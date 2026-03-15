@@ -902,6 +902,13 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                 # Datos básicos
                 'inspector':      fields.get('inspector', user.get('nombre', '')),
                 'nombre_firmante_inspector': fields.get('nombre_firmante_inspector', ''),
+                # Encabezado institucional
+                'num_inspector':     fields.get('num_inspector', ''),
+                'orden_inspeccion':  fields.get('orden_inspeccion', ''),
+                'motivo_inspeccion': fields.get('motivo_inspeccion', ''),
+                'expediente_previo': fields.get('expediente_previo', ''),
+                'cargo_visitado':    fields.get('cargo_visitado', ''),
+                'actividad_predio':  fields.get('actividad_predio', ''),
                 'infractor':      fields.get('infractor', ''),
                 'domicilio':      fields.get('domicilio', rep.get('domicilio', rep.get('colonia', ''))),
                 'descripcion':    fields.get('descripcion', ''),
