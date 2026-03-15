@@ -1154,7 +1154,7 @@ async function enviarActa() {
   const arbMet    = esArbolE ? gv('arb-metodo') : '';
   const nivelRiesgo = document.getElementById('acta-nivel-riesgo')?.value || '';
   const svCanvas   = document.getElementById('sig-visitado');
-  const visitadoNombre = (document.getElementById('visitado-nombre')?.value||'').trim();
+  const visitadoNombre = (document.getElementById('acta-nombre-visitado')?.value || document.getElementById('visitado-nombre')?.value || '').trim();
   const visitadoCargo  = (document.getElementById('visitado-cargo')?.value||'').trim();
   const svData = (svCanvas && visitadoNombre) ? svCanvas.toDataURL('image/png') : null;
   const dictamen = ['d-formacion','d-reduccion','d-elevacion','d-aclareo','d-derribo','d-trasplante','d-fitosanitario','d-conservacion']
@@ -1284,17 +1284,22 @@ async function enviarActa() {
     showLoading(false);
     if (d.success) {
       const acta = d.data.acta;
+      // Enriquecer con firmas locales (no se transmiten de vuelta desde el servidor)
+      if (!acta.firma_inspector_base64 && sigCanvas) {
+        acta.firma_inspector_base64 = sigCanvas.toDataURL('image/png');
+      }
+      if (!acta.firma_visitado_base64) {
+        const svC = document.getElementById('sig-visitado');
+        if (svC) acta.firma_visitado_base64 = svC.toDataURL('image/png');
+      }
+      if (!acta.nombre_visitado) {
+        acta.nombre_visitado = (document.getElementById('acta-nombre-visitado')?.value || '').trim();
+      }
       window._lastActa = acta;
       // Guardar en historial local
-      misActas.unshift({
-        folio_acta:  acta.folio_acta,
-        tipo_acta:   acta.tipo_acta,
+      misActas.unshift(Object.assign({}, acta, {
         report_folio: folio,
-        infractor:   acta.infractor,
-        fecha:       acta.fecha,
-        estado:      acta.estado,
-        descripcion: descripcion.slice(0,80),
-      });
+      }));
       localStorage.setItem('imbio_actas_local', JSON.stringify(misActas));
       closeNuevaActa();
       loadReportes('asignado');
@@ -2088,6 +2093,9 @@ function _buildActaForm() {
   }
 
   initSig();
+  // Initialize visitado signature canvas
+  var svCanv = document.getElementById('sig-visitado');
+  if (svCanv) { svCanv.width = svCanv.offsetWidth || 320; svCanv.height = 90; initSigExtra(svCanv); }
 }
 
 
@@ -2174,7 +2182,7 @@ function buildActaHTML(acta) {
   .data-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; font-size: 9px; }
   .data-table td { border: 1px solid #ccc; padding: 3px 6px; vertical-align: top; }
   .data-table .lbl { background: #f0f4fa; font-weight: bold; color: #1a3a5c; width: 90px; }
-  .desc-box { border: 1px solid #ccc; border-radius: 4px; padding: 8px; margin-bottom: 8px; font-size: 9.5px; line-height: 1.5; min-height: 60px; }
+  .desc-box { border: 1px solid #ccc; border-radius: 4px; padding: 8px; margin-bottom: 8px; font-size: 9.5px; line-height: 1.6; min-height: 60px; word-break: break-word; overflow-wrap: break-word; }
   .risk-badge { display: inline-block; padding: 2px 10px; border-radius: 3px; font-weight: bold; font-size: 10px; }
   .risk-bajo { background: #dcfce7; color: #166534; }
   .risk-moderado { background: #fef3c7; color: #92400e; }

@@ -181,6 +181,7 @@
       <a onclick="showPage('nuevo-reporte')"><span class="ic">➕</span> Nuevo Reporte</a>
       <a onclick="showPage('inspectores')" id="nav-inspectores"><span class="ic">👷</span> Inspectores</a>
       <a onclick="showPage('catalogo-inspectores')" id="nav-catalogo-inspectores"><span class="ic">👤</span> Catálogo Inspectores</a>
+      <a onclick="showPage('actas')" id="nav-actas"><span class="ic">📋</span> Actas</a>
     </aside>
     <main>
 
@@ -688,6 +689,43 @@
         </div>
       </div>
 
+      <!-- PAGE ACTAS -->
+      <div id="page-actas" class="page">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+          <h2>📋 Registro de Actas Circunstanciadas</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <select id="acta-filtro-tipo" onchange="cargarActas()" style="padding:6px 10px;border:1.5px solid var(--azul-borde);border-radius:6px;font-size:.82rem">
+              <option value="">Todos los tipos</option>
+              <option value="circunstanciada">Circunstanciada</option>
+              <option value="infraccion">Infracción</option>
+              <option value="clausura">Clausura</option>
+            </select>
+            <select id="acta-filtro-estado" onchange="cargarActas()" style="padding:6px 10px;border:1.5px solid var(--azul-borde);border-radius:6px;font-size:.82rem">
+              <option value="">Todos los estados</option>
+              <option value="emitida">Emitida</option>
+              <option value="notificada">Notificada</option>
+              <option value="cerrada">Cerrada</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="cargarActas()">🔄 Actualizar</button>
+          </div>
+        </div>
+        <div id="actas-alert"></div>
+        <div id="actas-tabla-wrap">
+          <p style="color:var(--muted);text-align:center;padding:40px">Cargando actas...</p>
+        </div>
+      </div>
+
+      <!-- MODAL DETALLE ACTA -->
+      <div id="modal-acta-detalle" class="modal" style="display:none">
+        <div class="modal-box" style="max-width:780px;max-height:90vh;overflow-y:auto">
+          <div class="pop-header" style="display:flex;justify-content:space-between;align-items:center">
+            <div class="pop-title" id="modal-acta-titulo">Detalle del Acta</div>
+            <button class="btn btn-sm" onclick="cerrarModalActa()">✕ Cerrar</button>
+          </div>
+          <div id="modal-acta-body" style="padding:20px"></div>
+        </div>
+      </div>
+
       <!-- MODAL EDITAR INSPECTOR -->
       <div id="modal-edit-insp" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:800;align-items:center;justify-content:center">
         <div style="background:#fff;border-radius:16px;padding:28px;width:420px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.3)">
@@ -998,6 +1036,7 @@ function showPage(name) {
   if (name==='reportes')      { currentPage=1; loadReportes(); }
   if (name==='dashboard')     loadDashboard();
   if (name==='inspectores')   loadAsignaciones();
+  if (name==='actas')         cargarActas();
   if (name==='nuevo-reporte') { initCanvas(); setTimeout(initMapPicker, 100); }
   if (name==='mapa') {
     setTimeout(initMapReportes, 100);
@@ -1695,6 +1734,246 @@ async function eliminarInspector(id, nombre) {
     } else { alert('Error: ' + r.message); }
   } catch(e) { alert('Error: ' + e.message); }
 }
+// ════════════════════════════════════════════════════════
+//  ACTAS — Registro completo
+// ════════════════════════════════════════════════════════
+
+async function cargarActas() {
+  const wrap  = document.getElementById('actas-tabla-wrap');
+  const alert = document.getElementById('actas-alert');
+  const tipo  = document.getElementById('acta-filtro-tipo')?.value  || '';
+  const est   = document.getElementById('acta-filtro-estado')?.value || '';
+  wrap.innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px">Cargando...</p>';
+  alert.innerHTML = '';
+
+  try {
+    let url = '/api/actas?limit=100';
+    if (tipo) url += '&tipo_acta=' + encodeURIComponent(tipo);
+    if (est)  url += '&estado='    + encodeURIComponent(est);
+    const r = await api(url);
+    if (!r.success) { alert.innerHTML = alert_html('error', r.message || 'Error al cargar actas.'); return; }
+    const actas = r.data.actas || [];
+    renderActasTabla(actas, r.data.paginacion);
+  } catch(e) {
+    alert.innerHTML = alert_html('error', 'Error: ' + e.message);
+  }
+}
+
+function renderActasTabla(actas, pag) {
+  const wrap = document.getElementById('actas-tabla-wrap');
+  if (!actas.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:48px;color:var(--muted)"><div style="font-size:2.5rem;margin-bottom:12px">📋</div><p>No hay actas registradas.</p></div>';
+    return;
+  }
+
+  const TIPO_LABELS = {
+    circunstanciada:'Circunstanciada', infraccion:'Infracción',
+    clausura:'Clausura', aseguramiento:'Aseguramiento'
+  };
+  const TIPO_ICONS = {
+    circunstanciada:'📄', infraccion:'⚠️', clausura:'🔒', aseguramiento:'📦'
+  };
+
+  const rows = actas.map(a => `
+    <tr>
+      <td><span class="folio-badge">${a.folio_acta||'—'}</span></td>
+      <td>${TIPO_ICONS[a.tipo_acta]||'📋'} ${TIPO_LABELS[a.tipo_acta]||a.tipo_acta||'—'}</td>
+      <td><span class="folio-badge" style="color:#059669">${a.reporte_folio||'—'}</span><br>
+          <small style="color:var(--muted)">${a.reporte_tipo||''}</small></td>
+      <td>${a.infractor||'—'}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.domicilio||''}">${a.domicilio||'—'}</td>
+      <td>${a.inspector||'—'}</td>
+      <td>${fmtDate(a.fecha)}</td>
+      <td><span class="badge badge-${a.estado==='emitida'?'inspector':'admin'}">${a.estado||'—'}</span></td>
+      <td>
+        <button class="btn btn-primary btn-sm" onclick="verDetalleActa(${a.id})">🔍 Ver</button>
+        <button class="btn btn-success btn-sm" onclick="descargarActaPDF(${a.id})">📥 PDF</button>
+      </td>
+    </tr>`).join('');
+
+  wrap.innerHTML = `
+    <p style="color:var(--muted);font-size:.8rem;margin-bottom:8px">${pag?.total||actas.length} acta(s) encontrada(s)</p>
+    <div style="overflow-x:auto">
+    <table class="table-reportes" style="min-width:900px">
+      <thead><tr>
+        <th>Folio Acta</th><th>Tipo</th><th>Reporte</th>
+        <th>Infractor/Visitado</th><th>Domicilio</th>
+        <th>Inspector</th><th>Fecha</th><th>Estado</th><th>Acciones</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </div>`;
+}
+
+async function verDetalleActa(id) {
+  const modal = document.getElementById('modal-acta-detalle');
+  const body  = document.getElementById('modal-acta-body');
+  const titulo = document.getElementById('modal-acta-titulo');
+  body.innerHTML = '<p style="text-align:center;padding:20px;color:var(--muted)">Cargando...</p>';
+  modal.style.display = 'flex';
+  modal.style.alignItems = 'center';
+  modal.style.justifyContent = 'center';
+  modal.style.position = 'fixed';
+  modal.style.inset = '0';
+  modal.style.background = 'rgba(0,0,0,.5)';
+  modal.style.zIndex = '900';
+
+  try {
+    const r = await api('/api/actas/' + id);
+    if (!r.success) { body.innerHTML = '<p style="color:red">' + r.message + '</p>'; return; }
+    const a = r.data.acta;
+    titulo.textContent = a.folio_acta || 'Detalle del Acta';
+    body.innerHTML = renderActaDetalle(a);
+  } catch(e) {
+    body.innerHTML = '<p style="color:red">Error: ' + e.message + '</p>';
+  }
+}
+
+function cerrarModalActa() {
+  document.getElementById('modal-acta-detalle').style.display = 'none';
+}
+
+function renderActaDetalle(a) {
+  const fila = (lbl, val) => val ? `<tr><td class="lbl" style="width:200px;font-weight:700;color:#1a3a5c;padding:6px 10px;background:#f8fafc;border:1px solid #e2e8f0">${lbl}</td><td style="padding:6px 10px;border:1px solid #e2e8f0">${val}</td></tr>` : '';
+  const sec  = (titulo) => `<tr><td colspan="2" style="background:#002A5C;color:#fff;font-weight:700;padding:8px 12px;font-size:.85rem;letter-spacing:.05em">${titulo}</td></tr>`;
+
+  const TIPO_LABELS = { circunstanciada:'Circunstanciada', infraccion:'Infracción', clausura:'Clausura' };
+
+  let html = `<table style="width:100%;border-collapse:collapse;font-size:.88rem">`;
+
+  // ── ENCABEZADO ──
+  html += sec('📋 IDENTIFICACIÓN DEL ACTA');
+  html += fila('Folio', `<b style="font-family:monospace;color:#003B7A">${a.folio_acta||'—'}</b>`);
+  html += fila('Tipo de Acta', TIPO_LABELS[a.tipo_acta]||a.tipo_acta||'—');
+  html += fila('Estado', a.estado||'—');
+  html += fila('Fecha y Hora', fmtDate(a.fecha));
+  html += fila('Reporte Origen', a.reporte_folio || ('ID: ' + a.report_id));
+
+  // ── DATOS DE LA DILIGENCIA ──
+  html += sec('1. DATOS DE LA DILIGENCIA');
+  html += fila('Inspector Actuante', a.inspector||'—');
+  html += fila('Propietario / Visitado', a.infractor||'—');
+  html += fila('Domicilio Inspeccionado', a.domicilio||'—');
+
+  // ── DATOS DE ÁRBOL (si aplica) ──
+  if (a.arb_especie || a.arb_dap || a.dictamen) {
+    html += sec('2. DATOS DEL ÁRBOL');
+    html += fila('Especie', a.arb_especie);
+    html += fila('DAP (cm)', a.arb_dap);
+    html += fila('Altura (m)', a.arb_altura);
+    html += fila('Vigor', a.arb_vigor);
+    html += fila('Estructura', a.arb_estructura);
+    html += fila('Método de trabajo', a.arb_metodo);
+    html += fila('Dictamen técnico', a.dictamen);
+    html += fila('Nivel de Riesgo', a.nivel_riesgo);
+    if (a.comp_categoria) {
+      html += sec('Compensación Ambiental');
+      html += fila('Categoría', a.comp_categoria);
+      html += fila('Árboles a compensar', a.comp_arboles);
+      html += fila('Especie compensatoria', a.comp_especie);
+    }
+  }
+
+  // ── DATOS ANIMAL / MORDIDA (si aplica) ──
+  if (a.vic_nombre || a.anim_especie || a.mordida_zonas) {
+    html += sec('2. DATOS DE LA VÍCTIMA');
+    html += fila('Nombre víctima', a.vic_nombre);
+    html += fila('Edad', a.vic_edad);
+    html += fila('Teléfono', a.vic_telefono);
+    html += fila('Domicilio víctima', a.vic_domicilio);
+    html += fila('Atención médica', a.vic_atencion);
+    html += fila('Gravedad', a.vic_gravedad);
+    if (a.mordida_zonas) {
+      html += sec('Datos de la Mordida');
+      html += fila('Zonas afectadas', a.mordida_zonas);
+      html += fila('Gravedad mordida', a.mordida_gravedad);
+    }
+    html += sec('Datos del Animal');
+    html += fila('Especie', a.anim_especie);
+    html += fila('Condición', a.anim_condicion);
+    html += fila('Situación', a.anim_situacion);
+    html += fila('Dueño/Responsable', a.anim_duenio);
+    html += fila('Destino animal', a.anim_destino);
+    html += fila('Acciones en campo', a.acciones_animal);
+  }
+
+  // ── DENUNCIA AMBIENTAL (si aplica) ──
+  if (a.da_tipo_infraccion || a.da_responsable) {
+    html += sec('2. DATOS DE LA INFRACCIÓN AMBIENTAL');
+    html += fila('Tipo de infracción', a.da_tipo_infraccion);
+    html += fila('Superficie afectada', a.da_superficie);
+    html += fila('Severidad', a.da_severidad);
+    html += fila('Presunto responsable', a.da_responsable);
+    html += fila('Medidas adoptadas', a.medidas_denuncia);
+    html += fila('Plazo de remediación', a.da_plazo);
+  }
+
+  // ── DIAGNÓSTICO Y DESCRIPCIÓN ──
+  html += sec('3. DIAGNÓSTICO Y DESCRIPCIÓN DE LOS HECHOS');
+  html += `<tr><td colspan="2" style="padding:10px 12px;border:1px solid #e2e8f0;white-space:pre-wrap;word-break:break-word">${a.descripcion||'—'}</td></tr>`;
+
+  // ── FUNDAMENTO LEGAL ──
+  if (a.fundamento) {
+    html += sec('FUNDAMENTO LEGAL');
+    html += `<tr><td colspan="2" style="padding:10px 12px;border:1px solid #e2e8f0;word-break:break-word">${a.fundamento}</td></tr>`;
+  }
+
+  // ── MEDIDA DE SEGURIDAD ──
+  if (a.medida) {
+    html += sec('MEDIDA DE SEGURIDAD / SANCIÓN');
+    html += `<tr><td colspan="2" style="padding:10px 12px;border:1px solid #e2e8f0;word-break:break-word">${a.medida}</td></tr>`;
+    html += fila('Monto de Sanción', a.monto_sancion ? '$' + a.monto_sancion + ' MXN' : null);
+  }
+
+  // ── OBSERVACIONES ──
+  if (a.observaciones) {
+    html += sec('OBSERVACIONES');
+    html += `<tr><td colspan="2" style="padding:10px 12px;border:1px solid #e2e8f0;word-break:break-word">${a.observaciones}</td></tr>`;
+  }
+
+  // ── FIRMAS ──
+  html += sec('FIRMAS');
+  const firmaInsp = a.firma_inspector_base64
+    ? `<img src="${a.firma_inspector_base64}" style="max-height:70px;display:block;margin-bottom:4px">`
+    : '<div style="height:50px;border-bottom:1px solid #333;margin-bottom:4px"></div>';
+  const firmaVis = a.firma_visitado_base64
+    ? `<img src="${a.firma_visitado_base64}" style="max-height:70px;display:block;margin-bottom:4px">`
+    : (a.nombre_visitado ? '<div style="background:#fef3c7;padding:8px;border-radius:4px;font-size:.75rem;color:#92400e">Se negó a firmar o no firmó</div>' : '<div style="height:50px;border-bottom:1px solid #333;margin-bottom:4px"></div>');
+  html += `<tr><td style="padding:12px;border:1px solid #e2e8f0;text-align:center">
+    ${firmaInsp}
+    <div style="font-size:.75rem;font-weight:700;color:#1a3a5c">${a.nombre_firmante_inspector||a.inspector||'Inspector'}</div>
+    <div style="font-size:.7rem;color:#64748b">Inspector IMBIO</div>
+  </td><td style="padding:12px;border:1px solid #e2e8f0;text-align:center">
+    ${firmaVis}
+    <div style="font-size:.75rem;font-weight:700;color:#1a3a5c">${a.nombre_visitado||'Visitado / Propietario'}</div>
+    <div style="font-size:.7rem;color:#64748b">Visitado / Propietario</div>
+  </td></tr>`;
+
+  // ── FOTOS ──
+  if (a.fotos && a.fotos.length) {
+    html += sec('EVIDENCIA FOTOGRÁFICA');
+    html += `<tr><td colspan="2" style="padding:10px 12px;border:1px solid #e2e8f0">
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${a.fotos.map(f=>`<img src="/${f}" style="max-width:120px;max-height:90px;border-radius:4px;border:1px solid #e2e8f0" onerror="this.style.display='none'">`).join('')}
+      </div></td></tr>`;
+  }
+
+  html += '</table>';
+  return html;
+}
+
+async function descargarActaPDF(id) {
+  try {
+    const r = await api('/api/actas/' + id);
+    if (!r.success) { alert('Error al obtener el acta: ' + r.message); return; }
+    // The inspector app has the PDF builder - open it referencing the acta
+    alert('Para generar el PDF, utiliza la App Inspector (inspector.html) donde se encuentra el generador de PDF completo.');
+  } catch(e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+
 
 </script>
 </body>

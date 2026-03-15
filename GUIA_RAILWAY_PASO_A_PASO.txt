@@ -1,0 +1,99 @@
+
+╔══════════════════════════════════════════════════════════════╗
+║     SGO-IMBIO · GUÍA RÁPIDA RAILWAY (30 MINUTOS)            ║
+║     Sistema disponible 24/7 desde cualquier celular o PC    ║
+╚══════════════════════════════════════════════════════════════╝
+
+PASO 1 — CREAR CUENTA EN GITHUB (5 min)
+─────────────────────────────────────────
+1. Ve a https://github.com
+2. Clic en "Sign up" (gratis)
+3. Usa tu correo y crea una contraseña
+4. Confirma el correo que te mandan
+
+PASO 2 — SUBIR EL PROYECTO A GITHUB (5 min)
+─────────────────────────────────────────────
+Opción A (más fácil — GitHub Desktop):
+  1. Descarga GitHub Desktop: https://desktop.github.com
+  2. Instala y entra con tu cuenta GitHub
+  3. File → New repository
+     - Name: sgo-imbio
+     - Local path: selecciona la carpeta sgo-imbio-python
+     - Clic "Create Repository"
+  4. Clic "Publish repository"
+     - Deja marcado "Keep this code private"
+     - Clic "Publish Repository"
+
+Opción B (CMD — sin instalar nada):
+  Abre CMD en la carpeta sgo-imbio-python y escribe:
+    git init
+    git add .
+    git commit -m "SGO-IMBIO inicial"
+    git branch -M main
+    git remote add origin https://github.com/TU_USUARIO/sgo-imbio.git
+    git push -u origin main
+
+PASO 3 — CREAR PROYECTO EN RAILWAY (5 min)
+────────────────────────────────────────────
+1. Ve a https://railway.app
+2. Clic "Login" → "Login with GitHub" 
+3. Clic "+ New Project"
+4. Elige "Deploy from GitHub repo"
+5. Selecciona "sgo-imbio"
+6. Railway detecta Python automáticamente → clic "Deploy Now"
+
+PASO 4 — AGREGAR DISCO PARA LA BASE DE DATOS (5 min)
+──────────────────────────────────────────────────────
+(Sin esto los datos se borran al reiniciar)
+1. En tu proyecto Railway → clic en el servicio "sgo-imbio"
+2. Pestaña "Settings" → sección "Volumes" → "Add Volume"
+   - Mount Path:  /app/data
+   - Clic "Create"
+3. Pestaña "Variables" → "Add Variable"
+   - Key:   DB_PATH
+   - Value: /app/data/imbio.db
+   - Clic "Add"
+4. Clic "Deploy" (arriba a la derecha)
+
+PASO 5 — OBTENER URL FIJA (2 min)
+───────────────────────────────────
+1. Pestaña "Settings" → sección "Networking"
+2. Clic "Generate Domain"
+3. Tu URL será: https://sgo-imbio-production.up.railway.app
+   (O similar — es fija y nunca cambia)
+
+PASO 6 — COMPARTIR CON EL EQUIPO
+───────────────────────────────────
+Guarda y comparte estas URLs:
+
+  PANEL ADMIN:    https://TU-URL.up.railway.app
+  APP INSPECTOR:  https://TU-URL.up.railway.app/inspector
+  APP CIUDADANO:  https://TU-URL.up.railway.app/app
+
+En el celular del inspector:
+  1. Chrome → abre la URL del inspector
+  2. Menú ⋮ → "Añadir a pantalla de inicio"
+  3. Ya queda como ícono de app nativa
+
+COSTOS
+───────
+  Plan Hobby (recomendado): $5 USD/mes → URL fija, sin límite de tiempo
+  Plan Gratis (Trial): $5 de crédito gratis para probar
+
+CREDENCIALES INICIALES DEL SISTEMA
+────────────────────────────────────
+  Admin:      admin / admin123
+  Operador:   operador / operador123
+  Inspector:  inspector01 / inspector123
+  ⚠️  Cambia las contraseñas después del primer acceso
+
+ACTUALIZAR EL SISTEMA DESPUÉS DE CAMBIOS
+──────────────────────────────────────────
+  1. Reemplaza los archivos en la carpeta local
+  2. GitHub Desktop → Changes → escribir "actualización" → Commit → Push
+  3. Railway redespliega automáticamente en ~2 minutos
+
+SOPORTE
+────────
+  Railway Dashboard: https://railway.app/dashboard
+  Estado del servicio: https://status.railway.app

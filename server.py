@@ -4,15 +4,16 @@ SGO-IMBIO – Sistema de Gestión Operativa
 Servidor Python puro (stdlib) con API REST + Frontend HTML embebido
 """
 
-import json, hashlib, base64, os, re, uuid, pathlib, threading
+import json, hashlib, base64, os, re, uuid, pathlib, threading, sqlite3
 from datetime import datetime, timezone
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
 # ── Config ─────────────────────────────────────────────────────────────────
-PORT       = 8080
+PORT       = int(os.environ.get("PORT", 8080))
 BASE_DIR   = pathlib.Path(__file__).parent
-DB_FILE    = BASE_DIR / "data" / "db.json"
+DB_FILE    = BASE_DIR / "data" / "db.json"   # legacy (used for initial seed)
+DB_SQLITE  = pathlib.Path(os.environ.get("DB_PATH", str(BASE_DIR / "data" / "imbio.db")))
 UPLOAD_EV  = BASE_DIR / "uploads" / "evidence"
 UPLOAD_SIG = BASE_DIR / "uploads" / "signatures"
 JWT_SECRET = "sgo-imbio-secret-2026"
@@ -108,6 +109,10 @@ import threading as _thr
 _LEAFLET_CSS = b''
 _LEAFLET_JS  = b''
 
+INSPECTOR_MANIFEST = '{\n  "name": "IMBIO Inspector",\n  "short_name": "Inspector IMBIO",\n  "description": "App para inspectores del Instituto Municipal de Biodiversidad y Protecci\u00f3n Ambiental de Pabll\u00f3n de Arteaga",\n  "start_url": "/inspector",\n  "display": "standalone",\n  "background_color": "#0d1f35",\n  "theme_color": "#003B7A",\n  "orientation": "portrait",\n  "icons": [\n    { "src": "/inspector/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },\n    { "src": "/inspector/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }\n  ],\n  "categories": ["utilities"],\n  "lang": "es"\n}'
+
+INSPECTOR_SW = "// IMBIO Inspector SW\nconst CACHE='imbio-insp-v1';\nself.addEventListener('install',e=>{self.skipWaiting();});\nself.addEventListener('activate',e=>{self.clients.claim();});\nself.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});"
+
 def _fetch_leaflet():
     global _LEAFLET_CSS, _LEAFLET_JS
     try:
@@ -137,26 +142,56 @@ print(f'[INIT] App: {len(_APP_BYTES_RAW)//1024}KB → gzip {len(_APP_BYTES)//102
 # ── Utilidades DB (JSON file como persistence) ─────────────────────────────
 db_lock = threading.Lock()
 
+def _init_sqlite():
+    """Create SQLite DB and seed from JSON if first run."""
+    DB_SQLITE.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(DB_SQLITE))
+    conn.execute("""CREATE TABLE IF NOT EXISTS store (
+        id   INTEGER PRIMARY KEY,
+        data TEXT NOT NULL
+    )""")
+    conn.commit()
+    row = conn.execute("SELECT data FROM store WHERE id=1").fetchone()
+    if not row:
+        # Seed from JSON file if it exists, otherwise use defaults
+        if DB_FILE.exists():
+            seed = DB_FILE.read_text(encoding='utf-8')
+        else:
+            seed = json.dumps({
+                "reports": [], "assignments": [], "users": [
+                    {"id":1,"username":"admin","password": hashlib.sha256(b"admin123").hexdigest(),"nombre":"Administrador IMBIO","rol":"admin","activo":True},
+                    {"id":2,"username":"operador","password": hashlib.sha256(b"operador123").hexdigest(),"nombre":"Operador IMBIO","rol":"operador","activo":True},
+                    {"id":3,"username":"inspector01","password": hashlib.sha256(b"inspector123").hexdigest(),"nombre":"Inspector Campo 01","rol":"inspector","brigada":"Brigada 1","activo":True}
+                ], "actas": []
+            }, ensure_ascii=False)
+        conn.execute("INSERT INTO store(id,data) VALUES(1,?)", (seed,))
+        conn.commit()
+    conn.close()
+
 def read_db():
     with db_lock:
-        db = json.loads(DB_FILE.read_text(encoding='utf-8'))
-        # Migración automática: agregar campos nuevos si no existen
+        conn = sqlite3.connect(str(DB_SQLITE))
+        row = conn.execute("SELECT data FROM store WHERE id=1").fetchone()
+        conn.close()
+        db = json.loads(row[0])
+        # Migración automática
         changed = False
         if 'actas' not in db:
-            db['actas'] = []
-            changed = True
-        # Migrar usuarios sin campo id
+            db['actas'] = []; changed = True
         for idx_u, u in enumerate(db.get('users', [])):
             if 'id' not in u:
-                u['id'] = idx_u + 1
-                changed = True
+                u['id'] = idx_u + 1; changed = True
         if changed:
-            DB_FILE.write_text(json.dumps(db, indent=2, ensure_ascii=False), encoding='utf-8')
+            write_db(db)
         return db
 
 def write_db(db):
     with db_lock:
-        DB_FILE.write_text(json.dumps(db, indent=2, ensure_ascii=False), encoding='utf-8')
+        conn = sqlite3.connect(str(DB_SQLITE))
+        conn.execute("UPDATE store SET data=? WHERE id=1",
+                     (json.dumps(db, ensure_ascii=False),))
+        conn.commit()
+        conn.close()
 
 def hash_pw(pw):
     return hashlib.sha256(pw.encode()).hexdigest()
@@ -363,6 +398,57 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             }, f'{total} reporte(s) encontrado(s).')
             return
 
+        # ── Listado de actas (panel admin) ──────────────────────────
+        if path == '/api/actas':
+            user = self.require_auth('admin', 'operador')
+            if not user: return
+            db = read_db()
+            actas = list(db.get('actas', []))
+            # Filtros opcionales
+            tipo_f    = qs.get('tipo_acta',  [None])[0]
+            estado_f  = qs.get('estado',     [None])[0]
+            inspector_f = qs.get('inspector',[None])[0]
+            if tipo_f:      actas = [a for a in actas if a.get('tipo_acta')  == tipo_f]
+            if estado_f:    actas = [a for a in actas if a.get('estado')     == estado_f]
+            if inspector_f: actas = [a for a in actas if inspector_f.lower() in (a.get('inspector','') or '').lower()]
+            actas = sorted(actas, key=lambda a: a.get('fecha',''), reverse=True)
+            # Enriquecer con datos del reporte origen
+            reps_idx = {r['id']: r for r in db.get('reports', [])}
+            for a in actas:
+                rep = reps_idx.get(a.get('report_id'))
+                if rep:
+                    a['reporte_folio'] = rep.get('folio','')
+                    a['reporte_tipo']  = rep.get('tipo','')
+                    a['reporte_colonia'] = rep.get('colonia','')
+                else:
+                    a['reporte_folio'] = a['reporte_tipo'] = a['reporte_colonia'] = ''
+            # Paginación
+            page  = int(qs.get('page',  [1])[0])
+            limit = int(qs.get('limit', [50])[0])
+            total = len(actas)
+            start = (page - 1) * limit
+            self.ok({
+                'actas': actas[start:start+limit],
+                'paginacion': {
+                    'total': total, 'pagina': page, 'por_pagina': limit,
+                    'total_paginas': max(1, (total + limit - 1) // limit)
+                }
+            }, f'{total} acta(s) encontrada(s).')
+            return
+
+        # ── Acta individual ─────────────────────────────────────────
+        m = re.match(r'^/api/actas/(\d+)$', path)
+        if m:
+            user = self.require_auth('admin', 'operador')
+            if not user: return
+            aid = int(m.group(1))
+            db = read_db()
+            acta = next((a for a in db.get('actas', []) if a['id'] == aid), None)
+            if not acta:
+                self.err('Acta no encontrada.', 404); return
+            self.ok({'acta': acta}, 'OK.')
+            return
+
         # ── Reportes asignados al inspector ─────────────────────────
         if path == '/api/inspector/reportes':
             user = self.require_auth('inspector', 'admin', 'operador')
@@ -375,6 +461,20 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                 reps = [r for r in reps if r['estado'] == estado]
             else:
                 reps = [r for r in reps if r['estado'] in ('asignado', 'en_proceso')]
+            # ── Filtrar por inspector si el usuario es inspector ──────────
+            if user.get('rol') == 'inspector':
+                nombre_insp = (user.get('nombre') or user.get('username') or '').strip()
+                username_insp = (user.get('username') or '').strip().lower()
+                # Un reporte pertenece al inspector si tiene una asignación con su nombre o username
+                def es_del_inspector(rep):
+                    asigs = [a for a in db['assignments'] if a['report_id'] == rep['id']]
+                    if not asigs:
+                        return False
+                    last = sorted(asigs, key=lambda a: a['fecha_asignacion'])[-1]
+                    asig_insp = (last.get('inspector') or '').strip()
+                    return (asig_insp.lower() == nombre_insp.lower() or
+                            asig_insp.lower() == username_insp)
+                reps = [r for r in reps if es_del_inspector(r)]
             reps = sorted(reps, key=lambda r: r['fecha_creacion'], reverse=True)
             # Enriquecer con asignacion
             for rep in reps:
@@ -499,6 +599,28 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(APP_ICON_512)
             return
+
+        if path == '/inspector/manifest.json':
+            body = INSPECTOR_MANIFEST.encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/manifest+json')
+            self.send_header('Content-Length', len(body))
+            self.end_headers(); self.wfile.write(body); return
+
+        if path == '/inspector/sw.js':
+            body = INSPECTOR_SW.encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/javascript')
+            self.send_header('Content-Length', len(body))
+            self.end_headers(); self.wfile.write(body); return
+
+        if path in ('/inspector/icon-192.png', '/inspector/icon-512.png'):
+            icon = APP_ICON_192 if '192' in path else APP_ICON_512
+            self.send_response(200)
+            self.send_header('Content-Type', 'image/png')
+            self.send_header('Content-Length', len(icon))
+            self.end_headers(); self.wfile.write(icon); return
+
 
         # ── App Ciudadano ─────────────────────────────────────
         if path in ('/app', '/app/'):
@@ -764,7 +886,7 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             if not rep: self.err(f'Reporte {rid} no encontrado.', 404); return
             now  = now_iso()
             aid  = (max((a['id'] for a in db['actas']), default=0)) + 1
-            tipo_acta = fields.get('tipo_acta', 'circunstanciada')
+            tipo_acta = (fields.get('tipo_acta', '') or 'circunstanciada').strip()
             # Guardar fotos del acta
             fotos = []
             for f in files:
@@ -776,8 +898,10 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                 'id':             aid,
                 'report_id':      rid,
                 'tipo_acta':      tipo_acta,
-                'folio_acta':     f"ACTA-{tipo_acta[:3].upper()}-{now[:10].replace('-','')}-{aid:04d}",
+                'folio_acta':     f"ACTA-{(tipo_acta[:3] if tipo_acta else 'GEN').upper()}-{now[:10].replace('-','')}-{aid:04d}",
+                # Datos básicos
                 'inspector':      fields.get('inspector', user.get('nombre', '')),
+                'nombre_firmante_inspector': fields.get('nombre_firmante_inspector', ''),
                 'infractor':      fields.get('infractor', ''),
                 'domicilio':      fields.get('domicilio', rep.get('domicilio', rep.get('colonia', ''))),
                 'descripcion':    fields.get('descripcion', ''),
@@ -790,6 +914,54 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                 'fotos':          fotos,
                 'estado':         'emitida',
                 'fecha':          now,
+                # Tipo de reporte (árbol, animal, ambiental)
+                'tipo_reporte':   fields.get('tipo_reporte', ''),
+                # Datos árbol
+                'arb_especie':    fields.get('arb_especie', ''),
+                'arb_dap':        fields.get('arb_dap', ''),
+                'arb_altura':     fields.get('arb_altura', ''),
+                'arb_vigor':      fields.get('arb_vigor', ''),
+                'arb_estructura': fields.get('arb_estructura', ''),
+                'arb_copa':       fields.get('arb_copa', ''),
+                'fs_plagas':      fields.get('fs_plagas', ''),
+                'fs_enfermedades':fields.get('fs_enfermedades', ''),
+                'fs_infra':       fields.get('fs_infra', ''),
+                'fs_raiz':        fields.get('fs_raiz', ''),
+                'arb_metodo':     fields.get('arb_metodo', ''),
+                'dictamen':       fields.get('dictamen', ''),
+                'nivel_riesgo':   fields.get('nivel_riesgo', ''),
+                'comp_categoria': fields.get('comp_categoria', ''),
+                'comp_arboles':   fields.get('comp_arboles', ''),
+                'comp_especie':   fields.get('comp_especie', ''),
+                # Datos animal / mordida
+                'vic_nombre':     fields.get('vic_nombre', ''),
+                'vic_edad':       fields.get('vic_edad', ''),
+                'vic_telefono':   fields.get('vic_telefono', ''),
+                'vic_domicilio':  fields.get('vic_domicilio', ''),
+                'vic_atencion':   fields.get('vic_atencion', ''),
+                'vic_gravedad':   fields.get('vic_gravedad', ''),
+                'mordida_zonas':  fields.get('mordida_zonas', ''),
+                'mordida_gravedad': fields.get('mordida_gravedad', ''),
+                'anim_especie':   fields.get('anim_especie', ''),
+                'anim_raza':      fields.get('anim_raza', ''),
+                'anim_cantidad':  fields.get('anim_cantidad', ''),
+                'anim_condicion': fields.get('anim_condicion', ''),
+                'anim_situacion': fields.get('anim_situacion', ''),
+                'anim_duenio':    fields.get('anim_duenio', ''),
+                'anim_destino':   fields.get('anim_destino', ''),
+                'acciones_animal': fields.get('acciones_animal', ''),
+                # Datos denuncia ambiental
+                'da_tipo_infraccion': fields.get('da_tipo_infraccion', ''),
+                'da_tiempo':          fields.get('da_tiempo', ''),
+                'da_superficie':  fields.get('da_superficie', ''),
+                'da_severidad':   fields.get('da_severidad', ''),
+                'da_responsable': fields.get('da_responsable', ''),
+                'da_plazo':       fields.get('da_plazo', ''),
+                'medidas_denuncia': fields.get('medidas_denuncia', ''),
+                # Firmas
+                'firma_inspector_base64': fields.get('firma_inspector_base64', ''),
+                'firma_visitado_base64':  fields.get('firma_visitado_base64', ''),
+                'nombre_visitado':        fields.get('nombre_visitado', ''),
             }
             if not db.get('actas'): db['actas'] = []
             db['actas'].append(acta)
@@ -829,7 +1001,8 @@ class IMBIOHandler(BaseHTTPRequestHandler):
 
         m = re.match(r'^/api/reports/(\d+)$', path)
         if m:
-            user = self.require_auth('admin', 'operador')
+            # Admin/operador pueden editar todo; inspector solo puede cambiar estado de sus reportes
+            user = self.require_auth('admin', 'operador', 'inspector')
             if not user: return
             rid  = int(m.group(1))
             body = self.parse_json_body()
@@ -837,12 +1010,17 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             rep  = next((r for r in db['reports'] if r['id'] == rid), None)
             if not rep:
                 self.err(f'Reporte {rid} no encontrado.', 404); return
-            for campo in ['tipo','colonia','descripcion','estado','nombre_reportante','telefono','domicilio']:
+            if user.get('rol') == 'inspector':
+                # Inspector solo puede cambiar el estado (no otros campos)
+                campos_permitidos = ['estado']
+            else:
+                campos_permitidos = ['tipo','colonia','descripcion','estado','nombre_reportante','telefono','domicilio']
+            for campo in campos_permitidos:
                 if campo in body:
                     rep[campo] = body[campo]
             rep['fecha_actualizacion'] = now_iso()
             write_db(db)
-            print(f"[EDICION] Folio: {rep['folio']} editado por {user['username']}")
+            print(f"[EDICION] Folio: {rep['folio']} → estado={rep.get('estado','')} por {user['username']}")
             self.ok(rep, f"Reporte {rep['folio']} actualizado.")
             return
         self.err('Ruta no encontrada.', 404)
@@ -883,6 +1061,22 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             print(f"[ELIMINADO] Folio: {folio} por {user['username']}")
             self.ok(None, f'Reporte {folio} eliminado.')
             return
+        # ── Eliminar acta ──────────────────────────────────────────────
+        ma = re.match(r'^/api/actas/(\d+)$', path)
+        if ma:
+            user = self.require_auth('admin', 'operador', 'inspector')
+            if not user: return
+            aid = int(ma.group(1))
+            db  = read_db()
+            before = len(db.get('actas', []))
+            db['actas'] = [a for a in db.get('actas', []) if a['id'] != aid]
+            if len(db['actas']) == before:
+                self.err(f'Acta {aid} no encontrada.', 404); return
+            write_db(db)
+            print(f"[ACTA_DEL] id={aid} eliminada por {user['username']}")
+            self.ok({}, 'Acta eliminada.')
+            return
+
         self.err('Ruta no encontrada.', 404)
 
     def do_OPTIONS(self):
@@ -920,6 +1114,7 @@ if __name__ == '__main__':
             super().handle_error(request, client_address)
 
     from http.server import ThreadingHTTPServer
+    _init_sqlite()
     server = ThreadingHTTPServer(('0.0.0.0', PORT), QuietHandler)
     server.socket.setsockopt(__import__('socket').SOL_SOCKET, __import__('socket').SO_REUSEADDR, 1)
     server.serve_forever()
