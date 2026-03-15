@@ -1,0 +1,1980 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGO-IMBIO · Sistema de Gestión Operativa</title>
+<link rel="stylesheet" href="/static/leaflet.css"/>
+<script src="/static/leaflet.js"></script>
+<style>
+  :root{
+    --verde:#003B7A;--verde-claro:#1976D2;--verde-oscuro:#002A5C;
+    --naranja:#e8650a;--gris:#f0f4fa;--borde:#c8d9ee;
+    --texto:#1a202c;--muted:#6b7280;--blanco:#ffffff;
+    --rojo:#dc2626;--azul:#0057B8;--amarillo:#d97706;
+    --azul-claro:#E8F1FB;--azul-borde:#B3CFF0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris);color:var(--texto);min-height:100vh}
+  nav{background:var(--verde-oscuro);color:#fff;padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  nav .brand{display:flex;align-items:center;gap:10px;font-size:1.1rem;font-weight:700}
+  nav .brand span{font-size:1.6rem}
+  nav .user-info{display:flex;align-items:center;gap:12px;font-size:.9rem}
+  nav .badge-rol{background:var(--verde-claro);padding:2px 10px;border-radius:99px;font-size:.75rem;font-weight:600;text-transform:uppercase}
+  nav button.logout{background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:.85rem}
+  nav button.logout:hover{background:rgba(255,255,255,.1)}
+  #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#002A5C,#0057B8)}
+  .login-card{background:#fff;border-radius:16px;padding:40px;width:380px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .login-card .logo{text-align:center;margin-bottom:28px}
+  .login-card .logo .icon{font-size:3rem}
+  .login-card .logo h1{font-size:1.4rem;color:var(--verde-oscuro);margin-top:8px}
+  .login-card .logo p{color:var(--muted);font-size:.85rem}
+  .creds-hint{background:#E8F1FB;border:1px solid #B3CFF0;border-radius:8px;padding:12px;margin-bottom:20px;font-size:.8rem;color:#002A5C}
+  .creds-hint b{display:block;margin-bottom:4px}
+  #app{display:none}
+  .app-layout{display:flex;min-height:calc(100vh - 60px)}
+  aside{width:220px;background:var(--verde-oscuro);padding:16px 0;flex-shrink:0}
+  aside a{display:flex;align-items:center;gap:10px;padding:12px 20px;color:rgba(255,255,255,.8);text-decoration:none;font-size:.9rem;cursor:pointer;transition:.15s}
+  aside a:hover,aside a.active{background:rgba(255,255,255,.12);color:#fff}
+  aside a .ic{font-size:1.1rem;width:24px;text-align:center}
+  main{flex:1;padding:28px;overflow-y:auto;max-height:calc(100vh - 60px)}
+  .page{display:none}.page.active{display:block}
+  h2{font-size:1.3rem;color:var(--verde-oscuro);margin-bottom:20px;display:flex;align-items:center;gap:8px}
+  .card{background:#fff;border-radius:12px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:20px}
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;margin-bottom:24px}
+  .stat{background:#fff;border-radius:12px;padding:20px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  .stat .num{font-size:2rem;font-weight:700}
+  .stat .lbl{font-size:.8rem;color:var(--muted);margin-top:4px}
+  .stat.verde .num{color:var(--verde)}
+  .stat.naranja .num{color:var(--naranja)}
+  .stat.azul .num{color:var(--azul)}
+  .stat.rojo .num{color:var(--rojo)}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .form-group{display:flex;flex-direction:column;gap:6px}
+  .form-group.full{grid-column:1/-1}
+  label{font-size:.85rem;font-weight:600;color:var(--texto)}
+  input,select,textarea{border:1.5px solid var(--borde);border-radius:8px;padding:9px 12px;font-size:.9rem;width:100%;outline:none;transition:.15s;font-family:inherit}
+  input:focus,select:focus,textarea:focus{border-color:var(--verde-claro);box-shadow:0 0 0 3px rgba(25,118,210,.18)}
+  textarea{resize:vertical;min-height:80px}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:8px;border:none;cursor:pointer;font-size:.9rem;font-weight:600;transition:.15s}
+  .btn-primary{background:var(--verde);color:#fff}.btn-primary:hover{background:var(--verde-claro)}
+  .btn-secondary{background:#e5e7eb;color:var(--texto)}.btn-secondary:hover{background:#d1d5db}
+  .btn-danger{background:var(--rojo);color:#fff}.btn-danger:hover{background:#b91c1c}
+  .btn-warning{background:var(--naranja);color:#fff}.btn-warning:hover{background:#c2570a}
+  .btn-sm{padding:5px 12px;font-size:.8rem}
+  .btn-indigo{background:#6366f1;color:#fff}.btn-indigo:hover{background:#4f46e5}
+  .edit-estado-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .edit-estado-row button{padding:7px 14px;border-radius:8px;border:2px solid var(--borde);background:#fff;cursor:pointer;font-size:.82rem;font-weight:600;transition:.15s}
+  .edit-estado-row button.sel{border-color:var(--verde);background:#E8F1FB;color:var(--verde-oscuro)}
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:.88rem}
+  th{background:var(--gris);padding:10px 14px;text-align:left;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:2px solid var(--borde)}
+  td{padding:12px 14px;border-bottom:1px solid var(--borde);vertical-align:middle}
+  tr:hover td{background:#f9fafb}
+  .badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.75rem;font-weight:600;text-transform:uppercase}
+  .badge-reportado{background:#fef3c7;color:#92400e}
+  .badge-asignado{background:#dbeafe;color:#1e40af}
+  .badge-en_proceso{background:#fce7f3;color:#9d174d}
+  .badge-cerrado{background:#dcfce7;color:#166534}
+  .badge-admin{background:#ede9fe;color:#5b21b6}
+  .badge-operador{background:#dbeafe;color:#1e40af}
+  .badge-inspector{background:#dbeafe;color:#002A5C}
+  .alert{padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:.9rem}
+  .alert-success{background:#dbeafe;color:#1e3a6e;border:1px solid #93c5fd}
+  .alert-error{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+  .alert-info{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center}
+  .modal-bg.open{display:flex}
+  .modal{background:#fff;border-radius:16px;padding:32px;width:600px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.3)}
+  .modal h3{font-size:1.15rem;color:var(--verde-oscuro);margin-bottom:20px}
+  .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+  .detail-section{margin-bottom:20px}
+  .detail-section h4{font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--borde)}
+  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .detail-item label{font-size:.78rem;color:var(--muted);display:block}
+  .detail-item span{font-size:.92rem;font-weight:500}
+  .timeline{list-style:none;padding-left:0}
+  .timeline li{padding:8px 0 8px 20px;border-left:2px solid var(--verde-claro);position:relative;font-size:.88rem}
+  .timeline li::before{content:'';position:absolute;left:-5px;top:12px;width:8px;height:8px;border-radius:50%;background:var(--verde-claro)}
+  #sig-canvas{border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;width:100%}
+  .sig-controls{display:flex;gap:8px;margin-top:8px}
+  .loading{text-align:center;padding:40px;color:var(--muted)}
+  .empty{text-align:center;padding:40px;color:var(--muted);font-size:.9rem}
+  .folio-badge{font-family:monospace;font-weight:700;color:var(--verde-oscuro);background:#E8F1FB;padding:2px 8px;border-radius:4px}
+  .filters{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end}
+  .filters select,.filters input{width:auto;min-width:140px}
+
+  /* ── MAPA ── */
+  #map-reportes{ height:520px; border-radius:10px; z-index:1; }
+  #map-picker  { height:320px; border-radius:10px; z-index:1; border:2px solid var(--borde); }
+  .map-layer-ctrl{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+  .map-layer-ctrl button{padding:6px 14px;border-radius:6px;border:1.5px solid var(--borde);background:#fff;cursor:pointer;font-size:.82rem;font-weight:600;transition:.15s}
+  .map-layer-ctrl button.active{background:var(--azul);color:#fff;border-color:var(--azul);box-shadow:0 2px 6px rgba(0,87,184,.25)}
+  .map-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:.82rem}
+  .map-legend span{display:flex;align-items:center;gap:5px}
+  .map-legend i{width:12px;height:12px;border-radius:50%;display:inline-block}
+  .picker-coords{display:flex;gap:10px;margin-top:8px;align-items:flex-start;font-size:.85rem;background:#E8F1FB;padding:10px 14px;border-radius:8px;min-height:40px}
+  .picker-coords b{color:var(--verde-oscuro)}
+  .domicilio-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px;padding:14px;background:#EEF5FC;border-radius:8px;border:1px solid var(--azul-borde)}
+  .domicilio-grid .form-group.full{grid-column:1/-1}
+  .map-filters{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .map-filters select{width:auto;min-width:130px;font-size:.85rem}
+
+  /* ── BOTÓN EDITAR (índigo) ── */
+  .btn-indigo{background:#4f46e5;color:#fff}.btn-indigo:hover{background:#4338ca}
+  /* ── CONFIRMACIÓN BORRADO ── */
+  .confirm-box{background:#fff3f3;border:1px solid #fca5a5;border-radius:10px;padding:18px;text-align:center;margin-bottom:8px}
+  .confirm-box p{font-size:.95rem;color:#7f1d1d;margin-bottom:14px}
+  /* ── MODAL EDITAR más ancho ── */
+  #modal-editar .modal{width:680px}
+
+  /* Popup personalizado */
+  .leaflet-popup-content-wrapper{border-radius:10px!important;box-shadow:0 4px 20px rgba(0,0,0,.15)!important}
+  .pop-title{font-weight:700;font-size:.95rem;color:var(--verde-oscuro);margin-bottom:4px}
+  .pop-row{font-size:.82rem;color:#444;margin:2px 0}
+  .pop-badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.72rem;font-weight:700;text-transform:uppercase;margin-top:4px}
+  .pop-btn{display:block;margin-top:8px;background:var(--verde);color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:.82rem;font-weight:600;width:100%;text-align:center}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="logo">
+      <div class="icon">🌿</div>
+      <h1 style="font-size:1rem;line-height:1.2">Plataforma de Monitoreo<br>Ambiental IMBIO-Pabellón</h1>
+      <p>Instituto Municipal de Biodiversidad y Protección Ambiental de Pabellón de Arteaga</p>
+    </div>
+    <div class="creds-hint">
+      <b>👤 Credenciales de acceso:</b>
+      admin / admin123 &nbsp;·&nbsp; operador / operador123 &nbsp;·&nbsp; inspector01 / inspector123
+    </div>
+    <div id="login-error"></div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Usuario</label>
+      <input id="l-user" type="text" value="admin">
+    </div>
+    <div class="form-group" style="margin-bottom:20px">
+      <label>Contraseña</label>
+      <input id="l-pass" type="password" value="admin123">
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()">🔐 Iniciar Sesión</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <nav>
+    <div class="brand"><span>🌿</span> IMBIO-Pabellón</div>
+    <div class="user-info">
+      <span id="nav-nombre"></span>
+      <span id="nav-rol" class="badge-rol badge"></span>
+      <button class="logout" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+  </nav>
+  <div class="app-layout">
+    <aside id="sidebar">
+      <a onclick="showPage('dashboard')" class="active"><span class="ic">📊</span> Dashboard</a>
+      <a onclick="showPage('mapa')"><span class="ic">🗺️</span> Mapa General</a>
+      <a onclick="showPage('reportes')"><span class="ic">📋</span> Reportes</a>
+      <a onclick="showPage('nuevo-reporte')"><span class="ic">➕</span> Nuevo Reporte</a>
+      <a onclick="showPage('inspectores')" id="nav-inspectores"><span class="ic">👷</span> Inspectores</a>
+      <a onclick="showPage('catalogo-inspectores')" id="nav-catalogo-inspectores"><span class="ic">👤</span> Catálogo Inspectores</a>
+      <a onclick="showPage('actas')" id="nav-actas"><span class="ic">📋</span> Actas</a>
+    </aside>
+    <main>
+
+      <!-- DASHBOARD -->
+      <div id="page-dashboard" class="page active">
+        <h2>📊 Panel de Control</h2>
+        <div class="stats-grid">
+          <div class="stat verde"><div class="num" id="st-total">–</div><div class="lbl">Total Reportes</div></div>
+          <div class="stat naranja"><div class="num" id="st-reportado">–</div><div class="lbl">Reportados</div></div>
+          <div class="stat azul"><div class="num" id="st-asignado">–</div><div class="lbl">Asignados</div></div>
+          <div class="stat rojo"><div class="num" id="st-en_proceso">–</div><div class="lbl">En Proceso</div></div>
+          <div class="stat verde"><div class="num" id="st-cerrado">–</div><div class="lbl">Cerrados</div></div>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:16px;font-size:1rem;color:var(--verde-oscuro)">⚡ Últimos Reportes</h3>
+          <div id="dash-recent"></div>
+        </div>
+      </div>
+
+      <!-- MAPA GENERAL -->
+      <div id="page-mapa" class="page">
+        <h2>🗺️ Mapa General de Reportes</h2>
+        <div class="card" style="padding:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+            <div class="map-layer-ctrl">
+              <button id="btn-layer-osm" class="active" onclick="setLayer('osm')">🗺️ Calles</button>
+              <button id="btn-layer-sat" onclick="setLayer('sat')">🛰️ Satelital</button>
+              <button id="btn-layer-hybrid" onclick="setLayer('hybrid')">🛰️ Híbrido</button>
+              <button id="btn-layer-topo" onclick="setLayer('topo')">🏔️ Topográfico</button>
+            </div>
+            <div class="map-filters">
+              <select id="mf-estado" onchange="refreshMapMarkers()">
+                <option value="">Todos los estados</option>
+                <option value="reportado">Reportado</option>
+                <option value="asignado">Asignado</option>
+                <option value="en_proceso">En Proceso</option>
+                <option value="cerrado">Cerrado</option>
+              </select>
+              <select id="mf-tipo" onchange="refreshMapMarkers()">
+                <option value="">Todos los tipos</option>
+                <option value="denuncia_ambiental">Denuncia Ambiental</option>
+                <option value="areas_verdes">Áreas Verdes</option>
+                <option value="emergencia">Emergencia</option>
+                <option value="residuos_solidos">Residuos Sólidos</option>
+                <option value="agua_contaminada">Agua Contaminada</option>
+                <option value="ruido">Ruido</option>
+                <option value="otro">Otro</option>
+              </select>
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('mf-estado').value='';document.getElementById('mf-tipo').value='';refreshMapMarkers()">✕ Limpiar</button>
+              <button class="btn btn-primary btn-sm" onclick="refreshMapMarkers()" id="btn-map-refresh">🔄 Actualizar</button>
+              <span id="map-last-update" style="font-size:.75rem;color:var(--muted);margin-left:4px"></span>
+            </div>
+          </div>
+          <div id="map-reportes"></div>
+          <div class="map-legend">
+            <span><i style="background:#e53e3e"></i> Reportado</span>
+            <span><i style="background:#3182ce"></i> Asignado</span>
+            <span><i style="background:#d53f8c"></i> En Proceso</span>
+            <span><i style="background:#38a169"></i> Cerrado</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- REPORTES -->
+      <div id="page-reportes" class="page">
+        <h2>📋 Gestión de Reportes</h2>
+        <div class="card">
+          <div class="filters">
+            <select id="f-estado" onchange="loadReportes()">
+              <option value="">Todos los estados</option>
+              <option value="reportado">Reportado</option>
+              <option value="asignado">Asignado</option>
+              <option value="en_proceso">En Proceso</option>
+              <option value="cerrado">Cerrado</option>
+            </select>
+            <select id="f-tipo" onchange="loadReportes()">
+              <option value="">Todos los tipos</option>
+              <option value="denuncia_ambiental">Denuncia Ambiental</option>
+              <option value="areas_verdes">Áreas Verdes</option>
+              <option value="emergencia">Emergencia</option>
+              <option value="residuos_solidos">Residuos Sólidos</option>
+              <option value="agua_contaminada">Agua Contaminada</option>
+              <option value="ruido">Ruido</option>
+              <option value="poda_arbol">Poda de Árbol</option>
+              <option value="derribo_arbol">Derribo de Árbol</option>
+              <option value="animal_calle">Animal en Calle</option>
+              <option value="perro_agresivo">Perro Agresivo</option>
+              <option value="tiradero_escombro">Tiradero de Escombro</option>
+              <option value="tiradero_basura">Tiradero de Basura</option>
+              <option value="otro">Otro</option>
+            </select>
+            <input id="f-colonia" placeholder="Filtrar colonia..." oninput="loadReportes()" style="min-width:180px">
+            <button class="btn btn-secondary btn-sm" onclick="clearFilters()">✕ Limpiar</button>
+            <button class="btn btn-sm" style="background:#217346;color:#fff;margin-left:auto" onclick="descargarXLS()">📥 Descargar Excel</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Folio</th><th>Tipo</th><th>Colonia</th><th>Estado</th><th>Fecha</th><th style="text-align:right">Acciones</th></tr></thead>
+              <tbody id="tabla-reportes"><tr><td colspan="6" class="loading">Cargando...</td></tr></tbody>
+            </table>
+          </div>
+          <div id="paginacion" style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end"></div>
+        </div>
+      </div>
+
+      <!-- NUEVO REPORTE -->
+      <div id="page-nuevo-reporte" class="page">
+        <h2>➕ Nuevo Reporte Ciudadano</h2>
+        <div class="card">
+          <div id="new-alert"></div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Tipo de Reporte *</label>
+              <select id="nr-tipo">
+                <option value="">– Seleccionar –</option>
+                <option value="denuncia_ambiental">🌱 Denuncia Ambiental</option>
+                <option value="areas_verdes">🌳 Áreas Verdes</option>
+                <option value="emergencia">🚨 Emergencia</option>
+                <option value="residuos_solidos">🗑️ Residuos Sólidos</option>
+                <option value="agua_contaminada">💧 Agua Contaminada</option>
+                <option value="ruido">🔊 Ruido</option>
+                <option value="poda_arbol">✂️ Solicitud de Poda de Árbol</option>
+                <option value="derribo_arbol">🪓 Solicitud de Derribo de Árbol</option>
+                <option value="animal_calle">🐾 Animal en Situación de Calle</option>
+                <option value="perro_agresivo">🐕 Perro Agresivo</option>
+                <option value="tiradero_escombro">🧱 Tiradero de Escombro</option>
+                <option value="tiradero_basura">🗑 Tiradero de Basura</option>
+                <option value="otro">📌 Otro</option>
+              </select>
+            </div>
+
+            <div class="form-group full">
+              <label>Descripción *</label>
+              <textarea id="nr-desc" placeholder="Describa la situación con detalle..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>Nombre del Reportante</label>
+              <input id="nr-nombre" placeholder="Nombre completo (opcional)">
+            </div>
+            <div class="form-group">
+              <label>Teléfono</label>
+              <input id="nr-tel" placeholder="Ej: 449 123 4567">
+            </div>
+
+            <!-- MAPA PICKER -->
+            <div class="form-group full">
+              <label>📍 Ubicación del Incidente — haz clic en el mapa para posicionar</label>
+              <div class="map-layer-ctrl" style="margin-bottom:8px">
+                <button id="pb-osm" class="active" onclick="setPickerLayer('osm')">🗺️ Calles</button>
+                <button id="pb-sat" onclick="setPickerLayer('sat')">🛰️ Satelital</button>
+                <button class="btn btn-secondary btn-sm" onclick="locateMe()" style="margin-left:auto">📡 Mi ubicación</button>
+              </div>
+              <div id="map-picker"></div>
+              <div class="picker-coords" id="picker-coords">
+                <span>📍 Haz clic en el mapa para seleccionar la ubicación exacta</span>
+              </div>
+            </div>
+
+            <!-- Campos de domicilio autollenados por geocoder -->
+            <div class="form-group full">
+              <label>📋 Domicilio Detectado</label>
+              <div class="domicilio-grid">
+                <div class="form-group">
+                  <label style="font-weight:400;color:var(--muted)">Calle</label>
+                  <input id="nr-calle" placeholder="Se autocompleta al ubicar en mapa">
+                </div>
+                <div class="form-group">
+                  <label style="font-weight:400;color:var(--muted)">Número</label>
+                  <input id="nr-numero" placeholder="Núm. exterior">
+                </div>
+                <div class="form-group">
+                  <label style="font-weight:400;color:var(--muted)">Colonia / Fraccionamiento *</label>
+                  <input id="nr-colonia" placeholder="Se autocompleta o escribe manualmente">
+                </div>
+                <div class="form-group">
+                  <label style="font-weight:400;color:var(--muted)">C.P.</label>
+                  <input id="nr-cp" placeholder="Código Postal">
+                </div>
+                <div class="form-group full">
+                  <label style="font-weight:400;color:var(--muted)">Ciudad / Municipio</label>
+                  <input id="nr-ciudad" placeholder="Se autocompleta al ubicar en mapa" readonly style="background:#f9fafb">
+                </div>
+              </div>
+            </div>
+
+            <input type="hidden" id="nr-lat">
+            <input type="hidden" id="nr-lon">
+
+            <div class="form-group full">
+              <label>✍️ Firma Digital del Ciudadano</label>
+              <canvas id="sig-canvas" width="500" height="140"></canvas>
+              <div class="sig-controls">
+                <input id="nr-firmante" placeholder="Nombre completo del firmante" style="flex:1">
+                <button class="btn btn-secondary btn-sm" onclick="clearSig()">🗑️ Borrar firma</button>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:20px;display:flex;gap:10px">
+            <button class="btn btn-primary" onclick="submitReporte()">📨 Enviar Reporte</button>
+            <button class="btn btn-secondary" onclick="resetForm()">↺ Limpiar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ASIGNACIONES -->
+      <div id="page-inspectores" class="page">
+        <h2>👷 Asignaciones de Brigadas</h2>
+        <div id="asig-alert"></div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Folio</th><th>Tipo</th><th>Colonia</th><th>Estado</th><th>Brigada</th><th>Inspector</th><th>Acción</th></tr></thead>
+              <tbody id="tabla-asig"><tr><td colspan="7" class="loading">Cargando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- MODAL EDITAR REPORTE -->
+<div class="modal-bg" id="modal-editar">
+  <div class="modal">
+    <h3>&#9999;&#65039; Editar Reporte</h3>
+    <input type="hidden" id="edit-id">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Tipo de Reporte</label>
+        <select id="edit-tipo">
+          <option value="denuncia_ambiental">Denuncia Ambiental</option>
+          <option value="areas_verdes">Areas Verdes</option>
+          <option value="emergencia">Emergencia</option>
+          <option value="residuos_solidos">Residuos Solidos</option>
+          <option value="agua_contaminada">Agua Contaminada</option>
+          <option value="ruido">Ruido</option>
+          <option value="poda_arbol">Poda de Arbol</option>
+          <option value="derribo_arbol">Derribo de Arbol</option>
+          <option value="animal_calle">Animal en Calle</option>
+          <option value="perro_agresivo">Perro Agresivo</option>
+          <option value="tiradero_escombro">Tiradero de Escombro</option>
+          <option value="tiradero_basura">Tiradero de Basura</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Colonia</label>
+        <input id="edit-colonia" placeholder="Colonia">
+      </div>
+      <div class="form-group full">
+        <label>Descripcion</label>
+        <textarea id="edit-desc"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Nombre Reportante</label>
+        <input id="edit-nombre">
+      </div>
+      <div class="form-group">
+        <label>Telefono</label>
+        <input id="edit-tel">
+      </div>
+      <div class="form-group full">
+        <label>Estado</label>
+        <div class="edit-estado-row" id="edit-estado-row">
+          <button type="button" onclick="selEstado('reportado')">Reportado</button>
+          <button type="button" onclick="selEstado('asignado')">Asignado</button>
+          <button type="button" onclick="selEstado('en_proceso')">En Proceso</button>
+          <button type="button" onclick="selEstado('cerrado')">Cerrado</button>
+        </div>
+        <input type="hidden" id="edit-estado">
+      </div>
+    </div>
+    <div id="edit-alert"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-editar')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEdicion()">Guardar Cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE -->
+<div class="modal-bg" id="modal-detalle">
+  <div class="modal">
+    <h3>📋 Detalle del Reporte</h3>
+    <div id="modal-detalle-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-detalle')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ASIGNAR -->
+<div class="modal-bg" id="modal-asignar">
+  <div class="modal">
+    <h3>👷 Asignar Brigada</h3>
+    <input type="hidden" id="asig-report-id">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Brigada *</label>
+        <input id="asig-brigada" placeholder="Ej: Brigada Verde A">
+      </div>
+      <div class="form-group">
+        <label>Inspector Responsable *</label>
+        <input id="asig-inspector" placeholder="Nombre del inspector">
+      </div>
+      <div class="form-group full">
+        <label>Notas</label>
+        <textarea id="asig-notas" placeholder="Instrucciones adicionales..."></textarea>
+      </div>
+    </div>
+    <div id="asig-modal-alert"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-asignar')">Cancelar</button>
+      <button class="btn btn-primary" onclick="submitAsignacion()">✅ Asignar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EVIDENCIA -->
+<div class="modal-bg" id="modal-evidencia">
+  <div class="modal">
+    <h3>📸 Registrar Evidencia de Campo</h3>
+    <input type="hidden" id="ev-report-id">
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Comentario</label>
+        <textarea id="ev-comentario" placeholder="Observaciones de campo..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Latitud de Captura</label>
+        <input id="ev-lat" type="number" step="any" placeholder="22.1234567">
+      </div>
+      <div class="form-group">
+        <label>Longitud de Captura</label>
+        <input id="ev-lon" type="number" step="any" placeholder="-102.3456789">
+      </div>
+      <div class="form-group full">
+        <label>Nuevo Estado</label>
+        <select id="ev-estado">
+          <option value="">– Sin cambiar –</option>
+          <option value="en_proceso">🔄 En Proceso</option>
+          <option value="cerrado">✅ Cerrado</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>📎 Fotografías</label>
+        <input type="file" id="ev-fotos" multiple accept="image/*">
+      </div>
+    </div>
+    <div id="ev-modal-alert"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-evidencia')">Cancelar</button>
+      <button class="btn btn-warning" onclick="submitEvidencia()">📸 Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR REPORTE -->
+<div class="modal-bg" id="modal-editar">
+  <div class="modal" style="width:700px">
+    <h3>✏️ Editar Reporte</h3>
+    <input type="hidden" id="ed-id">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Folio</label>
+        <input id="ed-folio" readonly style="background:#f9fafb;font-family:monospace;font-weight:700;color:var(--verde-oscuro)">
+      </div>
+      <div class="form-group">
+        <label>Estado *</label>
+        <select id="ed-estado">
+          <option value="reportado">Reportado</option>
+          <option value="asignado">Asignado</option>
+          <option value="en_proceso">En Proceso</option>
+          <option value="cerrado">Cerrado</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tipo *</label>
+        <select id="ed-tipo">
+          <option value="denuncia_ambiental">🌱 Denuncia Ambiental</option>
+          <option value="areas_verdes">🌳 Áreas Verdes</option>
+          <option value="emergencia">🚨 Emergencia</option>
+          <option value="residuos_solidos">🗑️ Residuos Sólidos</option>
+          <option value="agua_contaminada">💧 Agua Contaminada</option>
+          <option value="ruido">🔊 Ruido</option>
+          <option value="poda_arbol">✂️ Poda de Árbol</option>
+          <option value="derribo_arbol">🪓 Derribo de Árbol</option>
+          <option value="animal_calle">🐾 Animal en Calle</option>
+          <option value="perro_agresivo">🐕 Perro Agresivo</option>
+          <option value="tiradero_escombro">🧱 Tiradero de Escombro</option>
+          <option value="tiradero_basura">🗑 Tiradero de Basura</option>
+          <option value="otro">📌 Otro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Colonia / Fraccionamiento *</label>
+        <input id="ed-colonia" placeholder="Colonia">
+      </div>
+      <div class="form-group full">
+        <label>Domicilio</label>
+        <input id="ed-domicilio" placeholder="Calle, número, colonia, C.P.">
+      </div>
+      <div class="form-group full">
+        <label>Descripción *</label>
+        <textarea id="ed-descripcion" style="min-height:90px"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Nombre del Reportante</label>
+        <input id="ed-nombre" placeholder="Nombre completo">
+      </div>
+      <div class="form-group">
+        <label>Teléfono</label>
+        <input id="ed-telefono" placeholder="449 000 0000">
+      </div>
+      <div class="form-group">
+        <label>Latitud</label>
+        <input id="ed-lat" type="number" step="any">
+      </div>
+      <div class="form-group">
+        <label>Longitud</label>
+        <input id="ed-lon" type="number" step="any">
+      </div>
+    </div>
+    <div id="ed-alert" style="margin-top:12px"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-editar')">Cancelar</button>
+      <button class="btn btn-indigo" onclick="submitEditar()">💾 Guardar Cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAR BORRADO -->
+<div class="modal-bg" id="modal-borrar">
+  <div class="modal" style="width:420px">
+    <h3>🗑️ Eliminar Reporte</h3>
+    <input type="hidden" id="del-id">
+    <div class="confirm-box">
+      <p>¿Estás seguro de que deseas eliminar el reporte<br><b id="del-folio" style="font-family:monospace;font-size:1.1rem"></b>?<br><br>
+      <small>Esta acción eliminará también las evidencias, asignaciones y firmas asociadas. <b>No se puede deshacer.</b></small></p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="btn btn-secondary" onclick="closeModal('modal-borrar')">Cancelar</button>
+        <button class="btn btn-danger" onclick="confirmarBorrar()">🗑️ Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+      <!-- CATÁLOGO INSPECTORES -->
+      <div id="page-catalogo-inspectores" class="page">
+        <h2>👤 Catálogo de Inspectores</h2>
+        <div id="cat-insp-alert"></div>
+        <div class="card" style="padding:20px;margin-bottom:16px">
+          <h3 style="margin-bottom:16px;color:var(--azul)">➕ Registrar Inspector</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+            <div>
+              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Nombre completo *</label>
+              <input id="ci-nombre" class="form-control" placeholder="Nombre y apellidos" style="margin-top:4px">
+            </div>
+            <div>
+              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Usuario *</label>
+              <input id="ci-usuario" class="form-control" placeholder="Ej: inspector02" style="margin-top:4px">
+            </div>
+            <div>
+              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Contraseña *</label>
+              <input id="ci-password" type="password" class="form-control" placeholder="Contraseña de acceso" style="margin-top:4px">
+            </div>
+            <div>
+              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Teléfono</label>
+              <input id="ci-telefono" class="form-control" placeholder="Teléfono de contacto" style="margin-top:4px">
+            </div>
+            <div>
+              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Brigada / Área</label>
+              <input id="ci-brigada" class="form-control" placeholder="Ej: Brigada Norte" style="margin-top:4px">
+            </div>
+            <div style="display:flex;align-items:flex-end">
+              <button class="btn btn-primary" onclick="registrarInspector()" style="width:100%;padding:10px">
+                💾 Registrar Inspector
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--borde)">
+            <h3 style="color:var(--azul)">👥 Inspectores Registrados</h3>
+            <button class="btn btn-secondary btn-sm" onclick="cargarInspectores()">🔄 Actualizar</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Usuario</th>
+                  <th>Brigada</th>
+                  <th>Teléfono</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-inspectores">
+                <tr><td colspan="6" style="text-align:center;color:#64748b;padding:20px">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE ACTAS -->
+      <div id="page-actas" class="page">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+          <h2>📋 Registro de Actas Circunstanciadas</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <select id="acta-filtro-tipo" onchange="cargarActas()" style="padding:6px 10px;border:1.5px solid var(--azul-borde);border-radius:6px;font-size:.82rem">
+              <option value="">Todos los tipos</option>
+              <option value="circunstanciada">Circunstanciada</option>
+              <option value="infraccion">Infracción</option>
+              <option value="clausura">Clausura</option>
+            </select>
+            <select id="acta-filtro-estado" onchange="cargarActas()" style="padding:6px 10px;border:1.5px solid var(--azul-borde);border-radius:6px;font-size:.82rem">
+              <option value="">Todos los estados</option>
+              <option value="emitida">Emitida</option>
+              <option value="notificada">Notificada</option>
+              <option value="cerrada">Cerrada</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="cargarActas()">🔄 Actualizar</button>
+          </div>
+        </div>
+        <div id="actas-alert"></div>
+        <div id="actas-tabla-wrap">
+          <p style="color:var(--muted);text-align:center;padding:40px">Cargando actas...</p>
+        </div>
+      </div>
+
+      <!-- MODAL DETALLE ACTA -->
+      <div id="modal-acta-detalle" class="modal" style="display:none">
+        <div class="modal-box" style="max-width:780px;max-height:90vh;overflow-y:auto">
+          <div class="pop-header" style="display:flex;justify-content:space-between;align-items:center">
+            <div class="pop-title" id="modal-acta-titulo">Detalle del Acta</div>
+            <button class="btn btn-sm" onclick="cerrarModalActa()">✕ Cerrar</button>
+          </div>
+          <div id="modal-acta-body" style="padding:20px"></div>
+        </div>
+      </div>
+
+      <!-- MODAL EDITAR INSPECTOR -->
+      <div id="modal-edit-insp" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:800;align-items:center;justify-content:center">
+        <div style="background:#fff;border-radius:16px;padding:28px;width:420px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+          <h3 style="margin-bottom:18px;color:var(--azul)">✏️ Editar Inspector</h3>
+          <input type="hidden" id="ei-id">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div>
+              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Nombre completo</label>
+              <input id="ei-nombre" class="form-control" style="margin-top:4px">
+            </div>
+            <div>
+              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Brigada / Área</label>
+              <input id="ei-brigada" class="form-control" style="margin-top:4px">
+            </div>
+            <div>
+              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Teléfono</label>
+              <input id="ei-telefono" class="form-control" style="margin-top:4px">
+            </div>
+            <div>
+              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Nueva contraseña (dejar vacío para no cambiar)</label>
+              <input id="ei-password" type="password" class="form-control" placeholder="Nueva contraseña" style="margin-top:4px">
+            </div>
+            <div>
+              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Estado</label>
+              <select id="ei-activo" class="form-control" style="margin-top:4px">
+                <option value="true">✅ Activo</option>
+                <option value="false">⛔ Inactivo</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:8px">
+              <button class="btn btn-primary" onclick="guardarEdicionInspector()" style="flex:1">💾 Guardar cambios</button>
+              <button class="btn btn-secondary" onclick="cerrarModalInspector()" style="flex:1">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  SGO-IMBIO Frontend
+// ══════════════════════════════════════════════════════════════
+let TOKEN = null, USER = null, currentPage = 1;
+
+// ── Mapa General ──────────────────────────────────────────────
+let mapReportes = null, mapMarkers = [], currentLayerName = 'osm';
+let layerOSM, layerSat, layerTopo, activeLayer;
+
+const TILE_LAYERS = {
+  osm:  { url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          attr:'© <a href="https://openstreetmap.org">OpenStreetMap</a>', maxZoom:19 },
+  sat:  { url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          attr:'© Esri World Imagery', maxZoom:19 },
+  hybrid:{ url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          attr:'© Esri World Imagery + OpenStreetMap', maxZoom:19,
+          overlay:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' },
+  topo: { url:'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+          attr:'© OpenTopoMap', maxZoom:17 },
+};
+let overlayLayer = null;
+
+const MARKER_COLORS = {
+  reportado:'#e53e3e', asignado:'#3182ce', en_proceso:'#d53f8c', cerrado:'#38a169'
+};
+
+function makeIcon(color) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="28" height="42">
+    <path d="M12 0C5.37 0 0 5.37 0 12c0 9 12 24 12 24s12-15 12-24C24 5.37 18.63 0 12 0z" fill="${color}" stroke="white" stroke-width="1.5"/>
+    <circle cx="12" cy="12" r="5" fill="white" opacity="0.9"/>
+  </svg>`;
+  return L.divIcon({
+    html: svg, className:'', iconSize:[28,42], iconAnchor:[14,42], popupAnchor:[0,-40]
+  });
+}
+
+function initMapReportes() {
+  if (mapReportes) { setTimeout(()=>{ mapReportes.invalidateSize(); }, 100); return; }
+  mapReportes = L.map('map-reportes').setView([22.1508, -102.2913], 14);
+  const cfg = TILE_LAYERS.osm;
+  activeLayer = L.tileLayer(cfg.url, { attribution: cfg.attr, maxZoom: cfg.maxZoom }).addTo(mapReportes);
+  refreshMapMarkers();
+}
+
+function setLayer(name) {
+  if (!mapReportes) return;
+  document.querySelectorAll('.map-layer-ctrl button[id^="btn-layer"]').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('btn-layer-' + name);
+  if (btn) btn.classList.add('active');
+  if (activeLayer) mapReportes.removeLayer(activeLayer);
+  if (overlayLayer) { mapReportes.removeLayer(overlayLayer); overlayLayer = null; }
+  const cfg = TILE_LAYERS[name];
+  activeLayer = L.tileLayer(cfg.url, { attribution: cfg.attr, maxZoom: cfg.maxZoom || 19 }).addTo(mapReportes);
+  if (cfg.overlay) {
+    overlayLayer = L.tileLayer(cfg.overlay, { opacity: 0.4, attribution:'', maxZoom:19 }).addTo(mapReportes);
+  }
+  currentLayerName = name;
+  localStorage.setItem('imbio_map_layer', name);
+}
+
+async function refreshMapMarkers() {
+  if (!mapReportes) return;
+  mapMarkers.forEach(m => mapReportes.removeLayer(m));
+  mapMarkers = [];
+  const estado = document.getElementById('mf-estado')?.value || '';
+  const tipo   = document.getElementById('mf-tipo')?.value   || '';
+  let url = '/api/reports?limit=200';
+  if (estado) url += '&estado=' + estado;
+  if (tipo)   url += '&tipo='   + tipo;
+  const r = await api(url);
+  if (!r.success) return;
+  const reps = r.data.reportes.filter(rep => rep.lat != null && rep.lon != null && rep.lat !== '' && rep.lon !== '');
+  reps.forEach(rep => {
+    const color  = MARKER_COLORS[rep.estado] || '#888';
+    const marker = L.marker([rep.lat, rep.lon], { icon: makeIcon(color) });
+    const popHtml = `
+      <div class="pop-title">${rep.folio}</div>
+      <div class="pop-row">📍 ${rep.colonia}</div>
+      <div class="pop-row">🏷️ ${tipoLabel(rep.tipo)}</div>
+      <div class="pop-row">👤 ${rep.nombre_reportante || 'Anónimo'}</div>
+      <div class="pop-row">🕐 ${fmtDate(rep.fecha_creacion)}</div>
+      <span class="pop-badge" style="background:${color}20;color:${color}">${rep.estado.replace('_',' ')}</span>
+      <button class="pop-btn" onclick="verDetalle(${rep.id});closePopups()">Ver detalle completo</button>`;
+    marker.bindPopup(popHtml, { maxWidth: 240 });
+    marker.addTo(mapReportes);
+    mapMarkers.push(marker);
+  });
+  if (reps.length > 0) {
+    const group = L.featureGroup(mapMarkers);
+    mapReportes.fitBounds(group.getBounds().pad(0.15));
+  }
+  // Mostrar hora de última actualización
+  const el = document.getElementById('map-last-update');
+  if (el) el.textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-MX');
+  // Indicador visual en el botón
+  const btn = document.getElementById('btn-map-refresh');
+  if (btn) { btn.textContent = '✅ Listo'; setTimeout(() => btn.textContent = '🔄 Actualizar', 1500); }
+}
+
+// Auto-refresh del mapa cada 30 segundos cuando está visible
+let mapAutoRefreshTimer = null;
+function startMapAutoRefresh() {
+  if (mapAutoRefreshTimer) clearInterval(mapAutoRefreshTimer);
+  mapAutoRefreshTimer = setInterval(() => {
+    if (document.getElementById('page-mapa')?.classList.contains('active')) {
+      refreshMapMarkers();
+    }
+  }, 30000); // cada 30 segundos
+}
+
+function closePopups() {
+  mapMarkers.forEach(m => m.closePopup());
+}
+
+// ── Mapa Picker (Nuevo Reporte) ───────────────────────────────
+let mapPicker = null, pickerMarker = null, pickerLayerActive = null;
+
+function initMapPicker() {
+  if (mapPicker) { setTimeout(()=>{ mapPicker.invalidateSize(); }, 150); return; }
+  const center = [22.1508, -102.2913];
+  mapPicker = L.map('map-picker').setView(center, 15);
+  const cfg = TILE_LAYERS.osm;
+  pickerLayerActive = L.tileLayer(cfg.url, { attribution: cfg.attr, maxZoom: 19 }).addTo(mapPicker);
+
+  mapPicker.on('click', function(e) {
+    const { lat, lng } = e.latlng;
+    setPickerCoords(lat, lng);
+  });
+}
+
+function setPickerLayer(name) {
+  if (!mapPicker) return;
+  document.getElementById('pb-osm').classList.toggle('active', name==='osm');
+  document.getElementById('pb-sat').classList.toggle('active', name==='sat');
+  mapPicker.removeLayer(pickerLayerActive);
+  const cfg = TILE_LAYERS[name];
+  pickerLayerActive = L.tileLayer(cfg.url, { attribution: cfg.attr, maxZoom: 19 }).addTo(mapPicker);
+}
+
+async function setPickerCoords(lat, lng) {
+  document.getElementById('nr-lat').value = lat.toFixed(7);
+  document.getElementById('nr-lon').value = lng.toFixed(7);
+
+  // Mostrar coordenadas inmediatamente mientras carga el geocoder
+  document.getElementById('picker-coords').innerHTML =
+    `<b>📍 Lat:</b> ${lat.toFixed(6)} &nbsp; <b>Lon:</b> ${lng.toFixed(6)}
+     <span style="margin-left:auto;color:var(--muted);font-size:.8rem">🔍 Buscando domicilio...</span>`;
+
+  if (pickerMarker) mapPicker.removeLayer(pickerMarker);
+  pickerMarker = L.marker([lat, lng], { icon: makeIcon('#003B7A') })
+    .addTo(mapPicker);
+
+  // Geocodificación inversa con Nominatim (OpenStreetMap, sin API key)
+  try {
+    const resp = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&accept-language=es`,
+      { headers: { 'Accept-Language': 'es' } }
+    );
+    const geo = await resp.json();
+    const a   = geo.address || {};
+
+    // ── Extraer componentes de dirección ──────────────────────
+    const numero  = a.house_number || '';
+    const calle   = a.road || a.pedestrian || a.footway || a.path || '';
+    const colonia = a.neighbourhood || a.suburb || a.quarter ||
+                    a.village || a.hamlet || a.city_district || '';
+    const ciudad  = a.city || a.town || a.municipality || a.county || '';
+    const cp      = a.postcode || '';
+    const estado  = a.state || '';
+
+    // ── Construir línea de domicilio ──────────────────────────
+    let domicilio = '';
+    if (calle)   domicilio += calle;
+    if (numero)  domicilio += ' ' + numero;
+
+    // ── Rellenar campos del formulario ────────────────────────
+    const campoCalle   = document.getElementById('nr-calle');
+    const campoColonia = document.getElementById('nr-colonia');
+    const campoNumero  = document.getElementById('nr-numero');
+    const campoCP      = document.getElementById('nr-cp');
+    const campoCiudad  = document.getElementById('nr-ciudad');
+
+    if (campoCalle   && calle)   campoCalle.value   = calle.trim();
+    if (campoNumero  && numero)  campoNumero.value  = numero.trim();
+    if (campoColonia && colonia) campoColonia.value = colonia.trim();
+    if (campoCP      && cp)      campoCP.value      = cp.trim();
+    if (campoCiudad  && ciudad)  campoCiudad.value  = ciudad.trim();
+
+    // ── Popup con dirección completa ──────────────────────────
+    const displayAddr = geo.display_name
+      ? geo.display_name.split(',').slice(0,4).join(',')
+      : `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+
+    pickerMarker
+      .bindPopup(`<b>📍 Ubicación del reporte</b><br><small>${displayAddr}</small>`)
+      .openPopup();
+
+    // ── Actualizar banda de coordenadas ───────────────────────
+    document.getElementById('picker-coords').innerHTML =
+      `<div style="width:100%">
+        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+          <span><b>Lat:</b> ${lat.toFixed(6)}</span>
+          <span><b>Lon:</b> ${lng.toFixed(6)}</span>
+          <span style="color:var(--verde);font-weight:600">✅ Domicilio autocompletado</span>
+        </div>
+        <div style="margin-top:4px;font-size:.8rem;color:var(--muted)">
+          📍 ${domicilio ? domicilio + (colonia ? ', ' + colonia : '') + (ciudad ? ', ' + ciudad : '') : geo.display_name || 'Sin dirección disponible'}
+        </div>
+      </div>`;
+
+  } catch(e) {
+    // Sin internet o error de Nominatim — solo mostrar coordenadas
+    pickerMarker
+      .bindPopup(`<b>Ubicación del reporte</b><br>${lat.toFixed(5)}, ${lng.toFixed(5)}`)
+      .openPopup();
+    document.getElementById('picker-coords').innerHTML =
+      `<b>📍 Lat:</b> ${lat.toFixed(6)} &nbsp; <b>Lon:</b> ${lng.toFixed(6)}
+       <span style="margin-left:auto;color:var(--naranja);font-size:.8rem">⚠️ Geocodificación no disponible</span>`;
+  }
+}
+
+function locateMe() {
+  if (!navigator.geolocation) { alert('Tu navegador no soporta geolocalización'); return; }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      mapPicker.setView([lat, lng], 17);
+      setPickerCoords(lat, lng);
+    },
+    () => alert('No se pudo obtener la ubicación. Haz clic en el mapa manualmente.')
+  );
+}
+
+// ── AUTH ──────────────────────────────────────────────────────
+async function doLogin() {
+  const username = document.getElementById('l-user').value.trim();
+  const password = document.getElementById('l-pass').value.trim();
+  const errEl    = document.getElementById('login-error');
+  errEl.innerHTML = '';
+  try {
+    const r = await api('/api/auth/login','POST',{username,password},false);
+    if (!r.success) { errEl.innerHTML = alert_html('error', r.message); return; }
+    TOKEN = r.data.token; USER = r.data.usuario;
+    document.getElementById('nav-nombre').textContent = USER.nombre;
+    document.getElementById('nav-rol').textContent    = USER.rol;
+    document.getElementById('nav-rol').className      = `badge badge-${USER.rol}`;
+    if (USER.rol === 'inspector') document.getElementById('nav-inspectores').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    showPage('dashboard'); loadDashboard();
+    startMapAutoRefresh();
+  } catch(e) { errEl.innerHTML = alert_html('error','Error de conexión: '+e.message); }
+}
+function doLogout() {
+  TOKEN=null; USER=null;
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+  mapReportes=null; mapPicker=null;
+}
+document.getElementById('l-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+
+// ── NAVEGACIÓN ────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('aside a').forEach(a=>a.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('aside a').forEach(a=>{ if(a.getAttribute('onclick')?.includes("'"+name+"'")) a.classList.add('active'); });
+  if (name==='reportes')      { currentPage=1; loadReportes(); }
+  if (name==='dashboard')     loadDashboard();
+  if (name==='inspectores')   loadAsignaciones();
+  if (name==='actas')         cargarActas();
+  if (name==='nuevo-reporte') { initCanvas(); setTimeout(initMapPicker, 100); }
+  if (name==='mapa') {
+    setTimeout(initMapReportes, 100);
+    startMapAutoRefresh();
+  }
+  if (name==='catalogo-inspectores') cargarInspectores();
+}
+
+// ── API ───────────────────────────────────────────────────────
+async function api(path, method='GET', body=null, auth=true) {
+  const headers = {'Content-Type':'application/json'};
+  if (auth && TOKEN) headers['Authorization'] = 'Bearer '+TOKEN;
+  const opts = {method, headers};
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(path, opts);
+  return r.json();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────
+async function loadDashboard() {
+  const r = await api('/api/reports?limit=100');
+  if (!r.success) return;
+  const reps = r.data.reportes;
+  const counts = {reportado:0,asignado:0,en_proceso:0,cerrado:0};
+  reps.forEach(rep=>{ if(counts[rep.estado]!==undefined) counts[rep.estado]++; });
+  document.getElementById('st-total').textContent     = reps.length;
+  document.getElementById('st-reportado').textContent = counts.reportado;
+  document.getElementById('st-asignado').textContent  = counts.asignado;
+  document.getElementById('st-en_proceso').textContent= counts.en_proceso;
+  document.getElementById('st-cerrado').textContent   = counts.cerrado;
+  const recent = reps.slice(0,5);
+  const dashEl = document.getElementById('dash-recent');
+  if (!recent.length) { dashEl.innerHTML='<div class="empty">No hay reportes aún</div>'; return; }
+  dashEl.innerHTML = `<table style="width:100%;font-size:.88rem"><thead><tr>
+    <th style="padding:8px">Folio</th><th>Tipo</th><th>Colonia</th><th>Estado</th><th>Fecha</th>
+  </tr></thead><tbody>
+    ${recent.map(r=>`<tr>
+      <td><span class="folio-badge">${r.folio}</span></td>
+      <td>${tipoLabel(r.tipo)}</td><td>${r.colonia}</td>
+      <td>${badge(r.estado)}</td><td>${fmtDate(r.fecha_creacion)}</td>
+    </tr>`).join('')}
+  </tbody></table>`;
+}
+
+// ── REPORTES ──────────────────────────────────────────────────
+async function loadReportes() {
+  const estado=document.getElementById('f-estado').value;
+  const tipo=document.getElementById('f-tipo').value;
+  const colonia=document.getElementById('f-colonia').value;
+  let url=`/api/reports?page=${currentPage}&limit=15`;
+  if(estado) url+=`&estado=${estado}`;
+  if(tipo)   url+=`&tipo=${tipo}`;
+  if(colonia) url+=`&colonia=${encodeURIComponent(colonia)}`;
+  const tbody=document.getElementById('tabla-reportes');
+  tbody.innerHTML='<tr><td colspan="6" class="loading">Cargando...</td></tr>';
+  const r=await api(url);
+  if(!r.success){tbody.innerHTML=`<tr><td colspan="6">${alert_html('error',r.message)}</td></tr>`;return;}
+  const {reportes,paginacion}=r.data;
+  if(!reportes.length){tbody.innerHTML='<tr><td colspan="6" class="empty">Sin resultados</td></tr>';return;}
+  tbody.innerHTML=reportes.map(rep=>`<tr>
+    <td><span class="folio-badge">${rep.folio}</span></td>
+    <td>${tipoLabel(rep.tipo)}</td><td>${rep.colonia}</td>
+    <td>${badge(rep.estado)}</td><td>${fmtDate(rep.fecha_creacion)}</td>
+    <td style="text-align:right;white-space:nowrap">
+      <button class="btn btn-secondary btn-sm" title="Ver" onclick="verDetalle(${rep.id})">👁</button>
+      ${(USER.rol==='admin'||USER.rol==='operador')&&rep.estado==='reportado'?`<button class="btn btn-primary btn-sm" title="Asignar" onclick="abrirAsignar(${rep.id})">👷</button>`:''}
+      ${(USER.rol!=='admin'||USER.rol==='inspector')&&rep.estado!=='cerrado'&&rep.estado!=='reportado'?`<button class="btn btn-warning btn-sm" title="Evidencia" onclick="abrirEvidencia(${rep.id})">📸</button>`:''}
+      ${USER.rol==='admin'||USER.rol==='operador'?`<button class="btn btn-sm btn-indigo" title="Editar" onclick="abrirEditar(${rep.id})">✏️</button>`:''}
+      ${USER.rol==='admin'?`<button class="btn btn-danger btn-sm" title="Eliminar" onclick="borrarReporte(${rep.id},'${rep.folio}')">🗑</button>`:''}
+    </td></tr>`).join('');
+  const pagEl=document.getElementById('paginacion');
+  pagEl.innerHTML='';
+  if(paginacion.total_paginas>1){
+    for(let i=1;i<=paginacion.total_paginas;i++){
+      const btn=document.createElement('button');
+      btn.className='btn btn-sm '+(i===currentPage?'btn-primary':'btn-secondary');
+      btn.textContent=i;
+      btn.onclick=()=>{ currentPage=i; loadReportes(); };
+      pagEl.appendChild(btn);
+    }
+  }
+}
+function clearFilters(){
+  document.getElementById('f-estado').value='';
+  document.getElementById('f-tipo').value='';
+  document.getElementById('f-colonia').value='';
+  currentPage=1; loadReportes();
+}
+
+// ── DETALLE ───────────────────────────────────────────────────
+async function verDetalle(id) {
+  const r = await api(`/api/reports/${id}`);
+  if (!r.success) { alert(r.message); return; }
+  const rep = r.data;
+  const body = document.getElementById('modal-detalle-body');
+  body.innerHTML = `
+    <div class="detail-section">
+      <h4>Información General</h4>
+      <div class="detail-grid">
+        <div class="detail-item"><label>Folio</label><span class="folio-badge">${rep.folio}</span></div>
+        <div class="detail-item"><label>Estado</label><span>${badge(rep.estado)}</span></div>
+        <div class="detail-item"><label>Tipo</label><span>${tipoLabel(rep.tipo)}</span></div>
+        <div class="detail-item"><label>Colonia</label><span>${rep.colonia}</span></div>
+        <div class="detail-item"><label>Reportante</label><span>${rep.nombre_reportante||'Anónimo'}</span></div>
+        <div class="detail-item"><label>Teléfono</label><span>${rep.telefono||'–'}</span></div>
+        <div class="detail-item"><label>Coordenadas</label><span>${rep.lat&&rep.lon?`${parseFloat(rep.lat).toFixed(5)}, ${parseFloat(rep.lon).toFixed(5)}`:'No capturadas'}</span></div>
+        <div class="detail-item"><label>Creado</label><span>${fmtDate(rep.fecha_creacion)}</span></div>
+      </div>
+      <div style="margin-top:12px"><label style="font-size:.78rem;color:var(--muted)">Descripción</label>
+        <p style="margin-top:4px;font-size:.9rem;background:#EEF5FC;padding:10px;border-radius:6px">${rep.descripcion}</p>
+      </div>
+    </div>
+    ${rep.lat&&rep.lon?`<div class="detail-section"><h4>Ubicación en Mapa</h4>
+      <div id="mini-map-${rep.id}" style="height:200px;border-radius:8px;margin-top:6px"></div></div>`:''}
+    ${rep.asignaciones?.length?`<div class="detail-section"><h4>Asignaciones</h4><ul class="timeline">
+      ${rep.asignaciones.map(a=>`<li><b>${a.brigada}</b> – Inspector: ${a.inspector}<br>
+        <small style="color:var(--muted)">${fmtDate(a.fecha_asignacion)}${a.notas?' · '+a.notas:''}</small></li>`).join('')}
+    </ul></div>`:''}
+    ${rep.evidencias?.length?`<div class="detail-section"><h4>Evidencias (${rep.evidencias.length})</h4>
+      ${rep.evidencias.map(e=>`<div style="background:var(--gris);border-radius:6px;padding:8px;margin:4px 0;font-size:.82rem">
+        📸 ${e.comentario||'Sin comentario'} ${e.lat_captura?`· 📍 ${parseFloat(e.lat_captura).toFixed(4)},${parseFloat(e.lon_captura).toFixed(4)}`:''}
+      </div>`).join('')}</div>`:''}
+    ${rep.firmas?.length?`<div class="detail-section"><h4>Firmas</h4><ul class="timeline">
+      ${rep.firmas.map(f=>`<li><b>${f.nombre_firmante}</b> <span class="badge badge-${f.rol_firmante}">${f.rol_firmante}</span>
+        <br><small style="color:var(--muted)">${fmtDate(f.fecha_firma)}</small></li>`).join('')}
+    </ul></div>`:''}`;
+  openModal('modal-detalle');
+  // Mini mapa en detalle
+  if (rep.lat && rep.lon) {
+    setTimeout(() => {
+      const miniId = `mini-map-${rep.id}`;
+      const mini = L.map(miniId, { zoomControl:true, scrollWheelZoom:false }).setView([rep.lat, rep.lon], 16);
+      L.tileLayer(TILE_LAYERS.osm.url, { attribution: TILE_LAYERS.osm.attr, maxZoom:19 }).addTo(mini);
+      L.marker([rep.lat, rep.lon], { icon: makeIcon(MARKER_COLORS[rep.estado]||'#888') })
+        .bindPopup(`<b>${rep.folio}</b><br>${rep.colonia}`).addTo(mini).openPopup();
+    }, 200);
+  }
+}
+
+// ── NUEVO REPORTE ─────────────────────────────────────────────
+let sigCanvas, sigCtx, drawing=false;
+function initCanvas() {
+  sigCanvas = document.getElementById('sig-canvas');
+  sigCtx    = sigCanvas.getContext('2d');
+  sigCtx.strokeStyle='#003B7A'; sigCtx.lineWidth=2.5; sigCtx.lineCap='round';
+  sigCanvas.onmousedown = e=>{ drawing=true; sigCtx.beginPath(); sigCtx.moveTo(pos(e).x,pos(e).y); };
+  sigCanvas.onmousemove = e=>{ if(!drawing)return; sigCtx.lineTo(pos(e).x,pos(e).y); sigCtx.stroke(); };
+  sigCanvas.onmouseup   = ()=>drawing=false;
+  sigCanvas.onmouseleave= ()=>drawing=false;
+  sigCanvas.ontouchstart= e=>{ e.preventDefault(); drawing=true; const t=e.touches[0]; sigCtx.beginPath(); sigCtx.moveTo(pos(t).x,pos(t).y); };
+  sigCanvas.ontouchmove = e=>{ e.preventDefault(); if(!drawing)return; const t=e.touches[0]; sigCtx.lineTo(pos(t).x,pos(t).y); sigCtx.stroke(); };
+  sigCanvas.ontouchend  = ()=>drawing=false;
+}
+function pos(e){ const r=sigCanvas.getBoundingClientRect(); return{x:e.clientX-r.left,y:e.clientY-r.top}; }
+function clearSig(){ sigCtx&&sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height); }
+function getSigBase64(){ return sigCanvas?sigCanvas.toDataURL('image/png'):null; }
+function isSigEmpty(){ if(!sigCanvas)return true; return !sigCtx.getImageData(0,0,sigCanvas.width,sigCanvas.height).data.some(v=>v!==0); }
+
+async function submitReporte() {
+  const tipo   =document.getElementById('nr-tipo').value;
+  const colonia=document.getElementById('nr-colonia').value.trim();
+  const desc   =document.getElementById('nr-desc').value.trim();
+  const alertEl=document.getElementById('new-alert');
+  alertEl.innerHTML='';
+  if(!tipo)          { alertEl.innerHTML=alert_html('error','Seleccione el tipo de reporte.'); return; }
+  if(!colonia)       { alertEl.innerHTML=alert_html('error','Ingrese la colonia.'); return; }
+  if(desc.length<10) { alertEl.innerHTML=alert_html('error','Descripción mínimo 10 caracteres.'); return; }
+  const lat=document.getElementById('nr-lat').value;
+  const lon=document.getElementById('nr-lon').value;
+  if(!lat||!lon)     { alertEl.innerHTML=alert_html('error','📍 Selecciona la ubicación en el mapa.'); return; }
+  const calle  = document.getElementById('nr-calle')?.value.trim()  || '';
+  const numero = document.getElementById('nr-numero')?.value.trim() || '';
+  const cp     = document.getElementById('nr-cp')?.value.trim()     || '';
+  const ciudad = document.getElementById('nr-ciudad')?.value.trim() || '';
+  // Construir domicilio completo para enviarlo junto al reporte
+  const domicilio_completo = [calle, numero ? '#'+numero : '', colonia, cp, ciudad]
+    .filter(Boolean).join(', ');
+  const body={tipo, colonia: colonia || ciudad || 'Sin colonia', descripcion:desc,
+    domicilio: domicilio_completo || null,
+    nombre_reportante:document.getElementById('nr-nombre').value.trim()||null,
+    telefono:document.getElementById('nr-tel').value.trim()||null,
+    lat:parseFloat(lat), lon:parseFloat(lon)};
+  if(!isSigEmpty()){
+    const firmante=document.getElementById('nr-firmante').value.trim();
+    if(!firmante){alertEl.innerHTML=alert_html('error','Ingrese el nombre del firmante.');return;}
+    body.firma_base64=getSigBase64(); body.nombre_firmante=firmante;
+  }
+  const r=await api('/api/reports','POST',body,!!TOKEN);
+  if(r.success){
+    alertEl.innerHTML=alert_html('success',`✅ Reporte <b>${r.data.report.folio}</b> creado. La ubicación fue registrada en el mapa.`);
+    resetForm(); loadDashboard();
+    if(mapReportes) refreshMapMarkers();
+  } else {
+    alertEl.innerHTML=alert_html('error',r.message);
+  }
+}
+
+function resetForm(){
+  ['nr-tipo','nr-colonia','nr-calle','nr-numero','nr-cp','nr-ciudad',
+   'nr-desc','nr-nombre','nr-tel','nr-lat','nr-lon','nr-firmante']
+    .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('picker-coords').innerHTML='<span>📍 Haz clic en el mapa para seleccionar la ubicación exacta</span>';
+  if(pickerMarker&&mapPicker){mapPicker.removeLayer(pickerMarker);pickerMarker=null;}
+  clearSig();
+}
+
+// ── EDITAR REPORTE ───────────────────────────────────────────
+let _editEstado = '';
+
+function selEstado(e) {
+  _editEstado = e;
+  document.getElementById('edit-estado').value = e;
+  document.querySelectorAll('#edit-estado-row button').forEach(b => b.classList.remove('sel'));
+  document.querySelectorAll('#edit-estado-row button').forEach(b => {
+    const txt = b.textContent.toLowerCase().replace(' ','_');
+    if(txt === e || b.textContent.toLowerCase().replace(' proceso','_proceso') === e) b.classList.add('sel');
+  });
+}
+
+async function abrirEditar(id) {
+  const r = await api(`/api/reports/${id}`);
+  if(!r.success){ alert(r.message); return; }
+  const rep = r.data;
+  document.getElementById('edit-id').value      = rep.id;
+  document.getElementById('edit-tipo').value    = rep.tipo;
+  document.getElementById('edit-colonia').value = rep.colonia;
+  document.getElementById('edit-desc').value    = rep.descripcion;
+  document.getElementById('edit-nombre').value  = rep.nombre_reportante || '';
+  document.getElementById('edit-tel').value     = rep.telefono || '';
+  document.getElementById('edit-alert').innerHTML = '';
+  selEstado(rep.estado);
+  openModal('modal-editar');
+}
+
+async function guardarEdicion() {
+  const id      = document.getElementById('edit-id').value;
+  const tipo    = document.getElementById('edit-tipo').value;
+  const colonia = document.getElementById('edit-colonia').value.trim();
+  const desc    = document.getElementById('edit-desc').value.trim();
+  const estado  = document.getElementById('edit-estado').value;
+  const nombre  = document.getElementById('edit-nombre').value.trim();
+  const tel     = document.getElementById('edit-tel').value.trim();
+  const alertEl = document.getElementById('edit-alert');
+  if(!colonia || desc.length < 5) {
+    alertEl.innerHTML = alert_html('error','Colonia y descripcion son requeridos.'); return;
+  }
+  const r = await api(`/api/reports/${id}`, 'PATCH', {
+    tipo, colonia, descripcion: desc, estado,
+    nombre_reportante: nombre || null, telefono: tel || null
+  });
+  if(r.success) {
+    closeModal('modal-editar');
+    loadReportes(); loadDashboard();
+    if(mapReportes) refreshMapMarkers();
+  } else alertEl.innerHTML = alert_html('error', r.message);
+}
+
+async function borrarReporte(id, folio) {
+  if(!confirm('Eliminar permanentemente el reporte ' + folio + '?\nEsta accion no se puede deshacer.')) return;
+  const r = await api(`/api/reports/${id}`, 'DELETE');
+  if(r.success) {
+    loadReportes(); loadDashboard();
+    if(mapReportes) refreshMapMarkers();
+  } else alert(r.message);
+}
+
+// ── DESCARGAR EXCEL ───────────────────────────────────────────
+async function descargarXLS() {
+  const estado  = document.getElementById('f-estado').value;
+  const tipo    = document.getElementById('f-tipo').value;
+  const colonia = document.getElementById('f-colonia').value;
+  let url = '/api/reports?limit=2000';
+  if(estado)  url += '&estado='  + estado;
+  if(tipo)    url += '&tipo='    + tipo;
+  if(colonia) url += '&colonia=' + encodeURIComponent(colonia);
+  const r = await api(url);
+  if(!r.success){ alert('Error al obtener reportes'); return; }
+  const reps = r.data.reportes;
+
+  function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function cell(v, t) {
+    t = t || 'String';
+    return '<Cell><Data ss:Type="' + t + '">' + esc(v) + '</Data></Cell>';
+  }
+  function hcell(v) {
+    return '<Cell ss:StyleID="h"><Data ss:Type="String">' + esc(v) + '</Data></Cell>';
+  }
+
+  const cols = ['Folio','Tipo','Colonia','Estado','Descripcion','Reportante','Telefono','Latitud','Longitud','Fecha Creacion','Fecha Actualizacion','Brigada','Inspector'];
+  const headerRow = '<Row>' + cols.map(hcell).join('') + '</Row>';
+
+  const dataRows = reps.map(function(rep) {
+    return '<Row>' +
+      cell(rep.folio) +
+      cell((tipoLabel(rep.tipo)||'').replace(/[^\x00-\x7F]/g,'').trim()) +
+      cell(rep.colonia) +
+      cell((rep.estado||'').replace('_',' ')) +
+      cell(rep.descripcion) +
+      cell(rep.nombre_reportante||'') +
+      cell(rep.telefono||'') +
+      cell(rep.lat||'', rep.lat ? 'Number' : 'String') +
+      cell(rep.lon||'', rep.lon ? 'Number' : 'String') +
+      cell(fmtDate(rep.fecha_creacion)) +
+      cell(fmtDate(rep.fecha_actualizacion)) +
+      cell(rep.brigada||'') +
+      cell(rep.inspector||'') +
+    '</Row>';
+  }).join('');
+
+  const xml = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<?mso-application progid="Excel.Sheet"?>\n' +
+    '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n' +
+    '<Styles><Style ss:ID="h"><Font ss:Bold="1" ss:Color="#FFFFFF"/>' +
+    '<Interior ss:Color="#003B7A" ss:Pattern="Solid"/></Style></Styles>\n' +
+    '<Worksheet ss:Name="Reportes SGO-IMBIO"><Table>' +
+    headerRow + dataRows +
+    '</Table></Worksheet></Workbook>';
+
+  const blob = new Blob([xml], {type:'application/vnd.ms-excel;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const fecha = new Date().toISOString().slice(0,10);
+  a.download = 'SGO-IMBIO_Reportes_' + fecha + '.xls';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ── ASIGNACIONES ──────────────────────────────────────────────
+async function loadAsignaciones(){
+  const r=await api('/api/reports?estado=reportado&limit=100');
+  const tbody=document.getElementById('tabla-asig');
+  if(!r.success){tbody.innerHTML=`<tr><td colspan="7">${alert_html('error',r.message)}</td></tr>`;return;}
+  const reps=r.data.reportes;
+  if(!reps.length){tbody.innerHTML='<tr><td colspan="7" class="empty">No hay reportes pendientes</td></tr>';return;}
+  tbody.innerHTML=reps.map(rep=>`<tr>
+    <td><span class="folio-badge">${rep.folio}</span></td>
+    <td>${tipoLabel(rep.tipo)}</td><td>${rep.colonia}</td>
+    <td>${badge(rep.estado)}</td>
+    <td>${rep.brigada||'–'}</td><td>${rep.inspector||'–'}</td>
+    <td><button class="btn btn-primary btn-sm" onclick="abrirAsignar(${rep.id})">👷 Asignar</button></td>
+  </tr>`).join('');
+}
+function abrirAsignar(id){
+  document.getElementById('asig-report-id').value=id;
+  ['asig-brigada','asig-inspector','asig-notas'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('asig-modal-alert').innerHTML='';
+  openModal('modal-asignar');
+}
+async function submitAsignacion(){
+  const id      =document.getElementById('asig-report-id').value;
+  const brigada =document.getElementById('asig-brigada').value.trim();
+  const inspector=document.getElementById('asig-inspector').value.trim();
+  const notas   =document.getElementById('asig-notas').value.trim();
+  const alertEl =document.getElementById('asig-modal-alert');
+  if(!brigada||!inspector){alertEl.innerHTML=alert_html('error','Brigada e inspector son requeridos.');return;}
+  const r=await api(`/api/reports/${id}/assign`,'POST',{brigada,inspector,notas});
+  if(r.success){
+    closeModal('modal-asignar');
+    document.getElementById('asig-alert').innerHTML=alert_html('success',`✅ Reporte asignado a brigada "${brigada}"`);
+    loadAsignaciones(); loadDashboard();
+    if(mapReportes) refreshMapMarkers();
+    setTimeout(()=>document.getElementById('asig-alert').innerHTML='',4000);
+  } else alertEl.innerHTML=alert_html('error',r.message);
+}
+
+// ── EVIDENCIA ─────────────────────────────────────────────────
+function abrirEvidencia(id){
+  document.getElementById('ev-report-id').value=id;
+  ['ev-comentario','ev-lat','ev-lon'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('ev-estado').value='';
+  document.getElementById('ev-modal-alert').innerHTML='';
+  openModal('modal-evidencia');
+}
+async function submitEvidencia(){
+  const id        =document.getElementById('ev-report-id').value;
+  const comentario=document.getElementById('ev-comentario').value.trim();
+  const lat       =document.getElementById('ev-lat').value;
+  const lon       =document.getElementById('ev-lon').value;
+  const estado    =document.getElementById('ev-estado').value;
+  const alertEl   =document.getElementById('ev-modal-alert');
+  const filesInput=document.getElementById('ev-fotos');
+  if(filesInput.files.length===0){
+    const r=await api(`/api/reports/${id}/evidence`,'POST',{comentario,lat_captura:lat||null,lon_captura:lon||null,nuevo_estado:estado||null});
+    if(r.success){closeModal('modal-evidencia');loadReportes();loadDashboard();if(mapReportes)refreshMapMarkers();}
+    else alertEl.innerHTML=alert_html('error',r.message);
+    return;
+  }
+  const formData=new FormData();
+  if(comentario) formData.append('comentario',comentario);
+  if(lat) formData.append('lat_captura',lat);
+  if(lon) formData.append('lon_captura',lon);
+  if(estado) formData.append('nuevo_estado',estado);
+  for(const f of filesInput.files) formData.append('photos',f);
+  try{
+    const resp=await fetch(`/api/reports/${id}/evidence`,{method:'POST',headers:{'Authorization':'Bearer '+TOKEN},body:formData});
+    const r=await resp.json();
+    if(r.success){closeModal('modal-evidencia');loadReportes();loadDashboard();if(mapReportes)refreshMapMarkers();}
+    else alertEl.innerHTML=alert_html('error',r.message);
+  }catch(e){alertEl.innerHTML=alert_html('error',e.message);}
+}
+
+// ── EDITAR REPORTE ───────────────────────────────────────────
+async function abrirEditar(id) {
+  const r = await api(`/api/reports/${id}`);
+  if (!r.success) { alert(r.message); return; }
+  const rep = r.data;
+  document.getElementById('ed-id').value          = rep.id;
+  document.getElementById('ed-folio').value        = rep.folio;
+  document.getElementById('ed-tipo').value         = rep.tipo;
+  document.getElementById('ed-estado').value       = rep.estado;
+  document.getElementById('ed-colonia').value      = rep.colonia      || '';
+  document.getElementById('ed-domicilio').value    = rep.domicilio    || '';
+  document.getElementById('ed-descripcion').value  = rep.descripcion  || '';
+  document.getElementById('ed-nombre').value       = rep.nombre_reportante || '';
+  document.getElementById('ed-telefono').value     = rep.telefono     || '';
+  document.getElementById('ed-lat').value          = rep.lat          || '';
+  document.getElementById('ed-lon').value          = rep.lon          || '';
+  document.getElementById('ed-alert').innerHTML    = '';
+  openModal('modal-editar');
+}
+
+async function submitEditar() {
+  const id     = document.getElementById('ed-id').value;
+  const alertEl= document.getElementById('ed-alert');
+  const tipo   = document.getElementById('ed-tipo').value;
+  const estado = document.getElementById('ed-estado').value;
+  const colonia= document.getElementById('ed-colonia').value.trim();
+  const desc   = document.getElementById('ed-descripcion').value.trim();
+  if (!colonia) { alertEl.innerHTML = alert_html('error','La colonia es requerida.'); return; }
+  if (desc.length < 10) { alertEl.innerHTML = alert_html('error','La descripción debe tener al menos 10 caracteres.'); return; }
+  const body = {
+    tipo, estado, colonia, descripcion: desc,
+    domicilio:          document.getElementById('ed-domicilio').value.trim()  || null,
+    nombre_reportante:  document.getElementById('ed-nombre').value.trim()     || null,
+    telefono:           document.getElementById('ed-telefono').value.trim()   || null,
+    lat: document.getElementById('ed-lat').value ? parseFloat(document.getElementById('ed-lat').value) : null,
+    lon: document.getElementById('ed-lon').value ? parseFloat(document.getElementById('ed-lon').value) : null,
+  };
+  const r = await api(`/api/reports/${id}`, 'PATCH', body);
+  if (r.success) {
+    closeModal('modal-editar');
+    loadReportes(); loadDashboard();
+    if (mapReportes) refreshMapMarkers();
+  } else {
+    alertEl.innerHTML = alert_html('error', r.message);
+  }
+}
+
+// ── BORRAR REPORTE ────────────────────────────────────────────
+function borrarReporte(id, folio) {
+  document.getElementById('del-id').value       = id;
+  document.getElementById('del-folio').textContent = folio;
+  openModal('modal-borrar');
+}
+
+async function confirmarBorrar() {
+  const id = document.getElementById('del-id').value;
+  const r  = await api(`/api/reports/${id}`, 'DELETE');
+  if (r.success) {
+    closeModal('modal-borrar');
+    loadReportes(); loadDashboard();
+    if (mapReportes) refreshMapMarkers();
+  } else {
+    alert('Error al eliminar: ' + r.message);
+  }
+}
+
+// ── DESCARGAR XLS ─────────────────────────────────────────────
+async function descargarXLS() {
+  // Obtener TODOS los reportes (sin paginación)
+  const estado  = document.getElementById('f-estado').value;
+  const tipo    = document.getElementById('f-tipo').value;
+  const colonia = document.getElementById('f-colonia').value;
+  let url = '/api/reports?limit=9999';
+  if (estado)  url += '&estado='  + estado;
+  if (tipo)    url += '&tipo='    + tipo;
+  if (colonia) url += '&colonia=' + encodeURIComponent(colonia);
+
+  const r = await api(url);
+  if (!r.success) { alert('Error al obtener datos: ' + r.message); return; }
+  const rows = r.data.reportes;
+  if (!rows.length) { alert('No hay reportes para exportar.'); return; }
+
+  // Construir XML SpreadsheetML (compatible con Excel sin librerías)
+  const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const cell = (v, t='String') => `<Cell><Data ss:Type="${t}">${esc(v)}</Data></Cell>`;
+  const numCell = v => v != null && v !== '' ? `<Cell><Data ss:Type="Number">${v}</Data></Cell>` : cell('');
+
+  const headers = ['Folio','Tipo','Estado','Colonia','Domicilio','Descripción',
+                   'Reportante','Teléfono','Latitud','Longitud',
+                   'Brigada','Inspector','Fecha Creación','Fecha Actualización'];
+
+  const tipoMap = {
+    denuncia_ambiental:'Denuncia Ambiental', areas_verdes:'Áreas Verdes',
+    emergencia:'Emergencia',                  residuos_solidos:'Residuos Sólidos',
+    agua_contaminada:'Agua Contaminada',      ruido:'Ruido',
+    poda_arbol:'Poda de Árbol',               derribo_arbol:'Derribo de Árbol',
+    animal_calle:'Animal en Calle',           perro_agresivo:'Perro Agresivo',
+    tiradero_escombro:'Tiradero de Escombro', tiradero_basura:'Tiradero de Basura',
+    otro:'Otro'
+  };
+  const estadoMap = {
+    reportado:'Reportado', asignado:'Asignado', en_proceso:'En Proceso', cerrado:'Cerrado'
+  };
+
+  const headerRow = '<Row>' + headers.map(h =>
+    `<Cell ss:StyleID="header"><Data ss:Type="String">${esc(h)}</Data></Cell>`
+  ).join('') + '</Row>';
+
+  const dataRows = rows.map(rep => '<Row>' + [
+    cell(rep.folio),
+    cell(tipoMap[rep.tipo] || rep.tipo),
+    cell(estadoMap[rep.estado] || rep.estado),
+    cell(rep.colonia),
+    cell(rep.domicilio),
+    cell(rep.descripcion),
+    cell(rep.nombre_reportante),
+    cell(rep.telefono),
+    numCell(rep.lat),
+    numCell(rep.lon),
+    cell(rep.brigada),
+    cell(rep.inspector),
+    cell(rep.fecha_creacion ? new Date(rep.fecha_creacion).toLocaleString('es-MX') : ''),
+    cell(rep.fecha_actualizacion ? new Date(rep.fecha_actualizacion).toLocaleString('es-MX') : ''),
+  ].join('') + '</Row>').join('');
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:x="urn:schemas-microsoft-com:office:excel">
+<Styles>
+  <Style ss:ID="header">
+    <Font ss:Bold="1" ss:Color="#FFFFFF"/>
+    <Interior ss:Color="#0F4526" ss:Pattern="Solid"/>
+    <Alignment ss:Horizontal="Center"/>
+  </Style>
+</Styles>
+<Worksheet ss:Name="Reportes SGO-IMBIO">
+<Table>
+  <Column ss:Width="110"/>
+  <Column ss:Width="140"/>
+  <Column ss:Width="90"/>
+  <Column ss:Width="120"/>
+  <Column ss:Width="180"/>
+  <Column ss:Width="220"/>
+  <Column ss:Width="130"/>
+  <Column ss:Width="100"/>
+  <Column ss:Width="80"/>
+  <Column ss:Width="80"/>
+  <Column ss:Width="110"/>
+  <Column ss:Width="130"/>
+  <Column ss:Width="130"/>
+  <Column ss:Width="130"/>
+  ${headerRow}
+  ${dataRows}
+</Table>
+</Worksheet>
+</Workbook>`;
+
+  // Descargar como .xls
+  const fecha = new Date().toISOString().slice(0,10);
+  const blob  = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const link  = document.createElement('a');
+  link.href   = URL.createObjectURL(blob);
+  link.download = `SGO-IMBIO_Reportes_${fecha}.xls`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
+}
+
+// ── MODALES ───────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('click',e=>{if(e.target===bg)bg.classList.remove('open');}));
+
+// ── HELPERS ───────────────────────────────────────────────────
+function badge(e){ return `<span class="badge badge-${e}">${e.replace('_',' ')}</span>`; }
+function tipoLabel(t){
+  const m={
+    denuncia_ambiental:'🌱 Denuncia Ambiental', areas_verdes:'🌳 Áreas Verdes',
+    emergencia:'🚨 Emergencia',                 residuos_solidos:'🗑️ Residuos Sólidos',
+    agua_contaminada:'💧 Agua Contaminada',     ruido:'🔊 Ruido',
+    poda_arbol:'✂️ Poda de Árbol',             derribo_arbol:'🪓 Derribo de Árbol',
+    animal_calle:'🐾 Animal en Calle',          perro_agresivo:'🐕 Perro Agresivo',
+    tiradero_escombro:'🧱 Tiradero Escombro',   tiradero_basura:'🗑 Tiradero Basura',
+    otro:'📌 Otro'};
+  return m[t]||t;
+}
+function fmtDate(iso){ if(!iso)return'–'; return new Date(iso).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'}); }
+function alert_html(type,msg){ return `<div class="alert alert-${type}">${msg}</div>`; }
+
+// ============================================================
+//  CATALOGO DE INSPECTORES
+// ============================================================
+
+async function cargarInspectores() {
+  const tbody = document.getElementById('tabla-inspectores');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#64748b">Cargando...</td></tr>';
+  try {
+    const r = await api('/api/inspectores');
+    if (!r.success) { tbody.innerHTML = '<tr><td colspan="6" style="color:red;padding:16px">' + r.message + '</td></tr>'; return; }
+    const inspectores = r.data.inspectores;
+    if (!inspectores.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#64748b">No hay inspectores registrados.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = inspectores.map(insp => `
+      <tr>
+        <td><strong>${insp.nombre || '\u2014'}</strong></td>
+        <td><code>${insp.username}</code></td>
+        <td>${insp.brigada || '\u2014'}</td>
+        <td>${insp.telefono || '\u2014'}</td>
+        <td><span class="badge ${insp.activo !== false ? 'badge-success' : 'badge-danger'}">${insp.activo !== false ? 'Activo' : 'Inactivo'}</span></td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-sm btn-secondary" onclick="abrirEditarInspector(${insp.id},'${(insp.nombre||'').replace(/'/g,"\\'")}','${(insp.brigada||'').replace(/'/g,"\\'")}','${(insp.telefono||'').replace(/'/g,"\\'")}',${insp.activo!==false})">Editar</button>
+          <button class="btn btn-sm btn-danger" onclick="eliminarInspector(${insp.id},'${(insp.nombre||'').replace(/'/g,"\\'")}')">Eliminar</button>
+        </td>
+      </tr>`).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="6" style="color:red;padding:16px">Error: ' + e.message + '</td></tr>';
+  }
+}
+
+async function registrarInspector() {
+  const nombre   = document.getElementById('ci-nombre').value.trim();
+  const usuario  = document.getElementById('ci-usuario').value.trim();
+  const password = document.getElementById('ci-password').value.trim();
+  const telefono = document.getElementById('ci-telefono').value.trim();
+  const brigada  = document.getElementById('ci-brigada').value.trim();
+  const alertEl  = document.getElementById('cat-insp-alert');
+  alertEl.innerHTML = '';
+  if (!nombre || !usuario || !password) {
+    alertEl.innerHTML = '<div class="alert alert-danger">Nombre, usuario y contrasena son obligatorios.</div>';
+    return;
+  }
+  try {
+    const r = await api('/api/inspectores', 'POST', { nombre, username: usuario, password, telefono, brigada });
+    if (r.success) {
+      alertEl.innerHTML = '<div class="alert alert-success">Inspector ' + nombre + ' registrado.</div>';
+      ['ci-nombre','ci-usuario','ci-password','ci-telefono','ci-brigada'].forEach(id => document.getElementById(id).value = '');
+      cargarInspectores();
+    } else {
+      alertEl.innerHTML = '<div class="alert alert-danger">' + r.message + '</div>';
+    }
+  } catch(e) {
+    alertEl.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
+  }
+}
+
+function abrirEditarInspector(id, nombre, brigada, telefono, activo) {
+  document.getElementById('ei-id').value = id;
+  document.getElementById('ei-nombre').value = nombre;
+  document.getElementById('ei-brigada').value = brigada;
+  document.getElementById('ei-telefono').value = telefono;
+  document.getElementById('ei-password').value = '';
+  document.getElementById('ei-activo').value = activo ? 'true' : 'false';
+  document.getElementById('modal-edit-insp').style.display = 'flex';
+}
+
+function cerrarModalInspector() {
+  document.getElementById('modal-edit-insp').style.display = 'none';
+}
+
+async function guardarEdicionInspector() {
+  const id       = parseInt(document.getElementById('ei-id').value);
+  const nombre   = document.getElementById('ei-nombre').value.trim();
+  const brigada  = document.getElementById('ei-brigada').value.trim();
+  const telefono = document.getElementById('ei-telefono').value.trim();
+  const password = document.getElementById('ei-password').value.trim();
+  const activo   = document.getElementById('ei-activo').value === 'true';
+  const body = { nombre, brigada, telefono, activo };
+  if (password) body.password = password;
+  try {
+    const r = await api('/api/inspectores/' + id, 'PATCH', body);
+    if (r.success) {
+      cerrarModalInspector();
+      cargarInspectores();
+      document.getElementById('cat-insp-alert').innerHTML = '<div class="alert alert-success">Inspector actualizado.</div>';
+    } else { alert('Error: ' + r.message); }
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function eliminarInspector(id, nombre) {
+  if (!confirm('Eliminar al inspector ' + nombre + '?')) return;
+  try {
+    const r = await api('/api/inspectores/' + id, 'DELETE');
+    if (r.success) {
+      cargarInspectores();
+      document.getElementById('cat-insp-alert').innerHTML = '<div class="alert alert-warning">Inspector ' + nombre + ' eliminado.</div>';
+    } else { alert('Error: ' + r.message); }
+  } catch(e) { alert('Error: ' + e.message); }
+}
+// ════════════════════════════════════════════════════════
+//  ACTAS — Registro completo
+// ════════════════════════════════════════════════════════
+
+async function cargarActas() {
+  const wrap  = document.getElementById('actas-tabla-wrap');
+  const alert = document.getElementById('actas-alert');
+  const tipo  = document.getElementById('acta-filtro-tipo')?.value  || '';
+  const est   = document.getElementById('acta-filtro-estado')?.value || '';
+  wrap.innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px">Cargando...</p>';
+  alert.innerHTML = '';
+
+  try {
+    let url = '/api/actas?limit=100';
+    if (tipo) url += '&tipo_acta=' + encodeURIComponent(tipo);
+    if (est)  url += '&estado='    + encodeURIComponent(est);
+    const r = await api(url);
+    if (!r.success) { alert.innerHTML = alert_html('error', r.message || 'Error al cargar actas.'); return; }
+    const actas = r.data.actas || [];
+    renderActasTabla(actas, r.data.paginacion);
+  } catch(e) {
+    alert.innerHTML = alert_html('error', 'Error: ' + e.message);
+  }
+}
+
+function renderActasTabla(actas, pag) {
+  const wrap = document.getElementById('actas-tabla-wrap');
+  if (!actas.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:48px;color:var(--muted)"><div style="font-size:2.5rem;margin-bottom:12px">📋</div><p>No hay actas registradas.</p></div>';
+    return;
+  }
+
+  const TIPO_LABELS = {
+    circunstanciada:'Circunstanciada', infraccion:'Infracción',
+    clausura:'Clausura', aseguramiento:'Aseguramiento'
+  };
+  const TIPO_ICONS = {
+    circunstanciada:'📄', infraccion:'⚠️', clausura:'🔒', aseguramiento:'📦'
+  };
+
+  const rows = actas.map(a => `
+    <tr>
+      <td><span class="folio-badge">${a.folio_acta||'—'}</span></td>
+      <td>${TIPO_ICONS[a.tipo_acta]||'📋'} ${TIPO_LABELS[a.tipo_acta]||a.tipo_acta||'—'}</td>
+      <td><span class="folio-badge" style="color:#059669">${a.reporte_folio||'—'}</span><br>
+          <small style="color:var(--muted)">${a.reporte_tipo||''}</small></td>
+      <td>${a.infractor||'—'}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.domicilio||''}">${a.domicilio||'—'}</td>
+      <td>${a.inspector||'—'}</td>
+      <td>${fmtDate(a.fecha)}</td>
+      <td><span class="badge badge-${a.estado==='emitida'?'inspector':'admin'}">${a.estado||'—'}</span></td>
+      <td>
+        <button class="btn btn-primary btn-sm" onclick="verDetalleActa(${a.id})">🔍 Ver</button>
+        <button class="btn btn-success btn-sm" onclick="descargarActaPDF(${a.id})">📥 PDF</button>
+      </td>
+    </tr>`).join('');
+
+  wrap.innerHTML = `
+    <p style="color:var(--muted);font-size:.8rem;margin-bottom:8px">${pag?.total||actas.length} acta(s) encontrada(s)</p>
+    <div style="overflow-x:auto">
+    <table class="table-reportes" style="min-width:900px">
+      <thead><tr>
+        <th>Folio Acta</th><th>Tipo</th><th>Reporte</th>
+        <th>Infractor/Visitado</th><th>Domicilio</th>
+        <th>Inspector</th><th>Fecha</th><th>Estado</th><th>Acciones</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </div>`;
+}
+
+async function verDetalleActa(id) {
+  const modal = document.getElementById('modal-acta-detalle');
+  const body  = document.getElementById('modal-acta-body');
+  const titulo = document.getElementById('modal-acta-titulo');
+  body.innerHTML = '<p style="text-align:center;padding:20px;color:var(--muted)">Cargando...</p>';
+  modal.style.display = 'flex';
+  modal.style.alignItems = 'center';
+  modal.style.justifyContent = 'center';
+  modal.style.position = 'fixed';
+  modal.style.inset = '0';
+  modal.style.background = 'rgba(0,0,0,.5)';
+  modal.style.zIndex = '900';
+
+  try {
+    const r = await api('/api/actas/' + id);
+    if (!r.success) { body.innerHTML = '<p style="color:red">' + r.message + '</p>'; return; }
+    const a = r.data.acta;
+    titulo.textContent = a.folio_acta || 'Detalle del Acta';
+    body.innerHTML = renderActaDetalle(a);
+  } catch(e) {
+    body.innerHTML = '<p style="color:red">Error: ' + e.message + '</p>';
+  }
+}
+
+function cerrarModalActa() {
+  document.getElementById('modal-acta-detalle').style.display = 'none';
+}
+
+function renderActaDetalle(a) {
+  const fila = (lbl, val) => val ? `<tr><td class="lbl" style="width:200px;font-weight:700;color:#1a3a5c;padding:6px 10px;background:#f8fafc;border:1px solid #e2e8f0">${lbl}</td><td style="padding:6px 10px;border:1px solid #e2e8f0">${val}</td></tr>` : '';
+  const sec  = (titulo) => `<tr><td colspan="2" style="background:#002A5C;color:#fff;font-weight:700;padding:8px 12px;font-size:.85rem;letter-spacing:.05em">${titulo}</td></tr>`;
+
+  const TIPO_LABELS = { circunstanciada:'Circunstanciada', infraccion:'Infracción', clausura:'Clausura' };
+
+  let html = `<table style="width:100%;border-collapse:collapse;font-size:.88rem">`;
+
+  // ── ENCABEZADO ──
+  html += sec('📋 IDENTIFICACIÓN DEL ACTA');
+  html += fila('Folio', `<b style="font-family:monospace;color:#003B7A">${a.folio_acta||'—'}</b>`);
+  html += fila('Tipo de Acta', TIPO_LABELS[a.tipo_acta]||a.tipo_acta||'—');
+  html += fila('Estado', a.estado||'—');
+  html += fila('Fecha y Hora', fmtDate(a.fecha));
+  html += fila('Reporte Origen', a.reporte_folio || ('ID: ' + a.report_id));
+
+  // ── DATOS DE LA DILIGENCIA ──
+  html += sec('1. DATOS DE LA DILIGENCIA');
+  html += fila('Inspector Actuante', a.inspector||'—');
+  html += fila('Propietario / Visitado', a.infractor||'—');
+  html += fila('Domicilio Inspeccionado', a.domicilio||'—');
+
+  // ── DATOS DE ÁRBOL (si aplica) ──
+  if (a.arb_especie || a.arb_dap || a.dictamen) {
+    html += sec('2. DATOS DEL ÁRBOL');
+    html += fila('Especie', a.arb_especie);
+    html += fila('DAP (cm)', a.arb_dap);
+    html += fila('Altura (m)', a.arb_altura);
+    html += fila('Vigor', a.arb_vigor);
+    html += fila('Estructura', a.arb_estructura);
+    html += fila('Método de trabajo', a.arb_metodo);
+    html += fila('Dictamen técnico', a.dictamen);
+    html += fila('Nivel de Riesgo', a.nivel_riesgo);
+    if (a.comp_categoria) {
+      html += sec('Compensación Ambiental');
+      html += fila('Categoría', a.comp_categoria);
+      html += fila('Árboles a compensar', a.comp_arboles);
+      html += fila('Especie compensatoria', a.comp_especie);
+    }
+  }
+
+  // ── DATOS ANIMAL / MORDIDA (si aplica) ──
+  if (a.vic_nombre || a.anim_especie || a.mordida_zonas) {
+    html += sec('2. DATOS DE LA VÍCTIMA');
+    html += fila('Nombre víctima', a.vic_nombre);
+    html += fila('Edad', a.vic_edad);
+    html += fila('Teléfono', a.vic_telefono);
+    html += fila('Domicilio víctima', a.vic_domicilio);
+    html += fila('Atención médica', a.vic_atencion);
+    html += fila('Gravedad', a.vic_gravedad);
+    if (a.mordida_zonas) {
+      html += sec('Datos de la Mordida');
+      html += fila('Zonas afectadas', a.mordida_zonas);
+      html += fila('Gravedad mordida', a.mordida_gravedad);
+    }
+    html += sec('Datos del Animal');
+    html += fila('Especie', a.anim_especie);
+    html += fila('Condición', a.anim_condicion);
+    html += fila('Situación', a.anim_situacion);
+    html += fila('Dueño/Responsable', a.anim_duenio);
+    html += fila('Destino animal', a.anim_destino);
+    html += fila('Acciones en campo', a.acciones_animal);
+  }
+
+  // ── DENUNCIA AMBIENTAL (si aplica) ──
+  if (a.da_tipo_infraccion || a.da_responsable) {
+    html += sec('2. DATOS DE LA INFRACCIÓN AMBIENTAL');
+    html += fila('Tipo de infracción', a.da_tipo_infraccion);
+    html += fila('Superficie afectada', a.da_superficie);
+    html += fila('Severidad', a.da_severidad);
+    html += fila('Presunto responsable', a.da_responsable);
+    html += fila('Medidas adoptadas', a.medidas_denuncia);
+    html += fila('Plazo de remediación', a.da_plazo);
+  }
+
+  // ── DIAGNÓSTICO Y DESCRIPCIÓN ──
+  html += sec('3. DIAGNÓSTICO Y DESCRIPCIÓN DE LOS HECHOS');
+  html += `<tr><td colspan="2" style="padding:10px 12px;border:1px solid #e2e8f0;white-space:pre-wrap;word-break:break-word">${a.descripcion||'—'}</td></tr>`;
+
+  // ── FUNDAMENTO LEGAL ──
+  if (a.fundamento) {
+    html += sec('FUNDAMENTO LEGAL');
+    html += `<tr><td colspan="2" style="padding:10px 12px;border:1px solid #e2e8f0;word-break:break-word">${a.fundamento}</td></tr>`;
+  }
+
+  // ── MEDIDA DE SEGURIDAD ──
+  if (a.medida) {
+    html += sec('MEDIDA DE SEGURIDAD / SANCIÓN');
+    html += `<tr><td colspan="2" style="padding:10px 12px;border:1px solid #e2e8f0;word-break:break-word">${a.medida}</td></tr>`;
+    html += fila('Monto de Sanción', a.monto_sancion ? '$' + a.monto_sancion + ' MXN' : null);
+  }
+
+  // ── OBSERVACIONES ──
+  if (a.observaciones) {
+    html += sec('OBSERVACIONES');
+    html += `<tr><td colspan="2" style="padding:10px 12px;border:1px solid #e2e8f0;word-break:break-word">${a.observaciones}</td></tr>`;
+  }
+
+  // ── FIRMAS ──
+  html += sec('FIRMAS');
+  const firmaInsp = a.firma_inspector_base64
+    ? `<img src="${a.firma_inspector_base64}" style="max-height:70px;display:block;margin-bottom:4px">`
+    : '<div style="height:50px;border-bottom:1px solid #333;margin-bottom:4px"></div>';
+  const firmaVis = a.firma_visitado_base64
+    ? `<img src="${a.firma_visitado_base64}" style="max-height:70px;display:block;margin-bottom:4px">`
+    : (a.nombre_visitado ? '<div style="background:#fef3c7;padding:8px;border-radius:4px;font-size:.75rem;color:#92400e">Se negó a firmar o no firmó</div>' : '<div style="height:50px;border-bottom:1px solid #333;margin-bottom:4px"></div>');
+  html += `<tr><td style="padding:12px;border:1px solid #e2e8f0;text-align:center">
+    ${firmaInsp}
+    <div style="font-size:.75rem;font-weight:700;color:#1a3a5c">${a.nombre_firmante_inspector||a.inspector||'Inspector'}</div>
+    <div style="font-size:.7rem;color:#64748b">Inspector IMBIO</div>
+  </td><td style="padding:12px;border:1px solid #e2e8f0;text-align:center">
+    ${firmaVis}
+    <div style="font-size:.75rem;font-weight:700;color:#1a3a5c">${a.nombre_visitado||'Visitado / Propietario'}</div>
+    <div style="font-size:.7rem;color:#64748b">Visitado / Propietario</div>
+  </td></tr>`;
+
+  // ── FOTOS ──
+  if (a.fotos && a.fotos.length) {
+    html += sec('EVIDENCIA FOTOGRÁFICA');
+    html += `<tr><td colspan="2" style="padding:10px 12px;border:1px solid #e2e8f0">
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${a.fotos.map(f=>`<img src="/${f}" style="max-width:120px;max-height:90px;border-radius:4px;border:1px solid #e2e8f0" onerror="this.style.display='none'">`).join('')}
+      </div></td></tr>`;
+  }
+
+  html += '</table>';
+  return html;
+}
+
+async function descargarActaPDF(id) {
+  try {
+    const r = await api('/api/actas/' + id);
+    if (!r.success) { alert('Error al obtener el acta: ' + r.message); return; }
+    // The inspector app has the PDF builder - open it referencing the acta
+    alert('Para generar el PDF, utiliza la App Inspector (inspector.html) donde se encuentra el generador de PDF completo.');
+  } catch(e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+
+
+</script>
+</body>
+</html>

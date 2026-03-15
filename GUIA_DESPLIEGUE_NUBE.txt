@@ -1,0 +1,102 @@
+=======================================================
+  SGO-IMBIO · GUÍA DE DESPLIEGUE EN RAILWAY (NUBE, 24/7)
+=======================================================
+
+Railway.app ofrece plan GRATIS con:
+  - 512MB RAM
+  - $5 USD de crédito mensual (suficiente para uso moderado)
+  - HTTPS automático con URL fija
+  - Reinicio automático si falla
+
+PASO 1 — CREAR CUENTA EN GITHUB (si no tienes)
+-----------------------------------------------
+1. Ve a https://github.com y crea cuenta gratuita
+2. Descarga GitHub Desktop: https://desktop.github.com
+
+PASO 2 — SUBIR EL PROYECTO A GITHUB
+-------------------------------------
+1. Abre GitHub Desktop → File → New Repository
+   - Name: sgo-imbio
+   - Local path: carpeta donde está el server.py
+   - Clic en "Create Repository"
+
+2. Clic en "Publish repository"
+   - Deja "Keep this code private" marcado
+   - Clic en "Publish Repository"
+
+PASO 3 — DESPLEGAR EN RAILWAY
+-------------------------------
+1. Ve a https://railway.app
+2. Clic en "Start a New Project"
+3. Elige "Deploy from GitHub repo"
+4. Conecta tu cuenta de GitHub y selecciona "sgo-imbio"
+5. Railway detecta automáticamente que es Python
+
+PASO 4 — CONFIGURAR VOLUMEN PARA LA BASE DE DATOS
+---------------------------------------------------
+(Importante: sin esto los datos se borran al reiniciar)
+
+1. En tu proyecto Railway → clic en el servicio
+2. Pestaña "Settings" → sección "Volumes"
+3. Clic "Add Volume"
+   - Mount Path: /app/data
+   - Clic en "Add"
+
+4. Ve a pestaña "Variables" y agrega:
+   - Variable: DB_PATH
+   - Value: /app/data/imbio.db
+
+5. Clic "Deploy" para aplicar
+
+PASO 5 — OBTENER TU URL PÚBLICA
+---------------------------------
+1. Pestaña "Settings" → sección "Networking"
+2. Clic en "Generate Domain"
+3. Tu URL será algo como: https://sgo-imbio-production.up.railway.app
+
+PASO 6 — ACCEDER A LAS APPS
+-----------------------------
+Sustituye TU-URL por tu URL de Railway:
+
+  Panel Admin:     https://TU-URL.up.railway.app
+  App Inspector:   https://TU-URL.up.railway.app/inspector
+  App Ciudadano:   https://TU-URL.up.railway.app/app
+
+La URL es FIJA y PERMANENTE. Funciona 24/7 sin tu PC.
+
+PASO 7 — ACTUALIZAR EL SISTEMA
+--------------------------------
+Cuando hagas cambios al código:
+1. GitHub Desktop → Changes → Commit → Push origin
+2. Railway detecta el cambio y redeploya automáticamente
+
+CREDENCIALES INICIALES
+-----------------------
+  Admin:      admin / admin123
+  Operador:   operador / operador123
+  Inspector:  inspector01 / inspector123
+
+IMPORTANTE: Cambia las contraseñas después del primer acceso.
+
+=======================================================
+  ALTERNATIVA MÁS FÁCIL: RENDER.COM
+=======================================================
+
+Si Railway da problemas, usa Render.com:
+
+1. Ve a https://render.com → New → Web Service
+2. Conecta GitHub → selecciona sgo-imbio
+3. Build Command: (dejar vacío)
+   Start Command: python server.py
+4. Plan: Free
+5. Add Disk (en Advanced):
+   - Name: data
+   - Mount Path: /data
+   - Size: 1 GB
+6. Add Environment Variable:
+   - DB_PATH = /data/imbio.db
+7. Clic "Create Web Service"
+
+Tu URL será: https://sgo-imbio.onrender.com
+(El plan gratis "duerme" tras 15 min de inactividad
+ — usa UptimeRobot.com para mantenerlo despierto gratis)
