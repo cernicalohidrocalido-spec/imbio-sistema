@@ -961,6 +961,15 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                 # Firmas
                 'firma_inspector_base64': fields.get('firma_inspector_base64', ''),
                 'firma_visitado_base64':  fields.get('firma_visitado_base64', ''),
+                # Campos adaptativos por tipo de acta
+                'voz_imputado':       fields.get('voz_imputado', ''),
+                'imputado_presente':  fields.get('imputado_presente', ''),
+                'firmado_enterado':   fields.get('firmado_enterado', ''),
+                'gravedad_infraccion':fields.get('gravedad_infraccion', ''),
+                'reincidente':        fields.get('reincidente', ''),
+                'tiene_permiso':      fields.get('tiene_permiso', ''),
+                'num_permiso':        fields.get('num_permiso', ''),
+                'permiso_autoridad':  fields.get('permiso_autoridad', ''),
                 'nombre_visitado':        fields.get('nombre_visitado', ''),
             }
             if not db.get('actas'): db['actas'] = []
