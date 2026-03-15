@@ -1,0 +1,2391 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1a3a5c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="IMBIO Inspector">
+<title>IMBIO Inspector</title>
+<link rel="stylesheet" href="/static/leaflet.css"/>
+<style>
+:root {
+  --azul:       #003B7A;
+  --azul-medio: #0057B8;
+  --azul-claro: #1976D2;
+  --azul-bg:    #E8F1FB;
+  --oscuro:     #002A5C;
+  --inspector:  #1a3a5c;
+  --acento:     #f59e0b;
+  --verde:      #16a34a;
+  --rojo:       #dc2626;
+  --naranja:    #ea580c;
+  --morado:     #7c3aed;
+  --texto:      #1a202c;
+  --muted:      #64748b;
+  --gris:       #f0f4fa;
+  --borde:      #e2e8f0;
+  --blanco:     #ffffff;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#1a3a5c}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto)}
+
+/* SPLASH */
+#splash{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0d1f35 0%,#1a3a5c 60%,#003B7A 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s}
+#splash.hide{opacity:0;pointer-events:none}
+.sp-badge{background:var(--acento);color:#000;font-size:.7rem;font-weight:800;padding:3px 10px;border-radius:99px;letter-spacing:.1em;margin-bottom:16px}
+.sp-logo{font-size:4rem;margin-bottom:12px}
+.sp-title{color:#fff;font-size:1.8rem;font-weight:800;letter-spacing:-.5px}
+.sp-sub{color:rgba(255,255,255,.6);font-size:.82rem;margin-top:6px;text-align:center;line-height:1.5}
+.sp-loader{margin-top:40px;width:44px;height:4px;background:rgba(255,255,255,.15);border-radius:99px;overflow:hidden}
+.sp-loader::after{content:'';display:block;height:100%;width:35%;background:var(--acento);border-radius:99px;animation:ld 1.1s ease-in-out infinite}
+@keyframes ld{0%{transform:translateX(-100%)}100%{transform:translateX(380%)}}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;background:linear-gradient(160deg,#0d1f35,#1a3a5c)}
+#login-screen.show{display:flex}
+.login-box{background:#fff;border-radius:20px;padding:32px 28px;width:340px;box-shadow:0 24px 80px rgba(0,0,0,.4)}
+.login-box .lb-logo{text-align:center;margin-bottom:24px}
+.login-box .lb-logo .ic{font-size:2.8rem}
+.login-box .lb-logo h1{font-size:1.2rem;font-weight:800;color:var(--inspector);margin-top:8px}
+.login-box .lb-logo p{font-size:.75rem;color:var(--muted);margin-top:3px}
+.login-box .lb-badge{background:#fef3c7;color:#92400e;font-size:.72rem;font-weight:700;padding:4px 10px;border-radius:6px;text-align:center;margin-bottom:18px}
+.lf{margin-bottom:14px}
+.lf label{display:block;font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:5px}
+.lf input{width:100%;padding:11px 14px;border:1.5px solid var(--borde);border-radius:10px;font-size:.95rem;outline:none}
+.lf input:focus{border-color:var(--azul-claro)}
+.btn-login{width:100%;padding:13px;background:var(--inspector);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:800;cursor:pointer;margin-top:4px}
+#login-err{color:var(--rojo);font-size:.82rem;margin-top:8px;text-align:center}
+
+/* APP SHELL */
+#app{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--gris);padding-top:env(safe-area-inset-top,0px)}
+
+/* HEADER */
+.iheader{background:linear-gradient(135deg,#0d1f35,#1a3a5c);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.ih-icon{font-size:1.5rem}
+.ih-text h1{color:#fff;font-size:1rem;font-weight:800}
+.ih-text p{color:rgba(255,255,255,.55);font-size:.68rem;margin-top:1px}
+.ih-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:#4ade80}
+.conn-dot.off{background:#f87171}
+.btn-logout{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 10px;border-radius:7px;font-size:.75rem;cursor:pointer}
+.user-chip{background:var(--acento);color:#000;font-size:.7rem;font-weight:800;padding:3px 10px;border-radius:99px}
+
+/* TABS */
+.itabs{display:flex;background:#1a3a5c;flex-shrink:0}
+.itab{flex:1;padding:9px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;color:rgba(255,255,255,.45);font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid transparent;transition:.15s}
+.itab .ic{font-size:1.2rem}
+.itab.active{color:var(--acento);border-bottom-color:var(--acento)}
+
+/* CONTENT */
+.icontent{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.iscreen{display:none;min-height:100%}
+.iscreen.active{display:block}
+.ipad{padding:14px}
+
+/* CARDS */
+.icard{background:#fff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:12px;overflow:hidden}
+.icard-head{padding:12px 14px 0;display:flex;justify-content:space-between;align-items:flex-start}
+.icard-body{padding:10px 14px 14px}
+.icard-foot{padding:8px 14px;background:var(--gris);border-top:1px solid var(--borde);display:flex;gap:6px;flex-wrap:wrap}
+
+/* REPORTE CARD */
+.rep-card{border-left:4px solid var(--azul)}
+.rep-card.est-reportado{border-left-color:#f59e0b}
+.rep-card.est-asignado{border-left-color:#3b82f6}
+.rep-card.est-en_proceso{border-left-color:#ec4899}
+.rep-card.est-cerrado{border-left-color:#22c55e}
+.rep-folio{font-family:monospace;font-size:.8rem;font-weight:800;color:var(--azul)}
+.rep-tipo{font-size:.88rem;font-weight:700;color:var(--texto);margin-top:3px}
+.rep-desc{font-size:.78rem;color:var(--muted);margin-top:4px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rep-meta{display:flex;gap:10px;margin-top:6px;font-size:.72rem;color:var(--muted)}
+.est-badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.68rem;font-weight:800;text-transform:uppercase}
+.est-reportado{background:#fef3c7;color:#92400e}
+.est-asignado{background:#dbeafe;color:#1e40af}
+.est-en_proceso{background:#fce7f3;color:#9d174d}
+.est-cerrado{background:#dcfce7;color:#166534}
+
+/* FORMS */
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.fg label{font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.fg input,.fg select,.fg textarea{width:100%;padding:11px 13px;border:1.5px solid var(--borde);border-radius:10px;font-size:.9rem;font-family:inherit;outline:none;background:#fff}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--azul-claro);box-shadow:0 0 0 3px rgba(25,118,210,.1)}
+.fg textarea{resize:none;min-height:75px}
+.fg select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px;appearance:none}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-grid .full{grid-column:1/-1}
+
+/* TIPO ACTA selector */
+.tipo-acta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.ta-chip{padding:12px 8px;border:2px solid var(--borde);border-radius:10px;background:#fff;cursor:pointer;text-align:center;transition:.15s}
+.ta-chip .ta-ic{font-size:1.6rem;display:block;margin-bottom:4px}
+.ta-chip .ta-lbl{font-size:.7rem;font-weight:800;color:var(--muted);line-height:1.3}
+.ta-chip.sel{border-color:var(--azul-claro);background:var(--azul-bg)}
+.ta-chip.sel .ta-lbl{color:var(--inspector)}
+.ta-chip:active{transform:scale(.97)}
+
+/* FOTOS */
+.foto-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.foto-item{position:relative;border-radius:8px;overflow:hidden;background:var(--gris);aspect-ratio:1}
+.foto-item img{width:100%;height:100%;object-fit:cover}
+.foto-item .del-btn{position:absolute;top:3px;right:3px;background:rgba(220,38,38,.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.add-foto{border:2px dashed var(--borde);border-radius:8px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:#fafcff;gap:4px}
+.add-foto span{font-size:1.4rem}
+.add-foto p{font-size:.65rem;color:var(--muted);text-align:center}
+
+/* MAPA inspección */
+#map-inspector{height:200px;border-radius:10px;border:1.5px solid var(--borde)}
+.map-coord-bar{margin-top:6px;padding:8px 12px;background:var(--azul-bg);border-radius:8px;font-size:.78rem;color:var(--inspector);display:flex;justify-content:space-between;align-items:center}
+
+/* FIRMA */
+#sig-inspector{width:100%;height:110px;border:2px dashed var(--borde);border-radius:10px;cursor:crosshair;touch-action:none;background:#fafcff;display:block}
+
+/* BOTONES */
+.ibtn{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 18px;border-radius:10px;border:none;cursor:pointer;font-size:.88rem;font-weight:800;transition:.15s;width:100%}
+.ibtn:active{transform:scale(.98)}
+.ibtn-primary{background:var(--azul);color:#fff}
+.ibtn-success{background:var(--verde);color:#fff}
+.ibtn-warning{background:var(--naranja);color:#fff}
+.ibtn-danger{background:var(--rojo);color:#fff}
+.ibtn-ghost{background:var(--gris);color:var(--muted);border:1.5px solid var(--borde)}
+.ibtn-acento{background:var(--acento);color:#000}
+.ibtn-sm{padding:7px 14px;font-size:.78rem;width:auto}
+
+/* ALERTS */
+.ialert{padding:10px 14px;border-radius:8px;margin-bottom:10px;font-size:.82rem;line-height:1.4}
+.ialert-ok{background:#dcfce7;color:#166534;border:1px solid #86efac}
+.ialert-err{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+.ialert-inf{background:var(--azul-bg);color:var(--inspector);border:1px solid #B3CFF0}
+.ialert-warn{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+
+/* ACTA PREVIEW */
+.acta-card{background:#fff;border-radius:12px;border:2px solid var(--borde);overflow:hidden;margin-bottom:10px}
+.acta-card-head{background:var(--inspector);padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
+.acta-folio{color:#fff;font-family:monospace;font-size:.82rem;font-weight:800}
+.acta-tipo-badge{font-size:.65rem;font-weight:800;padding:3px 8px;border-radius:99px;text-transform:uppercase}
+.acta-circunstanciada{background:#dbeafe;color:#1e40af}
+.acta-apercibimiento{background:#fef3c7;color:#92400e}
+.acta-sancion{background:#fee2e2;color:#991b1b}
+.acta-card-body{padding:12px 14px;font-size:.82rem}
+.acta-row{display:flex;gap:8px;margin-bottom:6px}
+.acta-row label{color:var(--muted);font-weight:700;min-width:90px;font-size:.75rem}
+.acta-row span{color:var(--texto);flex:1}
+
+/* MODAL pantalla completa */
+#modal-acta{position:fixed;inset:0;z-index:800;background:var(--gris);display:none;flex-direction:column;overflow:hidden}
+#modal-acta.open{display:flex}
+.modal-header{background:var(--inspector);padding:13px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.modal-header h2{color:#fff;font-size:1rem;font-weight:800;flex:1}
+.modal-header button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 12px;border-radius:7px;font-size:.78rem;cursor:pointer}
+.modal-body{flex:1;overflow-y:auto;padding:14px}
+
+/* DETAIL SCREEN */
+.detail-section{margin-bottom:16px}
+.detail-section h3{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--borde)}
+.detail-row{display:flex;gap:8px;margin-bottom:6px;font-size:.82rem}
+.detail-row label{color:var(--muted);font-weight:700;min-width:80px}
+.detail-row span{color:var(--texto);flex:1;line-height:1.4}
+.foto-mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.foto-mini{border-radius:7px;overflow:hidden;background:var(--gris);aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:var(--muted)}
+
+/* MAPA DETALLE REPORTE */
+#map-detalle-rep{height:240px;border-radius:12px;border:2px solid var(--borde);margin:10px 0}
+.map-info-bar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.map-info-item{background:var(--azul-bg);border-radius:8px;padding:10px;text-align:center}
+.map-info-item .val{font-size:1.1rem;font-weight:800;color:var(--inspector)}
+.map-info-item .lbl{font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-top:2px}
+.btn-nav{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;background:var(--verde);color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:800;cursor:pointer;width:100%;margin-top:8px}
+.btn-waze{background:#33ccff;color:#000}
+
+/* MAPA DETALLE REPORTE */
+#map-detalle-rep{height:240px;border-radius:12px;border:2px solid var(--borde);margin:10px 0}
+.map-info-bar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.map-info-item{background:var(--azul-bg);border-radius:8px;padding:10px;text-align:center}
+.map-info-item .val{font-size:1.1rem;font-weight:800;color:var(--inspector)}
+.map-info-item .lbl{font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-top:2px}
+.btn-nav{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;background:var(--verde);color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:800;cursor:pointer;width:100%;margin-top:8px}
+.btn-waze{background:#33ccff;color:#000}
+
+/* MAP picker en acta */
+#map-acta{height:180px;border-radius:10px;border:1.5px solid var(--borde)}
+
+/* ── FORMULARIO ARBÓREO (NTEA-AGS-ARBOLADO-2026) ── */
+.arb-section{margin-bottom:14px}
+.arb-section-title{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--azul);background:var(--azul-bg);padding:7px 14px;margin:0 -14px 10px;border-bottom:1px solid var(--azul-borde);border-left:4px solid var(--azul)}
+.check-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+.check-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1.5px solid var(--borde);border-radius:8px;background:#fff;cursor:pointer;font-size:.8rem;transition:.15s}
+.check-item.checked{border-color:var(--azul-claro);background:var(--azul-bg)}
+.check-item input[type=checkbox]{width:16px;height:16px;accent-color:var(--azul-claro);cursor:pointer;flex-shrink:0}
+.severity-row{display:flex;gap:6px;margin-top:4px}
+.sev-btn{flex:1;padding:7px 4px;border:1.5px solid var(--borde);border-radius:7px;background:#fff;font-size:.72rem;font-weight:700;cursor:pointer;text-align:center;transition:.15s}
+.sev-btn.sev-baja.act{background:#dcfce7;border-color:#16a34a;color:#166534}
+.sev-btn.sev-media.act{background:#fef3c7;border-color:#ca8a04;color:#92400e}
+.sev-btn.sev-alta.act{background:#fee2e2;border-color:#dc2626;color:#991b1b}
+.risk-badge{display:inline-block;padding:6px 14px;border-radius:8px;font-size:.82rem;font-weight:800;text-align:center}
+.risk-bajo{background:#dcfce7;color:#166534}
+.risk-moderado{background:#fef3c7;color:#92400e}
+.risk-alto{background:#fee2e2;color:#dc2626}
+.risk-extremo{background:#450a0a;color:#fca5a5}
+.arb-tabla{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:6px}
+.arb-tabla th{background:var(--azul-bg);padding:7px 8px;text-align:left;font-size:.7rem;font-weight:800;color:var(--inspector);border-bottom:1px solid var(--azul-borde)}
+.arb-tabla td{padding:7px 8px;border-bottom:1px solid var(--borde);vertical-align:middle}
+.arb-tabla input,.arb-tabla select{padding:5px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.78rem;width:100%;outline:none}
+.firmante-wrap{border:1.5px solid var(--borde);border-radius:10px;overflow:hidden;margin-bottom:10px}
+.firmante-header{background:var(--gris);padding:8px 12px;font-size:.78rem;font-weight:700;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-action:none;background:#fafcff}
+
+/* ── FORMULARIO ANIMAL AGRESIVO ── */
+.body-diagram{position:relative;width:200px;height:280px;margin:0 auto 10px}
+.body-diagram svg{width:100%;height:100%}
+.body-part{cursor:pointer;transition:.15s;fill:#e2e8f0;stroke:#94a3b8;stroke-width:1.5}
+.body-part:active{transform:scale(.97)}
+.body-part.sel{fill:#dc2626;stroke:#991b1b}
+.bp-label{font-size:10px;fill:#1a202c;text-anchor:middle;pointer-events:none;font-weight:600}
+.gravedad-btn{flex:1;padding:10px 6px;border:2px solid var(--borde);border-radius:10px;background:#fff;font-size:.82rem;font-weight:700;cursor:pointer;text-align:center;transition:.15s}
+.gravedad-btn.sel-sup{background:#fef3c7;border-color:#ca8a04;color:#92400e}
+.gravedad-btn.sel-pro{background:#fee2e2;border-color:#dc2626;color:#991b1b}
+.vacuna-toggle{display:flex;align-items:center;gap:10px;padding:12px 14px;border:2px solid var(--borde);border-radius:10px;background:#fff;cursor:pointer;font-size:.88rem;font-weight:600;transition:.15s}
+.vacuna-toggle.si{border-color:#16a34a;background:#dcfce7;color:#166534}
+.vacuna-toggle.no{border-color:#dc2626;background:#fee2e2;color:#991b1b}
+.vacuna-toggle .vt-ic{font-size:1.3rem}
+#seccion-animal-agresivo{display:none}
+/* ACERCA */
+.acerca-row{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid var(--borde)}
+.acerca-row:last-child{border-bottom:none}
+.acerca-ic{font-size:1.3rem;width:32px;text-align:center;flex-shrink:0;margin-top:2px}
+.acerca-info label{display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.acerca-info span{display:block;font-size:.85rem;color:var(--texto);font-weight:600;margin-top:2px;line-height:1.4}
+
+/* PDF y descarga */
+.btn-pdf{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;background:#dc2626;color:#fff;border:none;border-radius:9px;font-size:.82rem;font-weight:800;cursor:pointer;width:100%;margin-top:6px}
+.btn-pdf:active{transform:scale(.97)}
+.btn-share{background:#16a34a}
+
+/* Figura humana / mordida */
+.grav-btn-insp{padding:8px 4px;border:2px solid var(--borde);border-radius:8px;background:#fff;cursor:pointer;font-size:.75rem;font-weight:700;color:var(--muted);transition:.15s;width:100%}
+.grav-btn-insp.sel-sup{border-color:#1976D2;background:var(--azul-bg);color:var(--azul)}
+.grav-btn-insp.sel-pro{border-color:#dc2626;background:#fee2e2;color:#991b1b}
+
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty .em-ic{font-size:3rem;margin-bottom:10px}
+.empty p{font-size:.85rem;line-height:1.5}
+.section-title{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--inspector);background:var(--azul-bg);padding:7px 14px;margin:-14px -14px 12px;border-bottom:1px solid #B3CFF0}
+
+#loading{position:fixed;inset:0;background:rgba(0,43,92,.55);z-index:900;display:none;align-items:center;justify-content:center}
+#loading.show{display:flex}
+.spinner{width:42px;height:42px;border:4px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="sp-badge">👷 INSPECTOR</div>
+  <div class="sp-logo">🔍</div>
+  <div class="sp-title">IMBIO Inspector</div>
+  <div class="sp-sub">Sistema de Atención en Campo<br>Instituto Municipal de Biodiversidad</div>
+  <div class="sp-loader"></div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="lb-logo">
+      <div class="ic">🔍</div>
+      <h1>IMBIO Inspector</h1>
+      <p>Acceso exclusivo para inspectores</p>
+    </div>
+    <div class="lb-badge">🔒 Personal autorizado IMBIO</div>
+    <div class="lf">
+      <label>Usuario</label>
+      <input id="l-user" type="text" placeholder="inspector01" autocomplete="username">
+    </div>
+    <div class="lf">
+      <label>Contraseña</label>
+      <input id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-login" onclick="doLogin()">🔐 Iniciar Sesión</button>
+    <div id="login-err"></div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loading"><div class="spinner"></div></div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <div class="iheader">
+    <div class="ih-icon">🔍</div>
+    <div class="ih-text">
+      <h1>IMBIO Inspector</h1>
+      <p>Instituto Municipal de Biodiversidad</p>
+    </div>
+    <div class="ih-right">
+      <div class="conn-dot" id="conn-dot"></div>
+      <span class="user-chip" id="user-chip">–</span>
+      <button class="btn-logout" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+  <div class="itabs">
+    <div class="itab active" id="tab-asignados" onclick="setTab('asignados')">
+      <span class="ic">📋</span><span>Asignados</span>
+    </div>
+    <div class="itab" id="tab-proceso" onclick="setTab('proceso')">
+      <span class="ic">🔄</span><span>En Proceso</span>
+    </div>
+    <div class="itab" id="tab-actas" onclick="setTab('actas-list')">
+      <span class="ic">📄</span><span>Mis Actas</span>
+    </div>
+    <div class="itab" id="tab-acerca" onclick="setTab('acerca')">
+      <span class="ic">ℹ️</span><span>Acerca</span>
+    </div>
+  </div>
+  <div class="icontent">
+
+    <!-- ASIGNADOS -->
+    <div id="screen-asignados" class="iscreen active">
+      <div class="ipad">
+        <div id="alert-asig"></div>
+        <div id="lista-asignados">
+          <div class="empty"><div class="em-ic">📋</div><p>Cargando reportes asignados...</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EN PROCESO -->
+    <div id="screen-proceso" class="iscreen">
+      <div class="ipad">
+        <div id="lista-proceso">
+          <div class="empty"><div class="em-ic">🔄</div><p>Cargando reportes en proceso...</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MIS ACTAS -->
+    <div id="screen-actas-list" class="iscreen">
+      <div class="ipad">
+        <div id="lista-actas">
+          <div class="empty"><div class="em-ic">📄</div><p>Las actas generadas aparecerán aquí.</p></div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ACERCA -->
+    <div id="screen-acerca" class="iscreen">
+      <div class="ipad">
+
+        <div class="icard" style="overflow:hidden">
+          <div style="background:linear-gradient(135deg,#0d1f35,#1a3a5c);padding:28px 20px;text-align:center">
+            <div style="font-size:3rem;margin-bottom:10px">🔍</div>
+            <div style="color:#fff;font-size:1.2rem;font-weight:800">IMBIO Inspector</div>
+            <div style="color:var(--acento);font-size:.72rem;font-weight:700;margin-top:4px;letter-spacing:.05em">VERSIÓN 1.0.0</div>
+          </div>
+          <div class="icard-body" style="padding:0">
+            <div class="acerca-row">
+              <div class="acerca-ic">🏛️</div>
+              <div class="acerca-info">
+                <label>Institución</label>
+                <span>Instituto Municipal de Biodiversidad y Protección Ambiental de Pabellón de Arteaga</span>
+              </div>
+            </div>
+            <div class="acerca-row">
+              <div class="acerca-ic">💻</div>
+              <div class="acerca-info">
+                <label>Desarrollo</label>
+                <span>Biol. Luis Felipe Lozano Román</span>
+              </div>
+            </div>
+            <div class="acerca-row">
+              <div class="acerca-ic">📧</div>
+              <div class="acerca-info">
+                <label>Contacto</label>
+                <span>imbio@pabellon.gob.mx</span>
+              </div>
+            </div>
+            <div class="acerca-row">
+              <div class="acerca-ic">📋</div>
+              <div class="acerca-info">
+                <label>Marco normativo</label>
+                <span>NTEA-AGS-ARBOLADO-2026 · LGEEPA · Reglamento Municipal de Medio Ambiente</span>
+              </div>
+            </div>
+            <div class="acerca-row">
+              <div class="acerca-ic">©</div>
+              <div class="acerca-info">
+                <label>Derechos</label>
+                <span>2026 · Municipio de Pabellón de Arteaga, Aguascalientes</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="icard">
+          <div class="icard-body">
+            <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">🔗 Servidor SGO-IMBIO</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="acerca-server-input" type="url" placeholder="http://192.168.X.X:8080"
+                style="flex:1;padding:10px 12px;border:1.5px solid var(--borde);border-radius:8px;font-size:.85rem;outline:none"
+                value="">
+              <button class="ibtn ibtn-primary ibtn-sm" onclick="guardarServidorInspector()" style="width:auto;padding:10px 14px">✓</button>
+            </div>
+            <div style="margin-top:8px;font-size:.72rem;color:var(--muted)">
+              <span id="acerca-conn-status">🔴 Verificando conexión...</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="icard">
+          <div class="icard-body">
+            <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">👷 Inspector en sesión</div>
+            <div style="font-size:.9rem;color:var(--texto)" id="acerca-usuario">–</div>
+            <button class="ibtn ibtn-danger" style="margin-top:12px" onclick="doLogout()">🚪 Cerrar Sesión</button>
+          </div>
+        </div>
+
+        <div class="icard">
+          <div class="icard-body" style="text-align:center">
+            <p style="font-size:.78rem;color:var(--muted);line-height:1.6">
+              Sistema de Gestión Operativa IMBIO.<br>
+              Uso exclusivo para personal autorizado del<br>
+              Instituto Municipal de Biodiversidad y<br>
+              Protección Ambiental de Pabellón de Arteaga.
+            </p>
+          </div>
+        </div>
+
+        <div style="height:20px"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL DETALLE REPORTE -->
+<div id="modal-detalle" class="modal-acta" style="position:fixed;inset:0;z-index:800;background:var(--gris);display:none;flex-direction:column;overflow:hidden">
+  <div class="modal-header">
+    <h2 id="detalle-folio-title">Reporte</h2>
+    <button onclick="closeDetalle()">✕ Cerrar</button>
+  </div>
+  <div class="modal-body" id="detalle-body"></div>
+</div>
+
+<!-- MODAL NUEVA ACTA (pantalla completa) -->
+<div id="modal-nueva-acta" style="position:fixed;inset:0;z-index:850;background:var(--gris);display:none;flex-direction:column;overflow:hidden">
+  <div class="modal-header">
+    <h2>📄 Nueva Acta</h2>
+    <button onclick="closeNuevaActa()">✕ Cancelar</button>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:14px" id="acta-form-body">
+
+    <input type="hidden" id="acta-report-id">
+    <div id="acta-form-dynamic"></div><div id="acta-alert"></div>
+    <button class="ibtn ibtn-acento" onclick="enviarActa()" style="margin-bottom:8px">
+      📄 Generar y Enviar Acta
+    </button>
+    <button class="ibtn ibtn-ghost" onclick="closeNuevaActa()">Cancelar</button>
+    <div style="height:20px"></div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  IMBIO INSPECTOR — App JavaScript
+// ════════════════════════════════════════════════════════
+// Captura errores globales para evitar recargas
+window.onerror = function(msg, src, line, col, err) {
+  console.error("IMBIO Error:", msg, "linea:", line);
+  // Mostrar error visible en pantalla (ayuda a depurar en celular)
+  var d = document.getElementById('error-overlay');
+  if (!d) {
+    d = document.createElement('div');
+    d.id = 'error-overlay';
+    d.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#fee2e2;color:#991b1b;padding:10px;font-size:12px;z-index:99999;font-family:monospace;border-top:2px solid #dc2626';
+    document.body.appendChild(d);
+  }
+  d.textContent = 'Error linea ' + line + ': ' + msg;
+  return true;
+};
+window.addEventListener("unhandledrejection", function(e) {
+  console.error("Promise error:", e.reason);
+  e.preventDefault();
+});
+
+let TOKEN = null, USER = null;
+let SERVER_URL = localStorage.getItem('imbio_inspector_server') || window.location.origin;
+let currentReporteId = null;
+let actaFotos = [];   // { dataUrl, file }
+let mapActa = null, mapActaLayer = null, mapActaMarker = null;
+let sigCanvas, sigCtx, sigDrawing = false;
+let misActas = JSON.parse(localStorage.getItem('imbio_actas_local') || '[]');
+
+// ── SPLASH ──────────────────────────────────────────────
+window.addEventListener('load', () => {
+  console.log('[IMBIO] Pagina cargada, iniciando...');
+  // Cargar Leaflet dinámicamente para evitar bloqueo
+  if (typeof L === 'undefined') {
+    var s = document.createElement('script');
+    s.src = '/static/leaflet.js';
+    s.onload = function() { console.log('[IMBIO] Leaflet cargado OK'); };
+    s.onerror = function() { console.warn('[IMBIO] Leaflet no disponible'); };
+    document.head.appendChild(s);
+  }
+  setTimeout(() => {
+    console.log('[IMBIO] Iniciando app...');
+    document.getElementById('splash').classList.add('hide');
+    const saved = localStorage.getItem('imbio_inspector_token');
+    const savedUser = localStorage.getItem('imbio_inspector_user');
+    if (saved && savedUser) {
+      TOKEN = saved;
+      USER  = JSON.parse(savedUser);
+      showApp();
+    } else {
+      document.getElementById('login-screen').classList.add('show');
+    }
+  }, 1500);
+});
+
+// ── LOGIN ────────────────────────────────────────────────
+async function doLogin() {
+  const username = document.getElementById('l-user').value.trim();
+  const password = document.getElementById('l-pass').value.trim();
+  const errEl    = document.getElementById('login-err');
+  errEl.textContent = '';
+  if (!username || !password) { errEl.textContent = 'Ingresa usuario y contraseña.'; return; }
+  showLoading(true);
+  try {
+    const r = await fetch(SERVER_URL + '/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+      signal: AbortSignal.timeout(20000)
+    });
+    const d = await r.json();
+    showLoading(false);
+    if (!d.success) { errEl.textContent = d.message || 'Credenciales incorrectas.'; return; }
+    TOKEN = d.data.token;
+    USER  = d.data.usuario;
+    localStorage.setItem('imbio_inspector_token', TOKEN);
+    localStorage.setItem('imbio_inspector_user',  JSON.stringify(USER));
+    localStorage.setItem('imbio_inspector_server', SERVER_URL);
+    showApp();
+  } catch(e) {
+    showLoading(false);
+    errEl.textContent = 'Sin conexión al servidor. Verifica la URL.';
+  }
+}
+document.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+function doLogout() {
+  TOKEN = null; USER = null;
+  localStorage.removeItem('imbio_inspector_token');
+  localStorage.removeItem('imbio_inspector_user');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').classList.add('show');
+}
+
+function showApp() {
+  document.getElementById('login-screen').classList.remove('show');
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('user-chip').textContent = USER.nombre?.split(' ')[0] || USER.username;
+  setTab('asignados');
+  checkConn();
+  setInterval(checkConn, 20000);
+}
+
+// ── TABS ─────────────────────────────────────────────────
+function setTab(name) {
+  ['asignados','proceso','actas-list','acerca'].forEach(t => {
+    document.getElementById('screen-' + t)?.classList.toggle('active', t === name);
+    const tabId = t === 'actas-list' ? 'actas' : t;
+    document.getElementById('tab-' + tabId)?.classList.toggle('active', t === name);
+  });
+  if (name === 'asignados')  loadReportes('asignado');
+  if (name === 'proceso')    loadReportes('en_proceso');
+  if (name === 'actas-list') renderMisActas();
+  if (name === 'acerca')     initAcerca();
+}
+
+// ── CONEXIÓN ─────────────────────────────────────────────
+async function checkConn() {
+  try {
+    const r = await fetch(SERVER_URL + '/health', { signal: AbortSignal.timeout(10000) });
+    document.getElementById('conn-dot').className = 'conn-dot' + (r.ok ? '' : ' off');
+  } catch { document.getElementById('conn-dot').className = 'conn-dot off'; }
+}
+
+// ── API ───────────────────────────────────────────────────
+async function api(path, method='GET', body=null) {
+  const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN };
+  const opts = { method, headers, signal: AbortSignal.timeout(30000) };
+  if (body) opts.body = JSON.stringify(body);
+  try {
+    const r = await fetch(SERVER_URL + path, opts);
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch(e) { return { success: false, message: 'Respuesta inválida del servidor.' }; }
+    // Si el token expiró, cerrar sesión automáticamente
+    if (r.status === 401 && TOKEN) {
+      console.warn('Token expirado, cerrando sesión...');
+      doLogout();
+      return { success: false, message: 'Sesión expirada. Inicia sesión nuevamente.' };
+    }
+    return data;
+  } catch(e) {
+    throw e;
+  }
+}
+
+// ── CARGAR REPORTES ───────────────────────────────────────
+async function loadReportes(estado) {
+  const containerId = estado === 'asignado' ? 'lista-asignados' : 'lista-proceso';
+  const alertId     = estado === 'asignado' ? 'alert-asig' : null;
+  const el = document.getElementById(containerId);
+  el.innerHTML = '<div class="empty"><div class="em-ic">⏳</div><p>Cargando...</p></div>';
+  try {
+    const r = await api('/api/inspector/reportes?estado=' + estado);
+    if (!r.success) { el.innerHTML = alert_html('err', r.message); return; }
+    const reps = r.data.reportes;
+    window._reportesCache = reps;
+    if (!reps.length) {
+      el.innerHTML = `<div class="empty"><div class="em-ic">${estado==='asignado'?'📬':'🔄'}</div><p>${estado==='asignado'?'No tienes reportes asignados':'No hay reportes en proceso'}</p></div>`;
+      return;
+    }
+    el.innerHTML = reps.map(rep => repCard(rep)).join('');
+  } catch(e) {
+    var msg = e.name === 'TimeoutError' ? '⏱ Tiempo de espera agotado. Verifica que el servidor esté corriendo.' : '📡 Sin conexión al servidor (' + e.message + '). Verifica tu red WiFi.';
+    el.innerHTML = alert_html('err', msg) + '<button class="ibtn ibtn-primary" style="margin-top:10px" onclick="loadReportes(\'' + estado + '\')">🔄 Reintentar</button>';
+  }
+}
+
+function repCard(rep) {
+  const asig = rep.asignacion;
+  return `<div class="icard rep-card est-${rep.estado}" onclick="verDetalle(${rep.id})">
+    <div class="icard-head">
+      <div>
+        <div class="rep-folio">${rep.folio}</div>
+        <div class="rep-tipo">${tipoLabel(rep.tipo)}</div>
+      </div>
+      <span class="est-badge est-${rep.estado}">${rep.estado.replace('_',' ')}</span>
+    </div>
+    <div class="icard-body">
+      <div class="rep-desc">${rep.descripcion}</div>
+      <div class="rep-meta">
+        <span>📍 ${rep.colonia}</span>
+        ${asig ? `<span>👷 ${asig.inspector}</span>` : ''}
+        <span>📅 ${fmtFecha(rep.fecha_creacion)}</span>
+      </div>
+    </div>
+    <div class="icard-foot">
+      <button class="ibtn ibtn-primary ibtn-sm" onclick="event.stopPropagation();verDetalle(${rep.id})">👁 Ver detalle</button>
+      <button class="ibtn ibtn-acento ibtn-sm" onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}')">📄 Levantar Acta</button>
+      ${rep.estado==='asignado'?`<button class="ibtn ibtn-warning ibtn-sm" onclick="event.stopPropagation();cambiarEstado(${rep.id},'en_proceso')">🔄 Iniciar</button>`:''}
+      ${rep.estado==='en_proceso'?`<button class="ibtn ibtn-success ibtn-sm" onclick="event.stopPropagation();cambiarEstado(${rep.id},'cerrado')">✅ Cerrar</button>`:''}
+    </div>
+  </div>`;
+}
+
+// ── DETALLE ───────────────────────────────────────────────
+async function verDetalle(id) {
+  showLoading(true);
+  const r = await api(`/api/reports/${id}`);
+  showLoading(false);
+  if (!r.success) { alert(r.message); return; }
+  const rep = r.data;
+  currentReporteId = id;
+  currentReporteTipo = rep.tipo || '';
+  document.getElementById('detalle-folio-title').textContent = rep.folio;
+  const body = document.getElementById('detalle-body');
+  body.innerHTML = `
+    <div class="ipad">
+      <div class="detail-section">
+        <h3>Información General</h3>
+        <div class="detail-row"><label>Folio</label><span style="font-family:monospace;font-weight:800;color:var(--azul)">${rep.folio}</span></div>
+        <div class="detail-row"><label>Estado</label><span class="est-badge est-${rep.estado}">${rep.estado.replace('_',' ')}</span></div>
+        <div class="detail-row"><label>Tipo</label><span>${tipoLabel(rep.tipo)}</span></div>
+        <div class="detail-row"><label>Colonia</label><span>${rep.colonia}</span></div>
+        ${rep.domicilio?`<div class="detail-row"><label>Domicilio</label><span>${rep.domicilio}</span></div>`:''}
+        <div class="detail-row"><label>Descripción</label><span>${rep.descripcion}</span></div>
+        <div class="detail-row"><label>Reportante</label><span>${rep.nombre_reportante||'Anónimo'}</span></div>
+        ${rep.telefono?`<div class="detail-row"><label>Teléfono</label><span><a href="tel:${rep.telefono}" style="color:var(--azul)">${rep.telefono}</a></span></div>`:''}
+        ${rep.lat&&rep.lon?`<div class="detail-row"><label>Coords</label><span>${parseFloat(rep.lat).toFixed(5)}, ${parseFloat(rep.lon).toFixed(5)}</span></div>`:''}
+        <div class="detail-row"><label>Fecha</label><span>${fmtFecha(rep.fecha_creacion)}</span></div>
+      </div>
+      ${(rep.lat&&rep.lon)?`
+      <div class="detail-section">
+        <h3>Ubicación del Reporte</h3>
+        <div id="map-detalle-rep"></div>
+        <div class="map-info-bar">
+          <div class="map-info-item"><div class="val" id="dist-val">-</div><div class="lbl">Distancia</div></div>
+          <div class="map-info-item"><div class="val" id="time-val">-</div><div class="lbl">Tiempo est.</div></div>
+        </div>
+        <button class="btn-nav" onclick="abrirNavegacion('${rep.lat}','${rep.lon}')">&#128506; Google Maps</button>
+        <button class="btn-nav btn-waze" onclick="abrirWaze('${rep.lat}','${rep.lon}')">&#128663; Waze</button>
+      </div>`:''}
+      ${rep.asignaciones?.length?`
+      <div class="detail-section">
+        <h3>Asignación</h3>
+        ${rep.asignaciones.map(a=>`
+          <div class="detail-row"><label>Brigada</label><span>${a.brigada}</span></div>
+          <div class="detail-row"><label>Inspector</label><span>${a.inspector}</span></div>
+          ${a.notas?`<div class="detail-row"><label>Notas</label><span>${a.notas}</span></div>`:''}
+        `).join('')}
+      </div>`:''}
+      ${rep.evidencias?.length?`
+      <div class="detail-section">
+        <h3>Evidencias (${rep.evidencias.length})</h3>
+        <div class="foto-mini-grid">
+          ${rep.evidencias.map(e=>`<div class="foto-mini">📸<br><span style="font-size:.6rem">${e.comentario||'Foto'}</span></div>`).join('')}
+        </div>
+      </div>`:''}
+      ${rep.actas?.length?`
+      <div class="detail-section">
+        <h3>Actas (${rep.actas.length})</h3>
+        ${rep.actas.map(a=>`
+          <div class="acta-card" style="margin-bottom:8px">
+            <div class="acta-card-head"><span class="acta-folio">${a.folio_acta}</span><span class="acta-tipo-badge acta-${a.tipo_acta}">${a.tipo_acta}</span></div>
+            <div class="acta-card-body">
+              <div class="acta-row"><label>Infractor</label><span>${a.infractor||'–'}</span></div>
+              <div class="acta-row"><label>Fecha</label><span>${fmtFecha(a.fecha)}</span></div>
+            </div>
+          </div>`).join('')}
+      </div>`:''}
+      <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
+        <button class="ibtn ibtn-acento" onclick="closeDetalle();abrirNuevaActa(${rep.id},'${rep.folio}')">📄 Levantar Acta</button>
+        ${rep.estado==='asignado'?`<button class="ibtn ibtn-warning" onclick="cambiarEstado(${rep.id},'en_proceso');closeDetalle()">🔄 Iniciar Atención</button>`:''}
+        ${rep.estado==='en_proceso'?`<button class="ibtn ibtn-success" onclick="cambiarEstado(${rep.id},'cerrado');closeDetalle()">✅ Marcar como Atendido</button>`:''}
+      </div>
+    </div>`;
+  document.getElementById('modal-detalle').style.display = 'flex';
+  if (rep.lat && rep.lon) initMapaDetalle(parseFloat(rep.lat), parseFloat(rep.lon));
+}
+function closeDetalle() {
+  document.getElementById('modal-detalle').style.display = 'none';
+  if (window._mapDet) { try { window._mapDet.remove(); } catch(e) {} window._mapDet = null; }
+}
+
+let _mapDet = null;
+let currentReporteTipo = '';
+
+function initMapaDetalle(lat, lon) {
+  if (_mapDet) { try { _mapDet.remove(); } catch(e) {} _mapDet = null; }
+  setTimeout(function() {
+    var el = document.getElementById('map-detalle-rep');
+    if (!el || typeof L === 'undefined') return;
+    _mapDet = L.map('map-detalle-rep', { zoomControl: true, scrollWheelZoom: false })
+      .setView([lat, lon], 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 })
+      .addTo(_mapDet);
+    // Marcador rojo del reporte
+    var rIcon = L.divIcon({
+      html: '<div style="background:#dc2626;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35)"></div>',
+      className: '', iconSize: [28, 28], iconAnchor: [14, 28]
+    });
+    L.marker([lat, lon], { icon: rIcon })
+      .bindPopup('<b>Ubicacion del reporte</b>').addTo(_mapDet).openPopup();
+    // Ubicacion del inspector via GPS
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        var ilat = pos.coords.latitude, ilon = pos.coords.longitude;
+        var iIcon = L.divIcon({
+          html: '<div style="background:#1a3a5c;width:26px;height:26px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:13px">&#128119;</div>',
+          className: '', iconSize: [26, 26], iconAnchor: [13, 13]
+        });
+        L.marker([ilat, ilon], { icon: iIcon })
+          .bindPopup('<b>Tu posicion</b>').addTo(_mapDet);
+        L.polyline([[ilat, ilon], [lat, lon]], {
+          color: '#1a3a5c', weight: 3, dashArray: '8 5', opacity: .8
+        }).addTo(_mapDet);
+        // Distancia y tiempo estimado (30 km/h)
+        var dist = calcDistKm(ilat, ilon, lat, lon);
+        var ds = dist < 1 ? Math.round(dist * 1000) + ' m' : dist.toFixed(1) + ' km';
+        var mins = Math.ceil((dist / 30) * 60);
+        var ts = mins < 60 ? mins + ' min' : Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm';
+        var e1 = document.getElementById('dist-val');
+        var e2 = document.getElementById('time-val');
+        if (e1) e1.textContent = ds;
+        if (e2) e2.textContent = ts;
+        _mapDet.fitBounds([[ilat, ilon], [lat, lon]], { padding: [40, 40] });
+      }, function() {}, { enableHighAccuracy: true, timeout: 8000 });
+    }
+  }, 300);
+}
+
+// ── ANIMAL AGRESIVO ──────────────────────────────────────────────────────────
+let _bpSel = new Set();
+
+function toggleBP(id) {
+  const el = document.getElementById('bp-' + id);
+  if (!el) return;
+  if (_bpSel.has(id)) { _bpSel.delete(id); el.classList.remove('sel'); }
+  else                { _bpSel.add(id);    el.classList.add('sel'); }
+  document.getElementById('an-zonas-mordida').value = [..._bpSel].join(',');
+  const lbl = document.getElementById('an-zonas-label');
+  if (lbl) lbl.textContent = _bpSel.size
+    ? 'Zonas: ' + [..._bpSel].map(z => z.replace('-',' ')).join(', ')
+    : 'Ninguna zona seleccionada';
+}
+
+function selGravedad(g) {
+  document.getElementById('an-gravedad').value = g;
+  document.getElementById('grav-sup').className = 'gravedad-btn' + (g==='superficial'?' sel-sup':'');
+  document.getElementById('grav-pro').className = 'gravedad-btn' + (g==='profunda'?' sel-pro':'');
+}
+
+function selAtencion(v) {
+  document.getElementById('an-atencion-medica').value = v;
+  ['si','no','nd'].forEach(function(x) {
+    var b = document.getElementById('atmed-'+x);
+    if (b) b.style.background = x===v ? 'var(--azul-bg)' : '';
+    if (b) b.style.borderColor = x===v ? 'var(--azul-claro)' : '';
+  });
+}
+
+function selVacuna(v) {
+  document.getElementById('an-vacuna').value = v;
+  ['si','no','nd'].forEach(function(x) {
+    var b = document.getElementById('vac-'+x);
+    if (b) b.style.background = x===v ? (v==='si'?'#dcfce7':v==='no'?'#fee2e2':'var(--azul-bg)') : '';
+    if (b) b.style.borderColor = x===v ? (v==='si'?'#16a34a':v==='no'?'#dc2626':'var(--azul-claro)') : '';
+  });
+}
+
+function selDueño(v) {
+  document.getElementById('an-dueño-identificado').value = v;
+  ['si','no'].forEach(function(x) {
+    var b = document.getElementById('dueño-'+x);
+    if (b) b.style.background = x===v ? 'var(--azul-bg)' : '';
+    if (b) b.style.borderColor = x===v ? 'var(--azul-claro)' : '';
+  });
+  var wrap = document.getElementById('dueño-datos-wrap');
+  if (wrap) wrap.style.display = v==='si' ? 'block' : 'none';
+}
+
+function mostrarSeccionAnimal(tipoReporte) {
+  var sec = document.getElementById('seccion-animal-agresivo');
+  var secArb = document.getElementById('seccion-arbolado-wrap');
+  var esAnimal = (tipoReporte === 'perro_agresivo' || tipoReporte === 'animal_calle');
+  if (sec) sec.style.display = esAnimal ? 'block' : 'none';
+  if (secArb) secArb.style.display = esAnimal ? 'none' : 'block';
+}
+
+function resetAnimalForm() {
+  _bpSel = new Set();
+  document.querySelectorAll('.body-part').forEach(function(el){ el.classList.remove('sel'); });
+  var zl = document.getElementById('an-zonas-label');
+  if (zl) zl.textContent = 'Ninguna zona seleccionada';
+  ['an-gravedad','an-atencion-medica','an-vacuna','an-dueño-identificado'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.value='';
+  });
+  ['grav-sup','grav-pro','atmed-si','atmed-no','atmed-nd','vac-si','vac-no','vac-nd','dueño-si','dueño-no'].forEach(function(id){
+    var b=document.getElementById(id); if(b){b.style.background='';b.style.borderColor='';}
+  });
+  var wrap=document.getElementById('dueño-datos-wrap');
+  if(wrap) wrap.style.display='none';
+  ['an-acc-asegurado','an-acc-traslado','an-acc-cuarentena','an-acc-apercibimiento','an-acc-remision','an-acc-apoyo-medico'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.checked=false;
+  });
+  ['an-victima-nombre','an-victima-tel','an-victima-email','an-victima-dom','an-victima-edad',
+   'an-incidente-desc','an-raza','an-color','an-señas','an-dueño-nombre','an-dueño-tel','an-dueño-dom'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+}
+
+function calcDistKm(a, b, c, d) {
+  var R = 6371, dA = (c - a) * Math.PI / 180, dB = (d - b) * Math.PI / 180;
+  var x = Math.sin(dA/2)*Math.sin(dA/2) +
+    Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dB/2)*Math.sin(dB/2);
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+}
+
+function abrirNavegacion(lat, lon) {
+  window.open('https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lon + '&travelmode=driving', '_blank');
+}
+
+function abrirWaze(lat, lon) {
+  window.open('https://waze.com/ul?ll=' + lat + ',' + lon + '&navigate=yes', '_blank');
+}
+
+// ── CAMBIAR ESTADO ────────────────────────────────────────
+async function cambiarEstado(id, estado) {
+  showLoading(true);
+  const r = await api(`/api/reports/${id}`, 'PATCH', { estado });
+  showLoading(false);
+  if (r.success) {
+    loadReportes('asignado');
+    loadReportes('en_proceso');
+  } else alert(r.message);
+}
+
+// ── NUEVA ACTA ────────────────────────────────────────────
+let tipoActaSel = 'circunstanciada';
+
+function selTipoActa(tipo) {
+  tipoActaSel = tipo;
+  document.getElementById('acta-tipo').value = tipo;
+  ['circunstanciada','apercibimiento','sancion','inspeccion'].forEach(t => {
+    document.getElementById('ta-' + t).classList.toggle('sel', t === tipo);
+  });
+  // Mostrar/ocultar sección de medidas según tipo
+  const secMed = document.getElementById('seccion-medidas');
+  const secMonto = document.getElementById('sec-monto');
+  secMed.style.display = tipo === 'circunstanciada' ? 'none' : 'block';
+  if (secMonto) secMonto.style.display = tipo === 'sancion' ? 'block' : 'none';
+}
+
+function abrirNuevaActa(reportId, folio) {
+  currentReporteId = reportId;
+  var s = function(id, val) { var el=document.getElementById(id); if(el) el.value=val; };
+  var si = function(id, html) { var el=document.getElementById(id); if(el) el.innerHTML=html; };
+  s('acta-report-id', reportId);
+  s('acta-report-folio', folio);
+  si('acta-alert', '');
+  var inspEl = document.getElementById('acta-inspector') || document.getElementById('acta-firmante');
+  if (inspEl) inspEl.value = USER.nombre || USER.username || '';
+  var now = new Date();
+  s('acta-fecha-insp', now.toISOString().slice(0,10));
+  s('acta-hora-insp', now.toTimeString().slice(0,5));
+  ['bajo','moderado','alto','extremo'].forEach(function(n){ var b=document.getElementById('rb-'+n); if(b) b.style.opacity='.35'; });
+  s('acta-nivel-riesgo','');
+  ['d-formacion','d-reduccion','d-elevacion','d-aclareo','d-derribo','d-trasplante','d-fitosanitario','d-conservacion'].forEach(function(id){ var el=document.getElementById(id); if(el) el.checked=false; });
+  // Mostrar sección según tipo de reporte
+  mostrarSeccionAnimal(currentReporteTipo || '');
+  resetAnimalForm();
+  // Auto-fecha incidente
+  var fi = document.getElementById('an-fecha-incidente');
+  if (fi && !fi.value) fi.value = new Date().toISOString().slice(0,10);
+  s('acta-infractor', '');
+  s('acta-domicilio', '');
+  s('acta-descripcion', '');
+  s('acta-fundamento', '');
+  s('acta-medida', '');
+  s('acta-monto', '');
+  s('acta-plazo', '');
+  s('acta-observaciones', '');
+  s('acta-nuevo-estado', '');
+  s('acta-lat', '');
+  s('acta-lon', '');
+  var cb=document.getElementById('acta-coords-bar'); if(cb) cb.textContent='📍 Toca "GPS Automático" o el mapa para capturar ubicación';
+  s('acta-firmante', USER.nombre || USER.username || '');
+  actaFotos = [];
+  renderFotosGrid();
+  clearSig();
+  selTipoActa('circunstanciada');
+  document.getElementById('modal-nueva-acta').style.display = 'flex';
+  initSig();
+  // Obtener GPS automáticamente al abrir
+  obtenerGPSActa();
+}
+
+function closeNuevaActa() {
+  document.getElementById('modal-nueva-acta').style.display = 'none';
+  if (mapActa) { mapActa.remove(); mapActa = null; }
+}
+
+// ── GPS para acta ─────────────────────────────────────────
+function obtenerGPSActa() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      document.getElementById('acta-lat').value = lat.toFixed(7);
+      document.getElementById('acta-lon').value = lon.toFixed(7);
+      document.getElementById('acta-coords-bar').innerHTML =
+        `<b style="color:var(--verde)">✅ GPS:</b> ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+      if (mapActa) {
+        mapActa.setView([lat, lon], 17);
+        if (mapActaMarker) mapActa.removeLayer(mapActaMarker);
+        mapActaMarker = L.marker([lat, lon]).addTo(mapActa);
+      }
+    },
+    () => {},
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+}
+
+function toggleMapaActa() {
+  const wrap = document.getElementById('mapa-acta-wrap');
+  const visible = wrap.style.display !== 'none';
+  wrap.style.display = visible ? 'none' : 'block';
+  if (!visible && !mapActa) {
+    setTimeout(() => {
+      const lat = parseFloat(document.getElementById('acta-lat').value) || 22.1508;
+      const lon = parseFloat(document.getElementById('acta-lon').value) || -102.2913;
+      mapActa = L.map('map-acta').setView([lat, lon], 16);
+      mapActaLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(mapActa);
+      if (document.getElementById('acta-lat').value) {
+        mapActaMarker = L.marker([lat, lon]).addTo(mapActa);
+      }
+      mapActa.on('click', e => {
+        document.getElementById('acta-lat').value = e.latlng.lat.toFixed(7);
+        document.getElementById('acta-lon').value = e.latlng.lng.toFixed(7);
+        document.getElementById('acta-coords-bar').innerHTML =
+          `<b>📍</b> ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`;
+        if (mapActaMarker) mapActa.removeLayer(mapActaMarker);
+        mapActaMarker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(mapActa);
+      });
+    }, 100);
+  }
+}
+
+// ── FOTOS ─────────────────────────────────────────────────
+function agregarFotos(event) {
+  const files = Array.from(event.target.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      actaFotos.push({ dataUrl: e.target.result, file });
+      renderFotosGrid();
+    };
+    reader.readAsDataURL(file);
+  });
+  event.target.value = '';
+}
+
+function renderFotosGrid() {
+  const grid = document.getElementById('acta-fotos-grid');
+  const items = actaFotos.map((f, i) => `
+    <div class="foto-item">
+      <img src="${f.dataUrl}" alt="foto">
+      <button class="del-btn" onclick="eliminarFoto(${i})">✕</button>
+    </div>`).join('');
+  grid.innerHTML = items + `
+    <div class="add-foto" onclick="document.getElementById('acta-foto-input').click()">
+      <span>📷</span><p>Agregar foto</p>
+    </div>`;
+}
+
+function eliminarFoto(i) {
+  actaFotos.splice(i, 1);
+  renderFotosGrid();
+}
+
+// ── FIRMA ─────────────────────────────────────────────────
+function initSig() {
+  sigCanvas = document.getElementById('sig-inspector');
+  if (!sigCanvas) return;
+  // Ajustar tamaño al contenedor
+  sigCanvas.width  = sigCanvas.offsetWidth || 320;
+  sigCanvas.height = 110;
+  sigCtx = sigCanvas.getContext('2d');
+  sigCtx.strokeStyle = '#1a3a5c';
+  sigCtx.lineWidth   = 2.5;
+  sigCtx.lineCap     = 'round';
+  sigCtx.lineJoin    = 'round';
+  const getPos = e => {
+    const r = sigCanvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return { x: src.clientX - r.left, y: src.clientY - r.top };
+  };
+  sigCanvas.onmousedown  = e => { sigDrawing=true; sigCtx.beginPath(); const p=getPos(e); sigCtx.moveTo(p.x,p.y); };
+  sigCanvas.onmousemove  = e => { if(!sigDrawing)return; const p=getPos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); };
+  sigCanvas.onmouseup    = () => sigDrawing=false;
+  sigCanvas.onmouseleave = () => sigDrawing=false;
+  sigCanvas.ontouchstart = e => { e.preventDefault(); sigDrawing=true; sigCtx.beginPath(); const p=getPos(e); sigCtx.moveTo(p.x,p.y); },{passive:false};
+  sigCanvas.ontouchmove  = e => { e.preventDefault(); if(!sigDrawing)return; const p=getPos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); },{passive:false};
+  sigCanvas.ontouchend   = () => sigDrawing=false;
+}
+function clearSig(id) {
+  if (!id || id === 'sig-inspector') {
+    if(sigCtx) sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height);
+  } else {
+    var c = document.getElementById(id);
+    if(c) c.getContext('2d').clearRect(0,0,c.width,c.height);
+  }
+}
+function sigIsEmpty() { return !sigCtx||!sigCtx.getImageData(0,0,sigCanvas?.width||1,sigCanvas?.height||1).data.some(v=>v!==0); }
+
+function initSigExtra(canvas) {
+  var ctx = canvas.getContext('2d');
+  ctx.strokeStyle = '#002A5C'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  var drawing = false;
+  function gp(e) { var r=canvas.getBoundingClientRect(),s=e.touches?e.touches[0]:e; return{x:s.clientX-r.left,y:s.clientY-r.top}; }
+  canvas.onmousedown  = function(e){ drawing=true; ctx.beginPath(); var p=gp(e); ctx.moveTo(p.x,p.y); };
+  canvas.onmousemove  = function(e){ if(!drawing)return; var p=gp(e); ctx.lineTo(p.x,p.y); ctx.stroke(); };
+  canvas.onmouseup    = function(){ drawing=false; };
+  canvas.onmouseleave = function(){ drawing=false; };
+  canvas.addEventListener('touchstart', function(e){ e.preventDefault(); drawing=true; ctx.beginPath(); var p=gp(e); ctx.moveTo(p.x,p.y); },{passive:false});
+  canvas.addEventListener('touchmove',  function(e){ e.preventDefault(); if(!drawing)return; var p=gp(e); ctx.lineTo(p.x,p.y); ctx.stroke(); },{passive:false});
+  canvas.addEventListener('touchend',   function(){ drawing=false; });
+}
+
+function selRiesgo(nivel) {
+  document.getElementById('acta-nivel-riesgo').value = nivel;
+  ['bajo','moderado','alto','extremo'].forEach(function(n) {
+    var btn = document.getElementById('rb-' + n);
+    if (btn) btn.style.opacity = n === nivel.toLowerCase() ? '1' : '.35';
+  });
+}
+
+// ── ENVIAR ACTA ───────────────────────────────────────────
+async function enviarActa() {
+  const rid         = document.getElementById('acta-report-id').value;
+  const folio       = document.getElementById('acta-report-folio').value;
+  const tipo        = document.getElementById('acta-tipo').value;
+  const inspector   = document.getElementById('acta-inspector').value.trim();
+  const infractor   = document.getElementById('acta-infractor').value.trim();
+  const domicilio   = document.getElementById('acta-domicilio').value.trim();
+  const descripcion = document.getElementById('acta-descripcion').value.trim();
+  const fundamento  = document.getElementById('acta-fundamento').value.trim();
+  const medida      = document.getElementById('acta-medida').value.trim();
+  const monto       = document.getElementById('acta-monto').value.trim();
+  const plazo       = document.getElementById('acta-plazo').value.trim();
+  const observ      = document.getElementById('acta-observaciones').value.trim();
+  const lat         = document.getElementById('acta-lat').value;
+  const lon         = document.getElementById('acta-lon').value;
+  const nuevoEst    = document.getElementById('acta-nuevo-estado').value;
+  const firmante    = document.getElementById('acta-firmante').value.trim();
+  // Datos dinámicos según tipo de reporte
+  const tipoRepE    = window._actaReporteTipo || '';
+  const esArbolE    = ['poda_arbol','derribo_arbol','corte_arbol','arbol_riesgo','areas_verdes'].includes(tipoRepE);
+  const esAnimalE   = ['perro_agresivo','animal_calle','animal_maltrato','fauna_silvestre','animal_abandonado'].includes(tipoRepE);
+  const esDenunciaE = ['denuncia_ambiental','residuos_solidos','tiradero_escombro','agua_contaminada','ruido','quema','contaminacion'].includes(tipoRepE);
+  const gv  = id => { var el = document.getElementById(id); return el ? el.value : ''; };
+  const gc2 = id => { var el = document.getElementById(id); return el ? el.checked : false; };
+  const arbEsp    = esArbolE ? gv('arb-especie-cient') : '';
+  const arbCom    = esArbolE ? gv('arb-especie-com') : '';
+  const arbDap    = esArbolE ? gv('arb-dap') : '';
+  const arbAltura = esArbolE ? gv('arb-altura') : '';
+  const arbVigor  = esArbolE ? gv('arb-vigor') : '';
+  const arbEst    = esArbolE ? gv('arb-estructura') : '';
+  const arbMet    = esArbolE ? gv('arb-metodo') : '';
+  const nivelRiesgo = document.getElementById('acta-nivel-riesgo')?.value || '';
+  const svCanvas   = document.getElementById('sig-visitado');
+  const visitadoNombre = (document.getElementById('visitado-nombre')?.value||'').trim();
+  const visitadoCargo  = (document.getElementById('visitado-cargo')?.value||'').trim();
+  const svData = (svCanvas && visitadoNombre) ? svCanvas.toDataURL('image/png') : null;
+  const dictamen = ['d-formacion','d-reduccion','d-elevacion','d-aclareo','d-derribo','d-trasplante','d-fitosanitario','d-conservacion']
+    .filter(function(id){ return document.getElementById(id)?.checked; })
+    .map(function(id){ return id.replace('d-',''); });
+  const compCat = document.getElementById('comp-categoria')?.value || '';
+  const compArb = document.getElementById('comp-arboles')?.value || '';
+  const compEsp = document.getElementById('comp-especie')?.value || '';
+  const alertEl     = document.getElementById('acta-alert');
+  alertEl.innerHTML = '';
+
+  if (!inspector)   { alertEl.innerHTML = alert_html('err','Ingresa el nombre del inspector.'); return; }
+  if (!descripcion || descripcion.length < 15) { alertEl.innerHTML = alert_html('err','La descripción debe tener al menos 15 caracteres.'); return; }
+
+  const formData = new FormData();
+  formData.append('tipo_acta',     tipo);
+  formData.append('inspector',     inspector);
+  formData.append('infractor',     infractor);
+  formData.append('domicilio',     domicilio);
+  formData.append('descripcion',   descripcion);
+  formData.append('fundamento',    fundamento);
+  formData.append('medida',        medida);
+  formData.append('monto_sancion', monto);
+  formData.append('nivel_riesgo',  nivelRiesgo);
+  if (arbEsp)    formData.append('arb_especie',   arbEsp + (arbCom ? ' / '+arbCom : ''));
+  if (arbDap)    formData.append('arb_dap',        arbDap);
+  if (arbAltura) formData.append('arb_altura',     arbAltura);
+  if (arbVigor)  formData.append('arb_vigor',      arbVigor);
+  if (arbEst)    formData.append('arb_estructura', arbEst);
+  if (arbMet)    formData.append('arb_metodo',     arbMet);
+  if (dictamen.length) formData.append('dictamen', dictamen.join(','));
+  if (compCat)   formData.append('comp_categoria', compCat);
+  if (compArb)   formData.append('comp_arboles',   compArb);
+  if (compEsp)   formData.append('comp_especie',   compEsp);
+  // Campos animal agresivo (si aplica)
+  var tipoRep = document.getElementById('acta-report-tipo')?.value || currentReporteTipo;
+  if (tipoRep === 'perro_agresivo' || tipoRep === 'animal_calle') {
+    var anFields = {
+      an_victima: document.getElementById('an-victima-nombre')?.value || '',
+      an_victima_tel: document.getElementById('an-victima-tel')?.value || '',
+      an_zonas: document.getElementById('an-zonas-mordida')?.value || '',
+      an_gravedad: document.getElementById('an-gravedad')?.value || '',
+      an_atencion_medica: document.getElementById('an-atencion-medica')?.value || '',
+      an_incidente: document.getElementById('an-incidente-desc')?.value || '',
+      an_especie: document.getElementById('an-especie')?.value || '',
+      an_raza: document.getElementById('an-raza')?.value || '',
+      an_color: document.getElementById('an-color')?.value || '',
+      an_tamaño: document.getElementById('an-tamaño')?.value || '',
+      an_señas: document.getElementById('an-señas')?.value || '',
+      an_vacuna: document.getElementById('an-vacuna')?.value || '',
+      an_dueño: document.getElementById('an-dueño-identificado')?.value || '',
+      an_dueño_nombre: document.getElementById('an-dueño-nombre')?.value || '',
+      an_dueño_tel: document.getElementById('an-dueño-tel')?.value || '',
+      an_acciones: ['asegurado','traslado','cuarentena','apercibimiento','remision','apoyo-medico']
+        .filter(function(a){ return document.getElementById('an-acc-'+a)?.checked; }).join(',')
+    };
+    Object.keys(anFields).forEach(function(k){ if(anFields[k]) formData.append(k, anFields[k]); });
+  }
+  if (svData && visitadoNombre) {
+    formData.append('firma_visitado_base64', svData);
+    formData.append('nombre_visitado', visitadoNombre + (visitadoCargo ? ' - '+visitadoCargo : ''));
+  }
+  var obsStr = [observ, plazo?'Plazo: '+plazo:''].filter(Boolean).join(' | ');
+  formData.append('observaciones', obsStr);
+  if (lat) formData.append('lat_acta', lat);
+  if (lon) formData.append('lon_acta', lon);
+  if (nuevoEst) formData.append('nuevo_estado', nuevoEst);
+
+  // Campos dinámicos según tipo de reporte
+  var tipoRepForm = window._actaReporteTipo || '';
+  var esAnimalForm = ['perro_agresivo','animal_calle','animal_maltrato','fauna_silvestre','animal_abandonado'].includes(tipoRepForm);
+  var esDenunciaForm = ['denuncia_ambiental','residuos_solidos','tiradero_escombro','agua_contaminada','ruido','quema','contaminacion'].includes(tipoRepForm);
+  if (tipoRepForm) formData.append('tipo_reporte', tipoRepForm);
+  if (esAnimalForm) {
+    var gvA = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+    var gcA = function(id){ var el=document.getElementById(id); return el?el.checked:false; };
+    formData.append('vic_nombre',     gvA('vic-nombre'));
+    formData.append('vic_edad',       gvA('vic-edad'));
+    formData.append('vic_telefono',   gvA('vic-telefono'));
+    formData.append('vic_domicilio',  gvA('vic-domicilio'));
+    formData.append('vic_atencion',   gvA('vic-atencion'));
+    formData.append('vic_gravedad',   gvA('vic-gravedad'));
+    var zonasEl = document.getElementById('an-zonas-mordida');
+    formData.append('mordida_zonas',  zonasEl ? zonasEl.value : '');
+    var gravEl = document.getElementById('an-gravedad');
+    formData.append('mordida_gravedad', gravEl ? gravEl.value : '');
+    formData.append('anim_especie',   gvA('anim-especie'));
+    formData.append('anim_condicion', gvA('anim-condicion'));
+    formData.append('anim_situacion', gvA('anim-situacion'));
+    formData.append('anim_duenio',    gvA('anim-duenio'));
+    formData.append('anim_destino',   gvA('anim-destino'));
+    var acAnim = [gcA('aa-rescate')?'Rescate':'',gcA('aa-traslado')?'Traslado a albergue':'',gcA('aa-apercibimiento')?'Apercibimiento':'',gcA('aa-acta')?'Acta al propietario':'',gcA('aa-canaliza')?'Canalización':''].filter(Boolean).join(', ');
+    formData.append('acciones_animal', acAnim);
+  }
+  if (esDenunciaForm) {
+    var gvD = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+    var gcD = function(id){ var el=document.getElementById(id); return el?el.checked:false; };
+    formData.append('da_tipo_infraccion', gvD('da-tipo-infraccion'));
+    formData.append('da_superficie',      gvD('da-superficie'));
+    formData.append('da_severidad',       gvD('da-severidad'));
+    formData.append('da_responsable',     gvD('da-responsable'));
+    formData.append('da_plazo',           gvD('da-plazo'));
+    var medD = [gcD('dm-apercibimiento')?'Apercibimiento verbal':'',gcD('dm-acta-infraccion')?'Acta de infracción':'',gcD('dm-clausura')?'Clausura temporal':'',gcD('dm-remediacion')?'Remediación':'',gcD('dm-sancion')?'Sanción económica':'',gcD('dm-denuncia-penal')?'Denuncia penal':''].filter(Boolean).join(', ');
+    formData.append('medidas_denuncia', medD);
+  }
+
+  // Fotos
+  for (const f of actaFotos) {
+    formData.append('photos', f.file);
+  }
+
+  // Firma
+  if (!sigIsEmpty() && firmante) {
+    formData.append('firma_inspector_base64', sigCanvas.toDataURL('image/png'));
+    formData.append('nombre_firmante_inspector', firmante);
+  }
+
+  showLoading(true);
+  try {
+    const resp = await fetch(SERVER_URL + `/api/reports/${rid}/acta`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN },
+      body: formData,
+      signal: AbortSignal.timeout(30000)
+    });
+    const d = await resp.json();
+    showLoading(false);
+    if (d.success) {
+      const acta = d.data.acta;
+      window._lastActa = acta;
+      // Guardar en historial local
+      misActas.unshift({
+        folio_acta:  acta.folio_acta,
+        tipo_acta:   acta.tipo_acta,
+        report_folio: folio,
+        infractor:   acta.infractor,
+        fecha:       acta.fecha,
+        estado:      acta.estado,
+        descripcion: descripcion.slice(0,80),
+      });
+      localStorage.setItem('imbio_actas_local', JSON.stringify(misActas));
+      closeNuevaActa();
+      loadReportes('asignado');
+      loadReportes('en_proceso');
+      // Mostrar éxito
+      showExitoActa(acta.folio_acta, tipo);
+    } else {
+      alertEl.innerHTML = alert_html('err', d.message || 'Error al generar el acta.');
+    }
+  } catch(e) {
+    showLoading(false);
+    alertEl.innerHTML = alert_html('err', 'Error de conexión: ' + e.message);
+  }
+}
+
+function showExitoActa(folio, tipo) {
+  const labels = { circunstanciada:'Acta Circunstanciada', apercibimiento:'Acta de Apercibimiento', sancion:'Acta de Sanción', inspeccion:'Acta de Inspección' };
+  // Show a full-screen success message briefly
+  const div = document.createElement('div');
+  div.style.cssText = 'position:fixed;inset:0;z-index:9000;background:linear-gradient(160deg,#0d1f35,#1a3a5c);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center';
+  div.innerHTML = `
+    <div style="font-size:4.5rem;margin-bottom:16px;animation:pop .4s cubic-bezier(.34,1.56,.64,1)">✅</div>
+    <div style="color:#fff;font-size:1.4rem;font-weight:800">Acta Generada</div>
+    <div style="color:rgba(255,255,255,.7);font-size:.88rem;margin-top:8px">${labels[tipo]||tipo}</div>
+    <div style="color:var(--acento);font-family:monospace;font-size:1rem;margin-top:12px;font-weight:800">${folio}</div>
+    <button onclick="descargarPDFActa(window._lastActa)" style="margin-top:24px;padding:12px 28px;background:#f59e0b;color:#000;border:none;border-radius:12px;font-size:.9rem;font-weight:800;cursor:pointer">📥 Descargar PDF</button>
+    <button onclick="compartirPDFActa(window._lastActa)" style="margin-top:8px;padding:12px 28px;background:#16a34a;color:#fff;border:none;border-radius:12px;font-size:.9rem;font-weight:700;cursor:pointer">📤 Compartir por WhatsApp</button>
+    <button onclick="this.parentElement.remove()" style="margin-top:8px;padding:12px 28px;background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.35);border-radius:12px;font-size:.9rem;font-weight:700;cursor:pointer">← Volver</button>`;
+  document.body.appendChild(div);
+}
+
+// ── MIS ACTAS ─────────────────────────────────────────────
+function renderMisActas() {
+  const el = document.getElementById('lista-actas');
+  if (!misActas.length) {
+    el.innerHTML = '<div class="empty"><div class="em-ic">📄</div><p>Las actas que generes aparecerán aquí.</p></div>';
+    return;
+  }
+  const labels = { circunstanciada:'Circunstanciada', apercibimiento:'Apercibimiento', sancion:'Sanción', inspeccion:'Inspección' };
+  el.innerHTML = misActas.map(a => `
+    <div class="acta-card">
+      <div class="acta-card-head">
+        <span class="acta-folio">${a.folio_acta}</span>
+        <span class="acta-tipo-badge acta-${a.tipo_acta}">${labels[a.tipo_acta]||a.tipo_acta}</span>
+      </div>
+      <div class="acta-card-body">
+        <div class="acta-row"><label>Reporte</label><span style="font-family:monospace;color:var(--azul)">${a.report_folio}</span></div>
+        ${a.infractor?`<div class="acta-row"><label>Infractor</label><span>${a.infractor}</span></div>`:''}
+        <div class="acta-row"><label>Descripción</label><span>${a.descripcion}</span></div>
+        <div class="acta-row"><label>Fecha</label><span>${fmtFecha(a.fecha)}</span></div>
+        <div class="acta-row"><label>Estado</label><span class="est-badge est-asignado">${a.estado}</span></div>
+      </div>
+      <div class="icard-foot">
+        <button class="ibtn ibtn-danger ibtn-sm" style="flex:1" onclick="descargarPDFActa(${JSON.stringify(a).replace(/'/g,'&#39;')})">📥 PDF</button>
+        <button class="ibtn ibtn-success ibtn-sm" style="flex:1" onclick="compartirPDFActa(${JSON.stringify(a).replace(/'/g,'&#39;')})">📤 WhatsApp</button>
+      </div>
+    </div>`).join('');
+}
+
+// ── HELPERS ───────────────────────────────────────────────
+function initAcerca() {
+  // Mostrar usuario en sesión
+  const uEl = document.getElementById('acerca-usuario');
+  if (uEl && USER) uEl.textContent = (USER.nombre || USER.username) + ' — ' + (USER.rol || 'Inspector');
+  // Mostrar server actual
+  const inp = document.getElementById('acerca-server-input');
+  if (inp) inp.value = SERVER_URL;
+  // Verificar conexión
+  const connEl = document.getElementById('acerca-conn-status');
+  if (connEl) {
+    connEl.textContent = '🟡 Verificando...';
+    fetch(SERVER_URL + '/health', { signal: AbortSignal.timeout(5000) })
+      .then(r => { connEl.textContent = r.ok ? '🟢 Conectado a ' + SERVER_URL : '🔴 Sin respuesta'; })
+      .catch(() => { connEl.textContent = '🔴 Sin conexión — ' + SERVER_URL; });
+  }
+}
+
+function guardarServidorInspector() {
+  const inp = document.getElementById('acerca-server-input');
+  if (!inp || !inp.value.trim()) return;
+  SERVER_URL = inp.value.trim().replace(/\/$/, '');
+  localStorage.setItem('imbio_inspector_server', SERVER_URL);
+  initAcerca();
+  alert('Servidor actualizado: ' + SERVER_URL);
+}
+
+// ── FIGURA HUMANA — INSPECTOR ─────────────────────────────────────────────
+var _mordidaZonas = [];
+var _mordidaGravedad = 'superficial';
+
+var _mordidaLabels = {
+  cabeza:'Cabeza', cuello:'Cuello',
+  hombro_izquierdo:'Hombro Izq.', hombro_derecho:'Hombro Der.',
+  pecho:'Pecho / Torso',
+  brazo_izquierdo_superior:'Brazo Izq.', brazo_derecho_superior:'Brazo Der.',
+  antebrazo_izquierdo:'Antebrazo Izq.', antebrazo_derecho:'Antebrazo Der.',
+  mano_izquierda:'Mano Izq.', mano_derecha:'Mano Der.',
+  abdomen:'Abdomen', cadera:'Cadera / Glúteos',
+  muslo_izquierdo:'Muslo Izq.', muslo_derecho:'Muslo Der.',
+  rodilla_izquierda:'Rodilla Izq.', rodilla_derecha:'Rodilla Der.',
+  pierna_izquierda:'Pierna Izq.', pierna_derecha:'Pierna Der.',
+  tobillo_izquierdo:'Tobillo Izq.', tobillo_derecho:'Tobillo Der.',
+  pie_izquierdo:'Pie Izq.', pie_derecho:'Pie Der.'
+};
+
+function inspecHit(zona) {
+  var idx = _mordidaZonas.indexOf(zona);
+  var el  = document.getElementById('iz-' + zona.replace(/_/g,'-'));
+  if (idx >= 0) {
+    _mordidaZonas.splice(idx, 1);
+    if (el) el.classList.remove('hit');
+    // Fix label color
+    var lbl = document.getElementById('izt-' + zona.replace(/_/g,'-'));
+    if (lbl) lbl.style.fill = '#1a3a5c';
+  } else {
+    _mordidaZonas.push(zona);
+    if (el) { el.classList.add('hit'); }
+    var lbl2 = document.getElementById('izt-' + zona.replace(/_/g,'-'));
+    if (lbl2) lbl2.style.fill = '#fff';
+  }
+  _actualizarListaMordida();
+}
+
+function _actualizarListaMordida() {
+  var lista = document.getElementById('mordida-zonas-lista');
+  var data  = document.getElementById('mordida-zonas-data');
+  if (!lista) return;
+  if (_mordidaZonas.length === 0) {
+    lista.innerHTML = '<em>Ninguna seleccionada</em>';
+  } else {
+    lista.innerHTML = _mordidaZonas.map(function(z) {
+      return '<span style="display:inline-block;background:#fee2e2;color:#991b1b;border-radius:5px;padding:2px 7px;margin:2px;font-size:.72rem;font-weight:700">🩸 ' + (_mordidaLabels[z]||z) + '</span>';
+    }).join('');
+  }
+  if (data) data.value = _mordidaZonas.join(', ');
+}
+
+function selGravMordida(tipo) {
+  _mordidaGravedad = tipo;
+  var s = document.getElementById('grav-sup');
+  var p = document.getElementById('grav-pro');
+  var hid = document.getElementById('mordida-gravedad-data');
+  if (s) { s.className = 'grav-btn-insp' + (tipo==='superficial'?' sel-sup':''); }
+  if (p) { p.className = 'grav-btn-insp' + (tipo==='profunda'?' sel-pro':''); }
+  if (hid) hid.value = tipo;
+}
+
+function limpiarMordida() {
+  _mordidaZonas = [];
+  document.querySelectorAll('#insp-body-svg .iz.hit').forEach(function(el){
+    el.classList.remove('hit');
+  });
+  document.querySelectorAll('#insp-body-svg .iz-t').forEach(function(el){
+    el.style.fill = '#1a3a5c';
+  });
+  _actualizarListaMordida();
+}
+
+function tipoLabel(t) {
+  const m = {
+    emergencia:'🚨 Emergencia', denuncia_ambiental:'🌱 Denuncia Ambiental',
+    areas_verdes:'🌳 Áreas Verdes', poda_arbol:'✂️ Poda de Árbol',
+    derribo_arbol:'🪓 Derribo de Árbol', residuos_solidos:'🗑️ Residuos Sólidos',
+    tiradero_basura:'🗑 Tiradero Basura', tiradero_escombro:'🧱 Tiradero Escombro',
+    agua_contaminada:'💧 Agua Contaminada', ruido:'🔊 Ruido',
+    animal_calle:'🐾 Animal en Calle', perro_agresivo:'🐕 Perro Agresivo', otro:'📌 Otro'
+  };
+  return m[t] || t;
+}
+function fmtFecha(iso) { if(!iso)return'–'; return new Date(iso).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'}); }
+function alert_html(type, msg) {
+  const cls = { ok:'ialert-ok', err:'ialert-err', inf:'ialert-inf', warn:'ialert-warn' };
+  return `<div class="ialert ${cls[type]||'ialert-inf'}">${msg}</div>`;
+}
+function showLoading(v) { document.getElementById('loading').className = v ? 'show' : ''; }
+// ── Formulario acta: inyección diferida (mejora de rendimiento) ────────────
+function _buildActaForm() {
+  var d = document.getElementById('acta-form-dynamic');
+  if (!d || d.dataset.built) return;
+
+  // Detectar tipo de reporte para secciones dinámicas
+  var tipoRep = window._actaReporteTipo || '';
+  var esArbol = ['poda_arbol','derribo_arbol','corte_arbol','arbol_riesgo','areas_verdes'].includes(tipoRep);
+  var esAnimal = ['perro_agresivo','animal_calle','animal_maltrato','fauna_silvestre','animal_abandonado'].includes(tipoRep);
+  var esDenuncia = ['denuncia_ambiental','residuos_solidos','tiradero_escombro','agua_contaminada','ruido','quema','contaminacion'].includes(tipoRep);
+
+  // Secciones comunes (siempre aparecen)
+  var seccionComun = `
+    <input type="hidden" id="acta-report-id">
+    <input type="hidden" id="acta-report-folio">
+
+    <!-- TIPO DE ACTA -->
+    <div class="section-title">📋 Tipo de Documento</div>
+    <div class="tipo-acta-grid">
+      <div class="ta-chip sel" onclick="selTipoActa('circunstanciada')" id="ta-circunstanciada">
+        <span class="ta-ic">📋</span><span class="ta-lbl">Circunstanciada</span>
+      </div>
+      <div class="ta-chip" onclick="selTipoActa('apercibimiento')" id="ta-apercibimiento">
+        <span class="ta-ic">⚠️</span><span class="ta-lbl">Apercibimiento</span>
+      </div>
+      <div class="ta-chip" onclick="selTipoActa('sancion')" id="ta-sancion">
+        <span class="ta-ic">🚫</span><span class="ta-lbl">Sanción</span>
+      </div>
+      <div class="ta-chip" onclick="selTipoActa('inspeccion')" id="ta-inspeccion">
+        <span class="ta-ic">🔍</span><span class="ta-lbl">Inspección</span>
+      </div>
+    </div>
+
+    <!-- DATOS DE LA VISITA -->
+    <div class="section-title">1. Datos de la Visita de Inspección</div>
+    <div class="form-grid">
+      <div class="fg fg2">
+        <label>Propietario / Visitado</label>
+        <input id="acta-infractor" placeholder="Nombre completo del visitado o propietario">
+      </div>
+      <div class="fg fg2">
+        <label>Domicilio inspeccionado</label>
+        <input id="acta-domicilio" placeholder="Dirección completa del predio">
+      </div>
+    </div>`;
+
+  // ── SECCIÓN ÁRBOL (solo poda/derribo/arbol) ─────────────────────────────
+  var seccionArbol = esArbol ? `
+    <div class="section-title">🌳 2. Características Dendrométricas del Árbol</div>
+    <div class="form-note" style="background:#e8f5e9;padding:8px 12px;border-radius:7px;font-size:.78rem;color:#2e7d32;margin-bottom:10px">
+      Art. 6 NTEA-AGS-ARBOLADO-2026 — Registrar datos del individuo arbóreo
+    </div>
+    <div class="form-grid">
+      <div class="fg">
+        <label>Especie (nombre científico)</label>
+        <input id="arb-especie-cient" placeholder="Ej: Fraxinus uhdei">
+      </div>
+      <div class="fg">
+        <label>Nombre común</label>
+        <input id="arb-especie-com" placeholder="Ej: Fresno, Eucalipto">
+      </div>
+      <div class="fg">
+        <label>DAP (cm) — Diámetro Altura Pecho</label>
+        <input id="arb-dap" type="number" placeholder="cm" min="0">
+      </div>
+      <div class="fg">
+        <label>Altura total (m)</label>
+        <input id="arb-altura" type="number" placeholder="metros" min="0" step="0.1">
+      </div>
+      <div class="fg">
+        <label>Diámetro de copa (m)</label>
+        <input id="arb-copa" type="number" placeholder="metros" min="0" step="0.1">
+      </div>
+      <div class="fg">
+        <label>Vigor general</label>
+        <select id="arb-vigor">
+          <option value="">Seleccionar...</option>
+          <option>Excelente</option><option>Bueno</option><option>Regular</option>
+          <option>Malo</option><option>Muerto</option>
+        </select>
+      </div>
+      <div class="fg fg2">
+        <label>Estructura / forma</label>
+        <select id="arb-estructura">
+          <option value="">Seleccionar...</option>
+          <option>Normal — Sin defectos aparentes</option>
+          <option>Inclinado — Ángulo moderado</option>
+          <option>Multifuste — Varios troncos</option>
+          <option>Bifurcación baja — Riesgo de división</option>
+          <option>Ramas primarias débiles</option>
+          <option>Copa desequilibrada</option>
+          <option>Daño mecánico visible</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-title">🔬 3. Diagnóstico Fitosanitario y Estructural</div>
+    <div class="form-grid">
+      <div class="fg">
+        <label>Plagas detectadas</label>
+        <select id="fs-plagas">
+          <option value="">Sin plagas</option>
+          <option>Barrenadores (Agrilus/Cossus)</option>
+          <option>Pulgones / áfidos</option>
+          <option>Cochinilla / escamas</option>
+          <option>Hormigas arrieras</option>
+          <option>Múltiple infestación</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Enfermedades / Patógenos</label>
+        <select id="fs-enfermedades">
+          <option value="">Sin enfermedades</option>
+          <option>Hongos en raíz</option>
+          <option>Pudrición central (xilófagos)</option>
+          <option>Cancros / lesiones cambiales</option>
+          <option>Muérdago</option>
+          <option>Agalla de corona</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Daño raíz / base</label>
+        <select id="fs-raiz">
+          <option value="">Sin daño</option>
+          <option>Raíces superficiales expuestas</option>
+          <option>Daño mecánico en base</option>
+          <option>Corte de raíces por obra</option>
+          <option>Pudrición basal</option>
+          <option>Anillamiento radical</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Interferencia con infraestructura</label>
+        <select id="fs-infra">
+          <option value="">Sin interferencia</option>
+          <option>Cableado eléctrico</option>
+          <option>Tuberías / drenaje</option>
+          <option>Construcción / bardas</option>
+          <option>Banqueta / pavimento</option>
+          <option>Luminarias / señalización</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-title">⚠️ 4. Nivel de Riesgo</div>
+    <div class="riesgo-grid">
+      <div class="rb" id="rb-bajo"    onclick="selRiesgo('Bajo')">
+        <span>🟢</span><span>Bajo</span>
+      </div>
+      <div class="rb" id="rb-moderado" onclick="selRiesgo('Moderado')">
+        <span>🟡</span><span>Moderado</span>
+      </div>
+      <div class="rb" id="rb-alto"    onclick="selRiesgo('Alto')">
+        <span>🟠</span><span>Alto</span>
+      </div>
+      <div class="rb" id="rb-extremo" onclick="selRiesgo('Extremo')">
+        <span>🔴</span><span>Extremo</span>
+      </div>
+    </div>
+    <input type="hidden" id="acta-nivel-riesgo">
+
+    <div class="section-title">✂️ 5. Dictamen Técnico</div>
+    <div class="form-note" style="background:#fff3e0;padding:8px 12px;border-radius:7px;font-size:.78rem;color:#e65100;margin-bottom:10px">
+      Marcar todas las intervenciones autorizadas
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <label class="chk-lbl"><input type="checkbox" id="d-poda"> Poda sanitaria / correctiva</label>
+      <label class="chk-lbl"><input type="checkbox" id="d-poda-form"> Poda de formación</label>
+      <label class="chk-lbl"><input type="checkbox" id="d-derribo"> Derribo autorizado</label>
+      <label class="chk-lbl"><input type="checkbox" id="d-derribo-riesgo"> Derribo urgente por riesgo</label>
+      <label class="chk-lbl"><input type="checkbox" id="d-tratamiento"> Tratamiento fitosanitario</label>
+      <label class="chk-lbl"><input type="checkbox" id="d-cable"> Desmonte de cables</label>
+      <label class="chk-lbl"><input type="checkbox" id="d-monitoreo"> Monitoreo periódico</label>
+      <label class="chk-lbl"><input type="checkbox" id="d-compensacion"> Reforestación compensatoria</label>
+    </div>
+    <div class="form-grid" id="comp-section" style="display:none">
+      <div class="fg">
+        <label>Categoría compensación</label>
+        <select id="comp-cat">
+          <option value="">Seleccionar...</option>
+          <option value="A">A — DAP ≥ 30 cm (3 árboles)</option>
+          <option value="B">B — DAP 15-29 cm (2 árboles)</option>
+          <option value="C">C — DAP < 15 cm (1 árbol)</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Número de árboles compensación</label>
+        <input id="comp-arboles" type="number" min="1" placeholder="Cantidad">
+      </div>
+      <div class="fg fg2">
+        <label>Especie para reforestación</label>
+        <input id="comp-especie" placeholder="Ej: Prosopis laevigata (Mezquite nativo)">
+      </div>
+    </div>` : '';
+
+  // ── SECCIÓN ANIMAL (denuncia animal) ────────────────────────────────────
+  var seccionAnimal = esAnimal ? `
+
+    <!-- ══ SECCIÓN ANIMAL AGRESIVO ══════════════════════════════════════ -->
+    <div class="section-title">🐾 2. Datos del Incidente con Animal</div>
+
+    <!-- DATOS DE LA VÍCTIMA -->
+    <div style="background:#fff3e0;border:1.5px solid #f59e0b;border-radius:8px;padding:12px 14px;margin-bottom:12px">
+      <div style="font-size:.75rem;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">
+        👤 Datos de la Víctima / Afectado
+      </div>
+      <div class="form-grid">
+        <div class="fg fg2">
+          <label>Nombre completo de la víctima *</label>
+          <input id="vic-nombre" placeholder="Nombre y apellidos" style="border-color:#f59e0b">
+        </div>
+        <div class="fg">
+          <label>Edad</label>
+          <input id="vic-edad" type="number" min="0" max="120" placeholder="Años">
+        </div>
+        <div class="fg">
+          <label>Teléfono de contacto</label>
+          <input id="vic-telefono" type="tel" placeholder="Número de contacto">
+        </div>
+        <div class="fg fg2">
+          <label>Domicilio de la víctima</label>
+          <input id="vic-domicilio" placeholder="Calle, número, colonia">
+        </div>
+        <div class="fg">
+          <label>¿Recibió atención médica?</label>
+          <select id="vic-atencion">
+            <option value="no">No requerida</option>
+            <option value="urgencias">Sí — Urgencias hospitalarias</option>
+            <option value="medico">Sí — Médico particular</option>
+            <option value="pendiente">Pendiente de valoración</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Gravedad de la herida</label>
+          <select id="vic-gravedad">
+            <option value="">Seleccionar...</option>
+            <option value="superficial">Superficial — Raspón/eritema</option>
+            <option value="leve">Leve — Herida menor sin sutura</option>
+            <option value="moderada">Moderada — Requiere sutura</option>
+            <option value="grave">Grave — Herida profunda/múltiple</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- FIGURA HUMANA + ZONA DE MORDIDA -->
+    <div style="font-size:.75rem;font-weight:800;color:#1a3a5c;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">
+      🩹 Localización de la Mordida (toca la zona afectada)
+    </div>
+    <p style="font-size:.72rem;color:#64748b;margin-bottom:10px;text-align:center">Puedes marcar más de una zona. Las zonas seleccionadas se resaltan en rojo.</p>
+
+    <div style="display:flex;gap:12px;align-items:flex-start;justify-content:center;flex-wrap:wrap;margin-bottom:12px">
+
+      <!-- SVG Figura Humana -->
+      <svg id="insp-body-svg" viewBox="0 0 180 400" xmlns="http://www.w3.org/2000/svg"
+        style="width:180px;flex-shrink:0;filter:drop-shadow(0 2px 6px rgba(0,0,0,.12))">
+        <defs>
+          <style>
+            .iz { fill:#e8f4fd; stroke:#1a3a5c; stroke-width:1.8; cursor:pointer; transition:all .18s; }
+            .iz:hover { fill:#b3d6f5; }
+            .iz.hit { fill:#dc2626; stroke:#991b1b; }
+            .iz-t { font-size:7.5px; fill:#1a3a5c; text-anchor:middle; pointer-events:none;
+                    font-family:Arial,sans-serif; font-weight:700; }
+            .iz.hit ~ .iz-t, .iz-t.hit { fill:#fff; }
+          </style>
+        </defs>
+
+        <!-- Cabeza -->
+        <ellipse class="iz" id="iz-cabeza" cx="90" cy="30" rx="26" ry="28"
+          onclick="inspecHit('cabeza')"/>
+        <text class="iz-t" id="izt-cabeza" x="90" y="33">Cabeza</text>
+
+        <!-- Cuello -->
+        <rect class="iz" id="iz-cuello" x="79" y="56" width="22" height="16" rx="5"
+          onclick="inspecHit('cuello')"/>
+        <text class="iz-t" id="izt-cuello" x="90" y="67">Cuello</text>
+
+        <!-- Hombro izquierdo (anatomico: lado izq del inspector = derecha en pantalla) -->
+        <ellipse class="iz" id="iz-hombro-izq" cx="55" cy="80" rx="17" ry="12"
+          onclick="inspecHit('hombro_izquierdo')"/>
+        <text class="iz-t" id="izt-hombro-izq" x="55" y="83">Hombro I</text>
+
+        <!-- Hombro derecho -->
+        <ellipse class="iz" id="iz-hombro-der" cx="125" cy="80" rx="17" ry="12"
+          onclick="inspecHit('hombro_derecho')"/>
+        <text class="iz-t" id="izt-hombro-der" x="125" y="83">Hombro D</text>
+
+        <!-- Torso superior / Pecho -->
+        <rect class="iz" id="iz-pecho" x="64" y="70" width="52" height="38" rx="6"
+          onclick="inspecHit('pecho')"/>
+        <text class="iz-t" id="izt-pecho" x="90" y="92">Pecho</text>
+
+        <!-- Brazo izquierdo superior -->
+        <rect class="iz" id="iz-brazo-izq-sup" x="36" y="72" width="18" height="36" rx="6"
+          onclick="inspecHit('brazo_izquierdo_superior')"/>
+        <text class="iz-t" id="izt-brazo-izq-sup" x="45" y="93">Brazo I</text>
+
+        <!-- Brazo derecho superior -->
+        <rect class="iz" id="iz-brazo-der-sup" x="126" y="72" width="18" height="36" rx="6"
+          onclick="inspecHit('brazo_derecho_superior')"/>
+        <text class="iz-t" id="izt-brazo-der-sup" x="135" y="93">Brazo D</text>
+
+        <!-- Antebrazo izquierdo -->
+        <rect class="iz" id="iz-antebrazo-izq" x="30" y="110" width="16" height="34" rx="5"
+          onclick="inspecHit('antebrazo_izquierdo')"/>
+        <text class="iz-t" id="izt-antebrazo-izq" x="38" y="130">A.Bra I</text>
+
+        <!-- Antebrazo derecho -->
+        <rect class="iz" id="iz-antebrazo-der" x="134" y="110" width="16" height="34" rx="5"
+          onclick="inspecHit('antebrazo_derecho')"/>
+        <text class="iz-t" id="izt-antebrazo-der" x="142" y="130">A.Bra D</text>
+
+        <!-- Mano izquierda -->
+        <ellipse class="iz" id="iz-mano-izq" cx="37" cy="158" rx="11" ry="14"
+          onclick="inspecHit('mano_izquierda')"/>
+        <text class="iz-t" id="izt-mano-izq" x="37" y="161">Mano I</text>
+
+        <!-- Mano derecha -->
+        <ellipse class="iz" id="iz-mano-der" cx="143" cy="158" rx="11" ry="14"
+          onclick="inspecHit('mano_derecha')"/>
+        <text class="iz-t" id="izt-mano-der" x="143" y="161">Mano D</text>
+
+        <!-- Abdomen -->
+        <rect class="iz" id="iz-abdomen" x="64" y="108" width="52" height="36" rx="6"
+          onclick="inspecHit('abdomen')"/>
+        <text class="iz-t" id="izt-abdomen" x="90" y="129">Abdomen</text>
+
+        <!-- Cadera / Glúteos -->
+        <rect class="iz" id="iz-cadera" x="64" y="144" width="52" height="24" rx="5"
+          onclick="inspecHit('cadera')"/>
+        <text class="iz-t" id="izt-cadera" x="90" y="159">Cadera</text>
+
+        <!-- Muslo izquierdo -->
+        <rect class="iz" id="iz-muslo-izq" x="62" y="168" width="24" height="44" rx="6"
+          onclick="inspecHit('muslo_izquierdo')"/>
+        <text class="iz-t" id="izt-muslo-izq" x="74" y="193">Muslo I</text>
+
+        <!-- Muslo derecho -->
+        <rect class="iz" id="iz-muslo-der" x="94" y="168" width="24" height="44" rx="6"
+          onclick="inspecHit('muslo_derecho')"/>
+        <text class="iz-t" id="izt-muslo-der" x="106" y="193">Muslo D</text>
+
+        <!-- Rodilla izquierda -->
+        <ellipse class="iz" id="iz-rodilla-izq" cx="74" cy="222" rx="12" ry="10"
+          onclick="inspecHit('rodilla_izquierda')"/>
+        <text class="iz-t" id="izt-rodilla-izq" x="74" y="225">Rod. I</text>
+
+        <!-- Rodilla derecha -->
+        <ellipse class="iz" id="iz-rodilla-der" cx="106" cy="222" rx="12" ry="10"
+          onclick="inspecHit('rodilla_derecha')"/>
+        <text class="iz-t" id="izt-rodilla-der" x="106" y="225">Rod. D</text>
+
+        <!-- Pierna izquierda -->
+        <rect class="iz" id="iz-pierna-izq" x="62" y="232" width="24" height="44" rx="6"
+          onclick="inspecHit('pierna_izquierda')"/>
+        <text class="iz-t" id="izt-pierna-izq" x="74" y="256">Pierna I</text>
+
+        <!-- Pierna derecha -->
+        <rect class="iz" id="iz-pierna-der" x="94" y="232" width="24" height="44" rx="6"
+          onclick="inspecHit('pierna_derecha')"/>
+        <text class="iz-t" id="izt-pierna-der" x="106" y="256">Pierna D</text>
+
+        <!-- Tobillo izquierdo -->
+        <rect class="iz" id="iz-tobillo-izq" x="64" y="276" width="20" height="16" rx="4"
+          onclick="inspecHit('tobillo_izquierdo')"/>
+        <text class="iz-t" id="izt-tobillo-izq" x="74" y="287">Tobillo I</text>
+
+        <!-- Tobillo derecho -->
+        <rect class="iz" id="iz-tobillo-der" x="96" y="276" width="20" height="16" rx="4"
+          onclick="inspecHit('tobillo_derecho')"/>
+        <text class="iz-t" id="izt-tobillo-der" x="106" y="287">Tobillo D</text>
+
+        <!-- Pie izquierdo -->
+        <ellipse class="iz" id="iz-pie-izq" cx="72" cy="305" rx="16" ry="10"
+          onclick="inspecHit('pie_izquierdo')"/>
+        <text class="iz-t" id="izt-pie-izq" x="72" y="308">Pie I</text>
+
+        <!-- Pie derecho -->
+        <ellipse class="iz" id="iz-pie-der" cx="108" cy="305" rx="16" ry="10"
+          onclick="inspecHit('pie_derecho')"/>
+        <text class="iz-t" id="izt-pie-der" x="108" y="308">Pie D</text>
+
+        <!-- Espalda label (informativo) -->
+        <text x="90" y="325" text-anchor="middle" font-size="7" fill="#94a3b8" font-family="Arial,sans-serif">
+          (Toca para seleccionar zona)
+        </text>
+      </svg>
+
+      <!-- Panel de zonas marcadas -->
+      <div style="flex:1;min-width:130px">
+        <div style="background:#fff;border:1.5px solid var(--borde);border-radius:10px;padding:12px;min-height:120px">
+          <div style="font-size:.72rem;font-weight:800;color:#1a3a5c;margin-bottom:8px;text-transform:uppercase">
+            🩸 Zonas marcadas:
+          </div>
+          <div id="mordida-zonas-lista" style="font-size:.8rem;color:#64748b;line-height:1.6">
+            <em>Ninguna seleccionada</em>
+          </div>
+        </div>
+        <div style="margin-top:10px">
+          <label style="font-size:.75rem;font-weight:700;color:#1a3a5c;display:block;margin-bottom:4px">
+            Gravedad de la mordida
+          </label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <button id="grav-sup" class="grav-btn-insp sel-sup" onclick="selGravMordida('superficial')">
+              ✓ Superficial
+            </button>
+            <button id="grav-pro" class="grav-btn-insp" onclick="selGravMordida('profunda')">
+              ⚠️ Profunda
+            </button>
+          </div>
+        </div>
+        <input type="hidden" id="mordida-zonas-data" value="">
+        <input type="hidden" id="mordida-gravedad-data" value="superficial">
+        <div style="margin-top:8px">
+          <button class="ibtn ibtn-ghost ibtn-sm" onclick="limpiarMordida()" style="width:100%;font-size:.72rem">
+            🗑 Limpiar zonas
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATOS DEL ANIMAL -->
+    <div style="font-size:.75rem;font-weight:800;color:#1a3a5c;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;margin-top:4px">
+      🐕 Datos del Animal Agresor
+    </div>
+    <div class="form-grid">
+      <div class="fg">
+        <label>Especie</label>
+        <select id="anim-especie">
+          <option value="perro">Perro doméstico</option>
+          <option value="gato">Gato doméstico</option>
+          <option value="otro">Otro animal</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Cantidad de animales</label>
+        <input id="anim-cantidad" type="number" min="1" value="1" placeholder="Cantidad">
+      </div>
+      <div class="fg">
+        <label>Descripción física (raza/color)</label>
+        <input id="anim-raza" placeholder="Color, tamaño, características">
+      </div>
+      <div class="fg">
+        <label>Condición del animal</label>
+        <select id="anim-condicion">
+          <option value="">Seleccionar...</option>
+          <option>Buen estado general</option>
+          <option>Delgadez moderada</option>
+          <option>Desnutrición severa</option>
+          <option>Herido / enfermo</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Situación del animal</label>
+        <select id="anim-situacion">
+          <option value="">Seleccionar...</option>
+          <option>En la vía pública</option>
+          <option>Animal agresivo activo</option>
+          <option>Controlado / encerrado</option>
+          <option>Fugó del lugar</option>
+          <option>Animal callejero</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>¿Tiene dueño identificado?</label>
+        <select id="anim-duenio">
+          <option value="no">No identificado</option>
+          <option value="si">Sí — dueño presente</option>
+          <option value="ausente">Sí — dueño ausente</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:10px">⚡ 3. Acciones Tomadas en Campo</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <label class="chk-lbl"><input type="checkbox" id="aa-rescate"> Rescate del animal</label>
+      <label class="chk-lbl"><input type="checkbox" id="aa-traslado"> Traslado a albergue/veterinaria</label>
+      <label class="chk-lbl"><input type="checkbox" id="aa-apercibimiento"> Apercibimiento al propietario</label>
+      <label class="chk-lbl"><input type="checkbox" id="aa-acta"> Levantamiento de acta al propietario</label>
+      <label class="chk-lbl"><input type="checkbox" id="aa-canaliza"> Canalización a autoridad competente</label>
+      <label class="chk-lbl"><input type="checkbox" id="aa-monitoreo"> Monitoreo de seguimiento</label>
+    </div>
+    <div class="fg" style="margin-bottom:10px">
+      <label>Destino del animal</label>
+      <select id="anim-destino">
+        <option value="">No aplica / no rescatado</option>
+        <option>Albergue Municipal</option>
+        <option>Veterinaria de guardia</option>
+        <option>Entregado a propietario</option>
+        <option>Liberado en hábitat natural</option>
+      </select>
+    </div>` : '';
+
+
+
+  // ── SECCIÓN DENUNCIA AMBIENTAL ──────────────────────────────────────────
+  var seccionDenuncia = esDenuncia ? `
+    <div class="section-title">🌿 2. Descripción de la Situación Ambiental</div>
+    <div class="form-note" style="background:#fce4ec;padding:8px 12px;border-radius:7px;font-size:.78rem;color:#b71c1c;margin-bottom:10px">
+      Registrar la situación ambiental encontrada durante la inspección en campo
+    </div>
+    <div class="form-grid">
+      <div class="fg fg2">
+        <label>Tipo de infracción ambiental</label>
+        <select id="da-tipo-infraccion">
+          <option value="">Seleccionar...</option>
+          <option>Quema de residuos a cielo abierto</option>
+          <option>Depósito ilegal de residuos sólidos</option>
+          <option>Tiradero clandestino de escombro</option>
+          <option>Descarga de aguas residuales</option>
+          <option>Contaminación de suelo</option>
+          <option>Ruido excesivo fuera de norma</option>
+          <option>Emisiones de humo / vapores</option>
+          <option>Tala ilegal de vegetación</option>
+          <option>Afectación a cuerpo de agua</option>
+          <option>Otra infracción ambiental</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Superficie afectada (m² estimados)</label>
+        <input id="da-superficie" type="number" min="0" placeholder="m²">
+      </div>
+      <div class="fg">
+        <label>Tiempo de afectación estimado</label>
+        <select id="da-tiempo">
+          <option value="">No determinado</option>
+          <option>Reciente (menos de 24 horas)</option>
+          <option>Días (2-7 días)</option>
+          <option>Semanas (1-4 semanas)</option>
+          <option>Meses (más de 1 mes)</option>
+          <option>Crónico / recurrente</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Severidad del impacto</label>
+        <select id="da-severidad">
+          <option value="">Seleccionar...</option>
+          <option value="leve">🟡 Leve — Impacto mínimo</option>
+          <option value="moderado">🟠 Moderado — Requiere atención</option>
+          <option value="grave">🔴 Grave — Daño significativo</option>
+          <option value="critico">⛔ Crítico — Riesgo a la salud/ecosistema</option>
+        </select>
+      </div>
+      <div class="fg fg2">
+        <label>¿Se identificó al responsable?</label>
+        <select id="da-responsable">
+          <option value="no">No identificado</option>
+          <option value="si">Sí — presente en el momento</option>
+          <option value="ubicado">Sí — identificado pero ausente</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-title">⚡ 3. Medidas Adoptadas</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <label class="chk-lbl"><input type="checkbox" id="dm-apercibimiento"> Apercibimiento verbal</label>
+      <label class="chk-lbl"><input type="checkbox" id="dm-acta-infraccion"> Acta de infracción</label>
+      <label class="chk-lbl"><input type="checkbox" id="dm-clausura"> Clausura temporal</label>
+      <label class="chk-lbl"><input type="checkbox" id="dm-remediacion"> Orden de remediación</label>
+      <label class="chk-lbl"><input type="checkbox" id="dm-sancion"> Sanción económica</label>
+      <label class="chk-lbl"><input type="checkbox" id="dm-denuncia-penal"> Denuncia penal (LGEEPA)</label>
+    </div>
+    <div class="fg fg2" style="margin-bottom:10px">
+      <label>Plazo otorgado para remediación</label>
+      <input id="da-plazo" placeholder="Ej: 72 horas, 15 días naturales...">
+    </div>` : '';
+
+  // ── DESCRIPCIÓN GENERAL (siempre aparece) ───────────────────────────────
+  var numSeccion = esArbol ? '6' : esDenuncia ? '4' : esAnimal ? '4' : '2';
+  var seccionDesc = `
+    <div class="section-title">${numSeccion}. Descripción de Hechos y Observaciones</div>
+    <textarea id="acta-descripcion" rows="4" placeholder="Describir detalladamente los hechos observados en campo, condiciones del lugar, acciones tomadas y cualquier observación relevante..."
+      style="width:100%;padding:10px 12px;border:1.5px solid var(--borde);border-radius:8px;font-size:.85rem;resize:vertical;outline:none;line-height:1.5"></textarea>
+
+    <div class="section-title">📜 Fundamento Legal</div>
+    <textarea id="acta-fundamento" rows="2" placeholder="${
+      esArbol ? 'Código Municipal Art. X · Ley de Ingresos Art. X · LPAEA Art. X · LGEEPA Art. 134 · NTEA-AGS-ARBOLADO-2026' :
+      esAnimal ? 'Código Municipal Art. X · Ley de Protección Animal · NOM-042-SSA2-2006 · LGVS' :
+      'Código Municipal Art. X · Ley de Ingresos Art. X · LPAEA Art. X · LGEEPA Art. 134-141'
+    }"
+      style="width:100%;padding:10px 12px;border:1.5px solid var(--borde);border-radius:8px;font-size:.85rem;resize:vertical;outline:none"></textarea>
+
+    <div class="section-title">✍️ Firmas de Responsabilidad</div>
+    <div class="firmante-wrap">
+      <div class="firmante-header">
+        <span>✍️ Firma del Inspector Actuante</span>
+        <button class="ibtn ibtn-ghost ibtn-sm" onclick="clearSig('sig-inspector')" style="padding:3px 8px">🗑 Borrar</button>
+      </div>
+      <canvas id="sig-inspector" class="sig-visitado"></canvas>
+      <div style="padding:8px 10px">
+        <input id="acta-firmante" placeholder="Nombre completo del inspector" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none">
+      </div>
+    </div>
+    <div class="firmante-wrap">
+      <div class="firmante-header">
+        <span>✍️ Firma del Visitado / Propietario <span style="font-weight:400;font-size:.72rem">(opcional)</span></span>
+        <button class="ibtn ibtn-ghost ibtn-sm" onclick="clearSig('sig-visitado')" style="padding:3px 8px">🗑 Borrar</button>
+      </div>
+      <canvas id="sig-visitado" class="sig-visitado"></canvas>
+      <div style="padding:8px 10px">
+        <input id="acta-nombre-visitado" placeholder="Nombre del visitado (si firmó)" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none">
+      </div>
+    </div>`;
+
+  d.innerHTML = seccionComun + seccionArbol + seccionAnimal + seccionDenuncia + seccionDesc;
+  d.dataset.built = '1';
+  d.dataset.tipo  = tipoRep;
+
+  // Mostrar/ocultar compensación según checkbox
+  if (esArbol) {
+    var chkComp = document.getElementById('d-compensacion');
+    if (chkComp) chkComp.addEventListener('change', function() {
+      var s = document.getElementById('comp-section');
+      if (s) s.style.display = this.checked ? 'grid' : 'none';
+    });
+  }
+
+  initSig();
+}
+
+
+// Llamar _buildActaForm ANTES de usar cualquier campo del formulario
+var _origAbrirActa = abrirNuevaActa;
+abrirNuevaActa = function(reportId, folio) {
+  var repData = window._reportesCache ? window._reportesCache.find(function(r){ return r.id === reportId; }) : null;
+  window._actaReporteTipo = repData ? (repData.tipo || '') : '';
+  var dynDiv = document.getElementById('acta-form-dynamic');
+  if (dynDiv) { dynDiv.innerHTML = ''; delete dynDiv.dataset.built; delete dynDiv.dataset.tipo; }
+  _buildActaForm();
+  setTimeout(function(){ _origAbrirActa(reportId, folio); }, 80);
+};
+
+
+// ════════════════════════════════════════════════════════
+//  GENERACIÓN DE PDF — ACTA OFICIAL IMBIO
+// ════════════════════════════════════════════════════════
+const LOGO_AYUNTAMIENTO = 'data:image/jpeg;base64,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';
+
+function buildActaHTML(acta) {
+  if (!acta) return '<p>Sin datos del acta.</p>';
+  const hoy = new Date(acta.fecha || Date.now());
+  const fechaStr = hoy.toLocaleDateString('es-MX', {day:'2-digit',month:'long',year:'numeric'});
+  const horaStr  = hoy.toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit'});
+  const tipoLabels = {
+    circunstanciada: 'ACTA CIRCUNSTANCIADA',
+    apercibimiento:  'ACTA DE APERCIBIMIENTO',
+    sancion:         'ACTA DE SANCIÓN AMBIENTAL',
+    inspeccion:      'ACTA DE INSPECCIÓN'
+  };
+  const tituloActa = tipoLabels[acta.tipo_acta] || 'ACTA DE INSPECCIÓN';
+
+  // Construir filas de datos arbóreos si existen
+  // ── Sección dinámica según tipo de reporte ───────────────────────────
+  const tipoRepPDF = acta.tipo_reporte || '';
+  const esArbolPDF    = ['poda_arbol','derribo_arbol','corte_arbol','arbol_riesgo','areas_verdes'].includes(tipoRepPDF);
+  const esAnimalPDF   = ['perro_agresivo','animal_calle','animal_maltrato','fauna_silvestre','animal_abandonado'].includes(tipoRepPDF);
+  const esDenunciaPDF = ['denuncia_ambiental','residuos_solidos','tiradero_escombro','agua_contaminada','ruido','quema','contaminacion'].includes(tipoRepPDF);
+
+  let arbóreoHTML = '';
+  if ((esArbolPDF || !tipoRepPDF) && (acta.arb_especie || acta.arb_dap)) {
+    arbóreoHTML = `
+    <div class="section-title">2. CARACTERÍSTICAS DENDROMÉTRICAS (Art. 6 NTEA-AGS-ARBOLADO-2026)</div>
+    <table class="data-table">
+      <tr><td class="lbl">Especie</td><td>${acta.arb_especie||'—'}</td><td class="lbl">DAP (cm)</td><td>${acta.arb_dap||'—'}</td></tr>
+      <tr><td class="lbl">Altura (m)</td><td>${acta.arb_altura||'—'}</td><td class="lbl">Copa (m)</td><td>${acta.arb_copa||'—'}</td></tr>
+      <tr><td class="lbl">Vigor</td><td>${acta.arb_vigor||'—'}</td><td class="lbl">Estructura</td><td>${acta.arb_estructura||'—'}</td></tr>
+      <tr><td class="lbl">Método eval.</td><td colspan="3">${acta.arb_metodo||'Inspección Visual Nivel 1'}</td></tr>
+    </table>`;
+  }
+
+  let dictamenHTML = '';
+  if (acta.dictamen) {
+    dictamenHTML = `<p><b>Intervención autorizada:</b> ${acta.dictamen.split(',').join(', ')}</p>`;
+  }
+
+  let compensHTML = '';
+  if (acta.comp_categoria || acta.comp_arboles) {
+    compensHTML = `<p><b>Compensación ambiental:</b> ${acta.comp_arboles||'—'} árbol(es) de ${acta.comp_especie||'especie nativa'} (Categoría: ${acta.comp_categoria||'—'})</p>`;
+  }
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>${acta.folio_acta||'ACTA'}</title>
+<style>
+  @page { size: letter; margin: 15mm 12mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 10px; color: #1a1a1a; background: #fff; }
+  .header { display: flex; align-items: center; border-bottom: 3px solid #1a3a5c; padding-bottom: 10px; margin-bottom: 10px; }
+  .header-logo { width: 140px; margin-right: 12px; flex-shrink: 0; }
+  .header-logo img { width: 100%; }
+  .header-center { flex: 1; text-align: center; }
+  .inst-name { font-size: 9px; font-weight: bold; color: #1a3a5c; line-height: 1.3; margin-bottom: 4px; }
+  .acta-title { font-size: 13px; font-weight: bold; color: #1a3a5c; letter-spacing: .05em; margin-bottom: 2px; }
+  .folio { font-size: 11px; color: #dc2626; font-weight: bold; font-family: monospace; }
+  .header-right { width: 80px; text-align: right; font-size: 8px; color: #555; flex-shrink: 0; }
+  .escudo { width: 50px; }
+  .meta-bar { background: #f0f4fa; border: 1px solid #c8d8f0; border-radius: 4px; padding: 5px 10px; margin-bottom: 8px; display: flex; gap: 20px; font-size: 9px; }
+  .meta-bar b { color: #1a3a5c; }
+  .section-title { background: #1a3a5c; color: #fff; font-weight: bold; font-size: 9px; padding: 4px 8px; margin: 8px 0 5px; letter-spacing: .05em; text-transform: uppercase; }
+  .data-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; font-size: 9px; }
+  .data-table td { border: 1px solid #ccc; padding: 3px 6px; vertical-align: top; }
+  .data-table .lbl { background: #f0f4fa; font-weight: bold; color: #1a3a5c; width: 90px; }
+  .desc-box { border: 1px solid #ccc; border-radius: 4px; padding: 8px; margin-bottom: 8px; font-size: 9.5px; line-height: 1.5; min-height: 60px; }
+  .risk-badge { display: inline-block; padding: 2px 10px; border-radius: 3px; font-weight: bold; font-size: 10px; }
+  .risk-bajo { background: #dcfce7; color: #166534; }
+  .risk-moderado { background: #fef3c7; color: #92400e; }
+  .risk-alto { background: #fee2e2; color: #991b1b; }
+  .risk-extremo { background: #450a0a; color: #fca5a5; }
+  .firma-section { display: flex; gap: 20px; margin-top: 16px; }
+  .firma-box { flex: 1; border: 1px solid #ccc; border-radius: 4px; padding: 6px; text-align: center; }
+  .firma-box img { max-width: 180px; max-height: 60px; display: block; margin: 0 auto; }
+  .firma-line { border-top: 1px solid #555; margin: 40px 10px 4px; }
+  .firma-label { font-size: 8px; color: #555; }
+  .firma-name { font-size: 9px; font-weight: bold; color: #1a3a5c; }
+  .footer { margin-top: 14px; border-top: 1px solid #ccc; padding-top: 5px; font-size: 8px; color: #666; text-align: center; }
+  .legal-ref { font-size: 8px; color: #555; font-style: italic; margin-bottom: 6px; }
+  p { margin-bottom: 5px; font-size: 9.5px; line-height: 1.4; }
+  .badge-row { margin: 4px 0; }
+</style>
+</head>
+<body>
+
+<!-- ENCABEZADO OFICIAL -->
+<div class="header">
+  <div class="header-logo">
+    <img src="${LOGO_AYUNTAMIENTO}" alt="H. Ayuntamiento Pabellón de Arteaga">
+  </div>
+  <div class="header-center">
+    <div class="inst-name">H. AYUNTAMIENTO DE PABELLÓN DE ARTEAGA 2024-2027<br>
+    INSTITUTO MUNICIPAL DE BIODIVERSIDAD Y PROTECCIÓN AMBIENTAL (IMBIO)</div>
+    <div class="acta-title">${tituloActa}</div>
+    <div class="folio">${acta.folio_acta || 'SIN FOLIO'}</div>
+  </div>
+  <div class="header-right">
+    <div>Fecha:</div>
+    <div><b>${fechaStr}</b></div>
+    <div style="margin-top:3px">Hora:</div>
+    <div><b>${horaStr}</b></div>
+  </div>
+</div>
+
+<!-- BARRA DE METADATOS -->
+<div class="meta-bar">
+  <div><b>Folio Reporte:</b> ${acta.report_folio || '—'}</div>
+  <div><b>Inspector:</b> ${acta.inspector || '—'}</div>
+  <div><b>Domicilio:</b> ${acta.domicilio || '—'}</div>
+  ${acta.nivel_riesgo ? `<div><b>Nivel de Riesgo:</b> <span class="risk-badge risk-${acta.nivel_riesgo.toLowerCase()}">${acta.nivel_riesgo}</span></div>` : ''}
+</div>
+
+<!-- SECCIÓN 1: DATOS DE LA DILIGENCIA -->
+<div class="section-title">1. Datos de la Diligencia</div>
+<table class="data-table">
+  <tr>
+    <td class="lbl">Propietario / Visitado</td>
+    <td colspan="3">${acta.infractor || '—'}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Domicilio</td>
+    <td colspan="3">${acta.domicilio || '—'}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Inspector actuante</td>
+    <td>${acta.inspector || '—'}</td>
+    <td class="lbl">Fecha / Hora</td>
+    <td>${fechaStr} — ${horaStr}</td>
+  </tr>
+</table>
+
+${arbóreoHTML}
+
+<!-- SECCIÓN ANIMAL -->
+    ${esAnimalPDF ? `
+    <div class="section-title">2. Datos de la Víctima</div>
+    <table class="data-table">
+      <tr><td class="lbl">Nombre víctima</td><td colspan="3">${acta.vic_nombre||'—'}</td></tr>
+      <tr><td class="lbl">Edad</td><td>${acta.vic_edad||'—'}</td><td class="lbl">Teléfono</td><td>${acta.vic_telefono||'—'}</td></tr>
+      <tr><td class="lbl">Domicilio</td><td colspan="3">${acta.vic_domicilio||'—'}</td></tr>
+      <tr><td class="lbl">Atención médica</td><td>${acta.vic_atencion||'—'}</td><td class="lbl">Gravedad herida</td><td>${acta.vic_gravedad||'—'}</td></tr>
+      ${acta.mordida_zonas ? `<tr><td class="lbl" style="color:#991b1b;font-weight:bold">🩸 Zonas de mordida</td><td colspan="3" style="color:#991b1b;font-weight:bold">${acta.mordida_zonas}</td></tr>` : ''}
+      ${acta.mordida_gravedad ? `<tr><td class="lbl">Gravedad mordida</td><td colspan="3">${acta.mordida_gravedad}</td></tr>` : ''}
+    </table>
+
+    <div class="section-title">3. Descripción del Animal Agresor</div>
+    <table class="data-table">
+      <tr><td class="lbl">Especie</td><td>${acta.anim_especie||'—'}</td><td class="lbl">Cantidad</td><td>${acta.anim_cantidad||'1'}</td></tr>
+      <tr><td class="lbl">Condición</td><td>${acta.anim_condicion||'—'}</td><td class="lbl">Situación</td><td>${acta.anim_situacion||'—'}</td></tr>
+      ${acta.anim_destino ? `<tr><td class="lbl">Destino</td><td colspan="3">${acta.anim_destino}</td></tr>` : ''}
+      ${acta.acciones_animal ? `<tr><td class="lbl">Acciones campo</td><td colspan="3">${acta.acciones_animal}</td></tr>` : ''}
+    </table>` : ''}
+
+    <!-- SECCIÓN DENUNCIA AMBIENTAL -->
+    ${esDenunciaPDF && acta.da_tipo_infraccion ? `
+    <div class="section-title">2. Situación Ambiental Detectada</div>
+    <table class="data-table">
+      <tr><td class="lbl">Tipo de infracción</td><td colspan="3">${acta.da_tipo_infraccion||'—'}</td></tr>
+      <tr><td class="lbl">Severidad</td><td>${acta.da_severidad||'—'}</td><td class="lbl">Responsable</td><td>${acta.da_responsable||'—'}</td></tr>
+      ${acta.medidas_denuncia ? `<tr><td class="lbl">Medidas adoptadas</td><td colspan="3">${acta.medidas_denuncia}</td></tr>` : ''}
+      ${acta.da_plazo ? `<tr><td class="lbl">Plazo remediación</td><td colspan="3">${acta.da_plazo}</td></tr>` : ''}
+    </table>` : ''}
+
+    <!-- SECCIÓN DE DIAGNÓSTICO -->
+<div class="section-title">${arbóreoHTML ? '3.' : '2.'} Diagnóstico y Descripción de los Hechos</div>
+<div class="desc-box">${(acta.descripcion || '—').split("\
+").join("<br>")}</div>
+
+${acta.nivel_riesgo ? `<div class="badge-row"><b>Nivel de Riesgo Calculado:</b> <span class="risk-badge risk-${acta.nivel_riesgo.toLowerCase()}">${acta.nivel_riesgo}</span></div>` : ''}
+
+<!-- FUNDAMENTO LEGAL -->
+${acta.fundamento ? `
+<div class="section-title">Fundamento Legal</div>
+<div class="legal-ref">${acta.fundamento}</div>` : ''}
+
+<!-- DICTAMEN Y MEDIDAS -->
+<div class="section-title">${arbóreoHTML ? '5.' : '3.'} Dictamen y Medidas de Manejo</div>
+${dictamenHTML}
+${acta.medida ? `<p><b>Medida correctiva / Apercibimiento:</b> ${acta.medida}</p>` : ''}
+${acta.monto_sancion ? `<p><b>Monto de sanción:</b> ${acta.monto_sancion} UMA</p>` : ''}
+${acta.observaciones ? `<p><b>Observaciones:</b> ${acta.observaciones}</p>` : ''}
+${compensHTML}
+
+<!-- FIRMAS -->
+<div class="firma-section">
+  <div class="firma-box" style="flex:1">
+    <div style="font-size:8px;font-weight:bold;color:#1a3a5c;margin-bottom:4px">INSPECTOR ACTUANTE</div>
+    ${acta.firma_inspector_base64 ? `<img src="${acta.firma_inspector_base64}" alt="Firma inspector" style="max-width:220px;max-height:80px;display:block;margin:0 auto">` : '<div class="firma-line"></div>'}
+    <div class="firma-name">${acta.inspector || '________________________'}</div>
+    <div class="firma-label">Inspector IMBIO · Firma y Nombre</div>
+  </div>
+  ${acta.firma_visitado_base64 || acta.nombre_visitado ? `
+  <div class="firma-box" style="flex:1">
+    <div style="font-size:8px;font-weight:bold;color:#1a3a5c;margin-bottom:4px">VISITADO / PROPIETARIO</div>
+    ${acta.firma_visitado_base64 ? `<img src="${acta.firma_visitado_base64}" alt="Firma visitado" style="max-width:220px;max-height:80px;display:block;margin:0 auto">` : '<div class="firma-line"></div>'}
+    <div class="firma-name">${acta.nombre_visitado || '________________________'}</div>
+    <div class="firma-label">Nombre y Firma del Visitado</div>
+  </div>` : `
+  <div class="firma-box" style="flex:1;background:#fef3c7;border-color:#f59e0b">
+    <div style="font-size:8px;font-weight:bold;color:#92400e;margin-bottom:4px">VISITADO / PROPIETARIO</div>
+    <div style="margin:20px 0;font-size:8px;color:#92400e;font-style:italic">No se presentó o se negó a firmar<br>(Art. 29 NTEA-AGS-ARBOLADO-2026)</div>
+    <div class="firma-label" style="color:#92400e">Constancia de ausencia de firma</div>
+  </div>`}
+</div>
+
+<!-- PIE DE PÁGINA -->
+<div class="footer">
+  <b>H. Ayuntamiento de Pabellón de Arteaga 2024-2027 · Instituto Municipal de Biodiversidad y Protección Ambiental (IMBIO)</b><br>
+  Marco legal: Código Municipal · Ley de Ingresos · LPAEA · LGEEPA · NTEA-AGS-ARBOLADO-2026<br>
+  Este documento tiene validez técnica y legal para trámites ambientales ante la Dirección del IMBIO.<br>
+  Generado el ${new Date().toLocaleString('es-MX')}
+</div>
+
+</body></html>`;
+}
+
+function descargarPDFActa(acta) {
+  if (!acta) { alert('Sin datos del acta para generar PDF.'); return; }
+  const htmlContent = buildActaHTML(acta);
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = (acta.folio_acta || 'ACTA-IMBIO') + '.html';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+  // En Android WebView, usar window.print() como alternativa
+  setTimeout(() => {
+    if (typeof Android !== 'undefined') {
+      // Abrir en nueva ventana para imprimir/compartir
+      const w = window.open('', '_blank');
+      if (w) { w.document.write(htmlContent); w.document.close(); w.print(); }
+    }
+  }, 500);
+}
+
+function compartirPDFActa(acta) {
+  if (!acta) { alert('Sin datos del acta.'); return; }
+  const htmlContent = buildActaHTML(acta);
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  const folio = acta.folio_acta || 'ACTA-IMBIO';
+  // Usar Web Share API si está disponible (Android Chrome)
+  if (navigator.share) {
+    const file = new File([blob], folio + '.html', { type: 'text/html' });
+    navigator.share({
+      title: folio + ' — IMBIO Pabellón de Arteaga',
+      text: 'Adjunto ' + folio + ' generado por el Sistema IMBIO.',
+      files: [file]
+    }).catch(e => {
+      if (e.name !== 'AbortError') fallbackShare(acta, htmlContent, folio);
+    });
+  } else {
+    fallbackShare(acta, htmlContent, folio);
+  }
+}
+
+function fallbackShare(acta, htmlContent, folio) {
+  // Generar enlace de WhatsApp con texto del acta
+  const texto = encodeURIComponent(
+    '📋 *' + (folio) + '*\
+' +
+    '🏛️ IMBIO — Pabellón de Arteaga\
+' +
+    '👷 Inspector: ' + (acta.inspector || '—') + '\
+' +
+    '📍 Domicilio: ' + (acta.domicilio || '—') + '\
+' +
+    '📅 Fecha: ' + new Date(acta.fecha||Date.now()).toLocaleDateString('es-MX') + '\
+' +
+    (acta.nivel_riesgo ? '⚠️ Nivel de Riesgo: ' + acta.nivel_riesgo + '\
+' : '') +
+    '\
+_Documento oficial IMBIO. Solicite el PDF completo al inspector._'
+  );
+  window.open('https://wa.me/?text=' + texto, '_blank');
+}
+
+</script>
+</body>
+</html>
