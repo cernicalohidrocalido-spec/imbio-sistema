@@ -952,6 +952,12 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                 'acciones_animal': fields.get('acciones_animal', ''),
                 # Datos denuncia ambiental
                 'da_tipo_infraccion': fields.get('da_tipo_infraccion', ''),
+                'da_tipo_residuo':    fields.get('da_tipo_residuo', ''),
+                'da_volumen':         fields.get('da_volumen', ''),
+                'da_cuerpo_agua':     fields.get('da_cuerpo_agua', ''),
+                'da_tipo_contaminante':fields.get('da_tipo_contaminante', ''),
+                'da_fuente_ruido':    fields.get('da_fuente_ruido', ''),
+                'da_horario_ruido':   fields.get('da_horario_ruido', ''),
                 'da_tiempo':          fields.get('da_tiempo', ''),
                 'da_superficie':  fields.get('da_superficie', ''),
                 'da_severidad':   fields.get('da_severidad', ''),
