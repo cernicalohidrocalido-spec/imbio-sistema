@@ -1040,7 +1040,8 @@ async function loadDashboard() {
     <th style="padding:8px">Folio</th><th>Tipo</th><th>Colonia</th><th>Estado</th><th>Fecha</th>
   </tr></thead><tbody>
     ${recent.map(r=>`<tr>
-      <td><span class="folio-badge">${r.folio}</span></td>
+      <td><span class="folio-badge">${r.folio}</span>
+          ${r.expediente ? `<span style="font-size:.68rem;color:#166534;font-weight:700;margin-left:6px">${r.expediente}</span>` : ''}</td>
       <td>${tipoLabel(r.tipo)}</td><td>${r.colonia}</td>
       <td>${badge(r.estado)}</td><td>${fmtDate(r.fecha_creacion)}</td>
     </tr>`).join('')}
@@ -1130,7 +1131,28 @@ async function verDetalle(id) {
     ${rep.firmas?.length?`<div class="detail-section"><h4>Firmas</h4><ul class="timeline">
       ${rep.firmas.map(f=>`<li><b>${f.nombre_firmante}</b> <span class="badge badge-${f.rol_firmante}">${f.rol_firmante}</span>
         <br><small style="color:var(--muted)">${fmtDate(f.fecha_firma)}</small></li>`).join('')}
-    </ul></div>`:''}`;
+    </ul></div>`:''}
+
+    ${rep.historial && rep.historial.length ? `
+    <div class="detail-section" style="margin-top:16px">
+      <h4 style="color:#1a3a5c;margin-bottom:8px">📋 Historial de Estados</h4>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${rep.historial.map(h => `
+          <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:#f8fafc;border-radius:8px;border-left:3px solid ${
+            h.estado_nuevo==='cerrado'?'#166534':h.estado_nuevo==='sancionado'?'#991b1b':h.estado_nuevo==='apercibido'?'#92400e':h.estado_nuevo==='pendiente_medida'?'#d97706':'#2563eb'
+          }">
+            <div style="flex:1">
+              <div style="font-size:.8rem;font-weight:700;color:#1a3a5c">
+                ${h.estado_anterior?`${h.estado_anterior} → `:''}${h.estado_nuevo}
+              </div>
+              <div style="font-size:.72rem;color:#64748b;margin-top:2px">
+                👤 ${h.usuario} &nbsp;·&nbsp; 📅 ${new Date(h.fecha).toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+                ${h.nota?`&nbsp;·&nbsp; <i>${h.nota}</i>`:''}
+              </div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>` : ''}`;
   openModal('modal-detalle');
   // Mini mapa en detalle
   if (rep.lat && rep.lon) {
