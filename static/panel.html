@@ -155,6 +155,7 @@
       <b>👤 Credenciales de acceso:</b>
       admin / admin123 &nbsp;·&nbsp; operador / operador123 &nbsp;·&nbsp; inspector01 / inspector123
     </div>
+    <div id="login-status" style="display:none;margin-bottom:12px;padding:10px 14px;border-radius:8px;font-size:.85rem;background:#E8F1FB;border:1px solid #B3CFF0;color:#002A5C"></div>
     <div id="login-error"></div>
     <div class="form-group" style="margin-bottom:14px">
       <label>Usuario</label>
@@ -1025,6 +1026,28 @@ function locateMe() {
     () => alert('No se pudo obtener la ubicación. Haz clic en el mapa manualmente.')
   );
 }
+
+// ── Despertar servidor (Railway cold start) ─────────────────────
+function setLoginStatus(msg, isError) {
+  var el = document.getElementById('login-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+  el.style.background = isError ? '#fee2e2' : '#E8F1FB';
+  el.style.borderColor = isError ? '#fca5a5' : '#B3CFF0';
+}
+async function wakeUpServer() {
+  if (document.getElementById('app').style.display === 'block') return; // ya logueado
+  setLoginStatus('⏳ Conectando con el servidor… (si está en Railway, puede tardar hasta 1 minuto)', false);
+  try {
+    await fetch('/health', { method: 'GET', signal: AbortSignal.timeout(65000) });
+    setLoginStatus('✅ Conectado. Introduce usuario y contraseña e inicia sesión.', false);
+  } catch (e) {
+    setLoginStatus('❌ No hay conexión. Espera 1 minuto, recarga la página (F5) y vuelve a intentar.', true);
+  }
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wakeUpServer);
+else wakeUpServer();
 
 // ── AUTH ──────────────────────────────────────────────────────
 async function doLogin() {

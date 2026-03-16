@@ -381,6 +381,7 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
       <p>Acceso exclusivo para inspectores</p>
     </div>
     <div class="lb-badge">🔒 Personal autorizado IMBIO</div>
+    <div id="login-status" style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:8px;font-size:.82rem;background:#E8F1FB;border:1px solid #B3CFF0;color:#0d1f35"></div>
     <div class="lf">
       <label>Usuario</label>
       <input id="l-user" type="text" placeholder="inspector01" autocomplete="username">
@@ -695,8 +696,30 @@ window.addEventListener('load', () => {
       TOKEN = null; USER = null;
     }
     document.getElementById('login-screen').classList.add('show');
+    wakeUpServerInsp();
   }, 1500);
 });
+
+// ── Despertar servidor (Railway cold start) ─────────────────────
+function setLoginStatusInsp(msg, isError) {
+  var el = document.getElementById('login-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+  el.style.background = isError ? '#fee2e2' : '#E8F1FB';
+  el.style.borderColor = isError ? '#fca5a5' : '#B3CFF0';
+}
+async function wakeUpServerInsp() {
+  var loginEl = document.getElementById('login-screen');
+  if (!loginEl || !loginEl.classList.contains('show')) return;
+  setLoginStatusInsp('⏳ Conectando con el servidor… (puede tardar hasta 1 min en Railway)', false);
+  try {
+    await fetch((typeof SERVER_URL !== 'undefined' ? SERVER_URL : '') + '/health', { method: 'GET', signal: AbortSignal.timeout(65000) });
+    setLoginStatusInsp('✅ Conectado. Introduce usuario y contraseña.', false);
+  } catch (e) {
+    setLoginStatusInsp('❌ Sin conexión. Espera 1 min, recarga (F5) e intenta de nuevo.', true);
+  }
+}
 
 // ── LOGIN ────────────────────────────────────────────────
 async function doLogin() {
@@ -711,7 +734,7 @@ async function doLogin() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
-      signal: AbortSignal.timeout(20000)
+      signal: AbortSignal.timeout(55000)
     });
     const d = await r.json();
     showLoading(false);
@@ -724,7 +747,9 @@ async function doLogin() {
     showApp();
   } catch(e) {
     showLoading(false);
-    errEl.textContent = 'Sin conexión al servidor. Verifica la URL.';
+    errEl.textContent = (e.name === 'TimeoutError' || e.name === 'AbortError')
+      ? 'El servidor no respondió a tiempo. Espera 1 minuto, recarga y vuelve a intentar.'
+      : 'Sin conexión al servidor. Verifica la URL.';
   }
 }
 document.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
@@ -735,6 +760,7 @@ function doLogout() {
   localStorage.removeItem('imbio_inspector_user');
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-screen').classList.add('show');
+  wakeUpServerInsp();
 }
 
 function showApp() {
