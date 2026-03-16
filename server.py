@@ -268,6 +268,28 @@ def hash_pw(pw):
 def now_iso():
     return datetime.now(timezone.utc).isoformat()
 
+def _calcular_vencimiento(plazo_str: str, fecha_base: str) -> str:
+    """Calcula la fecha de vencimiento a partir del plazo.
+    Ej: '72 horas', '5 días naturales', '15 días hábiles' -> ISO date
+    """
+    if not plazo_str or not fecha_base:
+        return ''
+    try:
+        from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+        base = _dt.fromisoformat(fecha_base.replace('Z', '+00:00'))
+        p = plazo_str.lower()
+        if 'hora' in p:
+            nums = [int(x) for x in p.split() if x.isdigit()]
+            horas = nums[0] if nums else 24
+            return (base + _td(hours=horas)).isoformat()
+        elif 'día' in p or 'dia' in p or 'natural' in p or 'hábil' in p or 'habil' in p:
+            nums = [int(x) for x in p.split() if x.isdigit()]
+            dias = nums[0] if nums else 5
+            return (base + _td(days=dias)).isoformat()
+        return ''
+    except Exception:
+        return ''
+
 def registrar_cambio_estado(db, report_id, estado_anterior, estado_nuevo, usuario, nota=''):
     """Registra cada cambio de estado en el historial del reporte."""
     if estado_anterior == estado_nuevo:
@@ -1041,6 +1063,86 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             }, 'Expediente encontrado.')
             return
 
+        # ── Apercibimientos por vencer / vencidos ──────────────────────
+        if path == '/api/apercibimientos/alertas':
+            user = self.require_auth('admin', 'operador', 'inspector')
+            if not user: return
+            from datetime import datetime as _dt, timezone as _tz, timedelta as _td
+            now_dt = _dt.now(_tz.utc)
+            db = read_db()
+            actas = [a for a in db.get('actas', []) if a.get('tipo_acta') == 'apercibimiento']
+            alertas = []
+            for acta in actas:
+                venc_str = acta.get('fecha_vencimiento', '')
+                if not venc_str:
+                    continue
+                try:
+                    venc_dt = _dt.fromisoformat(venc_str.replace('Z','+00:00'))
+                    diff = venc_dt - now_dt
+                    dias_restantes = diff.days
+                    # Incluir: ya vencidos o que vencen en 3 días
+                    if dias_restantes <= 3:
+                        # Buscar el reporte asociado
+                        rep = next((r for r in db['reports'] if r['id'] == acta['report_id']), {})
+                        # Solo alertar si el reporte no está ya cerrado/sancionado
+                        if rep.get('estado') not in ('cerrado', 'sancionado'):
+                            alertas.append({
+                                'acta_id':       acta['id'],
+                                'folio_acta':    acta.get('folio_acta', ''),
+                                'report_id':     acta.get('report_id'),
+                                'folio_reporte': rep.get('folio', ''),
+                                'infractor':     acta.get('infractor', ''),
+                                'domicilio':     acta.get('domicilio', ''),
+                                'colonia':       rep.get('colonia', ''),
+                                'plazo':         acta.get('plazo', ''),
+                                'fecha_vencimiento': venc_str,
+                                'dias_restantes': dias_restantes,
+                                'estado':        'vencido' if dias_restantes < 0 else 'por_vencer',
+                                'verificacion':  acta.get('verificacion_resultado', ''),
+                                'expediente':    rep.get('expediente', ''),
+                                'inspector':     acta.get('inspector', ''),
+                            })
+                except Exception:
+                    pass
+            # Ordenar: vencidos primero, luego por días restantes
+            alertas.sort(key=lambda a: a['dias_restantes'])
+            self.ok({'alertas': alertas, 'total': len(alertas),
+                     'vencidos': sum(1 for a in alertas if a['estado']=='vencido'),
+                     'por_vencer': sum(1 for a in alertas if a['estado']=='por_vencer')},
+                    f'{len(alertas)} apercibimiento(s) requieren atención.')
+            return
+
+        # ── Registrar resultado de verificación ─────────────────────────
+        # POST /api/actas/:id/verificacion
+        m_verif = re.match(r'^/api/actas/(\d+)/verificacion$', path)
+        if m_verif and self.command == 'POST':
+            user = self.require_auth('inspector', 'admin', 'operador')
+            if not user: return
+            aid  = int(m_verif.group(1))
+            body = self.parse_json_body()
+            resultado = body.get('resultado', '').strip()  # 'cumplió' | 'incumplió'
+            notas     = body.get('notas', '').strip()
+            if resultado not in ('cumplió', 'incumplió'):
+                self.err("Resultado debe ser 'cumplió' o 'incumplió'.", 422); return
+            db   = read_db()
+            acta = next((a for a in db.get('actas', []) if a['id'] == aid), None)
+            if not acta: self.err('Acta no encontrada.', 404); return
+            acta['verificacion_resultado'] = resultado
+            acta['verificacion_fecha']     = now_iso()
+            acta['verificacion_notas']     = notas
+            acta['verificacion_usuario']   = user.get('username', '')
+            # Si incumplió: cambiar estado del reporte a pendiente_medida para generar sanción
+            rep = next((r for r in db['reports'] if r['id'] == acta['report_id']), None)
+            if rep and resultado == 'incumplió':
+                estado_ant = rep.get('estado', '')
+                rep['estado'] = 'pendiente_medida'
+                rep['fecha_actualizacion'] = now_iso()
+                registrar_cambio_estado(db, rep['id'], estado_ant, 'pendiente_medida',
+                    user.get('username',''), f'Incumplimiento de apercibimiento {acta["folio_acta"]}')
+            write_db(db)
+            self.ok({'acta': acta, 'reporte': rep}, f'Verificación registrada: {resultado}.')
+            return
+
         # ── Lista de expedientes (panel admin) ──────────────────────────
         if path == '/api/expedientes':
             user = self.require_auth('admin', 'operador')
@@ -1430,6 +1532,9 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                 'da_plazo':       fields.get('da_plazo', ''),
                 'medidas_denuncia':    fields.get('medidas_denuncia', ''),
                 'medidas_correctivas': fields.get('medidas_correctivas', ''),
+                # Plazo y vencimiento (para apercibimientos)
+                'plazo':            fields.get('plazo', ''),
+                'fecha_vencimiento': _calcular_vencimiento(fields.get('plazo', ''), now),
                 # Firmas
                 'firma_inspector_base64': fields.get('firma_inspector_base64', ''),
                 'firma_visitado_base64':  fields.get('firma_visitado_base64', ''),
@@ -1443,6 +1548,11 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                 'num_permiso':        fields.get('num_permiso', ''),
                 'permiso_autoridad':  fields.get('permiso_autoridad', ''),
                 'nombre_visitado':        fields.get('nombre_visitado', ''),
+                # Verificación de cumplimiento (se llena en acta de verificación)
+                'verificacion_resultado': fields.get('verificacion_resultado', ''),  # 'cumplió'|'incumplió'
+                'verificacion_fecha':     fields.get('verificacion_fecha', ''),
+                'verificacion_notas':     fields.get('verificacion_notas', ''),
+                'acta_apercibimiento_ref': fields.get('acta_apercibimiento_ref', ''),  # folio del acta de apercibimiento
             }
             if not db.get('actas'): db['actas'] = []
             db['actas'].append(acta)
