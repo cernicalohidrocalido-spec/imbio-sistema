@@ -440,8 +440,21 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
     <!-- EN PROCESO -->
     <div id="screen-proceso" class="iscreen">
       <div class="ipad">
+        <!-- Context banner -->
+        <div style="background:linear-gradient(135deg,#0d1f35,#1a3a5c);border-radius:12px;padding:12px 14px;margin-bottom:12px">
+          <div style="color:#fff;font-weight:800;font-size:.88rem;margin-bottom:4px">🔄 Registros En Proceso</div>
+          <div style="color:rgba(255,255,255,.75);font-size:.75rem;line-height:1.5">
+            Selecciona el tipo de acta según corresponda al trámite o denuncia.
+          </div>
+          <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px">
+            <span style="background:rgba(255,255,255,.15);color:#fff;padding:3px 9px;border-radius:20px;font-size:.68rem">🔍 Inspección → Arbolado / Animales</span>
+            <span style="background:rgba(255,255,255,.15);color:#fff;padding:3px 9px;border-radius:20px;font-size:.68rem">📋 Circunstanciada → Documentar hechos</span>
+            <span style="background:rgba(255,255,255,.15);color:#fff;padding:3px 9px;border-radius:20px;font-size:.68rem">⚠️ Apercibimiento → Irregularidad corregible</span>
+            <span style="background:rgba(255,255,255,.15);color:#fff;padding:3px 9px;border-radius:20px;font-size:.68rem">🚫 Sanción → Infracción / Reincidencia</span>
+          </div>
+        </div>
         <div id="lista-proceso">
-          <div class="empty"><div class="em-ic">🔄</div><p>Cargando reportes en proceso...</p></div>
+          <div class="empty"><div class="em-ic">🔄</div><p>Cargando registros en proceso...</p></div>
         </div>
       </div>
     </div>
@@ -791,104 +804,136 @@ async function loadReportes(estado) {
 }
 
 function repCard(rep) {
-  const asig = rep.asignacion;
-  const t = rep.tipo || '';
-  const esArbolTec = ['poda_arbol','derribo_arbol','corte_arbol','arbol_riesgo'].includes(t);
-  const esAV       = t === 'areas_verdes';
-  const esAnimal   = ['perro_agresivo','animal_calle','animal_maltrato','fauna_silvestre','animal_abandonado'].includes(t);
-  const esAmbiental= !esArbolTec && !esAV && !esAnimal;
-  const cerrado    = rep.estado === 'cerrado';
+  const t        = rep.tipo || '';
+  const estado   = rep.estado || '';
+  const cerrado  = estado === 'cerrado';
+  const asig     = rep.asignacion;
 
-  // ── Botones según tipo ──────────────────────────────────────
+  // ── Clasificar tipo de registro ──────────────────────────────────
+  // Tipos que solo usan Acta de Inspección propia
+  const TIPOS_INSPECCION_SIMPLE = [
+    'poda_arbol','derribo_arbol','corte_arbol','arbol_riesgo',   // arbolado técnico
+    'perro_agresivo','animal_calle','animal_maltrato',            // animales agresivos / calle
+    'fauna_silvestre','animal_abandonado'
+  ];
+  const esAV              = t === 'areas_verdes';
+  const esInspeccionSimple = TIPOS_INSPECCION_SIMPLE.includes(t);
+  const esDenunciaGeneral = !esAV && !esInspeccionSimple;        // resto → flujo completo
+
+  // ── Badge de estado ───────────────────────────────────────────────
+  const ESTADO_LABELS = {
+    asignado: '📬 Asignado', en_inspeccion: '🔍 En Inspección',
+    en_proceso: '🔄 En Proceso', pendiente_medida: '⚠️ Pendiente Medida',
+    apercibido: '📋 Apercibido', sancionado: '🚫 Sancionado',
+    cerrado: '✅ Cerrado', reportado: '📩 Reportado'
+  };
+  const badgeLabel = ESTADO_LABELS[estado] || estado.replace(/_/g,' ');
+
+  // ── LÓGICA DE BOTONES ─────────────────────────────────────────────
   let btnAccion = '';
+
   if (!cerrado) {
-    if (esArbolTec) {
-      // Arbol técnico: solo inspección → cerrar
-      if (rep.estado === 'asignado') {
-        btnAccion = `<button class="ibtn ibtn-warning ibtn-sm" onclick="event.stopPropagation();cambiarEstado(${rep.id},'en_inspeccion')">🔍 Iniciar Inspección</button>`;
-      } else if (rep.estado === 'en_inspeccion' || rep.estado === 'en_proceso') {
-        btnAccion = `<button class="ibtn ibtn-acento ibtn-sm" onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','inspeccion')">🌳 Llenar Inspección</button>
-                     <button class="ibtn ibtn-success ibtn-sm" onclick="event.stopPropagation();confirmarCierre(${rep.id},'${rep.folio}')">✅ Cerrar</button>`;
-      }
-    } else if (esAV) {
-      // Áreas verdes: reporte de intervención → cerrar
-      if (rep.estado === 'asignado') {
-        btnAccion = `<button class="ibtn ibtn-warning ibtn-sm" onclick="event.stopPropagation();cambiarEstado(${rep.id},'en_proceso')">🌿 Iniciar Intervención</button>`;
-      } else if (rep.estado === 'en_proceso') {
-        btnAccion = `<button class="ibtn" style="background:#16a34a;color:#fff;font-size:.75rem;padding:6px 10px;border-radius:8px;font-weight:700" onclick="event.stopPropagation();abrirIntervencionAV(${rep.id},'${rep.folio}')">🌿 Registrar Actividades</button>
-                     <button class="ibtn ibtn-success ibtn-sm" onclick="event.stopPropagation();confirmarCierre(${rep.id},'${rep.folio}')">✅ Cerrar</button>`;
-      }
-    } else if (esAnimal) {
-      // Animal: inspección con acta
-      if (rep.estado === 'asignado') {
-        btnAccion = `<button class="ibtn ibtn-warning ibtn-sm" onclick="event.stopPropagation();cambiarEstado(${rep.id},'en_inspeccion')">🔍 Iniciar</button>`;
+
+    // ── ASIGNADO: cualquier tipo → un solo botón "Iniciar" ──────────
+    if (estado === 'asignado') {
+      const nuevoEstado = esAV ? 'en_proceso' : 'en_inspeccion';
+      btnAccion = `<button class="ibtn ibtn-warning ibtn-sm" style="width:100%"
+        onclick="event.stopPropagation();iniciarRegistro(${rep.id},'${nuevoEstado}')">
+        ▶ Iniciar
+      </button>`;
+
+    // ── EN PROCESO / EN INSPECCIÓN: mostrar opciones de actas ───────
+    } else if (['en_proceso','en_inspeccion'].includes(estado)) {
+
+      if (esAV) {
+        // Áreas verdes: solo registro de intervención
+        btnAccion = `
+          <button class="ibtn ibtn-sm" style="background:#16a34a;color:#fff;width:100%"
+            onclick="event.stopPropagation();abrirIntervencionAV(${rep.id},'${rep.folio}')">
+            🌿 Registrar Intervención
+          </button>`;
+
+      } else if (esInspeccionSimple) {
+        // Arbolado técnico / animales: solo Acta de Inspección
+        btnAccion = `
+          <button class="ibtn ibtn-acento ibtn-sm" style="width:100%"
+            onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','inspeccion')">
+            🔍 Levantar Acta de Inspección
+          </button>`;
+
       } else {
+        // Denuncia / trámite general: tres opciones
         btnAccion = `
           <div style="display:flex;flex-direction:column;gap:5px;width:100%">
-            <div style="font-size:.68rem;color:var(--muted);font-weight:700;text-align:center;padding:2px 0">📄 ¿Qué acta vas a levantar?</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
-              <button class="ibtn ibtn-sm" style="background:#1e3a8a;color:#fff;font-size:.72rem;padding:6px 4px"
-                onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','inspeccion')">🔍 Inspección</button>
-              <button class="ibtn ibtn-sm" style="background:#5b21b6;color:#fff;font-size:.72rem;padding:6px 4px"
-                onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','circunstanciada')">📋 Circunstanciada</button>
+            <div style="font-size:.68rem;color:var(--muted);font-weight:700;text-align:center;margin-bottom:2px">
+              📄 Selecciona el tipo de acta
             </div>
+            <button class="ibtn ibtn-sm" style="background:#1e3a8a;color:#fff;font-size:.75rem;padding:8px"
+              onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','circunstanciada')">
+              📋 Acta Circunstanciada
+            </button>
+            <button class="ibtn ibtn-sm" style="background:#92400e;color:#fff;font-size:.75rem;padding:8px"
+              onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','apercibimiento')">
+              ⚠️ Acta de Apercibimiento
+            </button>
+            <button class="ibtn ibtn-sm" style="background:#991b1b;color:#fff;font-size:.75rem;padding:8px"
+              onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','sancion')">
+              🚫 Acta de Sanción
+            </button>
+          </div>`;
+      }
+
+    // ── PENDIENTE DE MEDIDA: apercibimiento o sanción ───────────────
+    } else if (estado === 'pendiente_medida') {
+      btnAccion = `
+        <div style="display:flex;flex-direction:column;gap:5px;width:100%">
+          <div style="font-size:.68rem;color:#92400e;font-weight:700;text-align:center;margin-bottom:2px">
+            ⚠️ Pendiente — elige la medida
           </div>
-          ${['apercibido','sancionado','en_proceso'].includes(rep.estado)?`<button class="ibtn ibtn-success ibtn-sm" onclick="event.stopPropagation();confirmarCierre(${rep.id},'${rep.folio}')">✅ Cerrar</button>`:''}`;
-      }
-    } else {
-      // Ambiental: flujo completo de actas administrativas
-      if (rep.estado === 'asignado') {
-        btnAccion = `<button class="ibtn ibtn-warning ibtn-sm" onclick="event.stopPropagation();cambiarEstado(${rep.id},'en_inspeccion')">🔍 Iniciar Inspección</button>`;
-      } else if (['en_inspeccion','en_proceso'].includes(rep.estado)) {
-        btnAccion = `
-          <div style="display:flex;flex-direction:column;gap:5px;width:100%">
-            <div style="font-size:.68rem;color:var(--muted);font-weight:700;text-align:center;padding:2px 0">📄 ¿Qué acta vas a levantar?</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
-              <button class="ibtn ibtn-sm" style="background:#1e3a8a;color:#fff;font-size:.72rem;padding:6px 4px"
-                onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','inspeccion')">🔍 Inspección</button>
-              <button class="ibtn ibtn-sm" style="background:#5b21b6;color:#fff;font-size:.72rem;padding:6px 4px"
-                onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','circunstanciada')">📋 Circunstanciada</button>
-            </div>
-          </div>`;
-      } else if (rep.estado === 'pendiente_medida') {
-        btnAccion = `
-          <div style="display:flex;flex-direction:column;gap:5px;width:100%">
-            <div style="font-size:.68rem;color:#92400e;font-weight:700;text-align:center;padding:2px 0">⚠️ Pendiente — elige la medida:</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
-              <button class="ibtn ibtn-sm" style="background:#b45309;color:#fff;font-size:.72rem;padding:6px 4px"
-                onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','apercibimiento')">⚠️ Apercibimiento</button>
-              <button class="ibtn ibtn-sm" style="background:#991b1b;color:#fff;font-size:.72rem;padding:6px 4px"
-                onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','sancion')">🚫 Sanción</button>
-            </div>
-          </div>`;
-      } else if (['apercibido','sancionado'].includes(rep.estado)) {
-        btnAccion = `<button class="ibtn ibtn-success ibtn-sm" onclick="event.stopPropagation();confirmarCierre(${rep.id},'${rep.folio}')">✅ Cerrar Caso</button>`;
-      }
+          <button class="ibtn ibtn-sm" style="background:#92400e;color:#fff;font-size:.75rem;padding:8px"
+            onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','apercibimiento')">
+            ⚠️ Acta de Apercibimiento
+          </button>
+          <button class="ibtn ibtn-sm" style="background:#991b1b;color:#fff;font-size:.75rem;padding:8px"
+            onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','sancion')">
+            🚫 Acta de Sanción
+          </button>
+        </div>`;
+
+    // ── APERCIBIDO / SANCIONADO: cerrar caso ────────────────────────
+    } else if (['apercibido','sancionado'].includes(estado)) {
+      btnAccion = `<button class="ibtn ibtn-success ibtn-sm" style="width:100%"
+        onclick="event.stopPropagation();confirmarCierre(${rep.id},'${rep.folio}')">
+        ✅ Cerrar Caso
+      </button>`;
     }
   }
 
-  return `<div class="icard rep-card est-${rep.estado}" onclick="verDetalle(${rep.id})">
+  // ── CARD HTML ─────────────────────────────────────────────────────
+  return `<div class="icard rep-card est-${estado}" onclick="verDetalle(${rep.id})">
     <div class="icard-head">
       <div>
         <div class="rep-folio">${rep.folio}</div>
-        <div class="rep-tipo">${tipoLabel(rep.tipo)}</div>
+        <div class="rep-tipo">${tipoLabel(t)}</div>
       </div>
-      <span class="est-badge est-${rep.estado}">${{ en_inspeccion:'En Inspección', pendiente_medida:'⚠️ Pendiente Medida', apercibido:'Apercibido', sancionado:'Sancionado', asignado:'Asignado', en_proceso:'En Proceso', cerrado:'Cerrado', reportado:'Reportado' }[rep.estado] || rep.estado.replace('_',' ')}</span>
+      <span class="est-badge est-${estado}">${badgeLabel}</span>
     </div>
     <div class="icard-body">
-      <div class="rep-desc">${rep.descripcion}</div>
+      <div class="rep-desc">${rep.descripcion || ''}</div>
       <div class="rep-meta">
-        <span>📍 ${rep.colonia}</span>
+        <span>📍 ${rep.colonia || ''}</span>
         ${asig ? `<span>👷 ${asig.inspector}</span>` : ''}
         <span>📅 ${fmtFecha(rep.fecha_creacion)}</span>
       </div>
     </div>
-    <div class="icard-foot">
-      <button class="ibtn ibtn-primary ibtn-sm" onclick="event.stopPropagation();verDetalle(${rep.id})">👁 Ver</button>
+    <div class="icard-foot" style="flex-direction:column;align-items:stretch;gap:6px;padding:10px 12px">
+      <button class="ibtn ibtn-primary ibtn-sm" style="width:100%"
+        onclick="event.stopPropagation();verDetalle(${rep.id})">👁 Ver Detalle</button>
       ${btnAccion}
     </div>
   </div>`;
 }
+
 
 // ── DETALLE ───────────────────────────────────────────────
 async function verDetalle(id) {
@@ -1122,6 +1167,23 @@ async function cambiarEstado(id, estado) {
   } else alert(r.message);
 }
 
+// ── Iniciar registro: cambia estado Y navega a "En Proceso" ──────────────
+async function iniciarRegistro(id, nuevoEstado) {
+  showLoading(true);
+  const r = await api(`/api/reports/${id}`, 'PATCH', { estado: nuevoEstado });
+  showLoading(false);
+  if (r.success) {
+    // Navegar automáticamente a la pestaña "En Proceso"
+    setTab('proceso');
+    // Mostrar toast de confirmación
+    if (typeof showToast === 'function') {
+      showToast('Registro iniciado — selecciona el tipo de acta a levantar', 'ok');
+    }
+  } else {
+    alert(r.message || 'No se pudo iniciar el registro.');
+  }
+}
+
 // ── NUEVA ACTA ────────────────────────────────────────────
 let tipoActaSel = 'circunstanciada';
 
@@ -1243,6 +1305,25 @@ async function abrirNuevaActa(reportId, folio, tipoInicial) {
   actaFotos = [];
   renderFotosGrid();
   clearSig();
+
+  // ── Heredar datos del registro original ────────────────────────
+  var _repOrigen = (window._reportesCache || []).find(function(r){
+    return String(r.id) === String(reportId);
+  }) || {};
+  // Pre-fill desde el reporte origen
+  if (_repOrigen.id) {
+    s('acta-infractor',    _repOrigen.solicitante || _repOrigen.nombre_reportante || '');
+    s('acta-domicilio',    _repOrigen.domicilio   || _repOrigen.colonia || '');
+    s('acta-descripcion',  _repOrigen.descripcion || '');
+    if (_repOrigen.lat)   { s('acta-lat', _repOrigen.lat); s('acta-lon', _repOrigen.lon); }
+    // GPS bar
+    if (_repOrigen.lat) {
+      var bar = document.getElementById('acta-coords-bar');
+      if (bar) bar.textContent = '📍 ' + _repOrigen.lat + ', ' + _repOrigen.lon;
+    }
+    // Motivo desde tipo de reporte
+    if (!s._motivo) s('acta-motivo', tipoLabel ? (tipoLabel(_repOrigen.tipo)||'') : (_repOrigen.tipo||''));
+  }
 
   // ── Cargar actas previas y precargar datos ──────────────────
   await cargarActasPrevias(reportId);
