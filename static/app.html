@@ -816,6 +816,8 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var
 </div><!-- /app -->
 
 <script>
+  if (typeof TOKEN === 'undefined') var TOKEN = '';
+  if (typeof SERVER_URL === 'undefined') var SERVER_URL = window.location.origin;
 // ════════════════════════════════════════════════════════
 //  IMBIO CIUDADANO — App JavaScript
 // ════════════════════════════════════════════════════════
@@ -1428,8 +1430,6 @@ async function llamarIA(tipo, datos, campoDestino, btnEl) {
 
 
 // ══ MATLACHO WIDGET ══
-if (typeof TOKEN === 'undefined') { var TOKEN = ''; }
-if (typeof SERVER_URL === 'undefined') { var SERVER_URL = window.location.origin; }
 // ════════════════════════════════════════════════════════════════
 // MATLACHO — Asistente Ambiental Inteligente IMBIO
 // ════════════════════════════════════════════════════════════════
