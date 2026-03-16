@@ -737,10 +737,12 @@ class IMBIOHandler(BaseHTTPRequestHandler):
 
         # ── IA: Generar texto (botón "Matlacho mejora la descripción") ───
         if path == '/api/ai/generar-texto':
-            user = self.require_auth()
-            if not user: return
             body  = self.parse_json_body()
             tipo  = body.get('tipo', '')
+            # App Ciudadano usa reporte_ciudadano sin login; el resto exige auth
+            if tipo != 'reporte_ciudadano':
+                user = self.require_auth()
+                if not user: return
             datos = body.get('datos', {})
             prompts = {
                 'reporte_ciudadano': (
@@ -810,11 +812,13 @@ class IMBIOHandler(BaseHTTPRequestHandler):
 
         # ── IA: Matlacho — Asistente ambiental inteligente ──────────────
         if path == '/api/ai/matlacho':
-            user = self.require_auth()
-            if not user: return
             body  = self.parse_json_body()
             tipo  = body.get('tipo', '')
             datos = body.get('datos', {})
+            # App Ciudadano usa reporte_ciudadano y chat sin login; el resto exige auth
+            if tipo not in ('reporte_ciudadano', 'chat'):
+                user = self.require_auth()
+                if not user: return
 
             import urllib.request as _ur
             api_key = os.environ.get('ANTHROPIC_API_KEY', '')
