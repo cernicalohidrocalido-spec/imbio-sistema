@@ -594,7 +594,8 @@
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
           <h2 style="margin:0">🏪 Padrón de Establecimientos</h2>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-secondary" onclick="exportarEstablecimientos()" style="font-size:.8rem;padding:6px 12px">📥 Exportar</button>
+            <button class="btn btn-secondary" onclick="exportarEstablecimientos()" style="font-size:.8rem;padding:6px 12px">📥 Exportar CSV</button>
+            <button onclick="mostrarStatusDenue()" style="background:#0369a1;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:.8rem;font-weight:700;cursor:pointer">🏛️ DENUE INEGI</button>
             <button class="btn btn-primary" onclick="abrirModalEstablecimiento()" style="font-size:.8rem;padding:6px 12px">➕ Nuevo Establecimiento</button>
           </div>
         </div>
@@ -655,7 +656,12 @@
               <option value="cumple_parcial">⚠️ Cumple parcial</option>
               <option value="no_cumple">❌ No cumple</option>
             </select>
-            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('est-buscar').value='';document.getElementById('est-filtro-giro').value='';document.getElementById('est-filtro-estado').value='';cargarEstablecimientos()">✕ Limpiar</button>
+            <select id="est-filtro-fuente" onchange="cargarEstablecimientos()" style="padding:7px 10px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+              <option value="">Todas las fuentes</option>
+              <option value="DENUE_INEGI_2026">🏛️ DENUE INEGI</option>
+              <option value="manual">✏️ Manual</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('est-buscar').value='';document.getElementById('est-filtro-giro').value='';document.getElementById('est-filtro-estado').value='';document.getElementById('est-filtro-fuente').value='';cargarEstablecimientos()">✕ Limpiar</button>
           </div>
         </div>
 
@@ -670,7 +676,7 @@
                   <th style="padding:10px 12px;text-align:left">Giro</th>
                   <th style="padding:10px 12px;text-align:left">Domicilio</th>
                   <th style="padding:10px 12px;text-align:left">Responsable</th>
-                  <th style="padding:10px 12px;text-align:center">Cumplimiento</th>
+                  <th style="padding:10px 12px;text-align:left">Personal</th><th style="padding:10px 12px;text-align:center">Cumplimiento</th>
                   <th style="padding:10px 12px;text-align:center">Acciones</th>
                 </tr>
               </thead>
@@ -714,6 +720,34 @@
         </div>
 
       </div><!-- fin page-verificaciones -->
+
+      <!-- MODAL: DENUE INEGI STATUS -->
+      <div id="modal-denue" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px">
+        <div style="background:#fff;border-radius:14px;padding:28px;width:100%;max-width:520px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <h3 style="margin:0;color:#1a3a5c">🏛️ DENUE INEGI — Directorio de Establecimientos</h3>
+            <button onclick="document.getElementById('modal-denue').style.display='none'" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888">✕</button>
+          </div>
+
+          <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:14px;margin-bottom:16px">
+            <div style="font-size:.82rem;color:#0369a1;font-weight:700;margin-bottom:6px">ℹ️ ¿Qué es el DENUE?</div>
+            <div style="font-size:.8rem;color:#1e40af;line-height:1.5">El Directorio Estadístico Nacional de Unidades Económicas del INEGI contiene todos los establecimientos registrados en Pabellón de Arteaga con nombre, giro, domicilio y coordenadas GPS.</div>
+          </div>
+
+          <div id="denue-status-content" style="margin-bottom:16px">
+            <div style="text-align:center;padding:20px;color:#888">Cargando información...</div>
+          </div>
+
+          <div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:12px;margin-bottom:16px;font-size:.8rem;color:#92400e">
+            ⚠️ <b>Nota:</b> Al reimportar se reemplazarán los registros DENUE existentes. Los establecimientos creados manualmente se conservan.
+          </div>
+
+          <div style="display:flex;gap:10px;justify-content:flex-end">
+            <button onclick="document.getElementById('modal-denue').style.display='none'" class="btn btn-secondary">Cerrar</button>
+            <button onclick="reimportarDenue()" id="btn-reimportar-denue" class="btn btn-primary" style="background:#0369a1">🔄 Reimportar DENUE</button>
+          </div>
+        </div>
+      </div>
 
       <!-- ══════════════════════════════════════════════════════════
            MODAL: NUEVO/EDITAR ESTABLECIMIENTO
@@ -3468,6 +3502,62 @@ async function exportarExcel() {
 
 
 
+// ── DENUE INEGI — funciones de importación ───────────────────
+async function mostrarStatusDenue() {
+  document.getElementById('modal-denue').style.display = 'flex';
+  const el = document.getElementById('denue-status-content');
+  el.innerHTML = '<div style="text-align:center;padding:20px;color:#888">⏳ Cargando...</div>';
+  const r = await api('/api/denue/status');
+  if (!r.success) {
+    el.innerHTML = '<div style="color:#dc2626;padding:10px">Error al consultar estado DENUE</div>';
+    return;
+  }
+  const d = r.data;
+  const fuentes = d.fuentes || {};
+  const inegi = fuentes['DENUE_INEGI_2026'] || fuentes['importacion_denue'] || 0;
+  const manual = fuentes['manual'] || (d.total - inegi);
+  const seedKB = d.seed_size ? (d.seed_size / 1024).toFixed(0) : '–';
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+      <div style="background:#f0f9ff;border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:1.6rem;font-weight:800;color:#0369a1">${d.total.toLocaleString()}</div>
+        <div style="font-size:.75rem;color:#555;margin-top:2px">Total en padrón</div>
+      </div>
+      <div style="background:#f0fdf4;border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:1.6rem;font-weight:800;color:#16a34a">${inegi.toLocaleString()}</div>
+        <div style="font-size:.75rem;color:#555;margin-top:2px">🏛️ Del INEGI</div>
+      </div>
+      <div style="background:#fafafa;border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:1.6rem;font-weight:800;color:#6b7280">${manual.toLocaleString()}</div>
+        <div style="font-size:.75rem;color:#555;margin-top:2px">✏️ Manuales</div>
+      </div>
+    </div>
+    <div style="font-size:.82rem;color:#555;background:#f8fafc;border-radius:6px;padding:10px">
+      📁 Archivo seed: <b>${d.seed_disponible ? '✅ Disponible' : '❌ No encontrado'}</b>
+      ${d.seed_disponible ? `<span style="color:#888"> (${seedKB} KB)</span>` : ''}
+      <br>📅 Fuente: DENUE INEGI — Pabellón de Arteaga, Ags. — Marzo 2026
+      <br>🏢 Unidades económicas con coordenadas GPS y actividad SCIAN
+    </div>`;
+}
+
+async function reimportarDenue() {
+  if (!confirm('¿Reimportar el DENUE INEGI? Se reemplazarán los registros del INEGI y se conservarán los manuales.')) return;
+  const btn = document.getElementById('btn-reimportar-denue');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Importando...'; }
+  const r = await api('/api/denue/reimportar', 'POST', {});
+  if (btn) { btn.disabled = false; btn.textContent = '🔄 Reimportar DENUE'; }
+  if (r.success) {
+    document.getElementById('modal-denue').style.display = 'none';
+    cargarEstablecimientos();
+    loadDashboard();
+    alert(`✅ DENUE reimportado correctamente.
+📊 ${r.data.importados.toLocaleString()} del INEGI + ${r.data.manuales_conservados} manuales
+Total en padrón: ${r.data.total.toLocaleString()}`);
+  } else {
+    alert('❌ Error al reimportar: ' + (r.message || 'Sin respuesta del servidor'));
+  }
+}
+
 // ── Mapa del modal de establecimiento ────────────────────────
 let _mapEst = null, _markerEst = null, _layerEst = null;
 
@@ -3576,10 +3666,12 @@ async function cargarEstablecimientos() {
   const q      = document.getElementById('est-buscar')?.value || '';
   const giro   = document.getElementById('est-filtro-giro')?.value || '';
   const estado = document.getElementById('est-filtro-estado')?.value || '';
+  const fuente = document.getElementById('est-filtro-fuente')?.value || '';
   let url = '/api/establecimientos?';
   if (q)      url += '&q=' + encodeURIComponent(q);
   if (giro)   url += '&giro=' + giro;
   if (estado) url += '&estado=' + estado;
+  if (fuente) url += '&fuente=' + fuente;
   const r = await api(url);
   if (!r.success) return;
   _estabsCache = r.data.establecimientos;
@@ -3601,11 +3693,15 @@ async function cargarEstablecimientos() {
   }
   tbody.innerHTML = _estabsCache.map((e, i) => `
     <tr style="background:${i%2===0?'#fff':'#f8fafc'};border-bottom:1px solid #f1f5f9">
-      <td style="padding:8px 12px;font-family:monospace;font-size:.78rem;font-weight:700;color:#1a3a5c">${e.folio || '–'}</td>
-      <td style="padding:8px 12px;font-weight:600">${e.nombre}<br><small style="color:#888;font-weight:400">${e.rfc||''}</small></td>
+      <td style="padding:8px 12px;font-family:monospace;font-size:.78rem;font-weight:700;color:#1a3a5c">
+        ${e.folio || '–'}
+        ${e.fuente === 'DENUE_INEGI_2026' ? '<div style="display:inline-block;background:#dbeafe;color:#1d4ed8;font-size:.6rem;padding:1px 4px;border-radius:3px;font-family:sans-serif;margin-left:3px">INEGI</div>' : ''}
+      </td>
+      <td style="padding:8px 12px;font-weight:600">${e.nombre}<br><small style="color:#888;font-weight:400">${e.razon_social||e.rfc||''}</small></td>
       <td style="padding:8px 12px">${GIRO_LABELS[e.giro]||e.giro||'–'}</td>
       <td style="padding:8px 12px;font-size:.8rem">${e.domicilio||'–'}<br><small style="color:#888">${e.colonia||''}</small></td>
       <td style="padding:8px 12px;font-size:.82rem">${e.responsable||'–'}<br><small style="color:#888">${e.telefono||''}</small></td>
+      <td style="padding:8px 12px;font-size:.78rem;color:#555">${e.personal||'–'}</td>
       <td style="padding:8px 12px;text-align:center">${CUMPL_BADGE[e.estado_cumplimiento||'sin_verificar']||''}</td>
       <td style="padding:8px 12px;text-align:center;white-space:nowrap">
         <button onclick="editarEstablecimiento(${e.id})" class="btn btn-secondary btn-sm" style="font-size:.72rem;padding:4px 8px;margin:1px">✏️ Editar</button>
