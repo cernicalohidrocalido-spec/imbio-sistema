@@ -669,18 +669,32 @@ window.addEventListener('load', () => {
     s.onerror = function() { console.warn('[IMBIO] Leaflet no disponible'); };
     document.head.appendChild(s);
   }
-  setTimeout(() => {
+  setTimeout(async () => {
     console.log('[IMBIO] Iniciando app...');
     document.getElementById('splash').classList.add('hide');
     const saved = localStorage.getItem('imbio_inspector_token');
     const savedUser = localStorage.getItem('imbio_inspector_user');
     if (saved && savedUser) {
-      TOKEN = saved;
-      USER  = JSON.parse(savedUser);
-      showApp();
-    } else {
-      document.getElementById('login-screen').classList.add('show');
+      try {
+        const r = await fetch(SERVER_URL + '/api/auth/me', {
+          headers: { 'Authorization': 'Bearer ' + saved },
+          signal: AbortSignal.timeout(8000)
+        });
+        if (r.ok) {
+          const d = await r.json();
+          if (d.success && d.data) {
+            TOKEN = saved;
+            USER = d.data;
+            showApp();
+            return;
+          }
+        }
+      } catch (e) { console.warn('[IMBIO] Validación token:', e); }
+      localStorage.removeItem('imbio_inspector_token');
+      localStorage.removeItem('imbio_inspector_user');
+      TOKEN = null; USER = null;
     }
+    document.getElementById('login-screen').classList.add('show');
   }, 1500);
 });
 
