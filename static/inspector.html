@@ -4198,7 +4198,7 @@ async function _matlachoCallAPI(tipo, datos) {
   var loading = _matlachoAddBubble('🐭 Matlacho está pensando...', false, true);
   try {
     var serverUrl = (typeof SERVER_URL !== 'undefined') ? SERVER_URL : window.location.origin;
-    var token = (typeof TOKEN !== 'undefined') ? TOKEN : (localStorage.getItem('imbio_token') || '');
+    var token = (typeof TOKEN !== 'undefined' && TOKEN) ? TOKEN : (localStorage.getItem('imbio_inspector_token') || '');
     var resp = await fetch(serverUrl + '/api/ai/matlacho', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },

@@ -712,7 +712,8 @@
         <div id="ver-lista" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px">
           <div style="text-align:center;padding:32px;color:#888;grid-column:1/-1">Cargando...</div>
         </div>
-      </div>
+
+      </div><!-- fin page-verificaciones -->
 
       <!-- ══════════════════════════════════════════════════════════
            MODAL: NUEVO/EDITAR ESTABLECIMIENTO
@@ -777,6 +778,18 @@
             <div class="form-group">
               <label>Colonia</label>
               <input id="est-colonia" placeholder="Colonia">
+            </div>
+            <div style="grid-column:1/-1" class="form-group">
+              <label style="font-weight:700;color:#1a3a5c;font-size:.85rem">📍 Ubicación en el Mapa</label>
+              <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+                <button type="button" onclick="usarGPSEst()" style="padding:6px 12px;background:#1a3a5c;color:#fff;border:none;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer">📡 Usar GPS</button>
+                <button type="button" onclick="setLayerEst('sat')" style="padding:6px 10px;background:#374151;color:#fff;border:none;border-radius:6px;font-size:.78rem;cursor:pointer">🛰️ Satelital</button>
+                <button type="button" onclick="setLayerEst('osm')" style="padding:6px 10px;background:#374151;color:#fff;border:none;border-radius:6px;font-size:.78rem;cursor:pointer">🗺️ Calles</button>
+                <span id="est-coords-txt" style="font-size:.75rem;color:#6b7280;align-self:center">Sin ubicación</span>
+              </div>
+              <div id="map-est" style="height:220px;border-radius:8px;border:1px solid var(--borde);background:#e5e7eb"></div>
+              <input type="hidden" id="est-lat">
+              <input type="hidden" id="est-lon">
             </div>
             <div class="form-group">
               <label>Nombre del Responsable *</label>
@@ -1292,6 +1305,23 @@ async function refreshMapMarkers() {
     const group = L.featureGroup(mapMarkers);
     mapReportes.fitBounds(group.getBounds().pad(0.15));
   }
+  // Mostrar establecimientos en el mapa también
+  try {
+    const re = await api('/api/establecimientos');
+    if (re.success) {
+      re.data.establecimientos.filter(e => e.lat && e.lon).forEach(e => {
+        const colorEst = {cumple:'#16a34a',cumple_parcial:'#d97706',no_cumple:'#dc2626',sin_verificar:'#6b7280'}[e.estado_cumplimiento||'sin_verificar']||'#6b7280';
+        const iconEst = L.divIcon({
+          html: `<div style="background:${colorEst};color:#fff;border-radius:4px;padding:2px 5px;font-size:.65rem;font-weight:700;white-space:nowrap;border:1px solid rgba(0,0,0,.2);box-shadow:0 1px 4px rgba(0,0,0,.3)">🏪 ${e.nombre.substring(0,12)}</div>`,
+          className:'', iconAnchor:[0,0]
+        });
+        const m = L.marker([e.lat, e.lon], { icon: iconEst });
+        m.bindPopup(`<b>🏪 ${e.nombre}</b><br>${e.giro||''}<br>${e.domicilio||''}<br><span style="font-size:.75rem">${{cumple:'✅ Cumple',cumple_parcial:'⚠️ Parcial',no_cumple:'❌ No Cumple',sin_verificar:'🔘 Sin Verificar'}[e.estado_cumplimiento||'sin_verificar']||''}</span>`);
+        m.addTo(mapReportes);
+        mapMarkers.push(m);
+      });
+    }
+  } catch(e) {}
   // Mostrar hora de última actualización
   const el = document.getElementById('map-last-update');
   if (el) el.textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-MX');
@@ -3437,6 +3467,75 @@ async function exportarExcel() {
 }
 
 
+
+// ── Mapa del modal de establecimiento ────────────────────────
+let _mapEst = null, _markerEst = null, _layerEst = null;
+
+function _initMapEst() {
+  if (_mapEst) { setTimeout(() => _mapEst.invalidateSize(), 100); return; }
+  _mapEst = L.map('map-est', { zoomControl: true }).setView([22.1508, -102.2913], 15);
+  _layerEst = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    { attribution:'© OSM', maxZoom:19 }).addTo(_mapEst);
+  _mapEst.on('click', function(e) { _geocodeEst(e.latlng.lat, e.latlng.lng); });
+}
+
+function setLayerEst(name) {
+  if (!_mapEst) return;
+  if (_layerEst) _mapEst.removeLayer(_layerEst);
+  const urls = {
+    osm: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    sat: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+  };
+  _layerEst = L.tileLayer(urls[name]||urls.osm, { maxZoom:19 }).addTo(_mapEst);
+}
+
+function usarGPSEst() {
+  if (!navigator.geolocation) { alert('GPS no disponible.'); return; }
+  document.getElementById('est-coords-txt').textContent = '📡 Obteniendo ubicación...';
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    _mapEst.setView([pos.coords.latitude, pos.coords.longitude], 17);
+    _geocodeEst(pos.coords.latitude, pos.coords.longitude);
+  }, function() {
+    document.getElementById('est-coords-txt').textContent = '⚠️ No se pudo obtener GPS';
+  }, { enableHighAccuracy: true, timeout: 10000 });
+}
+
+async function _geocodeEst(lat, lng) {
+  document.getElementById('est-lat').value = lat.toFixed(7);
+  document.getElementById('est-lon').value = lng.toFixed(7);
+  document.getElementById('est-coords-txt').textContent = '🔍 Buscando dirección...';
+  if (_markerEst) _mapEst.removeLayer(_markerEst);
+  const icon = L.divIcon({
+    html: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="24" height="36"><path d="M12 0C5.37 0 0 5.37 0 12c0 9 12 24 12 24s12-15 12-24C24 5.37 18.63 0 12 0z" fill="#1a3a5c" stroke="white" stroke-width="1.5"/><circle cx="12" cy="12" r="5" fill="white" opacity="0.9"/></svg>',
+    className:'', iconSize:[24,36], iconAnchor:[12,36]
+  });
+  _markerEst = L.marker([lat, lng], { icon }).addTo(_mapEst);
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&accept-language=es`);
+    const geo = await r.json();
+    const a = geo.address || {};
+    const calle   = a.road || a.pedestrian || '';
+    const numero  = a.house_number || '';
+    const colonia = a.neighbourhood || a.suburb || a.quarter || '';
+    const cp      = a.postcode || '';
+    // Autocompletar domicilio si está vacío
+    const domEl = document.getElementById('est-domicilio');
+    if (domEl && !domEl.value.trim()) {
+      const partes = [calle, numero ? '#'+numero : '', colonia, cp].filter(Boolean);
+      domEl.value = partes.join(', ');
+    }
+    if (!document.getElementById('est-colonia').value.trim() && colonia) {
+      document.getElementById('est-colonia').value = colonia;
+    }
+    const coordTxt = `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}${calle?' — '+calle+(numero?' #'+numero:''):''}`;
+    document.getElementById('est-coords-txt').textContent = coordTxt;
+    _markerEst.bindPopup(`<b>${calle} ${numero}</b><br><small>${colonia}</small>`).openPopup();
+  } catch(e) {
+    document.getElementById('est-coords-txt').textContent = `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  }
+}
+
+
 // ═══════════════════════════════════════════════════════════════
 //  MÓDULO: ESTABLECIMIENTOS Y VERIFICACIONES AMBIENTALES
 // ═══════════════════════════════════════════════════════════════
@@ -3511,6 +3610,7 @@ async function cargarEstablecimientos() {
       <td style="padding:8px 12px;text-align:center;white-space:nowrap">
         <button onclick="editarEstablecimiento(${e.id})" class="btn btn-secondary btn-sm" style="font-size:.72rem;padding:4px 8px;margin:1px">✏️ Editar</button>
         <button onclick="programarVerificacionDesde(${e.id})" class="btn btn-primary btn-sm" style="font-size:.72rem;padding:4px 8px;margin:1px">🔍 Verificar</button>
+        ${(e.lat && e.lon) ? `<a href="https://www.google.com/maps?q=${e.lat},${e.lon}&z=18" target="_blank" class="btn btn-secondary btn-sm" style="font-size:.72rem;padding:4px 8px;margin:1px;text-decoration:none">📍 Mapa</a>` : ''}
       </td>
     </tr>`).join('');
 }
@@ -3531,7 +3631,11 @@ function abrirModalEstablecimiento() {
   document.getElementById('est-estado-cump').value = 'sin_verificar';
   document.querySelectorAll('.perm-check').forEach(c => c.checked = false);
   document.getElementById('est-modal-alert').innerHTML = '';
+  document.getElementById('est-lat').value = '';
+  document.getElementById('est-lon').value = '';
+  document.getElementById('est-coords-txt').textContent = 'Sin ubicación — haz clic en el mapa';
   document.getElementById('modal-establecimiento').style.display = 'flex';
+  setTimeout(_initMapEst, 200);
 }
 
 function cerrarModalEst() {
@@ -3555,7 +3659,24 @@ function editarEstablecimiento(id) {
   const perms = est.permisos || [];
   document.querySelectorAll('.perm-check').forEach(c => { c.checked = perms.includes(c.value); });
   document.getElementById('est-modal-alert').innerHTML = '';
+  // Cargar coords si existen
+  const latEl = document.getElementById('est-lat');
+  const lonEl = document.getElementById('est-lon');
+  if (latEl) latEl.value = est.lat || '';
+  if (lonEl) lonEl.value = est.lon || '';
+  if (est.lat && est.lon) {
+    document.getElementById('est-coords-txt').textContent = `📍 ${parseFloat(est.lat).toFixed(5)}, ${parseFloat(est.lon).toFixed(5)}`;
+  } else {
+    document.getElementById('est-coords-txt').textContent = 'Sin ubicación — haz clic en el mapa';
+  }
   document.getElementById('modal-establecimiento').style.display = 'flex';
+  setTimeout(function() {
+    _initMapEst();
+    if (est.lat && est.lon) {
+      _mapEst.setView([est.lat, est.lon], 17);
+      _geocodeEst(est.lat, est.lon);
+    }
+  }, 200);
 }
 
 async function guardarEstablecimiento() {
@@ -3568,6 +3689,8 @@ async function guardarEstablecimiento() {
   if (!giro)      { alertEl.innerHTML = alert_html('error','Selecciona el giro.'); return; }
   if (!domicilio) { alertEl.innerHTML = alert_html('error','El domicilio es obligatorio.'); return; }
   const permisos = Array.from(document.querySelectorAll('.perm-check:checked')).map(c => c.value);
+  const latVal = document.getElementById('est-lat').value;
+  const lonVal = document.getElementById('est-lon').value;
   const body = {
     nombre, giro, domicilio, responsable,
     rfc:      document.getElementById('est-rfc').value.trim().toUpperCase(),
@@ -3575,7 +3698,9 @@ async function guardarEstablecimiento() {
     telefono: document.getElementById('est-telefono').value.trim(),
     estado_cumplimiento: document.getElementById('est-estado-cump').value,
     observaciones: document.getElementById('est-observaciones').value.trim(),
-    permisos
+    permisos,
+    lat: latVal ? parseFloat(latVal) : null,
+    lon: lonVal ? parseFloat(lonVal) : null,
   };
   const editId = document.getElementById('est-edit-id').value;
   const btn = document.getElementById('btn-guardar-est');
