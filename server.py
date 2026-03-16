@@ -492,8 +492,7 @@ class IMBIOHandler(BaseHTTPRequestHandler):
         # ── Listar inspectores ───────────────────────────────────────────
         # ── IA: Generar texto ────────────────────────────────────────
         if path == '/api/ai/generar-texto':
-            user = self.require_auth()
-            if not user: return
+            # Endpoint publico para asistente IA ciudadano
             body  = self.parse_json_body()
             tipo  = body.get('tipo', '')
             datos = body.get('datos', {})
@@ -565,8 +564,7 @@ class IMBIOHandler(BaseHTTPRequestHandler):
 
         # ── IA: Matlacho — Asistente ambiental inteligente ──────────────
         if path == '/api/ai/matlacho':
-            user = self.require_auth()
-            if not user: return
+            # Endpoint publico para Matlacho
             body  = self.parse_json_body()
             tipo  = body.get('tipo', '')
             datos = body.get('datos', {})
