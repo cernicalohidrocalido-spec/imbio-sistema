@@ -1083,11 +1083,21 @@ function showPage(name) {
 
 // ── API ───────────────────────────────────────────────────────
 async function api(path, method='GET', body=null, auth=true) {
+  if (auth && !TOKEN) return { success: false, message: 'Sesión expirada' };
   const headers = {'Content-Type':'application/json'};
   if (auth && TOKEN) headers['Authorization'] = 'Bearer '+TOKEN;
   const opts = {method, headers};
   if (body) opts.body = JSON.stringify(body);
   const r = await fetch(path, opts);
+  if (r.status === 401 && auth) {
+    TOKEN = null; USER = null;
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+    const errEl = document.getElementById('login-error');
+    if (errEl) errEl.innerHTML = alert_html('error', 'Sesión expirada. Inicia sesión nuevamente.');
+    mapReportes = null; mapPicker = null;
+    return { success: false, message: 'Sesión expirada' };
+  }
   return r.json();
 }
 
@@ -2858,8 +2868,9 @@ window.showPage = function(name) {
   if (name === 'alertas') cargarAlertas();
 };
 
-// Auto-verificar alertas al cargar el panel
+// Auto-verificar alertas al cargar el panel (solo si hay sesión)
 setTimeout(async function() {
+  if (!TOKEN) return;
   const r = await api('/api/apercibimientos/alertas');
   if (r.success && r.data && r.data.total > 0) {
     const badge = document.getElementById('alertas-badge');
