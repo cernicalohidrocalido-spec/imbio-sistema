@@ -1143,6 +1143,82 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             self.ok({'acta': acta, 'reporte': rep}, f'Verificación registrada: {resultado}.')
             return
 
+        # ── Estadísticas para dashboard ─────────────────────────────────
+        if path == '/api/stats':
+            user = self.require_auth('admin', 'operador')
+            if not user: return
+            db   = read_db()
+            reps = db.get('reports', [])
+            actas = db.get('actas', [])
+            now_dt = datetime.now(timezone.utc)
+
+            # ── Conteos por estado ─────────────────────────────────────────
+            from collections import Counter
+            estados = Counter(r.get('estado','') for r in reps)
+            tipos   = Counter(r.get('tipo','') for r in reps)
+            colonias = Counter(r.get('colonia','') for r in reps)
+            tipos_acta = Counter(a.get('tipo_acta','') for a in actas)
+
+            # ── Por mes (últimos 12 meses) ─────────────────────────────────
+            from datetime import datetime as _dt, timedelta as _td
+            meses = {}
+            for r in reps:
+                try:
+                    d = _dt.fromisoformat(r['fecha_creacion'].replace('Z','+00:00'))
+                    key = d.strftime('%Y-%m')
+                    meses[key] = meses.get(key, 0) + 1
+                except: pass
+            # Sort and take last 12
+            meses_sorted = sorted(meses.items())[-12:]
+
+            # ── Tiempo promedio de resolución (reportados → cerrados) ──────
+            tiempos = []
+            for r in reps:
+                if r.get('estado') == 'cerrado':
+                    try:
+                        t_cre = _dt.fromisoformat(r['fecha_creacion'].replace('Z','+00:00'))
+                        t_act = _dt.fromisoformat(r['fecha_actualizacion'].replace('Z','+00:00'))
+                        tiempos.append((t_act - t_cre).days)
+                    except: pass
+            tiempo_prom = round(sum(tiempos)/len(tiempos), 1) if tiempos else 0
+
+            # ── Inspectores más activos ────────────────────────────────────
+            inspectores_cnt = Counter()
+            for a in db.get('assignments', []):
+                insp = a.get('inspector', '')
+                if insp: inspectores_cnt[insp] += 1
+            top_inspectores = inspectores_cnt.most_common(5)
+
+            # ── Apercibimientos vencidos ───────────────────────────────────
+            vencidos = 0
+            for a in actas:
+                if a.get('tipo_acta') == 'apercibimiento' and a.get('fecha_vencimiento'):
+                    try:
+                        vd = _dt.fromisoformat(a['fecha_vencimiento'].replace('Z','+00:00'))
+                        rep_a = next((r for r in reps if r['id']==a['report_id']), {})
+                        if now_dt > vd and rep_a.get('estado') not in ('cerrado','sancionado'):
+                            vencidos += 1
+                    except: pass
+
+            self.ok({
+                'totales': {
+                    'reportes': len(reps),
+                    'actas':    len(actas),
+                    'cerrados': estados.get('cerrado', 0),
+                    'en_proceso': estados.get('en_proceso', 0) + estados.get('en_inspeccion', 0),
+                    'pendientes': estados.get('reportado', 0) + estados.get('asignado', 0),
+                    'apercibimientos_vencidos': vencidos,
+                    'tiempo_resolucion_dias': tiempo_prom,
+                },
+                'por_estado':    dict(estados),
+                'por_tipo':      dict(tipos.most_common(8)),
+                'por_colonia':   dict(colonias.most_common(10)),
+                'por_tipo_acta': dict(tipos_acta),
+                'por_mes':       [{'mes': k, 'total': v} for k, v in meses_sorted],
+                'top_inspectores': [{'inspector': k, 'asignaciones': v} for k, v in top_inspectores],
+            }, 'Estadísticas generadas.')
+            return
+
         # ── Lista de expedientes (panel admin) ──────────────────────────
         if path == '/api/expedientes':
             user = self.require_auth('admin', 'operador')
