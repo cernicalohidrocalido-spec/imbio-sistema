@@ -157,7 +157,7 @@
     </div>
     <div id="login-status" style="display:none;margin-bottom:12px;padding:10px 14px;border-radius:8px;font-size:.85rem;background:#E8F1FB;border:1px solid #B3CFF0;color:#002A5C"></div>
     <div id="login-error"></div>
-    <form id="login-form" onsubmit="(typeof doLogin==='function'?doLogin():null); return false;" action="javascript:void(0)">
+    <form id="login-form" onsubmit="doLogin(); return false;" action="javascript:void(0)">
       <div class="form-group" style="margin-bottom:14px">
         <label for="l-user">Usuario</label>
         <input id="l-user" name="username" type="text" value="admin" autocomplete="username">
@@ -166,7 +166,7 @@
         <label for="l-pass">Contraseña</label>
         <input id="l-pass" name="password" type="password" value="admin123" autocomplete="current-password">
       </div>
-      <button type="button" id="btn-login" class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()">🔐 Iniciar Sesión</button>
+      <button type="submit" id="btn-login" class="btn btn-primary" style="width:100%;justify-content:center">🔐 Iniciar Sesión</button>
     </form>
   </div>
 </div>
@@ -216,16 +216,34 @@
           <div class="stat" style="background:#0369a1;color:#fff"><div class="num" id="st-tiempo">–</div><div class="lbl">Días prom. resolución</div></div>
         </div>
 
-        <!-- KPIs Establecimientos -->
-        <div style="margin-bottom:16px">
-          <h4 style="font-size:.85rem;color:#1a3a5c;margin-bottom:8px">🏪 Verificación Ambiental a Establecimientos</h4>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">
-            <div class="stat" style="background:#1e3a5f;color:#fff"><div class="num" id="st-est-total">–</div><div class="lbl">Establecimientos</div></div>
-            <div class="stat verde"><div class="num" id="st-est-cumple">–</div><div class="lbl">✅ Cumplen</div></div>
-            <div class="stat naranja"><div class="num" id="st-est-parcial">–</div><div class="lbl">⚠️ Parcial</div></div>
-            <div class="stat rojo"><div class="num" id="st-est-nocumple">–</div><div class="lbl">❌ No Cumplen</div></div>
-            <div class="stat" style="background:#6b7280;color:#fff"><div class="num" id="st-est-sinver">–</div><div class="lbl">Sin Verificar</div></div>
-            <div class="stat azul"><div class="num" id="st-ver-pend">–</div><div class="lbl">Verif. Pendientes</div></div>
+        <!-- KPIs Establecimientos integrados -->
+        <div style="margin-bottom:16px;background:linear-gradient(135deg,#1e3a5f,#1a3a5c);border-radius:12px;padding:12px 14px">
+          <div style="font-size:.78rem;font-weight:700;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">🏪 Verificación Ambiental a Establecimientos</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px">
+            <div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:1.6rem;font-weight:800;color:#fff" id="st-est-total">–</div>
+              <div style="font-size:.72rem;color:rgba(255,255,255,.6);margin-top:2px">📊 Total</div>
+            </div>
+            <div style="background:rgba(34,197,94,.15);border-radius:8px;padding:10px;text-align:center;border:1px solid rgba(34,197,94,.3)">
+              <div style="font-size:1.6rem;font-weight:800;color:#4ade80" id="st-est-cumple">–</div>
+              <div style="font-size:.72rem;color:rgba(255,255,255,.6);margin-top:2px">✅ Cumplen</div>
+            </div>
+            <div style="background:rgba(245,158,11,.12);border-radius:8px;padding:10px;text-align:center;border:1px solid rgba(245,158,11,.3)">
+              <div style="font-size:1.6rem;font-weight:800;color:#fbbf24" id="st-est-parcial">–</div>
+              <div style="font-size:.72rem;color:rgba(255,255,255,.6);margin-top:2px">⚠️ Parcial</div>
+            </div>
+            <div style="background:rgba(239,68,68,.12);border-radius:8px;padding:10px;text-align:center;border:1px solid rgba(239,68,68,.3)">
+              <div style="font-size:1.6rem;font-weight:800;color:#f87171" id="st-est-nocumple">–</div>
+              <div style="font-size:.72rem;color:rgba(255,255,255,.6);margin-top:2px">❌ No Cumple</div>
+            </div>
+            <div style="background:rgba(107,114,128,.15);border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:1.6rem;font-weight:800;color:#d1d5db" id="st-est-sinver">–</div>
+              <div style="font-size:.72rem;color:rgba(255,255,255,.6);margin-top:2px">🔘 Sin Verificar</div>
+            </div>
+            <div style="background:rgba(96,165,250,.15);border-radius:8px;padding:10px;text-align:center;border:1px solid rgba(96,165,250,.3)">
+              <div style="font-size:1.6rem;font-weight:800;color:#60a5fa" id="st-ver-pend">–</div>
+              <div style="font-size:.72rem;color:rgba(255,255,255,.6);margin-top:2px">📅 Verif. Pendientes</div>
+            </div>
           </div>
         </div>
 
