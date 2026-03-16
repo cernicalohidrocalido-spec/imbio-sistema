@@ -1459,6 +1459,7 @@ async function enviarActa() {
   }
   var obsStr = [observ, plazo?'Plazo: '+plazo:''].filter(Boolean).join(' | ');
   formData.append('observaciones', obsStr);
+  if (plazo) formData.append('plazo', plazo);  // Campo separado para cálculo de vencimiento
   if (lat) formData.append('lat_acta', lat);
   if (lon) formData.append('lon_acta', lon);
   if (nuevoEst) formData.append('nuevo_estado', nuevoEst);
