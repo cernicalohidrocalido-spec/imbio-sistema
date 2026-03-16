@@ -1033,12 +1033,12 @@ async function doLogin() {
   const errEl    = document.getElementById('login-error');
   errEl.innerHTML = '';
   try {
-    // Login con timeout 25s para no quedar en Pending si el servidor (p. ej. Railway) no responde
+    // Timeout 55s: en Railway el cold start puede tardar 30–60 s
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
-      signal: AbortSignal.timeout(25000)
+      signal: AbortSignal.timeout(55000)
     });
     const r = await res.json();
     if (!r.success) { errEl.innerHTML = alert_html('error', r.message); return; }
@@ -1053,7 +1053,7 @@ async function doLogin() {
     startMapAutoRefresh();
   } catch(e) {
     const msg = (e.name === 'TimeoutError' || e.name === 'AbortError')
-      ? 'El servidor no respondió a tiempo. Si la app está en Railway, puede estar despertando: espera 30 segundos e intenta de nuevo.'
+      ? 'El servidor no respondió a tiempo. Si usas Railway (plan gratuito), la app puede estar “dormida”: espera 1 minuto, vuelve a hacer clic en Iniciar sesión y, si sigue fallando, revisa los logs del servicio en el panel de Railway.'
       : ('Error de conexión: ' + (e.message || 'sin respuesta del servidor'));
     errEl.innerHTML = alert_html('error', msg);
   }
