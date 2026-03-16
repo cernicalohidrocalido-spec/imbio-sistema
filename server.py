@@ -229,6 +229,24 @@ def read_db():
         changed = False
         if 'actas' not in db:
             db['actas'] = []; changed = True
+        if 'historial_estados' not in db:
+            db['historial_estados'] = []; changed = True
+        if 'expedientes' not in db:
+            # Crear expedientes para reportes existentes que no tienen uno
+            db['expedientes'] = []
+            for rep in db.get('reports', []):
+                if not rep.get('expediente'):
+                    exp_num = generate_expediente(db)
+                    rep['expediente'] = exp_num
+                    db['expedientes'].append({
+                        'id': len(db['expedientes']) + 1,
+                        'numero': exp_num,
+                        'report_id': rep['id'],
+                        'folio_reporte': rep.get('folio', ''),
+                        'fecha_apertura': rep.get('fecha_creacion', now_iso()),
+                        'estado': rep.get('estado', 'reportado'),
+                    })
+            changed = True
         for idx_u, u in enumerate(db.get('users', [])):
             if 'id' not in u:
                 u['id'] = idx_u + 1; changed = True
@@ -250,9 +268,32 @@ def hash_pw(pw):
 def now_iso():
     return datetime.now(timezone.utc).isoformat()
 
+def registrar_cambio_estado(db, report_id, estado_anterior, estado_nuevo, usuario, nota=''):
+    """Registra cada cambio de estado en el historial del reporte."""
+    if estado_anterior == estado_nuevo:
+        return
+    hid = (max((h['id'] for h in db.get('historial_estados', [])), default=0)) + 1
+    db.setdefault('historial_estados', []).append({
+        'id':              hid,
+        'report_id':       report_id,
+        'estado_anterior': estado_anterior,
+        'estado_nuevo':    estado_nuevo,
+        'usuario':         usuario,
+        'fecha':           now_iso(),
+        'nota':            nota,
+    })
+
 def generate_folio(db):
     db["folio_counter"] += 1
     return f"IMBIO-2026-{db['folio_counter']:04d}"
+
+def generate_expediente(db):
+    """Genera número de expediente formal: EXP-IMBIO-YYYY-NNNN"""
+    from datetime import datetime as _dt
+    year = _dt.now().year
+    key = f"exp_counter_{year}"
+    db[key] = db.get(key, 0) + 1
+    return f"EXP-IMBIO-{year}-{db[key]:04d}"
 
 # ── JWT minimalista (HMAC-SHA256) ──────────────────────────────────────────
 def b64url_encode(data: bytes) -> str:
@@ -819,6 +860,9 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             rep['evidencias']   = [e for e in db['evidence']    if e['report_id'] == rid]
             rep['firmas']       = [s for s in db['signatures']  if s['report_id'] == rid]
             rep['actas']        = [a for a in db.get('actas', []) if a['report_id'] == rid]
+            rep['historial']    = sorted([h for h in db.get('historial_estados', []) if h['report_id'] == rid],
+                                          key=lambda h: h.get('fecha',''))
+            rep['expediente']   = next((e for e in db.get('expedientes', []) if e.get('report_id') == rid), None)
             self.ok(rep, 'Reporte encontrado.')
             return
 
@@ -965,6 +1009,66 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             self.wfile.write(APP_ICON_512)
             return
 
+        # ── Historial de estados de un reporte ─────────────────────────
+        m = re.match(r'^/api/reports/(\d+)/historial$', path)
+        if m:
+            user = self.require_auth()
+            if not user: return
+            rid = int(m.group(1))
+            db  = read_db()
+            historial = [h for h in db.get('historial_estados', []) if h['report_id'] == rid]
+            historial = sorted(historial, key=lambda h: h.get('fecha', ''))
+            self.ok({'historial': historial, 'total': len(historial)}, f'{len(historial)} cambio(s) de estado.')
+            return
+
+        # ── Expediente de un reporte ────────────────────────────────────
+        m = re.match(r'^/api/reports/(\d+)/expediente$', path)
+        if m:
+            user = self.require_auth()
+            if not user: return
+            rid = int(m.group(1))
+            db  = read_db()
+            rep = next((r for r in db['reports'] if r['id'] == rid), None)
+            if not rep: self.err(f'Reporte {rid} no encontrado.', 404); return
+            expediente = next((e for e in db.get('expedientes', []) if e['report_id'] == rid), None)
+            historial  = [h for h in db.get('historial_estados', []) if h['report_id'] == rid]
+            actas      = [a for a in db.get('actas', []) if a['report_id'] == rid]
+            self.ok({
+                'reporte':    rep,
+                'expediente': expediente,
+                'historial':  sorted(historial, key=lambda h: h.get('fecha', '')),
+                'actas':      actas,
+            }, 'Expediente encontrado.')
+            return
+
+        # ── Lista de expedientes (panel admin) ──────────────────────────
+        if path == '/api/expedientes':
+            user = self.require_auth('admin', 'operador')
+            if not user: return
+            db = read_db()
+            expedientes = list(db.get('expedientes', []))
+            # Enriquecer con datos del reporte
+            reps_idx = {r['id']: r for r in db.get('reports', [])}
+            for exp in expedientes:
+                rep = reps_idx.get(exp.get('report_id'))
+                if rep:
+                    exp['folio_reporte']  = rep.get('folio', '')
+                    exp['tipo_reporte']   = rep.get('tipo', '')
+                    exp['colonia']        = rep.get('colonia', '')
+                    exp['estado_actual']  = rep.get('estado', '')
+                    exp['inspector']      = rep.get('inspector', '')
+            expedientes = sorted(expedientes, key=lambda e: e.get('fecha_apertura',''), reverse=True)
+            page  = int(qs.get('page', [1])[0])
+            limit = int(qs.get('limit', [20])[0])
+            total = len(expedientes)
+            start = (page - 1) * limit
+            self.ok({
+                'expedientes': expedientes[start:start+limit],
+                'paginacion':  {'total': total, 'pagina': page, 'por_pagina': limit,
+                                'total_paginas': max(1, (total+limit-1)//limit)},
+            }, f'{total} expediente(s).')
+            return
+
         # ── Listar actas de un reporte ──────────────────────────────
         m = re.match(r'^/api/reports/(\d+)/actas$', path)
         if m:
@@ -1073,10 +1177,12 @@ class IMBIOHandler(BaseHTTPRequestHandler):
 
             db    = read_db()
             folio = generate_folio(db)
+            exp_num = generate_expediente(db)
             now   = now_iso()
             rid   = (max((r['id'] for r in db['reports']), default=0)) + 1
             report = {
                 'id': rid, 'folio': folio, 'tipo': tipo,
+                'expediente': exp_num,
                 'descripcion': desc, 'colonia': colonia,
                 'lat': body.get('lat'), 'lon': body.get('lon'),
                 'estado': 'reportado',
@@ -1085,6 +1191,14 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                 'fecha_creacion': now, 'fecha_actualizacion': now,
             }
             db['reports'].append(report)
+            # Registrar expediente
+            eid = (max((e['id'] for e in db.get('expedientes', [])), default=0)) + 1
+            db.setdefault('expedientes', []).append({
+                'id': eid, 'numero': exp_num, 'report_id': rid,
+                'folio_reporte': folio, 'fecha_apertura': now, 'estado': 'reportado',
+            })
+            # Registrar estado inicial en historial
+            registrar_cambio_estado(db, rid, '', 'reportado', 'ciudadano', 'Denuncia creada')
 
             # Firma ciudadano
             firma_reg = None
@@ -1332,6 +1446,8 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             }
             if not db.get('actas'): db['actas'] = []
             db['actas'].append(acta)
+            # Capturar estado antes del cambio para el historial
+            estado_antes_acta = rep.get('estado', '')
             # ── Estado automático según tipo de acta ────────────────────
             now2 = now_iso()
             tipo_rep = rep.get('tipo', '')
@@ -1381,6 +1497,17 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                     self.err('Debe generar un acta de apercibimiento o sanción antes de cerrar el caso.', 409)
                     return
 
+            # Registrar cambio de estado en historial
+            registrar_cambio_estado(
+                db, rid, estado_antes_acta, rep.get('estado', ''),
+                user.get('username', ''),
+                f'Acta {acta["folio_acta"]} ({tipo_acta}) generada'
+            )
+            # Actualizar expediente
+            for exp in db.get('expedientes', []):
+                if exp.get('report_id') == rid:
+                    exp['estado'] = rep.get('estado', '')
+                    exp.setdefault('actas', []).append(acta['folio_acta'])
             write_db(db)
             print(f"[ACTA] {acta['folio_acta']} | Reporte: {rep['folio']} | Tipo: {tipo_acta}")
             self.ok({'acta': acta, 'reporte': rep}, f"Acta {acta['folio_acta']} generada.", 201)
@@ -1421,6 +1548,7 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             rep  = next((r for r in db['reports'] if r['id'] == rid), None)
             if not rep:
                 self.err(f'Reporte {rid} no encontrado.', 404); return
+            estado_anterior_patch = rep.get('estado', '')
             if user.get('rol') == 'inspector':
                 # Inspector solo puede cambiar el estado (no otros campos)
                 campos_permitidos = ['estado']
@@ -1444,9 +1572,16 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                         self.err('Debe generar un acta de apercibimiento o sanción antes de cerrar.', 409)
                         return
 
+            estado_nuevo = rep.get('estado', '')
+            registrar_cambio_estado(db, rid, estado_anterior_patch, estado_nuevo,
+                                    user.get('username',''), 'Cambio via panel')
+            # Actualizar estado en expediente
+            for exp in db.get('expedientes', []):
+                if exp.get('report_id') == rid:
+                    exp['estado'] = estado_nuevo
             rep['fecha_actualizacion'] = now_iso()
             write_db(db)
-            print(f"[EDICION] Folio: {rep['folio']} → estado={rep.get('estado','')} por {user['username']}")
+            print(f"[EDICION] Folio: {rep['folio']} → estado={estado_nuevo} por {user['username']}")
             self.ok(rep, f"Reporte {rep['folio']} actualizado.")
             return
         self.err('Ruta no encontrada.', 404)
