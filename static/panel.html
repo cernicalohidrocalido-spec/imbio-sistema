@@ -157,15 +157,17 @@
     </div>
     <div id="login-status" style="display:none;margin-bottom:12px;padding:10px 14px;border-radius:8px;font-size:.85rem;background:#E8F1FB;border:1px solid #B3CFF0;color:#002A5C"></div>
     <div id="login-error"></div>
-    <div class="form-group" style="margin-bottom:14px">
-      <label>Usuario</label>
-      <input id="l-user" type="text" value="admin">
-    </div>
-    <div class="form-group" style="margin-bottom:20px">
-      <label>Contraseña</label>
-      <input id="l-pass" type="password" value="admin123">
-    </div>
-    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()">🔐 Iniciar Sesión</button>
+    <form id="login-form" onsubmit="doLogin(); return false;" action="javascript:void(0)">
+      <div class="form-group" style="margin-bottom:14px">
+        <label for="l-user">Usuario</label>
+        <input id="l-user" name="username" type="text" value="admin" autocomplete="username">
+      </div>
+      <div class="form-group" style="margin-bottom:20px">
+        <label for="l-pass">Contraseña</label>
+        <input id="l-pass" name="password" type="password" value="admin123" autocomplete="current-password">
+      </div>
+      <button type="submit" id="btn-login" class="btn btn-primary" style="width:100%;justify-content:center">🔐 Iniciar Sesión</button>
+    </form>
   </div>
 </div>
 
@@ -1051,11 +1053,14 @@ else wakeUpServer();
 
 // ── AUTH ──────────────────────────────────────────────────────
 async function doLogin() {
-  const username = document.getElementById('l-user').value.trim();
-  const password = document.getElementById('l-pass').value.trim();
+  var usernameEl = document.getElementById('l-user');
+  var passwordEl = document.getElementById('l-pass');
+  if (!usernameEl || !passwordEl) return;
+  const username = usernameEl.value.trim();
+  const password = passwordEl.value.trim();
   const errEl    = document.getElementById('login-error');
-  const btn      = document.querySelector('#login-screen .btn-primary');
-  errEl.innerHTML = '';
+  const btn      = document.getElementById('btn-login') || document.querySelector('#login-screen .btn-primary');
+  if (errEl) errEl.innerHTML = '';
   if (!username || !password) {
     errEl.innerHTML = alert_html('error', 'Ingresa usuario y contraseña.');
     return;
@@ -1100,7 +1105,8 @@ function doLogout() {
   document.getElementById('app').style.display='none';
   mapReportes=null; mapPicker=null;
 }
-document.getElementById('l-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+var lpass = document.getElementById('l-pass');
+if (lpass) lpass.addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); doLogin(); } });
 
 // ── NAVEGACIÓN ────────────────────────────────────────────────
 function showPage(name) {
