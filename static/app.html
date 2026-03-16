@@ -1400,10 +1400,10 @@ async function llamarIA(tipo, datos, campoDestino, btnEl) {
   btnEl.innerHTML = '⏳ Generando...';
   btnEl.disabled = true;
   try {
-    var resp = await fetch(SERVER_URL + '/api/ai/generar-texto', {
+    var resp = await fetch(SERVER_URL + '/api/ai/ciudadano', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (typeof TOKEN !== 'undefined' ? TOKEN : '') },
-      body: JSON.stringify({ tipo: tipo, datos: datos }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ descripcion: (datos && datos.descripcion) || datos || '' }),
       signal: AbortSignal.timeout(35000)
     });
     var d = await resp.json();
