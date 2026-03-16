@@ -15,110 +15,132 @@
 <script src="/static/leaflet.js"></script>
 <style>
 /* ═══════════════════════════════════════════════
-   IMBIO CIUDADANO — Mobile-First Design
-   Paleta institucional azul municipal
+   IMBIO CIUDADANO — Rediseño 2026
+   Tono: Institucional · Municipal · Confiable
+   Paleta azul municipal institucional
 ═══════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap');
+
 :root {
-  --azul:       #003B7A;
-  --azul-medio: #0057B8;
-  --azul-claro: #1976D2;
-  --azul-bg:    #E8F1FB;
-  --azul-borde: #B3CFF0;
-  --oscuro:     #002A5C;
-  --texto:      #1a202c;
-  --muted:      #64748b;
-  --gris:       #f0f4fa;
-  --borde:      #e2e8f0;
-  --blanco:     #ffffff;
-  --rojo:       #dc2626;
-  --verde:      #16a34a;
-  --naranja:    #ea580c;
-  --amarillo:   #ca8a04;
-  --safe-top:   env(safe-area-inset-top, 0px);
-  --safe-bot:   env(safe-area-inset-bottom, 0px);
+  --verde:        #003B7A;
+  --verde-medio:  #0057B8;
+  --verde-claro:  #1976D2;
+  --verde-bg:     #E8F1FB;
+  --verde-borde:  #B3CFF0;
+  --oscuro:       #002A5C;
+  --ambar:        #f59e0b;
+  --ambar-claro:  #fde68a;
+  --ambar-oscuro: #d97706;
+  --tierra:       #78350f;
+  --rojo:         #dc2626;
+  --rojo-bg:      #fee2e2;
+  --azul:         #1d4ed8;
+  --texto:        #1a202c;
+  --muted:        #64748b;
+  --gris:         #f0f4fa;
+  --borde:        #d1dff0;
+  --blanco:       #ffffff;
+  --safe-top:     env(safe-area-inset-top, 0px);
+  --safe-bot:     env(safe-area-inset-bottom, 0px);
+  --r-card:       16px;
+  --sombra:       0 2px 12px rgba(0,59,122,.10), 0 1px 3px rgba(0,0,0,.06);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; overflow: hidden; background: var(--azul); }
-body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--texto); }
+html, body { height: 100%; overflow: hidden; background: var(--verde); }
+body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var(--texto); }
 
-/* ── SPLASH / INTRO ── */
+/* ── SPLASH ── */
 #splash {
   position: fixed; inset: 0; z-index: 9999;
-  background: linear-gradient(160deg, #002A5C 0%, #003B7A 50%, #0057B8 100%);
+  background: linear-gradient(160deg, var(--oscuro) 0%, var(--verde) 55%, var(--verde-medio) 100%);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  transition: opacity .5s ease;
+  transition: opacity .6s ease;
 }
 #splash.hide { opacity: 0; pointer-events: none; }
-.splash-logo { width: 90px; height: 90px; background: rgba(255,255,255,.12);
-  border-radius: 24px; display: flex; align-items: center; justify-content: center;
-  font-size: 3rem; margin-bottom: 20px;
-  box-shadow: 0 0 0 1px rgba(255,255,255,.15), 0 20px 60px rgba(0,0,0,.3); }
-.splash-title { color: #fff; font-size: 1.8rem; font-weight: 800; letter-spacing: -.5px; }
-.splash-sub { color: rgba(255,255,255,.65); font-size: .85rem; margin-top: 6px; text-align: center; line-height: 1.4; }
-.splash-loader { margin-top: 48px; width: 40px; height: 4px; background: rgba(255,255,255,.2); border-radius: 99px; overflow: hidden; }
-.splash-loader::after { content: ''; display: block; height: 100%; width: 40%; background: #fff; border-radius: 99px; animation: load 1.2s ease-in-out infinite; }
+.splash-blob {
+  width: 100px; height: 100px;
+  background: rgba(255,255,255,.12);
+  border-radius: 38% 62% 55% 45% / 45% 38% 62% 55%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 3.2rem; margin-bottom: 22px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.15), 0 24px 64px rgba(0,0,0,.25);
+  animation: blobPulse 3s ease-in-out infinite;
+}
+@keyframes blobPulse {
+  0%,100% { border-radius: 38% 62% 55% 45% / 45% 38% 62% 55%; }
+  50%     { border-radius: 62% 38% 45% 55% / 55% 62% 38% 45%; }
+}
+.splash-title { color: #fff; font-family: 'Nunito', sans-serif; font-size: 2rem; font-weight: 900; letter-spacing: -.5px; }
+.splash-sub { color: rgba(255,255,255,.65); font-size: .88rem; margin-top: 6px; text-align: center; line-height: 1.4; }
+.splash-municipio {
+  margin-top: 8px; background: rgba(255,255,255,.12); border-radius: 99px;
+  padding: 4px 16px; color: rgba(255,255,255,.85); font-size: .75rem; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase;
+}
+.splash-loader { margin-top: 52px; width: 44px; height: 4px; background: rgba(255,255,255,.18); border-radius: 99px; overflow: hidden; }
+.splash-loader::after { content: ''; display: block; height: 100%; width: 40%; background: var(--ambar); border-radius: 99px; animation: load 1.3s ease-in-out infinite; }
 @keyframes load { 0%{transform:translateX(-100%)} 100%{transform:translateX(350%)} }
 
 /* ── APP SHELL ── */
-#app {
-  position: fixed; inset: 0;
-  display: flex; flex-direction: column;
-  background: var(--gris);
-  padding-top: var(--safe-top);
-  padding-bottom: var(--safe-bot);
-}
+#app { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--gris); padding-top: var(--safe-top); padding-bottom: var(--safe-bot); }
 
 /* ── HEADER ── */
 .app-header {
-  background: linear-gradient(135deg, var(--oscuro), var(--azul));
-  padding: 14px 20px 12px;
+  background: linear-gradient(135deg, var(--oscuro), var(--verde));
+  padding: 14px 18px 12px;
   display: flex; align-items: center; gap: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,.25);
-  flex-shrink: 0;
+  box-shadow: 0 3px 16px rgba(0,42,92,.25);
+  flex-shrink: 0; position: relative; overflow: hidden;
 }
-.header-icon { font-size: 1.6rem; }
-.header-text h1 { color: #fff; font-size: 1.05rem; font-weight: 800; letter-spacing: -.3px; }
-.header-text p  { color: rgba(255,255,255,.6); font-size: .72rem; margin-top: 1px; }
+.app-header::before {
+  content: ''; position: absolute; top: -30px; right: -20px;
+  width: 120px; height: 120px; border-radius: 50%;
+  background: rgba(255,255,255,.04);
+}
+.header-leaf { font-size: 1.7rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,.3)); }
+.header-text h1 { color: #fff; font-family: 'Nunito', sans-serif; font-size: 1.08rem; font-weight: 800; letter-spacing: -.3px; }
+.header-text p  { color: rgba(255,255,255,.55); font-size: .7rem; margin-top: 1px; }
 .header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-.conn-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 0 2px rgba(74,222,128,.3); }
-.conn-dot.off { background: #f87171; box-shadow: 0 0 0 2px rgba(248,113,113,.3); }
+.conn-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ambar); box-shadow: 0 0 0 3px rgba(245,158,11,.25); transition: .3s; }
+.conn-dot.ok  { background: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,.25); }
+.conn-dot.off { background: #f87171; box-shadow: 0 0 0 3px rgba(248,113,113,.25); }
 
 /* ── TABS ── */
 .tabs {
-  display: flex; background: var(--azul); flex-shrink: 0;
-  border-bottom: 1px solid rgba(255,255,255,.1);
+  display: flex; background: var(--verde); flex-shrink: 0;
+  border-bottom: 1px solid rgba(255,255,255,.08);
 }
 .tab {
   flex: 1; padding: 10px 4px; display: flex; flex-direction: column;
   align-items: center; gap: 3px; cursor: pointer; transition: .2s;
-  color: rgba(255,255,255,.5); font-size: .65rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
+  color: rgba(255,255,255,.45); font-size: .62rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .05em;
   border-bottom: 2px solid transparent;
 }
-.tab .tab-ic { font-size: 1.25rem; }
-.tab.active { color: #fff; border-bottom-color: #60a5fa; }
-.tab:active { background: rgba(255,255,255,.08); }
+.tab .tab-ic { font-size: 1.3rem; }
+.tab.active { color: var(--ambar); border-bottom-color: var(--ambar); }
+.tab:active { background: rgba(255,255,255,.07); }
 
-/* ── CONTENT AREA ── */
+/* ── CONTENT ── */
 .content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .screen { display: none; min-height: 100%; }
 .screen.active { display: block; }
-
-/* ── NUEVO REPORTE ── */
 .screen-pad { padding: 16px; }
 
+/* ── CARDS ── */
 .form-card {
-  background: var(--blanco); border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,59,122,.06);
+  background: var(--blanco); border-radius: var(--r-card);
+  box-shadow: var(--sombra);
   overflow: hidden; margin-bottom: 12px;
 }
 .form-card-header {
-  background: var(--azul-bg); padding: 12px 16px;
-  border-bottom: 1px solid var(--azul-borde);
+  background: var(--verde-bg); padding: 11px 16px;
+  border-bottom: 1px solid var(--verde-borde);
   display: flex; align-items: center; gap: 8px;
 }
 .form-card-header .ic { font-size: 1.1rem; }
-.form-card-header span { font-size: .8rem; font-weight: 700; color: var(--oscuro); text-transform: uppercase; letter-spacing: .05em; }
+.form-card-header span { font-size: .78rem; font-weight: 800; color: var(--verde); text-transform: uppercase; letter-spacing: .06em; }
 .form-card-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
 
 .fgroup label {
@@ -132,187 +154,144 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var
   transition: border-color .15s, box-shadow .15s; appearance: none;
 }
 .fgroup input:focus, .fgroup select:focus, .fgroup textarea:focus {
-  border-color: var(--azul-claro); box-shadow: 0 0 0 3px rgba(25,118,210,.12);
+  border-color: var(--verde-medio); box-shadow: 0 0 0 3px rgba(13,138,86,.12);
 }
 .fgroup textarea { resize: none; min-height: 80px; }
-.fgroup select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+.fgroup select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
 
-/* Tipo chips */
+/* ── CATEGORÍAS DE TIPO ── */
+.cat-label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: .7rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .07em; margin: 12px 0 7px; padding: 0 2px;
+}
+.cat-line { flex: 1; height: 1px; background: var(--borde); }
+
+/* Grid de chips */
 .tipo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.tipo-chip {
-  padding: 10px 8px; border: 2px solid var(--borde); border-radius: 10px;
-  background: #fff; cursor: pointer; text-align: center; transition: .15s;
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-}
-.tipo-chip .chip-ic { font-size: 1.4rem; }
-.tipo-chip .chip-lbl { font-size: .7rem; font-weight: 700; color: var(--muted); line-height: 1.2; }
-.tipo-chip.sel {
-  border-color: var(--azul-claro); background: var(--azul-bg);
-  box-shadow: 0 0 0 3px rgba(25,118,210,.12);
-}
-.tipo-chip.sel .chip-lbl { color: var(--oscuro); }
-.tipo-chip:active { transform: scale(.97); }
 
-/* Mapa picker */
+/* Chips de tipo mejorados */
+.tipo-chip {
+  padding: 11px 8px 9px; border: 2px solid var(--borde);
+  border-radius: 12px; background: #fff; cursor: pointer;
+  text-align: center; transition: all .18s;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  position: relative; overflow: hidden;
+}
+.tipo-chip::before {
+  content: ''; position: absolute; inset: 0;
+  background: var(--chip-color, var(--verde)); opacity: 0;
+  transition: opacity .18s;
+}
+.tipo-chip .chip-ic { font-size: 1.6rem; position: relative; z-index: 1; }
+.tipo-chip .chip-lbl {
+  font-size: .68rem; font-weight: 700; color: var(--muted);
+  line-height: 1.2; position: relative; z-index: 1;
+}
+.tipo-chip.sel {
+  border-color: var(--chip-color, var(--verde));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--chip-color, var(--verde)) 20%, transparent);
+  transform: scale(1.02);
+}
+.tipo-chip.sel::before { opacity: .08; }
+.tipo-chip.sel .chip-lbl { color: var(--verde); font-weight: 800; }
+.tipo-chip:active { transform: scale(.96); }
+
+/* Colores por tipo */
+.chip-emergencia    { --chip-color: #dc2626; }
+.chip-ambiental     { --chip-color: #16a34a; }
+.chip-arbolado      { --chip-color: #15803d; }
+.chip-residuos      { --chip-color: #ea580c; }
+.chip-agua          { --chip-color: #0284c7; }
+.chip-animal        { --chip-color: #b45309; }
+.chip-comercial     { --chip-color: #7c3aed; }
+.chip-otro          { --chip-color: #64748b; }
+
+/* chip de emergencia full-width especial */
+.chip-full { grid-column: 1/-1; flex-direction: row !important; padding: 12px 16px !important; gap: 12px !important; }
+.chip-full .chip-lbl { text-align: left !important; font-size: .78rem !important; }
+
+/* ── MAPA ── */
 #map-app { height: 220px; border-radius: 10px; overflow: hidden; border: 1.5px solid var(--borde); }
 .map-addr {
-  margin-top: 8px; padding: 10px 12px; background: var(--azul-bg);
-  border-radius: 8px; border: 1px solid var(--azul-borde);
+  margin-top: 8px; padding: 10px 12px; background: var(--verde-bg);
+  border-radius: 8px; border: 1px solid var(--verde-borde);
   font-size: .82rem; color: var(--oscuro); line-height: 1.4;
   min-height: 38px;
 }
 .map-btns { display: flex; gap: 8px; margin-top: 8px; }
 .map-btn {
   flex: 1; padding: 9px; border: 1.5px solid var(--borde); border-radius: 8px;
-  background: #fff; font-size: .78rem; font-weight: 700; color: var(--azul);
+  background: #fff; font-size: .78rem; font-weight: 700; color: var(--verde);
   cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;
   transition: .15s;
 }
-.map-btn:active { background: var(--azul-bg); }
+.map-btn:active { background: var(--verde-bg); }
 
-/* Street View / Foto del domicilio */
-#streetview-modal {
-  position: fixed; inset: 0; z-index: 600;
-  background: rgba(0,0,0,.92);
-  display: none; flex-direction: column;
-}
-#streetview-modal.open { display: flex; }
-.sv-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 16px; background: #000; flex-shrink: 0;
-}
-.sv-header span { color: #fff; font-size: .9rem; font-weight: 700; }
-.sv-header button {
-  background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
-  color: #fff; padding: 6px 14px; border-radius: 7px; font-size: .82rem; cursor: pointer;
-}
-.sv-tabs { display: flex; background: #111; flex-shrink: 0; }
-.sv-tab {
-  flex: 1; padding: 9px 4px; text-align: center; cursor: pointer;
-  color: rgba(255,255,255,.5); font-size: .72rem; font-weight: 700;
-  text-transform: uppercase; border-bottom: 2px solid transparent;
-}
-.sv-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; }
-.sv-content { flex: 1; position: relative; overflow: hidden; }
-.sv-frame { width: 100%; height: 100%; border: none; display: none; }
-.sv-frame.active { display: block; }
-#sv-map-mini { width: 100%; height: 100%; }
-.sv-addr-bar {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  background: rgba(0,0,0,.75); color: #fff; font-size: .78rem;
-  padding: 8px 14px; backdrop-filter: blur(4px);
-}
-.sv-actions {
-  display: flex; gap: 8px; padding: 10px 14px; background: #000; flex-shrink: 0;
-}
-.sv-action-btn {
-  flex: 1; padding: 12px; border: none; border-radius: 9px; font-size: .82rem;
-  font-weight: 800; cursor: pointer;
-}
-.sv-use-btn { background: #16a34a; color: #fff; }
-.sv-cancel-btn { background: rgba(255,255,255,.12); color: #fff; }
-
-/* Firma */
+/* ── FIRMA ── */
 #sig-app {
-  width: 100%; height: 120px; border: 2px dashed var(--azul-borde);
-  border-radius: 10px; cursor: crosshair; touch-action: none; background: #fafcff; display: block;
+  width: 100%; height: 120px; border: 2px dashed var(--verde-borde);
+  border-radius: 10px; cursor: crosshair; touch-action: none; background: #f0f6fc; display: block;
 }
 
-/* Dirección autocompletada */
-.addr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.addr-grid .fgroup.full { grid-column: 1/-1; }
-.addr-filled input { border-color: var(--azul-claro); background: var(--azul-bg); }
-
-/* ── BOTÓN ENVIAR ── */
+/* ── BOTONES ── */
 .btn-enviar {
-  width: 100%; padding: 16px; background: var(--azul);
-  color: #fff; border: none; border-radius: 14px; font-size: 1rem;
-  font-weight: 800; cursor: pointer; letter-spacing: .02em;
-  box-shadow: 0 4px 20px rgba(0,59,122,.35);
+  width: 100%; padding: 17px; 
+  background: linear-gradient(135deg, var(--verde) 0%, var(--verde-medio) 100%);
+  color: #fff; border: none; border-radius: 14px; font-size: 1.02rem;
+  font-family: 'Nunito', sans-serif; font-weight: 800; cursor: pointer;
+  letter-spacing: .02em;
+  box-shadow: 0 6px 24px rgba(10,102,64,.35), 0 2px 8px rgba(10,102,64,.2);
   display: flex; align-items: center; justify-content: center; gap: 8px;
-  transition: .15s; margin-top: 4px;
+  transition: .15s; margin-top: 4px; position: relative; overflow: hidden;
 }
-.btn-enviar:active { transform: scale(.98); background: var(--oscuro); }
+.btn-enviar::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to bottom, rgba(255,255,255,.12), transparent);
+}
+.btn-enviar:active { transform: scale(.98); }
 .btn-enviar:disabled { background: #94a3b8; box-shadow: none; cursor: not-allowed; }
 .btn-sec {
-  width: 100%; padding: 12px; background: var(--gris);
+  width: 100%; padding: 12px; background: transparent;
   color: var(--muted); border: 1.5px solid var(--borde); border-radius: 12px;
   font-size: .88rem; font-weight: 700; cursor: pointer; margin-top: 8px;
-  transition: .15s;
+  transition: .15s; font-family: inherit;
 }
 .btn-sec:active { background: var(--borde); }
 
 /* ── ALERTS ── */
-.alert {
-  padding: 12px 14px; border-radius: 10px; font-size: .85rem;
-  margin-bottom: 12px; line-height: 1.4;
-}
+.alert { padding: 12px 14px; border-radius: 10px; font-size: .85rem; margin-bottom: 12px; line-height: 1.4; }
 .alert-ok  { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
 .alert-err { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-.alert-inf { background: var(--azul-bg); color: var(--oscuro); border: 1px solid var(--azul-borde); }
+.alert-inf { background: var(--verde-bg); color: var(--oscuro); border: 1px solid var(--verde-borde); }
 
 /* ── MIS REPORTES ── */
 .reporte-card {
   background: var(--blanco); border-radius: 14px; margin-bottom: 10px;
-  box-shadow: 0 1px 3px rgba(0,0,0,.07); overflow: hidden;
-  border-left: 4px solid var(--azul);
+  box-shadow: var(--sombra); overflow: hidden;
+  border-left: 4px solid var(--verde);
 }
-.reporte-card.est-reportado   { border-left-color: #f59e0b; }
+.reporte-card.est-reportado   { border-left-color: var(--ambar); }
 .reporte-card.est-asignado    { border-left-color: #3b82f6; }
-.reporte-card.est-en_proceso  { border-left-color: #ec4899; }
+.reporte-card.est-en_proceso  { border-left-color: var(--verde-claro); }
 .reporte-card.est-cerrado     { border-left-color: #22c55e; }
 .reporte-card-head { padding: 12px 14px 8px; display: flex; justify-content: space-between; align-items: flex-start; }
-.reporte-folio { font-size: .75rem; font-weight: 800; color: var(--azul); font-family: monospace; }
-.reporte-estado { font-size: .68rem; font-weight: 800; padding: 3px 8px; border-radius: 99px; text-transform: uppercase; }
-.est-badge-reportado  { background: #fef3c7; color: #92400e; }
+.reporte-folio { font-size: .75rem; font-weight: 800; color: var(--verde); font-family: monospace; }
+.reporte-estado { font-size: .68rem; font-weight: 800; padding: 3px 9px; border-radius: 99px; text-transform: uppercase; }
+.est-badge-reportado  { background: #fef3c7; color: var(--ambar-oscuro); }
 .est-badge-asignado   { background: #dbeafe; color: #1e40af; }
-.est-badge-en_proceso { background: #fce7f3; color: #9d174d; }
+.est-badge-en_proceso { background: #d1fae5; color: #065f46; }
 .est-badge-cerrado    { background: #dcfce7; color: #166534; }
-.reporte-tipo { font-size: .82rem; font-weight: 700; color: var(--texto); padding: 0 14px; }
+.reporte-tipo { font-size: .84rem; font-weight: 700; color: var(--texto); padding: 0 14px; }
 .reporte-desc { font-size: .8rem; color: var(--muted); padding: 4px 14px 10px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .reporte-foot { padding: 8px 14px; background: var(--gris); border-top: 1px solid var(--borde); display: flex; justify-content: space-between; align-items: center; }
-.reporte-fecha { font-size: .72rem; color: var(--muted); }
-.reporte-colonia { font-size: .72rem; color: var(--muted); font-weight: 600; }
+.reporte-fecha, .reporte-colonia { font-size: .72rem; color: var(--muted); font-weight: 600; }
 
-/* ── ACERCA ── */
-.about-card { background: var(--blanco); border-radius: 16px; padding: 20px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.07); }
-.about-logo { text-align: center; padding: 20px 0; }
-.about-logo .big-ic { font-size: 3.5rem; }
-.about-logo h2 { font-size: 1.3rem; font-weight: 800; color: var(--azul); margin-top: 8px; }
-.about-logo p { font-size: .82rem; color: var(--muted); margin-top: 4px; line-height: 1.4; }
-.about-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--borde); }
-.about-row:last-child { border-bottom: none; }
-.about-row .row-ic { font-size: 1.3rem; width: 36px; text-align: center; }
-.about-row .row-info label { font-size: .72rem; color: var(--muted); font-weight: 700; text-transform: uppercase; }
-.about-row .row-info span { display: block; font-size: .88rem; color: var(--texto); font-weight: 600; margin-top: 1px; }
-.server-input { display: flex; gap: 8px; }
-.server-input input { flex: 1; padding: 10px 12px; border: 1.5px solid var(--borde); border-radius: 8px; font-size: .85rem; outline: none; }
-.server-input input:focus { border-color: var(--azul-claro); }
-.server-input button { padding: 10px 14px; background: var(--azul); color: #fff; border: none; border-radius: 8px; font-size: .82rem; font-weight: 700; cursor: pointer; }
+/* ── ADDR GRID ── */
+.addr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.addr-grid .fgroup.full { grid-column: 1/-1; }
 
-/* ── ÉXITO SCREEN ── */
-#screen-exito {
-  position: fixed; inset: 0; z-index: 500;
-  background: linear-gradient(160deg, #002A5C, #0057B8);
-  display: none; flex-direction: column; align-items: center; justify-content: center;
-  padding: 32px;
-}
-#screen-exito.show { display: flex; }
-.exito-ic { font-size: 5rem; margin-bottom: 20px; animation: pop .4s cubic-bezier(.34,1.56,.64,1); }
-@keyframes pop { from{transform:scale(0)} to{transform:scale(1)} }
-.exito-title { color: #fff; font-size: 1.6rem; font-weight: 800; text-align: center; }
-.exito-folio { color: rgba(255,255,255,.8); font-size: 1rem; margin-top: 8px; font-family: monospace; text-align: center; }
-.exito-msg { color: rgba(255,255,255,.65); font-size: .88rem; margin-top: 12px; text-align: center; line-height: 1.5; }
-.exito-btn { margin-top: 32px; padding: 14px 32px; background: rgba(255,255,255,.15); color: #fff; border: 2px solid rgba(255,255,255,.4); border-radius: 12px; font-size: .95rem; font-weight: 700; cursor: pointer; transition: .15s; }
-.exito-btn:active { background: rgba(255,255,255,.25); }
-
-/* Loading overlay */
-#loading-overlay { position: fixed; inset: 0; background: rgba(0,43,92,.6); z-index: 400; display: none; align-items: center; justify-content: center; }
-#loading-overlay.show { display: flex; }
-.spinner { width: 44px; height: 44px; border: 4px solid rgba(255,255,255,.2); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ── FORMULARIO ANIMAL AGRESIVO ── */
+/* ── ANIMAL PANEL ── */
 #panel-animal-agresivo { display:none }
 .body-map-wrap { position:relative; width:200px; margin:12px auto; user-select:none }
 .body-map-wrap svg { width:100%; height:auto }
@@ -322,23 +301,72 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var
 .bzone.sel text { fill:#fff !important }
 .gravedad-btns { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px }
 .grav-btn { padding:12px 8px; border:2px solid var(--borde); border-radius:10px; background:#fff; cursor:pointer; text-align:center; font-size:.82rem; font-weight:700; color:var(--muted); transition:.15s }
-.grav-btn.sel-sup { border-color:#1976D2; background:var(--azul-bg); color:var(--inspector) }
+.grav-btn.sel-sup { border-color:var(--verde-medio); background:var(--verde-bg); color:var(--verde) }
 .grav-btn.sel-pro { border-color:#dc2626; background:#fee2e2; color:#991b1b }
 .animal-check { display:flex; align-items:center; gap:10px; padding:12px 14px; border:1.5px solid var(--borde); border-radius:10px; background:#fff; cursor:pointer; font-size:.88rem; font-weight:600 }
-.animal-check input { width:18px; height:18px; accent-color:var(--azul) }
+.animal-check input { width:18px; height:18px; accent-color:var(--verde) }
+
+/* ── ÉXITO ── */
+#screen-exito {
+  position: fixed; inset: 0; z-index: 500;
+  background: linear-gradient(160deg, var(--oscuro), var(--verde-medio));
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  padding: 32px;
+}
+#screen-exito.show { display: flex; }
+.exito-ic { font-size: 5.5rem; margin-bottom: 20px; animation: pop .45s cubic-bezier(.34,1.56,.64,1); }
+@keyframes pop { from{transform:scale(0)} to{transform:scale(1)} }
+.exito-title { color: #fff; font-family: 'Nunito', sans-serif; font-size: 1.7rem; font-weight: 900; text-align: center; }
+.exito-folio { color: rgba(255,255,255,.8); font-size: .95rem; margin-top: 10px; font-family: monospace; text-align: center; background: rgba(255,255,255,.1); padding: 6px 18px; border-radius: 8px; }
+.exito-msg { color: rgba(255,255,255,.65); font-size: .9rem; margin-top: 14px; text-align: center; line-height: 1.5; }
+.exito-btn { margin-top: 36px; padding: 14px 36px; background: var(--ambar); color: var(--oscuro); border: none; border-radius: 14px; font-size: .95rem; font-weight: 800; cursor: pointer; font-family: 'Nunito', sans-serif; transition: .15s; }
+.exito-btn:active { background: var(--ambar-oscuro); }
+
+/* ── ACERCA ── */
+.about-card { background: var(--blanco); border-radius: 16px; padding: 20px; margin-bottom: 12px; box-shadow: var(--sombra); }
+.about-logo { text-align: center; padding: 24px 0 16px; }
+.about-logo .big-ic { font-size: 3.8rem; }
+.about-logo h2 { font-family: 'Nunito', sans-serif; font-size: 1.4rem; font-weight: 900; color: var(--verde); margin-top: 10px; }
+.about-logo p { font-size: .82rem; color: var(--muted); margin-top: 5px; line-height: 1.4; }
+.about-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--borde); }
+.about-row:last-child { border-bottom: none; }
+.about-row .row-ic { font-size: 1.3rem; width: 36px; text-align: center; }
+.about-row .row-info label { font-size: .72rem; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+.about-row .row-info span { display: block; font-size: .88rem; color: var(--texto); font-weight: 600; margin-top: 1px; }
+.server-input { display: flex; gap: 8px; }
+.server-input input { flex: 1; padding: 10px 12px; border: 1.5px solid var(--borde); border-radius: 8px; font-size: .85rem; outline: none; }
+.server-input input:focus { border-color: var(--verde-medio); }
+.server-input button { padding: 10px 14px; background: var(--verde); color: #fff; border: none; border-radius: 8px; font-size: .82rem; font-weight: 700; cursor: pointer; }
+
+/* ── LOADING ── */
+#loading-overlay { position: fixed; inset: 0; background: rgba(0,42,92,.55); z-index: 400; display: none; align-items: center; justify-content: center; }
+#loading-overlay.show { display: flex; }
+.spinner { width: 44px; height: 44px; border: 4px solid rgba(255,255,255,.2); border-top-color: var(--ambar); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .empty-state { text-align: center; padding: 48px 20px; color: var(--muted); }
 .empty-state .em-ic { font-size: 3rem; margin-bottom: 12px; }
 .empty-state p { font-size: .88rem; line-height: 1.5; }
+
+/* ── BANNER COMERCIAL ── */
+.banner-comercial {
+  background: linear-gradient(135deg, #4c1d95, #6d28d9);
+  border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 12px;
+}
+.banner-comercial .bc-icon { font-size: 2rem; flex-shrink: 0; }
+.banner-comercial .bc-txt h4 { color: #fff; font-size: .88rem; font-weight: 800; margin-bottom: 2px; }
+.banner-comercial .bc-txt p  { color: rgba(255,255,255,.7); font-size: .75rem; line-height: 1.3; }
 </style>
 </head>
 <body>
 
 <!-- SPLASH -->
 <div id="splash">
-  <div class="splash-logo">🌿</div>
+  <div class="splash-blob">🌿</div>
   <div class="splash-title">IMBIO</div>
-  <div class="splash-sub">Reporte Ciudadano<br>Pabellón de Arteaga, Ags.</div>
+  <div class="splash-sub">Reporte Ciudadano</div>
+  <div class="splash-municipio">Pabellón de Arteaga · Ags.</div>
   <div class="splash-loader"></div>
 </div>
 
@@ -347,7 +375,7 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var
   <div class="exito-ic">✅</div>
   <div class="exito-title">¡Reporte Enviado!</div>
   <div class="exito-folio" id="exito-folio"></div>
-  <div class="exito-msg">Tu reporte fue registrado en el sistema municipal.<br>Puedes darle seguimiento en "Mis Reportes".</div>
+  <div class="exito-msg">Tu reporte fue registrado correctamente.<br>Puedes darle seguimiento en "Mis Reportes".</div>
   <button class="exito-btn" onclick="cerrarExito()">Hacer otro reporte</button>
 </div>
 
@@ -359,20 +387,20 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var
 
   <!-- HEADER -->
   <div class="app-header">
-    <div class="header-icon">🌿</div>
+    <div class="header-leaf">🌿</div>
     <div class="header-text">
       <h1>IMBIO Ciudadano</h1>
-      <p style="font-size:.65rem;line-height:1.3">IMBIO · Pabellón de Arteaga, Ags.</p>
+      <p>Instituto Municipal de Biodiversidad · Pabellón de Arteaga</p>
     </div>
     <div class="header-right">
-      <div class="conn-dot" id="conn-dot" title="Conexión"></div>
+      <div class="conn-dot" id="conn-dot" title="Estado de conexión"></div>
     </div>
   </div>
 
   <!-- TABS -->
   <div class="tabs">
     <div class="tab active" onclick="setTab('nuevo')" id="tab-nuevo">
-      <span class="tab-ic">📝</span><span>Nuevo</span>
+      <span class="tab-ic">📝</span><span>Nuevo Reporte</span>
     </div>
     <div class="tab" onclick="setTab('mis')" id="tab-mis">
       <span class="tab-ic">📋</span><span>Mis Reportes</span>
@@ -390,51 +418,106 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var
       <div class="screen-pad">
         <div id="form-alert"></div>
 
-        <!-- TIPO -->
+        <!-- TIPO DE INCIDENCIA -->
         <div class="form-card">
-          <div class="form-card-header"><span class="ic">🏷️</span><span>Tipo de incidencia *</span></div>
-          <div class="form-card-body">
-            <div class="tipo-grid" id="tipo-grid">
-              <div class="tipo-chip" onclick="selTipo('emergencia')" data-tipo="emergencia">
-                <span class="chip-ic">🚨</span><span class="chip-lbl">Emergencia</span>
-              </div>
-              <div class="tipo-chip" onclick="selTipo('denuncia_ambiental')" data-tipo="denuncia_ambiental">
-                <span class="chip-ic">🌱</span><span class="chip-lbl">Denuncia Ambiental</span>
-              </div>
-              <div class="tipo-chip" onclick="selTipo('areas_verdes')" data-tipo="areas_verdes">
-                <span class="chip-ic">🌳</span><span class="chip-lbl">Áreas Verdes</span>
-              </div>
-              <div class="tipo-chip" onclick="selTipo('poda_arbol')" data-tipo="poda_arbol">
-                <span class="chip-ic">✂️</span><span class="chip-lbl">Poda de Árbol</span>
-              </div>
-              <div class="tipo-chip" onclick="selTipo('derribo_arbol')" data-tipo="derribo_arbol">
-                <span class="chip-ic">🪓</span><span class="chip-lbl">Derribo de Árbol</span>
-              </div>
-              <div class="tipo-chip" onclick="selTipo('residuos_solidos')" data-tipo="residuos_solidos">
-                <span class="chip-ic">🗑️</span><span class="chip-lbl">Residuos Sólidos</span>
-              </div>
-              <div class="tipo-chip" onclick="selTipo('tiradero_basura')" data-tipo="tiradero_basura">
-                <span class="chip-ic">🗑</span><span class="chip-lbl">Tiradero de Basura</span>
-              </div>
-              <div class="tipo-chip" onclick="selTipo('tiradero_escombro')" data-tipo="tiradero_escombro">
-                <span class="chip-ic">🧱</span><span class="chip-lbl">Tiradero de Escombro</span>
-              </div>
-              <div class="tipo-chip" onclick="selTipo('agua_contaminada')" data-tipo="agua_contaminada">
-                <span class="chip-ic">💧</span><span class="chip-lbl">Agua Contaminada</span>
-              </div>
-              <div class="tipo-chip" onclick="selTipo('ruido')" data-tipo="ruido">
-                <span class="chip-ic">🔊</span><span class="chip-lbl">Ruido</span>
-              </div>
-              <div class="tipo-chip" onclick="selTipo('animal_calle')" data-tipo="animal_calle">
-                <span class="chip-ic">🐾</span><span class="chip-lbl">Animal en Calle</span>
-              </div>
-              <div class="tipo-chip" onclick="selTipo('perro_agresivo')" data-tipo="perro_agresivo">
-                <span class="chip-ic">🐕</span><span class="chip-lbl">Perro Agresivo</span>
-              </div>
-              <div class="tipo-chip" onclick="selTipo('otro')" data-tipo="otro" style="grid-column:1/-1">
-                <span class="chip-ic">📌</span><span class="chip-lbl">Otro</span>
+          <div class="form-card-header"><span class="ic">🏷️</span><span>¿Qué quieres reportar?</span></div>
+          <div class="form-card-body" style="gap:4px">
+
+            <!-- CATEGORÍA: URGENCIAS -->
+            <div class="cat-label" style="color:#dc2626">
+              <span>🚨</span><span>Urgencias</span><div class="cat-line"></div>
+            </div>
+            <div class="tipo-grid">
+              <div class="tipo-chip chip-emergencia chip-full" onclick="selTipo('emergencia')" data-tipo="emergencia">
+                <span class="chip-ic">🚨</span>
+                <div><div class="chip-lbl" style="font-size:.82rem;font-weight:800">Emergencia Ambiental</div><div style="font-size:.68rem;color:#94a3b8;margin-top:1px">Derrame, incendio, contaminación grave</div></div>
               </div>
             </div>
+
+            <!-- CATEGORÍA: MEDIO AMBIENTE -->
+            <div class="cat-label" style="color:var(--verde);margin-top:8px">
+              <span>🌱</span><span>Medio Ambiente</span><div class="cat-line"></div>
+            </div>
+            <div class="tipo-grid">
+              <div class="tipo-chip chip-ambiental" onclick="selTipo('denuncia_ambiental')" data-tipo="denuncia_ambiental">
+                <span class="chip-ic">🌱</span><span class="chip-lbl">Denuncia Ambiental</span>
+              </div>
+              <div class="tipo-chip chip-agua" onclick="selTipo('agua_contaminada')" data-tipo="agua_contaminada">
+                <span class="chip-ic">💧</span><span class="chip-lbl">Agua Contaminada</span>
+              </div>
+              <div class="tipo-chip chip-residuos" onclick="selTipo('residuos_solidos')" data-tipo="residuos_solidos">
+                <span class="chip-ic">🗑️</span><span class="chip-lbl">Residuos Sólidos</span>
+              </div>
+              <div class="tipo-chip chip-residuos" onclick="selTipo('tiradero_basura')" data-tipo="tiradero_basura">
+                <span class="chip-ic">🗑</span><span class="chip-lbl">Tiradero de Basura</span>
+              </div>
+              <div class="tipo-chip chip-residuos" onclick="selTipo('tiradero_escombro')" data-tipo="tiradero_escombro">
+                <span class="chip-ic">🧱</span><span class="chip-lbl">Escombro Ilegal</span>
+              </div>
+            </div>
+
+            <!-- CATEGORÍA: ARBOLADO -->
+            <div class="cat-label" style="color:#15803d;margin-top:8px">
+              <span>🌳</span><span>Arbolado y Espacios Verdes</span><div class="cat-line"></div>
+            </div>
+            <div class="tipo-grid">
+              <div class="tipo-chip chip-arbolado" onclick="selTipo('areas_verdes')" data-tipo="areas_verdes">
+                <span class="chip-ic">🌳</span><span class="chip-lbl">Áreas Verdes</span>
+              </div>
+              <div class="tipo-chip chip-arbolado" onclick="selTipo('poda_arbol')" data-tipo="poda_arbol">
+                <span class="chip-ic">✂️</span><span class="chip-lbl">Poda de Árbol</span>
+              </div>
+              <div class="tipo-chip chip-arbolado" onclick="selTipo('derribo_arbol')" data-tipo="derribo_arbol">
+                <span class="chip-ic">🪓</span><span class="chip-lbl">Derribo de Árbol</span>
+              </div>
+            </div>
+
+            <!-- CATEGORÍA: ANIMALES -->
+            <div class="cat-label" style="color:#b45309;margin-top:8px">
+              <span>🐾</span><span>Animales</span><div class="cat-line"></div>
+            </div>
+            <div class="tipo-grid">
+              <div class="tipo-chip chip-animal" onclick="selTipo('animal_calle')" data-tipo="animal_calle">
+                <span class="chip-ic">🐾</span><span class="chip-lbl">Animal en Calle</span>
+              </div>
+              <div class="tipo-chip chip-animal" onclick="selTipo('perro_agresivo')" data-tipo="perro_agresivo">
+                <span class="chip-ic">🐕</span><span class="chip-lbl">Perro Agresivo</span>
+              </div>
+            </div>
+
+            <!-- CATEGORÍA: NEGOCIOS (NUEVA) -->
+            <div class="cat-label" style="color:#7c3aed;margin-top:8px">
+              <span>🏪</span><span>Negocios y Establecimientos</span><div class="cat-line"></div>
+            </div>
+            <div class="banner-comercial">
+              <div class="bc-icon">🏭</div>
+              <div class="bc-txt">
+                <h4>¿Un negocio contamina o molesta?</h4>
+                <p>Reporta negocios con residuos, ruido excesivo o que no cumplen sus permisos ambientales.</p>
+              </div>
+            </div>
+            <div class="tipo-grid">
+              <div class="tipo-chip chip-comercial" onclick="selTipo('contaminacion_comercial')" data-tipo="contaminacion_comercial">
+                <span class="chip-ic">🏭</span><span class="chip-lbl">Contaminación Comercial</span>
+              </div>
+              <div class="tipo-chip chip-comercial" onclick="selTipo('ruido_comercial')" data-tipo="ruido_comercial">
+                <span class="chip-ic">📢</span><span class="chip-lbl">Ruido de Negocio</span>
+              </div>
+              <div class="tipo-chip chip-comercial" onclick="selTipo('residuos_comerciales')" data-tipo="residuos_comerciales">
+                <span class="chip-ic">🗑️</span><span class="chip-lbl">Residuos Comerciales</span>
+              </div>
+              <div class="tipo-chip chip-ambiental" onclick="selTipo('ruido')" data-tipo="ruido">
+                <span class="chip-ic">🔊</span><span class="chip-lbl">Ruido (General)</span>
+              </div>
+            </div>
+
+            <!-- OTRO -->
+            <div class="tipo-grid" style="margin-top:8px">
+              <div class="tipo-chip chip-otro chip-full" onclick="selTipo('otro')" data-tipo="otro">
+                <span class="chip-ic">📌</span><span class="chip-lbl">Otro tipo de incidencia</span>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -443,7 +526,7 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var
           <div class="form-card-header"><span class="ic">📝</span><span>Descripción *</span></div>
           <div class="form-card-body">
             <div class="fgroup">
-              <textarea id="nr-desc" placeholder="Describe la situación con el mayor detalle posible: qué ocurre, desde cuándo, qué tan urgente es..." rows="4"></textarea>
+              <textarea id="nr-desc" placeholder="Describe la situación con detalle: ¿qué ocurre?, ¿desde cuándo?, ¿qué tan urgente es?..." rows="4"></textarea>
             </div>
           </div>
         </div>
@@ -456,29 +539,14 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var
               <button class="map-btn" onclick="usarGPS()">📡 Mi ubicación</button>
               <button class="map-btn" onclick="setMapLayer('sat')" id="btn-sat">🛰️ Satelital</button>
               <button class="map-btn" onclick="setMapLayer('osm')" id="btn-osm">🗺️ Calles</button>
-              <button class="map-btn" onclick="abrirVistaCalles()" id="btn-sv" style="background:var(--azul);color:#fff;border-color:var(--azul)">📷 Ver domicilio</button>
             </div>
             <div id="map-app" style="margin-top:10px"></div>
             <div class="map-addr" id="map-addr">📍 Toca el mapa o usa tu GPS para marcar la ubicación exacta</div>
-
-            <!-- Dirección autocompletada -->
             <div class="addr-grid" id="addr-grid" style="margin-top:10px">
-              <div class="fgroup">
-                <label>Calle</label>
-                <input id="nr-calle" placeholder="Se autocompleta">
-              </div>
-              <div class="fgroup">
-                <label>Número</label>
-                <input id="nr-numero" placeholder="Núm. ext.">
-              </div>
-              <div class="fgroup">
-                <label>Colonia *</label>
-                <input id="nr-colonia" placeholder="Colonia o fraccionamiento">
-              </div>
-              <div class="fgroup">
-                <label>C.P.</label>
-                <input id="nr-cp" placeholder="Código postal">
-              </div>
+              <div class="fgroup"><label>Calle</label><input id="nr-calle" placeholder="Se autocompleta"></div>
+              <div class="fgroup"><label>Número</label><input id="nr-numero" placeholder="Núm. ext."></div>
+              <div class="fgroup"><label>Colonia *</label><input id="nr-colonia" placeholder="Colonia o fraccionamiento"></div>
+              <div class="fgroup"><label>C.P.</label><input id="nr-cp" placeholder="Código postal"></div>
             </div>
             <input type="hidden" id="nr-lat">
             <input type="hidden" id="nr-lon">
@@ -489,14 +557,8 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var
         <div class="form-card">
           <div class="form-card-header"><span class="ic">👤</span><span>Tus datos (opcionales)</span></div>
           <div class="form-card-body">
-            <div class="fgroup">
-              <label>Nombre completo</label>
-              <input id="nr-nombre" placeholder="Tu nombre (opcional)">
-            </div>
-            <div class="fgroup">
-              <label>Teléfono</label>
-              <input id="nr-tel" type="tel" placeholder="449 000 0000 (opcional)">
-            </div>
+            <div class="fgroup"><label>Nombre completo</label><input id="nr-nombre" placeholder="Tu nombre (opcional)"></div>
+            <div class="fgroup"><label>Teléfono</label><input id="nr-tel" type="tel" placeholder="449 000 0000 (opcional)"></div>
           </div>
         </div>
 
@@ -506,214 +568,79 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var
           <div class="form-card-body">
             <canvas id="sig-app"></canvas>
             <div style="display:flex;gap:8px;margin-top:8px">
-              <div class="fgroup" style="flex:1">
-                <input id="nr-firmante" placeholder="Nombre del firmante">
-              </div>
+              <div class="fgroup" style="flex:1"><input id="nr-firmante" placeholder="Nombre del firmante"></div>
               <button class="map-btn" onclick="clearSigApp()" style="flex:none;width:44px">🗑</button>
             </div>
           </div>
         </div>
 
-        <!-- PANEL ANIMAL AGRESIVO (se muestra solo cuando tipo=perro_agresivo o animal_calle) -->
+        <!-- PANEL ANIMAL (se muestra según tipo) -->
         <div id="panel-animal-agresivo" class="form-card">
-          <div class="form-card-header"><span class="ic">🐾</span><span>Información del Incidente</span></div>
+          <div class="form-card-header"><span class="ic">🐾</span><span>Información del Incidente Animal</span></div>
           <div class="form-card-body">
-
-            <!-- DATOS DEL AFECTADO -->
-            <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--azul);margin-bottom:8px">👤 Datos del Afectado</div>
-            <div class="fgroup">
-              <label>Nombre completo del afectado *</label>
-              <input id="a-afectado-nombre" placeholder="Nombre de la persona afectada">
-            </div>
+            <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--verde);margin-bottom:8px">👤 Datos del Afectado</div>
+            <div class="fgroup"><label>Nombre completo del afectado *</label><input id="a-afectado-nombre" placeholder="Nombre de la persona afectada"></div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-              <div class="fgroup">
-                <label>Teléfono *</label>
-                <input id="a-afectado-tel" type="tel" placeholder="449 000 0000">
-              </div>
-              <div class="fgroup">
-                <label>Correo electrónico</label>
-                <input id="a-afectado-email" type="email" placeholder="correo@ejemplo.com">
-              </div>
+              <div class="fgroup"><label>Teléfono *</label><input id="a-afectado-tel" type="tel" placeholder="449 000 0000"></div>
+              <div class="fgroup"><label>Correo electrónico</label><input id="a-afectado-email" type="email" placeholder="correo@ejemplo.com"></div>
             </div>
-            <div class="fgroup">
-              <label>Domicilio del afectado *</label>
-              <input id="a-afectado-domicilio" placeholder="Calle, número, colonia">
-            </div>
-
-            <!-- ¿FUE MORDIDA? -->
+            <div class="fgroup"><label>Domicilio del afectado *</label><input id="a-afectado-domicilio" placeholder="Calle, número, colonia"></div>
             <label class="animal-check" style="margin-top:4px">
               <input type="checkbox" id="a-hubo-mordida" onchange="toggleMordida()">
               <span>🦷 ¿El animal mordió a la víctima?</span>
             </label>
-
-            <!-- DATOS DE LA MORDIDA -->
             <div id="panel-mordida" style="display:none;margin-top:10px">
               <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#dc2626;margin-bottom:8px">🩸 Datos de la Mordida</div>
-
-              <!-- Mapa corporal SVG -->
               <div class="fgroup">
-                <label>¿Dónde ocurrió la mordida? (toca el cuerpo)</label>
+                <label>¿Dónde ocurrió? (toca el cuerpo)</label>
                 <p style="font-size:.75rem;color:var(--muted);margin-bottom:6px">Puede seleccionar más de una zona</p>
                 <div class="body-map-wrap">
                   <svg viewBox="0 0 160 340" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
-                    <!-- Cabeza -->
-                    <g class="bzone" id="bz-cabeza" onclick="toggleZona('cabeza')">
-                      <ellipse cx="80" cy="28" rx="24" ry="26" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                      <text x="80" y="32" text-anchor="middle" font-size="10" fill="#475569" font-weight="700">Cabeza</text>
-                    </g>
-                    <!-- Cuello -->
-                    <g class="bzone" id="bz-cuello" onclick="toggleZona('cuello')">
-                      <rect x="68" y="54" width="24" height="16" rx="6" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                      <text x="80" y="66" text-anchor="middle" font-size="8" fill="#475569" font-weight="700">Cuello</text>
-                    </g>
-                    <!-- Hombros + Torso -->
-                    <g class="bzone" id="bz-pecho" onclick="toggleZona('pecho')">
-                      <rect x="42" y="70" width="76" height="70" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                      <text x="80" y="109" text-anchor="middle" font-size="10" fill="#475569" font-weight="700">Pecho/Torso</text>
-                    </g>
-                    <!-- Brazo izq -->
-                    <g class="bzone" id="bz-brazo-izq" onclick="toggleZona('brazo_izq')">
-                      <rect x="14" y="72" width="26" height="58" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                      <text x="27" y="103" text-anchor="middle" font-size="8" fill="#475569" font-weight="700">Brazo</text>
-                      <text x="27" y="113" text-anchor="middle" font-size="8" fill="#475569" font-weight="700">Izq.</text>
-                    </g>
-                    <!-- Brazo der -->
-                    <g class="bzone" id="bz-brazo-der" onclick="toggleZona('brazo_der')">
-                      <rect x="120" y="72" width="26" height="58" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                      <text x="133" y="103" text-anchor="middle" font-size="8" fill="#475569" font-weight="700">Brazo</text>
-                      <text x="133" y="113" text-anchor="middle" font-size="8" fill="#475569" font-weight="700">Der.</text>
-                    </g>
-                    <!-- Abdomen -->
-                    <g class="bzone" id="bz-abdomen" onclick="toggleZona('abdomen')">
-                      <rect x="50" y="140" width="60" height="44" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                      <text x="80" y="167" text-anchor="middle" font-size="10" fill="#475569" font-weight="700">Abdomen</text>
-                    </g>
-                    <!-- Mano izq -->
-                    <g class="bzone" id="bz-mano-izq" onclick="toggleZona('mano_izq')">
-                      <rect x="10" y="132" width="22" height="22" rx="5" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                      <text x="21" y="147" text-anchor="middle" font-size="7.5" fill="#475569" font-weight="700">Mano I</text>
-                    </g>
-                    <!-- Mano der -->
-                    <g class="bzone" id="bz-mano-der" onclick="toggleZona('mano_der')">
-                      <rect x="128" y="132" width="22" height="22" rx="5" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                      <text x="139" y="147" text-anchor="middle" font-size="7.5" fill="#475569" font-weight="700">Mano D</text>
-                    </g>
-                    <!-- Pierna izq -->
-                    <g class="bzone" id="bz-pierna-izq" onclick="toggleZona('pierna_izq')">
-                      <rect x="46" y="184" width="30" height="80" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                      <text x="61" y="226" text-anchor="middle" font-size="8.5" fill="#475569" font-weight="700">Pierna</text>
-                      <text x="61" y="238" text-anchor="middle" font-size="8.5" fill="#475569" font-weight="700">Izq.</text>
-                    </g>
-                    <!-- Pierna der -->
-                    <g class="bzone" id="bz-pierna-der" onclick="toggleZona('pierna_der')">
-                      <rect x="84" y="184" width="30" height="80" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                      <text x="99" y="226" text-anchor="middle" font-size="8.5" fill="#475569" font-weight="700">Pierna</text>
-                      <text x="99" y="238" text-anchor="middle" font-size="8.5" fill="#475569" font-weight="700">Der.</text>
-                    </g>
-                    <!-- Pie izq -->
-                    <g class="bzone" id="bz-pie-izq" onclick="toggleZona('pie_izq')">
-                      <rect x="38" y="264" width="34" height="18" rx="5" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                      <text x="55" y="277" text-anchor="middle" font-size="7.5" fill="#475569" font-weight="700">Pie Izq.</text>
-                    </g>
-                    <!-- Pie der -->
-                    <g class="bzone" id="bz-pie-der" onclick="toggleZona('pie_der')">
-                      <rect x="88" y="264" width="34" height="18" rx="5" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                      <text x="105" y="277" text-anchor="middle" font-size="7.5" fill="#475569" font-weight="700">Pie Der.</text>
-                    </g>
+                    <g class="bzone" id="bz-cabeza" onclick="toggleZona('cabeza')"><ellipse cx="80" cy="28" rx="24" ry="26" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/><text x="80" y="32" text-anchor="middle" font-size="10" fill="#475569" font-weight="700">Cabeza</text></g>
+                    <g class="bzone" id="bz-cuello" onclick="toggleZona('cuello')"><rect x="68" y="54" width="24" height="16" rx="6" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/><text x="80" y="66" text-anchor="middle" font-size="8" fill="#475569" font-weight="700">Cuello</text></g>
+                    <g class="bzone" id="bz-pecho" onclick="toggleZona('pecho')"><rect x="42" y="70" width="76" height="70" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/><text x="80" y="109" text-anchor="middle" font-size="10" fill="#475569" font-weight="700">Pecho/Torso</text></g>
+                    <g class="bzone" id="bz-brazo-izq" onclick="toggleZona('brazo_izq')"><rect x="14" y="72" width="26" height="58" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/><text x="27" y="103" text-anchor="middle" font-size="8" fill="#475569" font-weight="700">Brazo</text><text x="27" y="113" text-anchor="middle" font-size="8" fill="#475569" font-weight="700">Izq.</text></g>
+                    <g class="bzone" id="bz-brazo-der" onclick="toggleZona('brazo_der')"><rect x="120" y="72" width="26" height="58" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/><text x="133" y="103" text-anchor="middle" font-size="8" fill="#475569" font-weight="700">Brazo</text><text x="133" y="113" text-anchor="middle" font-size="8" fill="#475569" font-weight="700">Der.</text></g>
+                    <g class="bzone" id="bz-abdomen" onclick="toggleZona('abdomen')"><rect x="50" y="140" width="60" height="44" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/><text x="80" y="167" text-anchor="middle" font-size="10" fill="#475569" font-weight="700">Abdomen</text></g>
+                    <g class="bzone" id="bz-mano-izq" onclick="toggleZona('mano_izq')"><rect x="10" y="132" width="22" height="22" rx="5" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/><text x="21" y="147" text-anchor="middle" font-size="7.5" fill="#475569" font-weight="700">Mano I</text></g>
+                    <g class="bzone" id="bz-mano-der" onclick="toggleZona('mano_der')"><rect x="128" y="132" width="22" height="22" rx="5" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/><text x="139" y="147" text-anchor="middle" font-size="7.5" fill="#475569" font-weight="700">Mano D</text></g>
+                    <g class="bzone" id="bz-pierna-izq" onclick="toggleZona('pierna_izq')"><rect x="46" y="184" width="30" height="80" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/><text x="61" y="226" text-anchor="middle" font-size="8.5" fill="#475569" font-weight="700">Pierna</text><text x="61" y="238" text-anchor="middle" font-size="8.5" fill="#475569" font-weight="700">Izq.</text></g>
+                    <g class="bzone" id="bz-pierna-der" onclick="toggleZona('pierna_der')"><rect x="84" y="184" width="30" height="80" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/><text x="99" y="226" text-anchor="middle" font-size="8.5" fill="#475569" font-weight="700">Pierna</text><text x="99" y="238" text-anchor="middle" font-size="8.5" fill="#475569" font-weight="700">Der.</text></g>
+                    <g class="bzone" id="bz-pie-izq" onclick="toggleZona('pie_izq')"><rect x="38" y="264" width="34" height="18" rx="5" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/><text x="55" y="277" text-anchor="middle" font-size="7.5" fill="#475569" font-weight="700">Pie Izq.</text></g>
+                    <g class="bzone" id="bz-pie-der" onclick="toggleZona('pie_der')"><rect x="88" y="264" width="34" height="18" rx="5" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/><text x="105" y="277" text-anchor="middle" font-size="7.5" fill="#475569" font-weight="700">Pie Der.</text></g>
                   </svg>
                 </div>
-                <div id="zonas-sel-txt" style="font-size:.78rem;color:var(--azul);font-weight:700;text-align:center;margin-top:4px;min-height:18px">Ninguna zona seleccionada</div>
+                <div id="zonas-sel-txt" style="font-size:.78rem;color:var(--verde);font-weight:700;text-align:center;margin-top:4px;min-height:18px">Ninguna zona seleccionada</div>
               </div>
-
-              <!-- Gravedad -->
               <div class="fgroup">
                 <label>Gravedad de la mordida</label>
                 <div class="gravedad-btns">
-                  <button type="button" class="grav-btn" id="grav-superficial" onclick="selGravedad('superficial')">
-                    ✅ Superficial<br><small style="font-weight:400">Sin perforación profunda</small>
-                  </button>
-                  <button type="button" class="grav-btn" id="grav-profunda" onclick="selGravedad('profunda')">
-                    ⚠️ Profunda<br><small style="font-weight:400">Perforación / hemorragia</small>
-                  </button>
+                  <button type="button" class="grav-btn" id="grav-superficial" onclick="selGravedad('superficial')">✅ Superficial<br><small style="font-weight:400">Sin perforación</small></button>
+                  <button type="button" class="grav-btn" id="grav-profunda" onclick="selGravedad('profunda')">⚠️ Profunda<br><small style="font-weight:400">Perforación / hemorragia</small></button>
                 </div>
                 <input type="hidden" id="a-gravedad-mordida">
               </div>
-
-              <!-- Atención médica -->
-              <label class="animal-check">
-                <input type="checkbox" id="a-atencion-medica">
-                <span>🏥 ¿El afectado recibió o requiere atención médica?</span>
-              </label>
-              <label class="animal-check" style="margin-top:8px">
-                <input type="checkbox" id="a-vacuna-antirabica">
-                <span>💉 ¿Se requiere vacuna antirrábica?</span>
-              </label>
+              <label class="animal-check"><input type="checkbox" id="a-atencion-medica"><span>🏥 ¿El afectado requiere atención médica?</span></label>
+              <label class="animal-check" style="margin-top:8px"><input type="checkbox" id="a-vacuna-antirabica"><span>💉 ¿Se requiere vacuna antirrábica?</span></label>
             </div>
-
-            <!-- DATOS DEL ANIMAL -->
-            <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--azul);margin:14px 0 8px">🐕 Datos del Animal</div>
-            <div class="fgroup">
-              <label>Descripción del animal *</label>
-              <input id="a-animal-desc" placeholder="Ej: Perro mediano café con manchas negras">
+            <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--verde);margin:14px 0 8px">🐕 Datos del Animal</div>
+            <div class="fgroup"><label>Descripción del animal *</label><input id="a-animal-desc" placeholder="Ej: Perro mediano café con manchas negras"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div class="fgroup"><label>Especie</label><select id="a-animal-especie"><option value="">-- Tipo --</option><option value="perro">🐕 Perro</option><option value="gato">🐈 Gato</option><option value="otro">Otro</option></select></div>
+              <div class="fgroup"><label>Color(es) *</label><input id="a-animal-color" placeholder="Negro, café, blanco..."></div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-              <div class="fgroup">
-                <label>Especie</label>
-                <select id="a-animal-especie">
-                  <option value="">-- Tipo --</option>
-                  <option value="perro">🐕 Perro</option>
-                  <option value="gato">🐈 Gato</option>
-                  <option value="otro">Otro animal</option>
-                </select>
-              </div>
-              <div class="fgroup">
-                <label>Color(es) *</label>
-                <input id="a-animal-color" placeholder="Negro, café, blanco...">
-              </div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-              <div class="fgroup">
-                <label>Tamaño aproximado</label>
-                <select id="a-animal-tamanio">
-                  <option value="">-- Talla --</option>
-                  <option value="pequeño">Pequeño (&lt;10 kg)</option>
-                  <option value="mediano">Mediano (10-30 kg)</option>
-                  <option value="grande">Grande (&gt;30 kg)</option>
-                </select>
-              </div>
-              <div class="fgroup">
-                <label>Señas particulares</label>
-                <input id="a-animal-senias" placeholder="Collar, cicatrices...">
-              </div>
+              <div class="fgroup"><label>Tamaño</label><select id="a-animal-tamanio"><option value="">-- Talla --</option><option value="pequeño">Pequeño (&lt;10 kg)</option><option value="mediano">Mediano (10-30 kg)</option><option value="grande">Grande (&gt;30 kg)</option></select></div>
+              <div class="fgroup"><label>Señas particulares</label><input id="a-animal-senias" placeholder="Collar, cicatrices..."></div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
-              <label class="animal-check">
-                <input type="checkbox" id="a-tiene-duenio" onchange="toggleDuenio()">
-                <span>🏠 ¿Tiene dueño conocido?</span>
-              </label>
-              <label class="animal-check">
-                <input type="checkbox" id="a-tiene-vacunas">
-                <span>💊 ¿Tiene vacunas?</span>
-              </label>
+              <label class="animal-check"><input type="checkbox" id="a-tiene-duenio" onchange="toggleDuenio()"><span>🏠 ¿Tiene dueño?</span></label>
+              <label class="animal-check"><input type="checkbox" id="a-tiene-vacunas"><span>💊 ¿Con vacunas?</span></label>
             </div>
             <div id="panel-duenio" style="display:none;margin-top:8px">
-              <div class="fgroup">
-                <label>Datos del dueño / responsable</label>
-                <input id="a-duenio-datos" placeholder="Nombre, teléfono, domicilio del dueño">
-              </div>
+              <div class="fgroup"><label>Datos del dueño / responsable</label><input id="a-duenio-datos" placeholder="Nombre, teléfono, domicilio del dueño"></div>
             </div>
-
-            <!-- SITUACIÓN DEL ANIMAL -->
-            <div class="fgroup" style="margin-top:8px">
-              <label>Situación actual del animal</label>
-              <select id="a-animal-situacion">
-                <option value="">-- Seleccionar --</option>
-                <option value="en_lugar">Sigue en el lugar</option>
-                <option value="huyó">Huyó / no se sabe dónde está</option>
-                <option value="controlado">Está controlado / encerrado</option>
-                <option value="capturado">Ya fue capturado</option>
-              </select>
-            </div>
+            <div class="fgroup" style="margin-top:8px"><label>Situación actual del animal</label><select id="a-animal-situacion"><option value="">-- Seleccionar --</option><option value="en_lugar">Sigue en el lugar</option><option value="huyó">Huyó / no se sabe</option><option value="controlado">Controlado / encerrado</option><option value="capturado">Ya fue capturado</option></select></div>
           </div>
         </div>
 
@@ -741,60 +668,31 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var
     <!-- ══════════ ACERCA ══════════ -->
     <div id="screen-acerca" class="screen">
       <div class="screen-pad">
-
-        <div class="form-card">
+        <div class="about-card">
           <div class="about-logo">
             <div class="big-ic">🌿</div>
             <h2>IMBIO Ciudadano</h2>
-            <p style="font-size:.78rem;line-height:1.4">Instituto Municipal de Biodiversidad y Protección Ambiental de Pabellón de Arteaga</p>
+            <p>Instituto Municipal de Biodiversidad y Protección Ambiental<br>de Pabellón de Arteaga, Aguascalientes</p>
           </div>
           <div class="form-card-body" style="padding-top:0">
-            <div class="about-row">
-              <div class="row-ic">🏛️</div>
-              <div class="row-info"><label>Institución</label><span>Instituto Municipal de Biodiversidad y Protección Ambiental de Pabellón de Arteaga</span></div>
-            </div>
-            <div class="about-row">
-              <div class="row-ic">📱</div>
-              <div class="row-info"><label>Versión</label><span>1.0.0 — SGO-IMBIO</span></div>
-            </div>
+            <div class="about-row"><div class="row-ic">🏛️</div><div class="row-info"><label>Institución</label><span>IMBIO Pabellón de Arteaga</span></div></div>
+            <div class="about-row"><div class="row-ic">📱</div><div class="row-info"><label>Versión</label><span>2.0.0 — SGO-IMBIO</span></div></div>
             <div class="about-row">
               <div class="row-ic">🔗</div>
-              <div class="row-info" style="flex:1">
-                <label>Servidor SGO-IMBIO</label>
-                <div class="server-input" style="margin-top:6px">
-                  <input id="server-url" type="url" placeholder="http://192.168.1.X:8080" value="">
-                  <button onclick="guardarServidor()">✓</button>
-                </div>
+              <div class="row-info" style="flex:1"><label>Servidor SGO-IMBIO</label>
+                <div class="server-input" style="margin-top:6px"><input id="server-url" type="url" placeholder="http://192.168.1.X:8080" value=""><button onclick="guardarServidor()">✓</button></div>
               </div>
             </div>
-            <div class="about-row">
-              <div class="row-ic" id="conn-status-ic">🔴</div>
-              <div class="row-info"><label>Estado de conexión</label><span id="conn-status-txt">Sin conexión</span></div>
-            </div>
-            <div class="about-row">
-              <div class="row-ic">💻</div>
-              <div class="row-info"><label>Desarrollo</label><span>Biol. Luis Felipe Lozano Román</span></div>
-            </div>
-            <div class="about-row">
-              <div class="row-ic">📧</div>
-              <div class="row-info"><label>Contacto</label><span>imbio@pabellon.gob.mx</span></div>
-            </div>
-            <div class="about-row">
-              <div class="row-ic">©</div>
-              <div class="row-info"><label>Derechos</label><span>2026 · Municipio de Pabellón de Arteaga</span></div>
-            </div>
-            <div class="about-row">
-              <div class="row-ic">📞</div>
-              <div class="row-info"><label>Emergencias</label><span>911 / Protección Civil</span></div>
-            </div>
+            <div class="about-row"><div class="row-ic" id="conn-status-ic">🔴</div><div class="row-info"><label>Estado de conexión</label><span id="conn-status-txt">Sin conexión</span></div></div>
+            <div class="about-row"><div class="row-ic">👨‍💻</div><div class="row-info"><label>Desarrollo</label><span>Biol. Luis Felipe Lozano Román</span></div></div>
+            <div class="about-row"><div class="row-ic">📧</div><div class="row-info"><label>Contacto</label><span><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="a9c0c4cbc0c6e9d9c8cbccc5c5c6c787cec6cb87c4d1">[email&#160;protected]</a></span></div></div>
+            <div class="about-row"><div class="row-ic">📞</div><div class="row-info"><label>Emergencias</label><span>911 / Protección Civil</span></div></div>
+            <div class="about-row"><div class="row-ic">©</div><div class="row-info"><label>Derechos</label><span>2026 · Municipio de Pabellón de Arteaga</span></div></div>
           </div>
         </div>
-
         <div class="about-card" style="padding:16px">
           <p style="font-size:.8rem;color:var(--muted);text-align:center;line-height:1.6">
-            Esta aplicación permite a los ciudadanos de Pabellón de Arteaga reportar
-            incidencias ambientales y de servicios urbanos directamente al sistema
-            municipal SGO-IMBIO para su atención por las brigadas operativas.
+            Esta aplicación permite a los ciudadanos de Pabellón de Arteaga reportar incidencias ambientales y de servicios urbanos directamente al sistema municipal SGO-IMBIO.
           </p>
         </div>
       </div>
@@ -803,25 +701,23 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var
   </div><!-- /content -->
 </div><!-- /app -->
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ════════════════════════════════════════════════════════
-//  IMBIO CIUDADANO — App JavaScript
+//  IMBIO CIUDADANO v2.0 — App JavaScript
 // ════════════════════════════════════════════════════════
-
-// ── Config ────────────────────────────────────────────
-const DEFAULT_SERVER = window.location.origin; // mismo servidor
+const DEFAULT_SERVER = window.location.origin;
 let SERVER_URL = localStorage.getItem('imbio_server') || DEFAULT_SERVER;
 let tipoSel = '';
 let mapApp = null, appMarker = null, appLayerActive = null;
 let sigAppCanvas, sigAppCtx, sigDrawing = false;
 let misReportes = JSON.parse(localStorage.getItem('imbio_mis_reportes') || '[]');
 
-// ── Splash ────────────────────────────────────────────
+// ── Splash ──────────────────────────────────────────────
 window.addEventListener('load', () => {
   setTimeout(() => {
     document.getElementById('splash').classList.add('hide');
     initApp();
-  }, 1800);
+  }, 1900);
 });
 
 function initApp() {
@@ -830,15 +726,13 @@ function initApp() {
   cargarMisReportes();
   checkConexion();
   setInterval(checkConexion, 15000);
-  // Cargar server guardado
   document.getElementById('server-url').value = SERVER_URL;
-  // Service Worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/app/sw.js').catch(() => {});
   }
 }
 
-// ── Tabs ──────────────────────────────────────────────
+// ── Tabs ────────────────────────────────────────────────
 function setTab(name) {
   ['nuevo','mis','acerca'].forEach(t => {
     document.getElementById('screen-' + t).classList.toggle('active', t === name);
@@ -848,16 +742,18 @@ function setTab(name) {
   if (name === 'nuevo') setTimeout(() => mapApp && mapApp.invalidateSize(), 150);
 }
 
-// ── Conexión ──────────────────────────────────────────
+// ── Conexión ────────────────────────────────────────────
 async function checkConexion() {
   try {
     const r = await fetch(SERVER_URL + '/health', { signal: AbortSignal.timeout(4000) });
     const ok = r.ok;
-    document.getElementById('conn-dot').className = 'conn-dot' + (ok ? '' : ' off');
+    const dot = document.getElementById('conn-dot');
+    if (dot) dot.className = 'conn-dot ' + (ok ? 'ok' : 'off');
     document.getElementById('conn-status-ic').textContent = ok ? '🟢' : '🔴';
     document.getElementById('conn-status-txt').textContent = ok ? 'Conectado al SGO-IMBIO' : 'Sin conexión';
   } catch {
-    document.getElementById('conn-dot').className = 'conn-dot off';
+    const dot = document.getElementById('conn-dot');
+    if (dot) dot.className = 'conn-dot off';
     document.getElementById('conn-status-ic').textContent = '🔴';
     document.getElementById('conn-status-txt').textContent = 'Sin conexión al servidor';
   }
@@ -872,7 +768,7 @@ function guardarServidor() {
   alert('Servidor guardado: ' + url);
 }
 
-// ── Tipo chips ─────────────────────────────────────────
+// ── Chips de tipo ────────────────────────────────────────
 function selTipo(t) {
   tipoSel = t;
   document.querySelectorAll('.tipo-chip').forEach(c => c.classList.toggle('sel', c.dataset.tipo === t));
@@ -880,9 +776,13 @@ function selTipo(t) {
   if (panelAnimal) {
     panelAnimal.style.display = (t === 'perro_agresivo' || t === 'animal_calle') ? 'block' : 'none';
   }
+  // Scroll suave al formulario de descripción
+  setTimeout(() => {
+    document.querySelector('.content').scrollTo({ top: document.getElementById('nr-desc')?.offsetTop - 80 || 0, behavior: 'smooth' });
+  }, 200);
 }
 
-// ── Mapa ──────────────────────────────────────────────
+// ── Mapa ─────────────────────────────────────────────────
 const TILES = {
   osm: { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attr: '© OSM' },
   sat: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr: '© Esri' }
@@ -903,7 +803,7 @@ function setMapLayer(name) {
 }
 
 function usarGPS() {
-  if (!navigator.geolocation) { showAlert('form-alert', 'err', 'Tu dispositivo no soporta GPS.'); return; }
+  if (!navigator.geolocation) { showAlert('form-alert','err','Tu dispositivo no soporta GPS.'); return; }
   showLoading(true);
   navigator.geolocation.getCurrentPosition(
     pos => {
@@ -912,16 +812,13 @@ function usarGPS() {
       mapApp.setView([lat, lng], 17);
       geocodePos(lat, lng);
     },
-    () => { showLoading(false); showAlert('form-alert', 'err', 'No se pudo obtener tu ubicación. Toca el mapa manualmente.'); },
+    () => { showLoading(false); showAlert('form-alert','err','No se pudo obtener tu ubicación. Toca el mapa manualmente.'); },
     { enableHighAccuracy: true, timeout: 10000 }
   );
 }
 
 function makeAppIcon() {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="28" height="42">
-    <path d="M12 0C5.37 0 0 5.37 0 12c0 9 12 24 12 24s12-15 12-24C24 5.37 18.63 0 12 0z" fill="#003B7A" stroke="white" stroke-width="1.5"/>
-    <circle cx="12" cy="12" r="5" fill="white" opacity="0.9"/>
-  </svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="28" height="42"><path d="M12 0C5.37 0 0 5.37 0 12c0 9 12 24 12 24s12-15 12-24C24 5.37 18.63 0 12 0z" fill="#003B7A" stroke="white" stroke-width="1.5"/><circle cx="12" cy="12" r="5" fill="white" opacity="0.9"/></svg>`;
   return L.divIcon({ html: svg, className: '', iconSize: [28,42], iconAnchor: [14,42], popupAnchor: [0,-44] });
 }
 
@@ -931,7 +828,6 @@ async function geocodePos(lat, lng) {
   document.getElementById('map-addr').textContent = '🔍 Buscando dirección...';
   if (appMarker) mapApp.removeLayer(appMarker);
   appMarker = L.marker([lat, lng], { icon: makeAppIcon() }).addTo(mapApp);
-
   try {
     const r   = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&accept-language=es`);
     const geo = await r.json();
@@ -940,29 +836,24 @@ async function geocodePos(lat, lng) {
     const numero  = a.house_number || '';
     const colonia = a.neighbourhood || a.suburb || a.quarter || a.village || '';
     const cp      = a.postcode || '';
-
     document.getElementById('nr-calle').value   = calle;
     document.getElementById('nr-numero').value  = numero;
     document.getElementById('nr-colonia').value = colonia;
     document.getElementById('nr-cp').value      = cp;
-
-    // Resaltar campos llenados
     ['nr-calle','nr-numero','nr-colonia','nr-cp'].forEach(id => {
       const el = document.getElementById(id);
-      if (el.value) el.style.borderColor = '#1976D2';
+      if (el && el.value) el.style.borderColor = '#0057B8';
     });
-
     const partes = [calle, numero, colonia, cp].filter(Boolean);
     document.getElementById('map-addr').innerHTML =
-      `<b style="color:#003B7A">✅ Domicilio detectado:</b><br>${partes.join(', ')}`;
-
+      `<b style="color:var(--verde)">✅ Domicilio detectado:</b><br>${partes.join(', ')}`;
     appMarker.bindPopup(`<b>${partes.slice(0,2).join(' ')}</b><br><small>${colonia}</small>`).openPopup();
   } catch {
     document.getElementById('map-addr').textContent = `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
   }
 }
 
-// ── Firma ─────────────────────────────────────────────
+// ── Firma ─────────────────────────────────────────────────
 function initSigApp() {
   sigAppCanvas = document.getElementById('sig-app');
   sigAppCtx    = sigAppCanvas.getContext('2d');
@@ -970,7 +861,6 @@ function initSigApp() {
   sigAppCtx.lineWidth   = 2.5;
   sigAppCtx.lineCap     = 'round';
   sigAppCtx.lineJoin    = 'round';
-
   function getPos(e) {
     const r = sigAppCanvas.getBoundingClientRect();
     const src = e.touches ? e.touches[0] : e;
@@ -984,19 +874,12 @@ function initSigApp() {
   sigAppCanvas.addEventListener('touchmove',  e => { e.preventDefault(); if(!sigDrawing)return; const p=getPos(e); sigAppCtx.lineTo(p.x,p.y); sigAppCtx.stroke(); }, {passive:false});
   sigAppCanvas.addEventListener('touchend',   () => sigDrawing=false);
 }
+function clearSigApp() { sigAppCtx.clearRect(0, 0, sigAppCanvas.width, sigAppCanvas.height); }
+function sigIsEmpty()  { return !sigAppCtx.getImageData(0,0,sigAppCanvas.width,sigAppCanvas.height).data.some(v=>v!==0); }
 
-function clearSigApp() {
-  sigAppCtx.clearRect(0, 0, sigAppCanvas.width, sigAppCanvas.height);
-}
-function sigIsEmpty() {
-  return !sigAppCtx.getImageData(0,0,sigAppCanvas.width,sigAppCanvas.height).data.some(v=>v!==0);
-}
-
-// ── Enviar reporte ────────────────────────────────────
+// ── Enviar reporte ────────────────────────────────────────
 async function enviarReporte() {
-  const alertEl = document.getElementById('form-alert');
-  alertEl.innerHTML = '';
-
+  document.getElementById('form-alert').innerHTML = '';
   const tipo   = tipoSel;
   const desc   = document.getElementById('nr-desc').value.trim();
   const lat    = document.getElementById('nr-lat').value;
@@ -1008,11 +891,10 @@ async function enviarReporte() {
   const nombre = document.getElementById('nr-nombre').value.trim();
   const tel    = document.getElementById('nr-tel').value.trim();
 
-  // Validaciones
-  if (!tipo)         { showAlert('form-alert','err','Selecciona el tipo de incidencia.'); scrollTop(); return; }
-  if (desc.length<10){ showAlert('form-alert','err','La descripción debe tener al menos 10 caracteres.'); return; }
-  if (!lat || !lon)  { showAlert('form-alert','err','📍 Marca la ubicación en el mapa o usa tu GPS.'); return; }
-  if (!colonia)      { showAlert('form-alert','err','Escribe o confirma la colonia.'); return; }
+  if (!tipo)          { showAlert('form-alert','err','Selecciona el tipo de incidencia.'); scrollTop(); return; }
+  if (desc.length<10) { showAlert('form-alert','err','La descripción debe tener al menos 10 caracteres.'); return; }
+  if (!lat || !lon)   { showAlert('form-alert','err','📍 Marca la ubicación en el mapa o usa tu GPS.'); return; }
+  if (!colonia)       { showAlert('form-alert','err','Escribe o confirma la colonia.'); return; }
 
   const body = {
     tipo, descripcion: desc,
@@ -1022,54 +904,47 @@ async function enviarReporte() {
     nombre_reportante: nombre || null,
     telefono: tel || null,
   };
+
   // Datos extra para animal agresivo
   if (tipo === 'perro_agresivo' || tipo === 'animal_calle') {
-    const afNombre  = document.getElementById('a-afectado-nombre')?.value.trim();
-    const afTel     = document.getElementById('a-afectado-tel')?.value.trim();
-    const afEmail   = document.getElementById('a-afectado-email')?.value.trim();
-    const afDom     = document.getElementById('a-afectado-domicilio')?.value.trim();
-    const huboMord  = document.getElementById('a-hubo-mordida')?.checked;
-    const zonas     = Array.from(zonasSeleccionadas).join(',');
-    const gravedad  = document.getElementById('a-gravedad-mordida')?.value;
-    const atMed     = document.getElementById('a-atencion-medica')?.checked;
-    const vacAnti   = document.getElementById('a-vacuna-antirabica')?.checked;
-    const aniDesc   = document.getElementById('a-animal-desc')?.value.trim();
-    const aniEsp    = document.getElementById('a-animal-especie')?.value;
-    const aniColor  = document.getElementById('a-animal-color')?.value.trim();
-    const aniTam    = document.getElementById('a-animal-tamanio')?.value;
-    const aniSen    = document.getElementById('a-animal-senias')?.value.trim();
-    const tieneDue  = document.getElementById('a-tiene-duenio')?.checked;
-    const dueData   = document.getElementById('a-duenio-datos')?.value.trim();
-    const tieVac    = document.getElementById('a-tiene-vacunas')?.checked;
-    const situacion = document.getElementById('a-animal-situacion')?.value;
-    if (afNombre) body.afectado_nombre = afNombre;
-    if (afTel)    body.afectado_telefono = afTel;
-    if (afEmail)  body.afectado_email = afEmail;
-    if (afDom)    body.afectado_domicilio = afDom;
+    const afNombre = document.getElementById('a-afectado-nombre')?.value.trim();
+    const afTel    = document.getElementById('a-afectado-tel')?.value.trim();
+    const afEmail  = document.getElementById('a-afectado-email')?.value.trim();
+    const afDom    = document.getElementById('a-afectado-domicilio')?.value.trim();
+    const huboMord = document.getElementById('a-hubo-mordida')?.checked;
+    const zonas    = Array.from(zonasSeleccionadas).join(',');
+    const gravedad = document.getElementById('a-gravedad-mordida')?.value;
+    const atMed    = document.getElementById('a-atencion-medica')?.checked;
+    const vacAnti  = document.getElementById('a-vacuna-antirabica')?.checked;
+    const aniDesc  = document.getElementById('a-animal-desc')?.value.trim();
+    const aniEsp   = document.getElementById('a-animal-especie')?.value;
+    const aniColor = document.getElementById('a-animal-color')?.value.trim();
+    const aniTam   = document.getElementById('a-animal-tamanio')?.value;
+    const aniSen   = document.getElementById('a-animal-senias')?.value.trim();
+    const tieneDue = document.getElementById('a-tiene-duenio')?.checked;
+    const dueData  = document.getElementById('a-duenio-datos')?.value.trim();
+    const tieVac   = document.getElementById('a-tiene-vacunas')?.checked;
+    const situacion= document.getElementById('a-animal-situacion')?.value;
+    if (afNombre) body.afectado_nombre     = afNombre;
+    if (afTel)    body.afectado_telefono   = afTel;
+    if (afEmail)  body.afectado_email      = afEmail;
+    if (afDom)    body.afectado_domicilio  = afDom;
     body.mordida = huboMord || false;
-    if (huboMord) {
-      body.zonas_mordida = zonas;
-      body.gravedad_mordida = gravedad;
-      body.requiere_atencion_medica = atMed || false;
-      body.requiere_vacuna_antirabica = vacAnti || false;
-    }
+    if (huboMord) { body.zonas_mordida = zonas; body.gravedad_mordida = gravedad; body.requiere_atencion_medica = atMed||false; body.requiere_vacuna_antirabica = vacAnti||false; }
     if (aniDesc)  body.animal_descripcion = aniDesc;
     if (aniEsp)   body.animal_especie  = aniEsp;
     if (aniColor) body.animal_color    = aniColor;
     if (aniTam)   body.animal_tamanio  = aniTam;
     if (aniSen)   body.animal_senias   = aniSen;
-    body.animal_tiene_duenio = tieneDue || false;
+    body.animal_tiene_duenio = tieneDue||false;
     if (tieneDue && dueData) body.duenio_datos = dueData;
-    body.animal_vacunado = tieVac || false;
+    body.animal_vacunado = tieVac||false;
     if (situacion) body.animal_situacion = situacion;
   }
 
   if (!sigIsEmpty()) {
     const firmante = document.getElementById('nr-firmante').value.trim();
-    if (firmante) {
-      body.firma_base64    = sigAppCanvas.toDataURL('image/png');
-      body.nombre_firmante = firmante;
-    }
+    if (firmante) { body.firma_base64 = sigAppCanvas.toDataURL('image/png'); body.nombre_firmante = firmante; }
   }
 
   showLoading(true);
@@ -1083,28 +958,18 @@ async function enviarReporte() {
     const data = await r.json();
     showLoading(false);
     if (data.success) {
-      // Guardar en historial local
-      const entry = {
-        id:      data.data.report.id,
-        folio:   data.data.report.folio,
-        tipo,
-        colonia,
-        desc:    desc.slice(0, 80),
-        estado:  'reportado',
-        fecha:   new Date().toISOString(),
-        lat, lon
-      };
+      const entry = { id: data.data.report.id, folio: data.data.report.folio, tipo, colonia, desc: desc.slice(0,80), estado: 'reportado', fecha: new Date().toISOString(), lat, lon };
       misReportes.unshift(entry);
       if (misReportes.length > 50) misReportes.pop();
       localStorage.setItem('imbio_mis_reportes', JSON.stringify(misReportes));
       mostrarExito(data.data.report.folio);
       limpiarForm();
     } else {
-      showAlert('form-alert', 'err', data.message || 'Error al enviar el reporte.');
+      showAlert('form-alert','err', data.message || 'Error al enviar el reporte.');
     }
   } catch(e) {
     showLoading(false);
-    showAlert('form-alert', 'err', '⚠️ Sin conexión al servidor SGO-IMBIO. Verifica tu red en la pestaña "Acerca".');
+    showAlert('form-alert','err','⚠️ Sin conexión al servidor SGO-IMBIO. Verifica tu red en la pestaña "Acerca".');
   }
 }
 
@@ -1117,11 +982,11 @@ function cerrarExito() {
   setTab('nuevo');
 }
 
-// ── Mis Reportes ──────────────────────────────────────
+// ── Mis Reportes ──────────────────────────────────────────
 function cargarMisReportes() {
   const el = document.getElementById('mis-lista');
   if (!misReportes.length) {
-    el.innerHTML = '<div class="empty-state"><div class="em-ic">📋</div><p>Aún no has enviado reportes.<br>¡Haz tu primer reporte desde la pestaña "Nuevo"!</p></div>';
+    el.innerHTML = '<div class="empty-state"><div class="em-ic">📋</div><p>Aún no has enviado reportes.<br>¡Haz tu primer reporte desde "Nuevo Reporte"!</p></div>';
     return;
   }
   const TIPO_LABELS = {
@@ -1131,6 +996,9 @@ function cargarMisReportes() {
     tiradero_basura:'🗑 Tiradero Basura', tiradero_escombro:'🧱 Tiradero Escombro',
     agua_contaminada:'💧 Agua Contaminada', ruido:'🔊 Ruido',
     animal_calle:'🐾 Animal en Calle', perro_agresivo:'🐕 Perro Agresivo',
+    contaminacion_comercial:'🏭 Contaminación Comercial',
+    ruido_comercial:'📢 Ruido de Negocio',
+    residuos_comerciales:'🗑️ Residuos Comerciales',
     otro:'📌 Otro'
   };
   el.innerHTML = misReportes.map(r => `
@@ -1146,45 +1014,30 @@ function cargarMisReportes() {
         <span class="reporte-colonia">📍 ${r.colonia}</span>
       </div>
     </div>`).join('');
-
-  // Actualizar estados desde servidor en background
   actualizarEstados();
 }
 
 async function actualizarEstados() {
   if (!misReportes.length) return;
-  // Limitar actualizacion: maximo una vez cada 5 minutos
-  const ultimaActualizacion = parseInt(localStorage.getItem('imbio_ultima_actualizacion') || '0');
-  if (Date.now() - ultimaActualizacion < 5 * 60 * 1000) return;
-  localStorage.setItem('imbio_ultima_actualizacion', Date.now().toString());
   try {
-    // Solo verificar los ultimos 5 reportes
-    const ids = misReportes.map(r => r.id).slice(0, 5);
-    for (const id of ids) {
-      const r = await fetch(SERVER_URL + '/api/reports/' + id + '/status', {
-        signal: AbortSignal.timeout(5000)
-      });
+    for (const rep of misReportes.slice(0,10)) {
+      const r = await fetch(SERVER_URL + '/api/reports/' + rep.id, { signal: AbortSignal.timeout(5000) });
       if (!r.ok) continue;
       const data = await r.json();
-      if (data.success) {
-        const entry = misReportes.find(m => m.id === id);
-        if (entry) entry.estado = data.data.estado;
-      }
+      if (data.success) { const entry = misReportes.find(m => m.id === rep.id); if (entry) entry.estado = data.data.estado; }
     }
     localStorage.setItem('imbio_mis_reportes', JSON.stringify(misReportes));
     cargarMisReportes();
-  } catch(e) {}
+  } catch {}
 }
 
-// ── Helpers ───────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────
 function limpiarForm() {
   tipoSel = '';
   document.querySelectorAll('.tipo-chip').forEach(c => c.classList.remove('sel'));
   ['nr-desc','nr-calle','nr-numero','nr-colonia','nr-cp','nr-nombre','nr-tel','nr-firmante','nr-lat','nr-lon']
     .forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
-  ['nr-calle','nr-numero','nr-colonia','nr-cp'].forEach(id => {
-    document.getElementById(id).style.borderColor = '';
-  });
+  ['nr-calle','nr-numero','nr-colonia','nr-cp'].forEach(id => { document.getElementById(id).style.borderColor = ''; });
   document.getElementById('map-addr').textContent = '📍 Toca el mapa o usa tu GPS para marcar la ubicación exacta';
   document.getElementById('form-alert').innerHTML = '';
   if (appMarker && mapApp) { mapApp.removeLayer(appMarker); appMarker = null; }
@@ -1196,214 +1049,272 @@ function limpiarForm() {
 
 function showAlert(containerId, type, msg) {
   const classes = { ok:'alert-ok', err:'alert-err', inf:'alert-inf' };
-  document.getElementById(containerId).innerHTML =
-    `<div class="alert ${classes[type]}">${msg}</div>`;
+  document.getElementById(containerId).innerHTML = `<div class="alert ${classes[type]}">${msg}</div>`;
 }
-
 function showLoading(show) {
-  document.getElementById('loading-overlay').className = 'loading-overlay' + (show ? ' show' : '');
-  document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
+  const el = document.getElementById('loading-overlay');
+  el.className = show ? 'loading-overlay show' : 'loading-overlay';
+  el.style.display = show ? 'flex' : 'none';
 }
-
-function scrollTop() {
-  document.querySelector('.content').scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// ── STREET VIEW / FOTO DOMICILIO ─────────────────────────────────────────────
-let svMap = null, svMarker = null, svLat = null, svLon = null, svCurrentTab = 'sv';
-
-function abrirVistaCalles() {
-  // Usar la ubicación actual del mapa si ya está marcada
-  const lat = parseFloat(document.getElementById('nr-lat').value) || 22.1508;
-  const lon = parseFloat(document.getElementById('nr-lon').value) || -102.2913;
-  svLat = lat; svLon = lon;
-  document.getElementById('streetview-modal').classList.add('open');
-  svSetTab('sv');
-  actualizarSV(lat, lon);
-}
-
-function cerrarStreetView() {
-  document.getElementById('streetview-modal').classList.remove('open');
-  if (svMap) { svMap.remove(); svMap = null; }
-}
-
-function svSetTab(tab) {
-  svCurrentTab = tab;
-  ['sv','sat','map'].forEach(t => {
-    document.getElementById('sv-tab-' + t).classList.toggle('active', t === tab);
-  });
-  if (tab === 'sv') {
-    document.getElementById('sv-iframe').classList.add('active');
-    document.getElementById('sv-map-mini').classList.remove('active');
-  } else {
-    document.getElementById('sv-iframe').classList.remove('active');
-    document.getElementById('sv-map-mini').classList.add('active');
-    iniciarSVMap(tab);
-  }
-}
-
-function actualizarSV(lat, lon) {
-  svLat = lat; svLon = lon;
-  // Street View via Google Maps embed (no API key needed for embed URL)
-  const svUrl = 'https://www.google.com/maps/embed/v1/streetview?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU3s_s'
-    + '&location=' + lat + ',' + lon
-    + '&heading=0&pitch=0&fov=80';
-  // Fallback: use Google Maps Street View URL without API (opens in iframe)
-  const gmUrl = 'https://maps.google.com/maps?q=' + lat + ',' + lon
-    + '&t=h&z=18&output=embed';
-  document.getElementById('sv-iframe').src = gmUrl;
-  // Update address bar
-  fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&accept-language=es')
-    .then(r => r.json())
-    .then(d => {
-      const a = d.address || {};
-      const parts = [a.road, a.house_number, a.neighbourhood || a.suburb, a.postcode].filter(Boolean);
-      document.getElementById('sv-addr-bar').textContent = '📍 ' + (parts.join(', ') || lat.toFixed(5) + ', ' + lon.toFixed(5));
-    }).catch(() => {
-      document.getElementById('sv-addr-bar').textContent = '📍 ' + lat.toFixed(5) + ', ' + lon.toFixed(5);
-    });
-  // Update mini map if visible
-  if (svCurrentTab !== 'sv' && svMap) {
-    svMap.setView([lat, lon], 18);
-    if (svMarker) svMap.removeLayer(svMarker);
-    svMarker = L.marker([lat, lon]).addTo(svMap);
-  }
-}
-
-function iniciarSVMap(tipo) {
-  setTimeout(function() {
-    const el = document.getElementById('sv-map-mini');
-    if (!el) return;
-    if (!svMap) {
-      svMap = L.map('sv-map-mini', { zoomControl: true }).setView([svLat || 22.1508, svLon || -102.2913], 18);
-      const tileUrl = tipo === 'sat'
-        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-        : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-      L.tileLayer(tileUrl, { maxZoom: 20 }).addTo(svMap);
-      if (svLat && svLon) {
-        svMarker = L.marker([svLat, svLon]).addTo(svMap);
-        // Allow changing location by clicking
-        svMap.on('click', function(e) {
-          svLat = e.latlng.lat; svLon = e.latlng.lng;
-          if (svMarker) svMap.removeLayer(svMarker);
-          svMarker = L.marker([svLat, svLon]).addTo(svMap);
-          actualizarSV(svLat, svLon);
-        });
-      }
-    } else {
-      svMap.invalidateSize();
-    }
-  }, 150);
-}
-
-function usarUbicacionSV() {
-  if (svLat && svLon) {
-    document.getElementById('nr-lat').value = svLat.toFixed(7);
-    document.getElementById('nr-lon').value = svLon.toFixed(7);
-    // Update main map
-    if (appMarker && mapApp) mapApp.removeLayer(appMarker);
-    appMarker = L.marker([svLat, svLon], { icon: makeAppIcon() }).addTo(mapApp);
-    mapApp.setView([svLat, svLon], 17);
-    geocodePos(svLat, svLon);
-  }
-  cerrarStreetView();
-}
-
+function scrollTop() { document.querySelector('.content').scrollTo({ top: 0, behavior: 'smooth' }); }
 function fmtFecha(iso) {
   if (!iso) return '–';
   return new Date(iso).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' });
 }
 
-// ── Animal Agresivo ──────────────────────────────────────────────────────────
+// ── Animal Agresivo ────────────────────────────────────────
 let zonasSeleccionadas = new Set();
-let gravedadMordida    = '';
-
 function toggleZona(zona) {
   const g = document.getElementById('bz-' + zona.replace('_','-'));
   if (!g) return;
-  if (zonasSeleccionadas.has(zona)) {
-    zonasSeleccionadas.delete(zona);
-    g.classList.remove('sel');
-  } else {
-    zonasSeleccionadas.add(zona);
-    g.classList.add('sel');
-  }
-  const labels = {
-    cabeza:'Cabeza', cuello:'Cuello', pecho:'Pecho/Torso',
-    brazo_izq:'Brazo izq.', brazo_der:'Brazo der.',
-    mano_izq:'Mano izq.', mano_der:'Mano der.',
-    abdomen:'Abdomen', pierna_izq:'Pierna izq.',
-    pierna_der:'Pierna der.', pie_izq:'Pie izq.', pie_der:'Pie der.'
-  };
+  if (zonasSeleccionadas.has(zona)) { zonasSeleccionadas.delete(zona); g.classList.remove('sel'); }
+  else { zonasSeleccionadas.add(zona); g.classList.add('sel'); }
+  const labels = { cabeza:'Cabeza', cuello:'Cuello', pecho:'Pecho/Torso', brazo_izq:'Brazo izq.', brazo_der:'Brazo der.', mano_izq:'Mano izq.', mano_der:'Mano der.', abdomen:'Abdomen', pierna_izq:'Pierna izq.', pierna_der:'Pierna der.', pie_izq:'Pie izq.', pie_der:'Pie der.' };
   const el = document.getElementById('zonas-sel-txt');
-  if (el) el.textContent = zonasSeleccionadas.size
-    ? Array.from(zonasSeleccionadas).map(z => labels[z]||z).join(', ')
-    : 'Ninguna zona seleccionada';
+  if (el) el.textContent = zonasSeleccionadas.size ? Array.from(zonasSeleccionadas).map(z => labels[z]||z).join(', ') : 'Ninguna zona seleccionada';
 }
-
 function selGravedad(g) {
-  gravedadMordida = g;
   document.getElementById('a-gravedad-mordida').value = g;
   document.getElementById('grav-superficial').className = 'grav-btn' + (g==='superficial'?' sel-sup':'');
   document.getElementById('grav-profunda').className    = 'grav-btn' + (g==='profunda'?' sel-pro':'');
 }
-
-function toggleMordida() {
-  var checked = document.getElementById('a-hubo-mordida').checked;
-  document.getElementById('panel-mordida').style.display = checked ? 'block' : 'none';
-}
-
-function toggleDuenio() {
-  var checked = document.getElementById('a-tiene-duenio').checked;
-  document.getElementById('panel-duenio').style.display = checked ? 'block' : 'none';
-}
-
+function toggleMordida() { document.getElementById('panel-mordida').style.display = document.getElementById('a-hubo-mordida').checked ? 'block' : 'none'; }
+function toggleDuenio()  { document.getElementById('panel-duenio').style.display  = document.getElementById('a-tiene-duenio').checked  ? 'block' : 'none'; }
 function resetAnimalForm() {
   zonasSeleccionadas.clear();
-  gravedadMordida = '';
   document.querySelectorAll('.bzone').forEach(g => g.classList.remove('sel'));
-  const txt = document.getElementById('zonas-sel-txt');
-  if (txt) txt.textContent = 'Ninguna zona seleccionada';
+  const txt = document.getElementById('zonas-sel-txt'); if (txt) txt.textContent = 'Ninguna zona seleccionada';
   document.getElementById('grav-superficial').className = 'grav-btn';
-  document.getElementById('grav-profunda').className = 'grav-btn';
-  ['a-hubo-mordida','a-atencion-medica','a-vacuna-antirabica','a-tiene-duenio','a-tiene-vacunas']
-    .forEach(id => { const el=document.getElementById(id); if(el) el.checked=false; });
-  ['a-afectado-nombre','a-afectado-tel','a-afectado-email','a-afectado-domicilio',
-   'a-animal-desc','a-animal-color','a-animal-senias','a-duenio-datos']
-    .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
-  ['a-animal-especie','a-animal-tamanio','a-animal-situacion']
-    .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
-  document.getElementById('panel-mordida').style.display = 'none';
-  document.getElementById('panel-duenio').style.display = 'none';
+  document.getElementById('grav-profunda').className    = 'grav-btn';
+  ['a-hubo-mordida','a-atencion-medica','a-vacuna-antirabica','a-tiene-duenio','a-tiene-vacunas'].forEach(id => { const el=document.getElementById(id); if(el) el.checked=false; });
+  ['a-afectado-nombre','a-afectado-tel','a-afectado-email','a-afectado-domicilio','a-animal-desc','a-animal-color','a-animal-senias','a-duenio-datos'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  ['a-animal-especie','a-animal-tamanio','a-animal-situacion'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
 }
 </script>
-<!-- MODAL FOTO DOMICILIO / STREET VIEW -->
-<div id="streetview-modal">
-  <div class="sv-header">
-    <span id="sv-title">📷 Ver domicilio</span>
-    <button onclick="cerrarStreetView()">✕ Cerrar</button>
-  </div>
-  <div class="sv-tabs">
-    <div class="sv-tab active" id="sv-tab-sv" onclick="svSetTab('sv')">📷 Foto del lugar</div>
-    <div class="sv-tab" id="sv-tab-sat" onclick="svSetTab('sat')">🛰️ Satelital</div>
-    <div class="sv-tab" id="sv-tab-map" onclick="svSetTab('map')">🗺️ Mapa de calles</div>
-  </div>
-  <div class="sv-content">
-    <!-- Street View iframe -->
-    <iframe id="sv-iframe" class="sv-frame active"
-      src="" allowfullscreen loading="lazy"
-      sandbox="allow-scripts allow-same-origin allow-popups">
-    </iframe>
-    <!-- Mapa mini para satelital/calles -->
-    <div id="sv-map-mini" class="sv-frame"></div>
-    <div class="sv-addr-bar" id="sv-addr-bar">📍 Buscando dirección...</div>
-  </div>
-  <div class="sv-actions">
-    <button class="sv-action-btn sv-use-btn" onclick="usarUbicacionSV()">✅ Usar esta ubicación</button>
-    <button class="sv-action-btn sv-cancel-btn" onclick="cerrarStreetView()">Cancelar</button>
-  </div>
-</div>
 
+<script>
+/* ══════════════════════════════════════════════════════
+   MATLACHO — Asistente IA · App Ciudadano
+   Color azul institucional IMBIO
+══════════════════════════════════════════════════════ */
+var _matlachoVisible = false;
+var _matlachoChatHistory = [];
+
+function _matlachoInit() {
+  if (document.getElementById('matlacho-widget')) return;
+  var widget = document.createElement('div');
+  widget.id = 'matlacho-widget';
+  widget.innerHTML = `
+    <style>
+      #matlacho-fab {
+        position:fixed;bottom:22px;right:18px;z-index:8000;
+        width:58px;height:58px;border-radius:50%;
+        background:linear-gradient(135deg,#003B7A,#0057B8);
+        box-shadow:0 4px 18px rgba(0,59,122,.45);
+        cursor:pointer;display:flex;align-items:center;justify-content:center;
+        font-size:1.7rem;border:none;transition:transform .2s;
+        animation:matlacho-bounce 3s ease-in-out infinite;
+      }
+      #matlacho-fab:hover { transform:scale(1.12); }
+      @keyframes matlacho-bounce {
+        0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)}
+      }
+      #matlacho-panel {
+        position:fixed;bottom:92px;right:18px;z-index:7999;
+        width:320px;max-height:520px;
+        background:#fff;border-radius:18px;
+        box-shadow:0 8px 40px rgba(0,0,0,.18);
+        display:none;flex-direction:column;overflow:hidden;
+        border:1.5px solid #B3CFF0;
+      }
+      #matlacho-panel.open { display:flex; }
+      .matlacho-header {
+        background:linear-gradient(135deg,#002A5C,#003B7A);
+        padding:14px 16px;display:flex;align-items:center;gap:10px;
+      }
+      .matlacho-avatar {
+        width:40px;height:40px;border-radius:50%;
+        background:#fff;display:flex;align-items:center;justify-content:center;
+        font-size:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.15);flex-shrink:0;
+      }
+      .matlacho-name { color:#fff;font-weight:800;font-size:.9rem;font-family:'Nunito',sans-serif; }
+      .matlacho-role { color:rgba(255,255,255,.75);font-size:.72rem; }
+      .matlacho-close {
+        margin-left:auto;background:none;border:none;color:#fff;
+        font-size:1.2rem;cursor:pointer;padding:2px 6px;opacity:.8;
+      }
+      .matlacho-body {
+        flex:1;overflow-y:auto;padding:12px;
+        display:flex;flex-direction:column;gap:8px;max-height:320px;
+      }
+      .matlacho-bubble {
+        background:#E8F1FB;border-radius:12px 12px 12px 2px;
+        padding:10px 13px;font-size:.8rem;color:#1a3a5c;line-height:1.5;
+        border:1px solid #B3CFF0;max-width:92%;
+      }
+      .matlacho-bubble.user {
+        background:#eff6ff;border-color:#bfdbfe;
+        border-radius:12px 12px 2px 12px;align-self:flex-end;color:#1e3a5f;
+      }
+      .matlacho-bubble.loading { background:#f8fafc;color:#94a3b8;font-style:italic; }
+      .matlacho-actions {
+        padding:10px 12px;border-top:1px solid #f1f5f9;
+        display:flex;flex-direction:column;gap:6px;
+      }
+      .matlacho-btn {
+        padding:8px 12px;border:none;border-radius:9px;
+        font-size:.78rem;font-weight:700;cursor:pointer;
+        display:flex;align-items:center;gap:6px;text-align:left;transition:opacity .15s;
+      }
+      .matlacho-btn:hover { opacity:.88; }
+      .matlacho-btn.verde  { background:#dcfce7;color:#166534; }
+      .matlacho-btn.azul   { background:#dbeafe;color:#1e40af; }
+      .matlacho-btn.naranja{ background:#fef3c7;color:#92400e; }
+      .matlacho-btn.rojo   { background:#fee2e2;color:#991b1b; }
+      .matlacho-btn.morado { background:#ede9fe;color:#5b21b6; }
+      .matlacho-input-row {
+        display:flex;gap:6px;padding:8px 12px;border-top:1px solid #f1f5f9;
+      }
+      .matlacho-input {
+        flex:1;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:9px;
+        font-size:.8rem;outline:none;font-family:inherit;
+      }
+      .matlacho-input:focus { border-color:#003B7A; }
+      .matlacho-send {
+        padding:7px 12px;background:#003B7A;color:#fff;border:none;
+        border-radius:9px;cursor:pointer;font-size:.85rem;
+      }
+    </style>
+
+    <button id="matlacho-fab" onclick="_matlachoToggle()" title="Matlacho — Asistente IMBIO">
+      🐭
+    </button>
+
+    <div id="matlacho-panel">
+      <div class="matlacho-header">
+        <div class="matlacho-avatar">🐭</div>
+        <div>
+          <div class="matlacho-name">Matlacho</div>
+          <div class="matlacho-role">Asistente Ambiental IMBIO</div>
+        </div>
+        <button class="matlacho-close" onclick="_matlachoToggle()">✕</button>
+      </div>
+      <div class="matlacho-body" id="matlacho-chat">
+        <div class="matlacho-bubble">
+          ¡Hola! 👋 Soy <b>Matlacho</b>, el asistente ambiental de IMBIO Pabellón de Arteaga.<br><br>
+          Puedo ayudarte a llenar el formulario de reporte. ¿En qué te puedo apoyar?
+        </div>
+      </div>
+      <div class="matlacho-actions" id="matlacho-quick-actions"></div>
+      <div class="matlacho-input-row">
+        <input id="matlacho-msg" class="matlacho-input" placeholder="Escribe tu pregunta..." onkeydown="if(event.key==='Enter')_matlachoChat()">
+        <button class="matlacho-send" onclick="_matlachoChat()">↑</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(widget);
+  _matlachoSetContext();
+}
+
+function _matlachoToggle() {
+  var panel = document.getElementById('matlacho-panel');
+  if (!panel) return;
+  _matlachoVisible = !_matlachoVisible;
+  panel.classList.toggle('open', _matlachoVisible);
+  if (_matlachoVisible) _matlachoSetContext();
+}
+
+function _matlachoSetContext() {
+  var actions = document.getElementById('matlacho-quick-actions');
+  if (!actions) return;
+  var btns = [
+    {cls:'azul',   icon:'✍️', label:'Mejorar mi descripción',        fn:'_matlachoCiudadano()'},
+    {cls:'verde',  icon:'📋', label:'¿Qué datos necesito llenar?',   fn:"_matlachoChat('¿Qué datos necesito llenar en el formulario de reporte ciudadano?')"},
+    {cls:'naranja',icon:'📍', label:'¿Cómo marco la ubicación?',     fn:"_matlachoChat('¿Cómo puedo marcar la ubicación del problema en el mapa?')"},
+    {cls:'morado', icon:'❓', label:'¿Cómo funciona la plataforma?', fn:"_matlachoChat('¿Cómo puedo usar la plataforma IMBIO como ciudadano?')"},
+  ];
+  actions.innerHTML = btns.map(function(b){
+    return '<button class="matlacho-btn '+b.cls+'" onclick="'+b.fn+'">'+b.icon+' '+b.label+'</button>';
+  }).join('');
+}
+
+function _matlachoAddBubble(text, isUser, isLoading) {
+  var chat = document.getElementById('matlacho-chat');
+  if (!chat) return null;
+  var div = document.createElement('div');
+  div.className = 'matlacho-bubble' + (isUser?' user':'') + (isLoading?' loading':'');
+  div.innerHTML = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+async function _matlachoCallAPI(tipo, datos) {
+  var loading = _matlachoAddBubble('🐭 Matlacho está pensando...', false, true);
+  try {
+    var serverUrl = (typeof SERVER_URL !== 'undefined') ? SERVER_URL : window.location.origin;
+    var resp = await fetch(serverUrl + '/api/ai/matlacho', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tipo: tipo, datos: datos }),
+      signal: AbortSignal.timeout(35000)
+    });
+    var d = await resp.json();
+    if (loading) loading.remove();
+    return d.success ? d.data : null;
+  } catch(e) {
+    if (loading) loading.remove();
+    _matlachoAddBubble('⚠️ No pude conectarme. Verifica tu conexión e intenta de nuevo.', false);
+    return null;
+  }
+}
+
+async function _matlachoChat(msgOverride) {
+  var input = document.getElementById('matlacho-msg');
+  var msg = msgOverride || (input ? input.value.trim() : '');
+  if (!msg) return;
+  if (input) input.value = '';
+  _matlachoAddBubble(msg, true);
+  var result = await _matlachoCallAPI('chat', { mensaje: msg });
+  if (result) _matlachoAddBubble(result.texto, false);
+}
+
+async function _matlachoCiudadano() {
+  var descEl = document.getElementById('nr-desc');
+  var desc = descEl ? descEl.value.trim() : '';
+  if (!desc) {
+    _matlachoAddBubble('📝 Primero escribe una descripción del problema en el campo de texto y luego te ayudo a mejorarla.', false);
+    return;
+  }
+  var tipoChip = document.querySelector('.tipo-chip.sel');
+  var tipo = tipoChip ? (tipoChip.dataset.tipo || '') : '';
+  var colonia = (document.getElementById('nr-colonia') || {}).value || '';
+  _matlachoAddBubble('Mejora esta descripción: "' + desc.substring(0,80) + (desc.length>80?'...' :'"'), true);
+  var result = await _matlachoCallAPI('reporte_ciudadano', { descripcion: desc, tipo_incidencia: tipo, colonia: colonia });
+  if (result) {
+    _matlachoAddBubble('✅ Aquí tienes una versión mejorada:<br><br><i>' + result.texto + '</i><br><br>' +
+      '<button class="matlacho-btn verde" onclick="_matlachoAplicar(\'nr-desc\',\'' +
+      result.texto.replace(/'/g,'&#39;').replace(/\n/g,' ') + '\')" style="margin-top:6px">✅ Aplicar texto</button>', false);
+  }
+}
+
+function _matlachoAplicar(campoId, texto) {
+  var campo = document.getElementById(campoId);
+  if (campo) {
+    campo.value = texto;
+    campo.style.borderColor = '#003B7A';
+    setTimeout(function(){ campo.style.borderColor=''; }, 2000);
+  }
+  _matlachoAddBubble('✅ Texto aplicado. Puedes editarlo antes de enviar.', false);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _matlachoInit);
+} else {
+  _matlachoInit();
+}
+// ══ END MATLACHO ══
+</script>
 
 </body>
 </html>
