@@ -76,6 +76,10 @@
   .badge-asignado{background:#dbeafe;color:#1e40af}
   .badge-en_proceso{background:#fce7f3;color:#9d174d}
   .badge-cerrado{background:#dcfce7;color:#166534}
+.badge-en_inspeccion  { background:#ede9fe;color:#7c3aed }
+.badge-pendiente_medida{ background:#fee2e2;color:#dc2626 }
+.badge-apercibido     { background:#fef3c7;color:#92400e }
+.badge-sancionado     { background:#dbeafe;color:#1d4ed8 }
   .badge-admin{background:#ede9fe;color:#5b21b6}
   .badge-operador{background:#dbeafe;color:#1e40af}
   .badge-inspector{background:#dbeafe;color:#002A5C}
@@ -218,6 +222,10 @@
                 <option value="reportado">Reportado</option>
                 <option value="asignado">Asignado</option>
                 <option value="en_proceso">En Proceso</option>
+                <option value="en_inspeccion">En Inspección</option>
+                <option value="pendiente_medida">⚠️ Pendiente Medida</option>
+                <option value="apercibido">Apercibido</option>
+                <option value="sancionado">Sancionado</option>
                 <option value="cerrado">Cerrado</option>
               </select>
               <select id="mf-tipo" onchange="refreshMapMarkers()">
@@ -295,7 +303,7 @@
           <div class="form-grid">
             <div class="form-group">
               <label>Tipo de Reporte *</label>
-              <select id="nr-tipo">
+              <select id="nr-tipo" onchange="document.getElementById('nr-otro-wrap').style.display=this.value==='otro'?'block':'none'">
                 <option value="">– Seleccionar –</option>
                 <option value="denuncia_ambiental">🌱 Denuncia Ambiental</option>
                 <option value="areas_verdes">🌳 Áreas Verdes</option>
@@ -309,13 +317,22 @@
                 <option value="perro_agresivo">🐕 Perro Agresivo</option>
                 <option value="tiradero_escombro">🧱 Tiradero de Escombro</option>
                 <option value="tiradero_basura">🗑 Tiradero de Basura</option>
-                <option value="otro">📌 Otro</option>
+                <option value="otro">📌 Otro (especificar)</option>
               </select>
+            </div>
+            <div class="form-group full" id="nr-otro-wrap" style="display:none">
+              <label>Especificar tipo de incidencia *</label>
+              <input id="nr-otro-desc" placeholder="Describe el tipo de problema ambiental...">
             </div>
 
             <div class="form-group full">
               <label>Descripción *</label>
               <textarea id="nr-desc" placeholder="Describa la situación con detalle..."></textarea>
+              <button type="button"
+                onclick="llamarIA('reporte_ciudadano',{descripcion:document.getElementById('nr-desc').value||'sin descripcion'},'nr-desc',this)"
+                style="margin-top:6px;width:100%;padding:9px;background:linear-gradient(135deg,#6d28d9,#4f46e5);color:#fff;border:none;border-radius:9px;font-size:.82rem;font-weight:700;cursor:pointer">
+                🐭 Matlacho mejora la descripción
+              </button>
             </div>
             <div class="form-group">
               <label>Nombre del Reportante</label>
@@ -1383,7 +1400,14 @@ function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('click',e=>{if(e.target===bg)bg.classList.remove('open');}));
 
 // ── HELPERS ───────────────────────────────────────────────────
-function badge(e){ return `<span class="badge badge-${e}">${e.replace('_',' ')}</span>`; }
+function badge(e){
+  const labels={
+    reportado:'Reportado', asignado:'Asignado', en_proceso:'En Proceso',
+    en_inspeccion:'En Inspección', pendiente_medida:'⚠️ Pendiente Medida',
+    apercibido:'Apercibido', sancionado:'Sancionado', cerrado:'Cerrado'
+  };
+  return `<span class="badge badge-${e}">${labels[e]||e.replace(/_/g,' ')}</span>`;
+}
 function tipoLabel(t){
   const m={
     denuncia_ambiental:'🌱 Denuncia Ambiental', areas_verdes:'🌳 Áreas Verdes',
@@ -2131,6 +2155,384 @@ async function submitEvidencia() {
   }
 }
 
+
+
+// ── Asistente IA ────────────────────────────────────────────────
+async function llamarIA(tipo, datos, campoDestino, btnEl) {
+  var original = btnEl.innerHTML;
+  btnEl.innerHTML = '&#9203; Generando...';
+  btnEl.disabled = true;
+  try {
+    var resp = await api('/api/ai/generar-texto', 'POST', { tipo: tipo, datos: datos });
+    if (resp.success && resp.data && resp.data.texto) {
+      var campo = document.getElementById(campoDestino);
+      if (campo) {
+        campo.value = resp.data.texto;
+        campo.style.borderColor = '#16a34a';
+        campo.style.background = '#f0fdf4';
+        setTimeout(function(){ campo.style.borderColor=''; campo.style.background=''; }, 3000);
+        campo.focus();
+      }
+    } else {
+      alert('No se pudo generar texto: ' + (resp.message || 'Error'));
+    }
+  } catch(e) {
+    alert('Error: ' + e.message);
+  } finally {
+    btnEl.innerHTML = original;
+    btnEl.disabled = false;
+  }
+}
+
+
+// ══ MATLACHO WIDGET ══
+// ════════════════════════════════════════════════════════════════
+// MATLACHO — Asistente Ambiental Inteligente IMBIO
+// ════════════════════════════════════════════════════════════════
+
+var _matlachoVisible = false;
+var _matlachoChatHistory = [];
+
+function _matlachoInit() {
+  if (document.getElementById('matlacho-widget')) return;
+
+  var widget = document.createElement('div');
+  widget.id = 'matlacho-widget';
+  widget.innerHTML = `
+    <style>
+      #matlacho-fab {
+        position:fixed;bottom:22px;right:18px;z-index:8000;
+        width:58px;height:58px;border-radius:50%;
+        background:linear-gradient(135deg,#16a34a,#15803d);
+        box-shadow:0 4px 18px rgba(22,163,74,.45);
+        cursor:pointer;display:flex;align-items:center;justify-content:center;
+        font-size:1.7rem;border:none;transition:transform .2s;
+        animation:matlacho-bounce 3s ease-in-out infinite;
+      }
+      #matlacho-fab:hover { transform:scale(1.12); }
+      @keyframes matlacho-bounce {
+        0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)}
+      }
+      #matlacho-panel {
+        position:fixed;bottom:92px;right:18px;z-index:7999;
+        width:320px;max-height:520px;
+        background:#fff;border-radius:18px;
+        box-shadow:0 8px 40px rgba(0,0,0,.18);
+        display:none;flex-direction:column;overflow:hidden;
+        border:1.5px solid #e2e8f0;
+      }
+      #matlacho-panel.open { display:flex; }
+      .matlacho-header {
+        background:linear-gradient(135deg,#166534,#16a34a);
+        padding:14px 16px;display:flex;align-items:center;gap:10px;
+      }
+      .matlacho-avatar {
+        width:40px;height:40px;border-radius:50%;
+        background:#fff;display:flex;align-items:center;justify-content:center;
+        font-size:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.15);flex-shrink:0;
+      }
+      .matlacho-name { color:#fff;font-weight:800;font-size:.9rem; }
+      .matlacho-role { color:rgba(255,255,255,.75);font-size:.72rem; }
+      .matlacho-close {
+        margin-left:auto;background:none;border:none;color:#fff;
+        font-size:1.2rem;cursor:pointer;padding:2px 6px;opacity:.8;
+      }
+      .matlacho-body {
+        flex:1;overflow-y:auto;padding:12px;
+        display:flex;flex-direction:column;gap:8px;
+        max-height:320px;
+      }
+      .matlacho-bubble {
+        background:#f0fdf4;border-radius:12px 12px 12px 2px;
+        padding:10px 13px;font-size:.8rem;color:#1a3a5c;line-height:1.5;
+        border:1px solid #bbf7d0;max-width:92%;
+      }
+      .matlacho-bubble.user {
+        background:#eff6ff;border-color:#bfdbfe;
+        border-radius:12px 12px 2px 12px;align-self:flex-end;color:#1e3a5f;
+      }
+      .matlacho-bubble.loading {
+        background:#f8fafc;color:#94a3b8;font-style:italic;
+      }
+      .matlacho-actions {
+        padding:10px 12px;border-top:1px solid #f1f5f9;
+        display:flex;flex-direction:column;gap:6px;
+      }
+      .matlacho-btn {
+        padding:8px 12px;border:none;border-radius:9px;
+        font-size:.78rem;font-weight:700;cursor:pointer;
+        display:flex;align-items:center;gap:6px;text-align:left;
+        transition:opacity .15s;
+      }
+      .matlacho-btn:hover { opacity:.88; }
+      .matlacho-btn.verde { background:#dcfce7;color:#166534; }
+      .matlacho-btn.azul  { background:#dbeafe;color:#1e40af; }
+      .matlacho-btn.naranja{ background:#fef3c7;color:#92400e; }
+      .matlacho-btn.rojo  { background:#fee2e2;color:#991b1b; }
+      .matlacho-btn.morado{ background:#ede9fe;color:#5b21b6; }
+      .matlacho-input-row {
+        display:flex;gap:6px;padding:8px 12px;border-top:1px solid #f1f5f9;
+      }
+      .matlacho-input {
+        flex:1;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:9px;
+        font-size:.8rem;outline:none;
+      }
+      .matlacho-input:focus { border-color:#16a34a; }
+      .matlacho-send {
+        padding:7px 12px;background:#16a34a;color:#fff;border:none;
+        border-radius:9px;cursor:pointer;font-size:.85rem;
+      }
+      .matlacho-suggestion-banner {
+        background:linear-gradient(135deg,#166534,#16a34a);
+        color:#fff;border-radius:10px;padding:10px 13px;
+        font-size:.8rem;font-weight:700;margin-top:4px;
+      }
+    </style>
+
+    <!-- FAB botón flotante -->
+    <button id="matlacho-fab" onclick="_matlachoToggle()" title="Matlacho — Asistente IMBIO">
+      🐭
+    </button>
+
+    <!-- Panel del asistente -->
+    <div id="matlacho-panel">
+      <div class="matlacho-header">
+        <div class="matlacho-avatar">🐭</div>
+        <div>
+          <div class="matlacho-name">Matlacho</div>
+          <div class="matlacho-role">Asistente Ambiental IMBIO</div>
+        </div>
+        <button class="matlacho-close" onclick="_matlachoToggle()">✕</button>
+      </div>
+      <div class="matlacho-body" id="matlacho-chat">
+        <div class="matlacho-bubble">
+          ¡Hola! 👋 Soy <b>Matlacho</b>, el asistente ambiental de IMBIO Pabellón de Arteaga.<br>
+          ¿En qué te puedo ayudar hoy?
+        </div>
+      </div>
+      <div class="matlacho-actions" id="matlacho-quick-actions">
+      </div>
+      <div class="matlacho-input-row">
+        <input id="matlacho-msg" class="matlacho-input" placeholder="Escribe tu pregunta..." onkeydown="if(event.key==='Enter')_matlachoChat()">
+        <button class="matlacho-send" onclick="_matlachoChat()">↑</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(widget);
+  _matlachoSetContext();
+}
+
+function _matlachoToggle() {
+  var panel = document.getElementById('matlacho-panel');
+  if (!panel) return;
+  _matlachoVisible = !_matlachoVisible;
+  panel.classList.toggle('open', _matlachoVisible);
+  if (_matlachoVisible) _matlachoSetContext();
+}
+
+function _matlachoSetContext() {
+  // Detect current context and show relevant quick actions
+  var actions = document.getElementById('matlacho-quick-actions');
+  if (!actions) return;
+  var isInspector = typeof tipoActaSel !== 'undefined';
+  var isModal = document.getElementById('modal-nueva-acta') &&
+                document.getElementById('modal-nueva-acta').style.display === 'flex';
+  var tipo = (typeof tipoActaSel !== 'undefined') ? tipoActaSel : '';
+
+  var btns = [];
+
+  if (isModal || isInspector) {
+    // Inspector context
+    if (tipo === 'circunstanciada' || tipo === 'inspeccion' || tipo === '') {
+      btns.push({cls:'verde', icon:'📝', label:'Redactar descripción', fn:'_matlachoRedactarDesc()'});
+    }
+    if (tipo === 'apercibimiento') {
+      btns.push({cls:'naranja', icon:'⚠️', label:'Redactar apercibimiento', fn:'_matlachoRedactarAper()'});
+    }
+    if (tipo === 'sancion') {
+      btns.push({cls:'rojo', icon:'🚫', label:'Redactar motivación sanción', fn:'_matlachoRedactarSanc()'});
+    }
+    btns.push({cls:'morado', icon:'🔍', label:'Sugerir medida administrativa', fn:'_matlachoSugerirMedida()'});
+  } else {
+    // Ciudadano o panel context
+    btns.push({cls:'verde', icon:'✍️', label:'Mejorar mi descripción', fn:'_matlachoCiudadano()'});
+  }
+  btns.push({cls:'azul', icon:'❓', label:'¿Cómo uso la plataforma?', fn:"_matlachoChat('¿Cómo puedo usar la plataforma IMBIO?')"});
+
+  actions.innerHTML = btns.map(function(b){
+    return '<button class="matlacho-btn '+b.cls+'" onclick="'+b.fn+'">'+b.icon+' '+b.label+'</button>';
+  }).join('');
+}
+
+function _matlachoAddBubble(text, isUser, isLoading) {
+  var chat = document.getElementById('matlacho-chat');
+  if (!chat) return null;
+  var div = document.createElement('div');
+  div.className = 'matlacho-bubble' + (isUser?' user':'') + (isLoading?' loading':'');
+  div.innerHTML = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+async function _matlachoCallAPI(tipo, datos) {
+  var loading = _matlachoAddBubble('🐭 Matlacho está pensando...', false, true);
+  try {
+    var serverUrl = (typeof SERVER_URL !== 'undefined') ? SERVER_URL : window.location.origin;
+    var token = (typeof TOKEN !== 'undefined') ? TOKEN : (localStorage.getItem('imbio_token') || '');
+    var resp = await fetch(serverUrl + '/api/ai/matlacho', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ tipo: tipo, datos: datos }),
+      signal: AbortSignal.timeout(35000)
+    });
+    var d = await resp.json();
+    if (loading) loading.remove();
+    return d.success ? d.data : null;
+  } catch(e) {
+    if (loading) loading.remove();
+    _matlachoAddBubble('⚠️ No pude conectarme. Verifica tu conexión e intenta de nuevo.', false);
+    return null;
+  }
+}
+
+async function _matlachoChat(msgOverride) {
+  var input = document.getElementById('matlacho-msg');
+  var msg = msgOverride || (input ? input.value.trim() : '');
+  if (!msg) return;
+  if (input) input.value = '';
+  _matlachoAddBubble(msg, true);
+  var result = await _matlachoCallAPI('chat', { mensaje: msg });
+  if (result) _matlachoAddBubble(result.texto, false);
+}
+
+async function _matlachoCiudadano() {
+  var descEl = document.getElementById('nr-desc') || document.getElementById('acta-descripcion');
+  var desc = descEl ? descEl.value.trim() : '';
+  if (!desc) {
+    _matlachoAddBubble('📝 Primero escribe una descripción del problema y luego te ayudo a mejorarla.', false);
+    return;
+  }
+  _matlachoAddBubble('Mejora esta descripción: "' + desc.substring(0,80) + (desc.length>80?'...':'"'), true);
+  var result = await _matlachoCallAPI('reporte_ciudadano', { descripcion: desc });
+  if (result) {
+    _matlachoAddBubble('✅ Aquí tienes una versión mejorada:<br><br><i>' + result.texto + '</i><br><br>' +
+      '<button class="matlacho-btn verde" onclick="_matlachoAplicar(\'nr-desc\',\'' +
+      result.texto.replace(/'/g,'&#39;').replace(/\n/g,' ') + '\')" style="margin-top:6px">✅ Aplicar texto</button>', false);
+  }
+}
+
+async function _matlachoRedactarDesc() {
+  var gv = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+  var repCache = (typeof window._reportesCache!=='undefined' && window._reportesCache) ? window._reportesCache : [];
+  var repActual = repCache.find ? repCache.find(function(r){ return String(r.id)===String(typeof window.currentReporteId!=='undefined'?window.currentReporteId:''); }) || {} : {};
+  var datos = {
+    tipo_incidencia: typeof window._actaReporteTipo!=='undefined' ? window._actaReporteTipo : '',
+    fecha: gv('acta-fecha-insp') || new Date().toLocaleDateString('es-MX'),
+    hora:  gv('acta-hora-insp')  || new Date().toLocaleTimeString('es-MX'),
+    colonia: repActual.colonia || '',
+    inspector: gv('acta-firmante') || '',
+    descripcion: gv('acta-descripcion'),
+    tipo_residuo: gv('da-tipo-residuo')||gv('da-tipo-infraccion')||'',
+    volumen: gv('da-volumen')||'', superficie: gv('da-superficie')||'',
+    visitado: gv('acta-infractor')||''
+  };
+  _matlachoAddBubble('📋 Redactando descripción circunstanciada...', true);
+  var result = await _matlachoCallAPI('acta_circunstanciada', datos);
+  if (result) {
+    _matlachoAddBubble('✅ Descripción generada:<br><br><i style="font-size:.75rem">' +
+      result.texto.substring(0,200) + (result.texto.length>200?'...':'') + '</i><br><br>' +
+      '<button class="matlacho-btn verde" onclick="_matlachoAplicarTextarea(\'acta-descripcion\',\'' +
+      result.texto.replace(/'/g,'&#39;').replace(/\n/g,' ').replace(/"/g,'&quot;') + '\')" style="margin-top:4px">✅ Aplicar al campo</button>', false);
+  }
+}
+
+async function _matlachoRedactarAper() {
+  var gv = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+  var datos = {
+    irregularidad: gv('acta-descripcion'),
+    tipo_infraccion: gv('da-tipo-infraccion')||'',
+    medidas: gv('acta-medidas-correctivas')||gv('acta-medida')||'',
+    plazo: gv('acta-plazo')||''
+  };
+  _matlachoAddBubble('⚠️ Redactando apercibimiento...', true);
+  var result = await _matlachoCallAPI('acta_apercibimiento', datos);
+  if (result) {
+    _matlachoAddBubble('✅ Texto del apercibimiento:<br><br><i style="font-size:.75rem">' +
+      result.texto.substring(0,200) + (result.texto.length>200?'...':'') + '</i><br><br>' +
+      '<button class="matlacho-btn naranja" onclick="_matlachoAplicarTextarea(\'acta-medida\',\'' +
+      result.texto.replace(/'/g,'&#39;').replace(/\n/g,' ').replace(/"/g,'&quot;') + '\')" style="margin-top:4px">✅ Aplicar al campo</button>', false);
+  }
+}
+
+async function _matlachoRedactarSanc() {
+  var gv = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+  var datos = {
+    conducta: gv('acta-descripcion'),
+    tipo_infraccion: gv('da-tipo-infraccion')||'',
+    gravedad: gv('acta-gravedad-infraccion')||'',
+    reincidente: gv('acta-reincidente')||'no',
+    sancion: gv('acta-medida')||''
+  };
+  _matlachoAddBubble('🚫 Redactando motivación de sanción...', true);
+  var result = await _matlachoCallAPI('acta_sancion', datos);
+  if (result) {
+    _matlachoAddBubble('✅ Motivación de sanción:<br><br><i style="font-size:.75rem">' +
+      result.texto.substring(0,200) + (result.texto.length>200?'...':'') + '</i><br><br>' +
+      '<button class="matlacho-btn rojo" onclick="_matlachoAplicarTextarea(\'acta-medida\',\'' +
+      result.texto.replace(/'/g,'&#39;').replace(/\n/g,' ').replace(/"/g,'&quot;') + '\')" style="margin-top:4px">✅ Aplicar al campo</button>', false);
+  }
+}
+
+async function _matlachoSugerirMedida() {
+  var gv = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+  var datos = {
+    tipo_infraccion: gv('da-tipo-infraccion')||'',
+    tipo_residuo: gv('da-tipo-residuo')||'',
+    volumen: gv('da-volumen')||'',
+    superficie: gv('da-superficie')||'',
+    severidad: gv('da-severidad')||'',
+    tiempo: gv('da-tiempo')||'',
+    responsable: gv('da-responsable')||'',
+    reincidente: gv('acta-reincidente')||'no',
+    medidas_adoptadas: ['dm-apercibimiento','dm-acta-infraccion','dm-clausura','dm-remediacion','dm-sancion']
+      .filter(function(id){ var el=document.getElementById(id); return el&&el.checked; }).join(', ')
+  };
+  _matlachoAddBubble('🔍 Analizando los datos para sugerir la medida administrativa...', true);
+  var result = await _matlachoCallAPI('sugerencia_medida', datos);
+  if (result) {
+    var color = result.sugerencia_medida === 'sancion' ? 'rojo' : 'naranja';
+    var banner = result.sugerencia_medida
+      ? '<div class="matlacho-suggestion-banner" style="margin-top:8px;font-size:.78rem">' +
+        (result.sugerencia_medida === 'sancion' ? '🚫 Posible: Acta de Sanción' : '⚠️ Posible: Acta de Apercibimiento') +
+        '</div>' : '';
+    _matlachoAddBubble('<b>🐭 Matlacho sugiere:</b><br><br>' + result.texto + banner +
+      '<br><span style="font-size:.7rem;color:#94a3b8;display:block;margin-top:6px">Solo sugerencia — el inspector decide.</span>', false);
+  }
+}
+
+function _matlachoAplicar(campoId, texto) {
+  var campo = document.getElementById(campoId);
+  if (campo) {
+    campo.value = texto;
+    campo.style.borderColor = '#16a34a';
+    setTimeout(function(){ campo.style.borderColor=''; }, 2000);
+  }
+  _matlachoAddBubble('✅ Texto aplicado. Puedes editarlo antes de enviar.', false);
+}
+
+function _matlachoAplicarTextarea(campoId, texto) {
+  _matlachoAplicar(campoId, texto.replace(/&quot;/g,'"').replace(/&#39;/g,"'"));
+}
+
+// Auto-init when DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _matlachoInit);
+} else {
+  _matlachoInit();
+}
+
+// ══ END MATLACHO ══
 
 </script>
 </body>
