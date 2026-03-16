@@ -503,6 +503,9 @@
 <div id="page-catalogo-inspectores" class="page">
         <h2>👤 Catálogo de Inspectores</h2>
         <div id="cat-insp-alert"></div>
+        <div id="cat-insp-usuarios-hint" style="display:none;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:.82rem;color:#0369a1">
+          👤 Usuarios ya registrados: <span id="cat-insp-usuarios-list" style="font-family:monospace;font-weight:700"></span>
+        </div>
         <div class="card" style="padding:20px;margin-bottom:16px">
           <h3 style="margin-bottom:16px;color:var(--azul)">➕ Registrar Inspector</h3>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
@@ -511,8 +514,8 @@
               <input id="ci-nombre" class="form-control" placeholder="Nombre y apellidos" style="margin-top:4px">
             </div>
             <div>
-              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Usuario *</label>
-              <input id="ci-usuario" class="form-control" placeholder="Ej: inspector02" style="margin-top:4px">
+              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Usuario * <small style="font-weight:400;text-transform:none;color:#94a3b8">(único, sin espacios)</small></label>
+              <input id="ci-usuario" class="form-control" placeholder="Ej: inspector02" style="margin-top:4px" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'')">
             </div>
             <div>
               <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Contraseña *</label>
@@ -928,6 +931,8 @@
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="senaletica"> Señalética ambiental visible</label>
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="uso_suelo"> Uso de suelo conforme</label>
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="proteccion_civil"> Protección Civil al corriente</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="pago_rsu"> Pago por recolección y disposición de RSU al corriente</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="contrato_rsu"> Contrato con empresa autorizada para disposición de RSU</label>
             </div>
           </div>
 
@@ -1552,6 +1557,8 @@ async function doLogin() {
       return;
     }
     TOKEN = r.data.token; USER = r.data.usuario;
+    localStorage.setItem('imbio_token', TOKEN);
+    localStorage.setItem('imbio_user', JSON.stringify(USER));
     document.getElementById('nav-nombre').textContent = USER.nombre;
     document.getElementById('nav-rol').textContent    = USER.rol;
     document.getElementById('nav-rol').className      = `badge badge-${USER.rol}`;
@@ -1570,6 +1577,8 @@ async function doLogin() {
 }
 function doLogout() {
   TOKEN=null; USER=null;
+  localStorage.removeItem('imbio_token');
+  localStorage.removeItem('imbio_user');
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('app').style.display='none';
   mapReportes=null; mapPicker=null;
@@ -2190,6 +2199,17 @@ async function cargarInspectores() {
     const r = await api('/api/inspectores');
     if (!r.success) { tbody.innerHTML = '<tr><td colspan="6" style="color:red;padding:16px">' + r.message + '</td></tr>'; return; }
     const inspectores = r.data.inspectores;
+    // Mostrar hint de usernames usados
+    const hintEl = document.getElementById('cat-insp-usuarios-hint');
+    const listEl = document.getElementById('cat-insp-usuarios-list');
+    if (hintEl && listEl) {
+      if (inspectores.length) {
+        listEl.textContent = inspectores.map(i => i.username).join(', ');
+        hintEl.style.display = 'block';
+      } else {
+        hintEl.style.display = 'none';
+      }
+    }
     if (!inspectores.length) {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#64748b">No hay inspectores registrados.</td></tr>';
       return;
@@ -2226,11 +2246,14 @@ async function registrarInspector() {
   try {
     const r = await api('/api/inspectores', 'POST', { nombre, username: usuario, password, telefono, brigada });
     if (r.success) {
-      alertEl.innerHTML = '<div class="alert alert-success">Inspector ' + nombre + ' registrado.</div>';
+      alertEl.innerHTML = '<div class="alert alert-success">✅ Inspector <b>' + nombre + '</b> registrado correctamente.</div>';
       ['ci-nombre','ci-usuario','ci-password','ci-telefono','ci-brigada'].forEach(id => document.getElementById(id).value = '');
       cargarInspectores();
+      setTimeout(() => { alertEl.innerHTML = ''; }, 5000);
     } else {
-      alertEl.innerHTML = '<div class="alert alert-danger">' + r.message + '</div>';
+      const msg = r.message || 'Error al registrar';
+      const extra = msg.includes('ya existe') ? '<br><small>Elige un nombre de usuario diferente, por ejemplo: <b>inspector02</b>, <b>inspector03</b>, etc.</small>' : '';
+      alertEl.innerHTML = '<div class="alert alert-danger">❌ ' + msg + extra + '</div>';
     }
   } catch(e) {
     alertEl.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
@@ -3949,7 +3972,8 @@ function abrirDetalleVerificacion(id) {
     nivel_ruido:'Nivel de ruido', emisiones_aire:'Emisiones al aire',
     almacen_productos:'Almacenamiento productos peligrosos', areas_verdes_predio:'Áreas verdes del predio',
     fauna_control:'Control de fauna nociva', senaletica:'Señalética ambiental',
-    uso_suelo:'Uso de suelo', proteccion_civil:'Protección Civil'
+    uso_suelo:'Uso de suelo', proteccion_civil:'Protección Civil',
+    pago_rsu:'Pago recolección RSU', contrato_rsu:'Contrato disposición RSU'
   };
   if (ckWrap && ver.checklist && ver.checklist.length) {
     ckWrap.innerHTML = ver.checklist.map(ck => `
