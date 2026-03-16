@@ -1358,20 +1358,17 @@ async function abrirNuevaActa(reportId, folio, tipoInicial) {
   var _esAmbiental = !_esArbolTec && !_esAV && !_esAnimal;
 
   // Grid de chips — solo mostrar para ambientales
-  var chipGrid = document.querySelector('.tipo-acta-grid');
-  var chipTitle = document.querySelector('[id="acta-tipo-guia"]')?.parentElement?.querySelector('.section-title');
-  var guiaDiv = document.getElementById('acta-tipo-guia');
+  var chipGrid  = document.querySelector('.tipo-acta-grid');
+  var chipTitle = null;  // removed
+  var guiaDiv   = document.getElementById('acta-tipo-badge');
 
   // Find section title for tipo de acta
   var tipoSection = document.querySelector('#acta-form-dynamic .section-title');
 
+  // Siempre ocultar el selector de tipo (se selecciona desde el repCard)
+  if (chipGrid) chipGrid.style.display = 'none';
+
   if (_esArbolTec) {
-    // Árbol técnico: ocultar toda la sección de tipo de acta
-    if (chipGrid) chipGrid.style.display = 'none';
-    if (guiaDiv)  { guiaDiv.style.display = 'none'; }
-    // Hide the "1. Tipo de Acta" section title
-    var secTitles = document.querySelectorAll('#acta-form-dynamic .section-title');
-    if (secTitles && secTitles[0]) secTitles[0].style.display = 'none';
     selTipoActa('inspeccion');
   } else if (_esAV) {
     // Áreas verdes: ocultar chips de actas
@@ -1379,14 +1376,34 @@ async function abrirNuevaActa(reportId, folio, tipoInicial) {
     if (guiaDiv)  guiaDiv.innerHTML = '🌿 <b>Intervención en área verde</b> — Registre las actividades de mantenimiento realizadas.';
     selTipoActa('inspeccion');
   } else {
-    // Ambiental / animal: mostrar todos los chips
-    if (chipGrid) chipGrid.style.display = '';
-    if (guiaDiv)  { guiaDiv.style.display = ''; guiaDiv.innerHTML = '<b>Flujo:</b> Toda intervención inicia con <b>Inspección</b> → según hallazgos: <b>Circunstanciada</b> → <b>Apercibimiento</b> → <b>Sanción</b>'; }
     selTipoActa(_tipoActaFinal || tipoInicial || 'circunstanciada');
   }
 
   document.getElementById('modal-nueva-acta').style.display = 'flex';
-  initSig();
+  // Esperar a que el modal tenga dimensiones reales antes de inicializar canvas
+  requestAnimationFrame(function() {
+    setTimeout(function() {
+      // Firma del inspector
+      var sc = document.getElementById('sig-inspector');
+      if (sc) {
+        sc.width  = sc.offsetWidth  || (sc.parentElement ? sc.parentElement.offsetWidth : 300);
+        sc.height = 110;
+        window.sigCanvas = sc;
+        window.sigCtx    = sc.getContext('2d');
+        sigCtx.strokeStyle = '#1a3a5c'; sigCtx.lineWidth = 2.5;
+        sigCtx.lineCap = 'round'; sigCtx.lineJoin = 'round';
+        // Re-attach touch/mouse events by calling initSig
+        initSig();
+      }
+      // Firma del visitado
+      var sv = document.getElementById('sig-visitado');
+      if (sv) {
+        sv.width  = sv.offsetWidth  || (sv.parentElement ? sv.parentElement.offsetWidth : 300);
+        sv.height = 90;
+        if (typeof initSigExtra === 'function') initSigExtra(sv);
+      }
+    }, 100);
+  });
   // Obtener GPS automáticamente al abrir
   obtenerGPSActa();
   // Actualizar contexto de Matlacho
@@ -2122,10 +2139,7 @@ function _buildActaForm() {
     <input type="hidden" id="acta-report-folio">
 
     <!-- ── TIPO DE ACTA ── -->
-    <div class="section-title" style="background:#003B7A">📋 1. Tipo de Acta Administrativa</div>
-    <div id="acta-tipo-guia" style="background:#EEF5FC;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:.78rem;color:#1a3a5c;line-height:1.5">
-      <b>Flujo:</b> Toda intervención inicia con <b>Inspección</b> → según hallazgos: <b>Circunstanciada</b> (documentar hechos) → <b>Apercibimiento</b> (irregularidad corregible) → <b>Sanción</b> (infracción / reincidencia)
-    </div>
+    <div id="acta-tipo-badge" style="display:none"></div>
     <div class="tipo-acta-grid">
       <div class="ta-chip" onclick="selTipoActa('inspeccion')" id="ta-inspeccion">
         <span class="ta-ic">🔍</span><span class="ta-lbl">Inspección</span>
@@ -2989,6 +3003,10 @@ function _buildActaForm() {
       <div class="fg">
         <label>Texto del Apercibimiento</label>
         <textarea id="acta-medida" rows="4" placeholder="Se apercibe formalmente al C. [nombre completo del responsable] que en un plazo de [X días] deberá realizar las acciones necesarias para corregir la irregularidad detectada consistente en: [descripción de la irregularidad]. En caso de incumplimiento del presente apercibimiento se podrá iniciar el procedimiento administrativo sancionador correspondiente, de conformidad con la normativa aplicable." style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none;resize:vertical"></textarea>
+        <button type="button" onclick="llamarIAApercibimiento(this)"
+          style="margin-top:5px;width:100%;padding:8px;background:linear-gradient(135deg,#92400e,#d97706);color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer">
+          🐭 Matlacho redacta el apercibimiento
+        </button>
       </div>
       <div class="fg" style="grid-column:1/-1">
         <label>Medidas correctivas requeridas al responsable</label>
@@ -3048,6 +3066,10 @@ function _buildActaForm() {
       <div class="fg" style="grid-column:1/-1">
         <label>Sanción impuesta</label>
         <textarea id="acta-medida" rows="3" placeholder="Multa de [monto] equivalente a [X] UMA(s) conforme al Art. [X] del Código Municipal / Ley de Ingresos, por [descripción de la infracción]..." style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none;resize:vertical"></textarea>
+        <button type="button" onclick="llamarIASancion(this)"
+          style="margin-top:5px;width:100%;padding:8px;background:linear-gradient(135deg,#991b1b,#dc2626);color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer">
+          🐭 Matlacho redacta la motivación
+        </button>
       </div>
       <div class="fg">
         <label>Monto de la Sanción (MXN)</label>
@@ -3517,9 +3539,15 @@ function descargarPDFActa(acta) {
   if (w) {
     w.document.write(htmlContent);
     w.document.close();
-    // Esperar carga de imágenes y abrir diálogo de impresión
-    w.onload = function() { w.focus(); w.print(); };
-    setTimeout(function() { try { w.focus(); w.print(); } catch(e){} }, 800);
+    // Mostrar instrucciones sin auto-imprimir
+    setTimeout(function(){
+      try {
+        var bar = w.document.createElement('div');
+        bar.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#166534;color:#fff;padding:12px 16px;text-align:center;font-size:13px;z-index:9999;font-family:sans-serif';
+        bar.innerHTML = 'Para guardar como PDF: Menu → Imprimir → Guardar como PDF';
+        w.document.body.appendChild(bar); w.focus();
+      } catch(e){}
+    }, 400);
   } else {
     // Fallback si el navegador bloquea popups: descarga HTML
     const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
@@ -3538,32 +3566,42 @@ function compartirPDFActa(acta) {
   const htmlContent = buildActaHTML(acta);
   const folio = acta.folio_acta || 'ACTA-IMBIO';
 
-  // Paso 1: abrir ventana con el acta y diálogo de impresión → guardar como PDF
-  const w = window.open('', '_blank');
+  // Intentar Web Share API con archivo HTML (funciona en Android Chrome)
+  const blob = new Blob([htmlContent], { type: 'text/html' });
+  const file = new File([blob], folio + '.html', { type: 'text/html' });
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    // Android / iOS con soporte nativo → comparte el archivo directo
+    navigator.share({
+      title: folio + ' — IMBIO Pabellón de Arteaga',
+      text: 'Acta ' + folio + ' emitida por IMBIO.',
+      files: [file]
+    }).catch(function(e) {
+      if (e.name !== 'AbortError') _compartirFallback(acta, folio, htmlContent);
+    });
+  } else {
+    // Fallback: abrir en nueva ventana para imprimir/guardar + link WhatsApp
+    _compartirFallback(acta, folio, htmlContent);
+  }
+}
+
+function _compartirFallback(acta, folio, htmlContent) {
+  // Abrir el acta en ventana nueva para que el usuario la guarde como PDF
+  var w = window.open('', '_blank');
   if (w) {
     w.document.write(htmlContent);
     w.document.close();
-    w.onload = function() { w.focus(); w.print(); };
-    setTimeout(function() { try { w.focus(); w.print(); } catch(e){} }, 800);
+    // Mostrar opción de guardar/compartir
+    w.onload = function() {
+      var msg = w.document.createElement('div');
+      msg.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#16a34a;color:#fff;padding:14px;text-align:center;font-size:14px;z-index:9999;font-family:sans-serif';
+      msg.innerHTML = '📄 Guarda como PDF: Menú ⋮ → Imprimir → Guardar como PDF &nbsp;|&nbsp; <a onclick="window.close()" style="color:#fff;text-decoration:underline;cursor:pointer">Cerrar</a>';
+      w.document.body.appendChild(msg);
+    };
+    setTimeout(function(){ try{ w.focus(); } catch(e){} }, 300);
   }
-
-  // Paso 2: ofrecer compartir por WhatsApp (con resumen de texto)
-  setTimeout(function() {
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const file = new File([blob], folio + '.html', { type: 'text/html' });
-    // Web Share API con archivo (Android Chrome soporta esto)
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      navigator.share({
-        title: folio + ' — IMBIO',
-        text: 'Acta ' + folio + ' emitida por IMBIO Pabellón de Arteaga.',
-        files: [file]
-      }).catch(function(e) {
-        if (e.name !== 'AbortError') fallbackShare(acta, folio);
-      });
-    } else {
-      fallbackShare(acta, folio);
-    }
-  }, 1200);
+  // Abrir WhatsApp con texto del acta
+  setTimeout(function() { fallbackShare(acta, folio); }, 400);
 }
 
 function fallbackShare(acta, folio) {
