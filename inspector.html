@@ -1,3 +1,68 @@
+function renderMisActas() {
+  const el = document.getElementById('lista-actas');
+
+  // ── Actualizar contadores del dashboard ──
+  const tipos = ['inspeccion','circunstanciada','apercibimiento','sancion'];
+  tipos.forEach(function(t) {
+    var cnt = document.getElementById('cnt-' + t);
+    if (cnt) cnt.textContent = misActas.filter(function(a){ return a.tipo_acta === t; }).length;
+  });
+
+  // ── Filtrar si hay filtro activo ──
+  var actasMostrar = misActas;
+  if (window._actasFiltro) {
+    actasMostrar = misActas.filter(function(a){ return a.tipo_acta === window._actasFiltro; });
+  }
+
+  if (!actasMostrar.length) {
+    var msg = window._actasFiltro
+      ? 'No tienes actas de tipo ' + ({inspeccion:'Inspección',circunstanciada:'Circunstanciada',apercibimiento:'Apercibimiento',sancion:'Sanción'}[window._actasFiltro]||window._actasFiltro) + '.'
+      : 'Las actas que generes aparecerán aquí.';
+    el.innerHTML = '<div class="empty"><div class="em-ic">📄</div><p>' + msg + '</p></div>';
+    return;
+  }
+
+  const labels = { circunstanciada:'Circunstanciada', apercibimiento:'Apercibimiento', sancion:'Sanción', inspeccion:'Inspección' };
+  const colors = { inspeccion:'#1a3a5c', circunstanciada:'#5b21b6', apercibimiento:'#92400e', sancion:'#991b1b' };
+
+  el.innerHTML = actasMostrar.map((a, idx) => `
+    <div class="acta-card">
+      <div class="acta-card-head">
+        <span class="acta-folio">${a.folio_acta || '—'}</span>
+        <span class="acta-tipo-badge" style="background:${colors[a.tipo_acta]||'#1a3a5c'};color:#fff;padding:3px 9px;border-radius:20px;font-size:.68rem;font-weight:800">
+          ${labels[a.tipo_acta] || a.tipo_acta || 'Acta'}
+        </span>
+      </div>
+      <div class="acta-card-body">
+        <div class="acta-row"><span class="acta-lbl">Reporte</span><span>${a.report_folio || a.folio_acta || '—'}</span></div>
+        <div class="acta-row"><span class="acta-lbl">Infractor</span><span>${a.infractor || '—'}</span></div>
+        <div class="acta-row"><span class="acta-lbl">Descripción</span><span>${(a.descripcion||'').substring(0,60)}${(a.descripcion||'').length>60?'...':''}</span></div>
+        <div class="acta-row"><span class="acta-lbl">Fecha</span><span>${a.fecha ? new Date(a.fecha).toLocaleString('es-MX') : '—'}</span></div>
+        <div class="acta-row"><span class="acta-lbl">Estado</span><span class="est-badge est-${a.estado_acta||'emitida'}">${(a.estado_acta||'EMITIDA').toUpperCase()}</span></div>
+      </div>
+      <div class="icard-foot">
+        <button class="ibtn ibtn-success ibtn-sm" style="flex:1" onclick="compartirPDFActa(misActas[${misActas.indexOf(a)}])">📤 Compartir PDF por WhatsApp</button>
+        <button class="ibtn ibtn-sm" style="background:#dc2626;color:#fff;padding:0 14px;flex:none" onclick="borrarActaLocal(${a.id||0}, ${misActas.indexOf(a)})">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+function filtrarActas(tipo) {
+  window._actasFiltro = tipo;
+  // Update visual state of cards
+  ['inspeccion','circunstanciada','apercibimiento','sancion'].forEach(function(t) {
+    var card = document.getElementById('card-' + t);
+    if (card) card.style.opacity = (!tipo || tipo === t) ? '1' : '0.5';
+  });
+  // Update label
+  var lbl = document.getElementById('actas-filtro-label');
+  var txt = document.getElementById('actas-filtro-txt');
+  var labels = {inspeccion:'🔍 Inspección',circunstanciada:'📋 Circunstanciada',apercibimiento:'⚠️ Apercibimiento',sancion:'🚫 Sanción'};
+  if (lbl) lbl.style.display = tipo ? 'flex' : 'none';
+  if (txt) txt.textContent = tipo ? ('Mostrando: ' + (labels[tipo]||tipo)) : '';
+  renderMisActas();
+}
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -96,6 +161,11 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 .rep-card.est-asignado{border-left-color:#3b82f6}
 .rep-card.est-en_proceso{border-left-color:#ec4899}
 .rep-card.est-cerrado{border-left-color:#22c55e}
+.rep-card.est-en_inspeccion{border-left-color:#7c3aed}
+.rep-card.est-pendiente_medida{border-left-color:#dc2626;animation:pulse-border 2s infinite}
+.rep-card.est-apercibido{border-left-color:#f59e0b}
+.rep-card.est-sancionado{border-left-color:#3b82f6}
+@keyframes pulse-border{0%,100%{border-left-color:#dc2626}50%{border-left-color:#fca5a5}}
 .rep-folio{font-family:monospace;font-size:.8rem;font-weight:800;color:var(--azul)}
 .rep-tipo{font-size:.88rem;font-weight:700;color:var(--texto);margin-top:3px}
 .rep-desc{font-size:.78rem;color:var(--muted);margin-top:4px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -105,6 +175,10 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 .est-asignado{background:#dbeafe;color:#1e40af}
 .est-en_proceso{background:#fce7f3;color:#9d174d}
 .est-cerrado{background:#dcfce7;color:#166534}
+.est-en_inspeccion{background:#ede9fe;color:#6d28d9}
+.est-pendiente_medida{background:#fee2e2;color:#dc2626}
+.est-apercibido{background:#fef3c7;color:#92400e}
+.est-sancionado{background:#dbeafe;color:#1d4ed8}
 
 /* FORMS */
 .fg{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
@@ -160,6 +234,11 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 .ialert-warn{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
 
 /* ACTA PREVIEW */
+/* ── actas dashboard ────────────────────────────────────────── */
+.acta-tipo-card { transition: transform .15s, box-shadow .15s; }
+.acta-tipo-card:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+.acta-tipo-card:active { transform: scale(.97); }
+
 .acta-card{background:#fff;border-radius:12px;border:2px solid var(--borde);overflow:hidden;margin-bottom:10px}
 .acta-card-head{background:var(--inspector);padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
 .acta-folio{color:#fff;font-family:monospace;font-size:.82rem;font-weight:800}
@@ -277,6 +356,10 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
 .spinner{width:42px;height:42px;border:4px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
+<link rel="manifest" href="/inspector/manifest.json">
+<link rel="apple-touch-icon" href="/inspector/icon-192.png">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Inspector IMBIO">
 </head>
 <body>
 
@@ -366,6 +449,47 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
     <!-- MIS ACTAS -->
     <div id="screen-actas-list" class="iscreen">
       <div class="ipad">
+
+        <!-- Dashboard header -->
+        <div style="padding:4px 0 12px">
+          <div style="font-size:.72rem;color:var(--muted);text-align:center">Toca una sección para ver las actas</div>
+        </div>
+
+        <!-- Contadores / tarjetas de tipo -->
+        <div id="actas-dashboard" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+          <div class="acta-tipo-card" onclick="filtrarActas('inspeccion')" id="card-inspeccion"
+            style="background:linear-gradient(135deg,#1a3a5c,#2563eb);border-radius:14px;padding:14px 12px;cursor:pointer;text-align:center;transition:.2s">
+            <div style="font-size:1.6rem">🔍</div>
+            <div style="color:#fff;font-weight:800;font-size:.88rem;margin-top:4px">Inspección</div>
+            <div id="cnt-inspeccion" style="color:rgba(255,255,255,.8);font-size:1.4rem;font-weight:900;margin-top:2px">0</div>
+          </div>
+          <div class="acta-tipo-card" onclick="filtrarActas('circunstanciada')" id="card-circunstanciada"
+            style="background:linear-gradient(135deg,#1a3a5c,#7c3aed);border-radius:14px;padding:14px 12px;cursor:pointer;text-align:center;transition:.2s">
+            <div style="font-size:1.6rem">📋</div>
+            <div style="color:#fff;font-weight:800;font-size:.88rem;margin-top:4px">Circunstanciada</div>
+            <div id="cnt-circunstanciada" style="color:rgba(255,255,255,.8);font-size:1.4rem;font-weight:900;margin-top:2px">0</div>
+          </div>
+          <div class="acta-tipo-card" onclick="filtrarActas('apercibimiento')" id="card-apercibimiento"
+            style="background:linear-gradient(135deg,#92400e,#d97706);border-radius:14px;padding:14px 12px;cursor:pointer;text-align:center;transition:.2s">
+            <div style="font-size:1.6rem">⚠️</div>
+            <div style="color:#fff;font-weight:800;font-size:.88rem;margin-top:4px">Apercibimiento</div>
+            <div id="cnt-apercibimiento" style="color:rgba(255,255,255,.8);font-size:1.4rem;font-weight:900;margin-top:2px">0</div>
+          </div>
+          <div class="acta-tipo-card" onclick="filtrarActas('sancion')" id="card-sancion"
+            style="background:linear-gradient(135deg,#991b1b,#dc2626);border-radius:14px;padding:14px 12px;cursor:pointer;text-align:center;transition:.2s">
+            <div style="font-size:1.6rem">🚫</div>
+            <div style="color:#fff;font-weight:800;font-size:.88rem;margin-top:4px">Sanción</div>
+            <div id="cnt-sancion" style="color:rgba(255,255,255,.8);font-size:1.4rem;font-weight:900;margin-top:2px">0</div>
+          </div>
+        </div>
+
+        <!-- Filtro activo label -->
+        <div id="actas-filtro-label" style="display:none;margin-bottom:8px;display:flex;align-items:center;gap:8px">
+          <span id="actas-filtro-txt" style="font-size:.8rem;font-weight:700;color:var(--accent)"></span>
+          <button onclick="filtrarActas(null)" style="background:none;border:none;color:var(--muted);font-size:.75rem;cursor:pointer;padding:2px 6px;border-radius:6px;background:#f1f5f9">✕ Ver todas</button>
+        </div>
+
+        <!-- Lista filtrada -->
         <div id="lista-actas">
           <div class="empty"><div class="em-ic">📄</div><p>Las actas generadas aparecerán aquí.</p></div>
         </div>
@@ -597,6 +721,7 @@ function showApp() {
 
 // ── TABS ─────────────────────────────────────────────────
 function setTab(name) {
+  if (name === 'actas-list') { window._actasFiltro = null; }
   ['asignados','proceso','actas-list','acerca'].forEach(t => {
     document.getElementById('screen-' + t)?.classList.toggle('active', t === name);
     const tabId = t === 'actas-list' ? 'actas' : t;
@@ -646,7 +771,11 @@ async function loadReportes(estado) {
   const el = document.getElementById(containerId);
   el.innerHTML = '<div class="empty"><div class="em-ic">⏳</div><p>Cargando...</p></div>';
   try {
-    const r = await api('/api/inspector/reportes?estado=' + estado);
+    // Fetch multiple states for inspector view
+    const estadoParam = estado === 'en_proceso'
+      ? 'en_proceso,en_inspeccion,pendiente_medida,apercibido,sancionado'
+      : estado;
+    const r = await api('/api/inspector/reportes?estado=' + estadoParam);
     if (!r.success) { el.innerHTML = alert_html('err', r.message); return; }
     const reps = r.data.reportes;
     window._reportesCache = reps;
@@ -663,13 +792,88 @@ async function loadReportes(estado) {
 
 function repCard(rep) {
   const asig = rep.asignacion;
+  const t = rep.tipo || '';
+  const esArbolTec = ['poda_arbol','derribo_arbol','corte_arbol','arbol_riesgo'].includes(t);
+  const esAV       = t === 'areas_verdes';
+  const esAnimal   = ['perro_agresivo','animal_calle','animal_maltrato','fauna_silvestre','animal_abandonado'].includes(t);
+  const esAmbiental= !esArbolTec && !esAV && !esAnimal;
+  const cerrado    = rep.estado === 'cerrado';
+
+  // ── Botones según tipo ──────────────────────────────────────
+  let btnAccion = '';
+  if (!cerrado) {
+    if (esArbolTec) {
+      // Arbol técnico: solo inspección → cerrar
+      if (rep.estado === 'asignado') {
+        btnAccion = `<button class="ibtn ibtn-warning ibtn-sm" onclick="event.stopPropagation();cambiarEstado(${rep.id},'en_inspeccion')">🔍 Iniciar Inspección</button>`;
+      } else if (rep.estado === 'en_inspeccion' || rep.estado === 'en_proceso') {
+        btnAccion = `<button class="ibtn ibtn-acento ibtn-sm" onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','inspeccion')">🌳 Llenar Inspección</button>
+                     <button class="ibtn ibtn-success ibtn-sm" onclick="event.stopPropagation();confirmarCierre(${rep.id},'${rep.folio}')">✅ Cerrar</button>`;
+      }
+    } else if (esAV) {
+      // Áreas verdes: reporte de intervención → cerrar
+      if (rep.estado === 'asignado') {
+        btnAccion = `<button class="ibtn ibtn-warning ibtn-sm" onclick="event.stopPropagation();cambiarEstado(${rep.id},'en_proceso')">🌿 Iniciar Intervención</button>`;
+      } else if (rep.estado === 'en_proceso') {
+        btnAccion = `<button class="ibtn" style="background:#16a34a;color:#fff;font-size:.75rem;padding:6px 10px;border-radius:8px;font-weight:700" onclick="event.stopPropagation();abrirIntervencionAV(${rep.id},'${rep.folio}')">🌿 Registrar Actividades</button>
+                     <button class="ibtn ibtn-success ibtn-sm" onclick="event.stopPropagation();confirmarCierre(${rep.id},'${rep.folio}')">✅ Cerrar</button>`;
+      }
+    } else if (esAnimal) {
+      // Animal: inspección con acta
+      if (rep.estado === 'asignado') {
+        btnAccion = `<button class="ibtn ibtn-warning ibtn-sm" onclick="event.stopPropagation();cambiarEstado(${rep.id},'en_inspeccion')">🔍 Iniciar</button>`;
+      } else {
+        btnAccion = `
+          <div style="display:flex;flex-direction:column;gap:5px;width:100%">
+            <div style="font-size:.68rem;color:var(--muted);font-weight:700;text-align:center;padding:2px 0">📄 ¿Qué acta vas a levantar?</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
+              <button class="ibtn ibtn-sm" style="background:#1e3a8a;color:#fff;font-size:.72rem;padding:6px 4px"
+                onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','inspeccion')">🔍 Inspección</button>
+              <button class="ibtn ibtn-sm" style="background:#5b21b6;color:#fff;font-size:.72rem;padding:6px 4px"
+                onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','circunstanciada')">📋 Circunstanciada</button>
+            </div>
+          </div>
+          ${['apercibido','sancionado','en_proceso'].includes(rep.estado)?`<button class="ibtn ibtn-success ibtn-sm" onclick="event.stopPropagation();confirmarCierre(${rep.id},'${rep.folio}')">✅ Cerrar</button>`:''}`;
+      }
+    } else {
+      // Ambiental: flujo completo de actas administrativas
+      if (rep.estado === 'asignado') {
+        btnAccion = `<button class="ibtn ibtn-warning ibtn-sm" onclick="event.stopPropagation();cambiarEstado(${rep.id},'en_inspeccion')">🔍 Iniciar Inspección</button>`;
+      } else if (['en_inspeccion','en_proceso'].includes(rep.estado)) {
+        btnAccion = `
+          <div style="display:flex;flex-direction:column;gap:5px;width:100%">
+            <div style="font-size:.68rem;color:var(--muted);font-weight:700;text-align:center;padding:2px 0">📄 ¿Qué acta vas a levantar?</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
+              <button class="ibtn ibtn-sm" style="background:#1e3a8a;color:#fff;font-size:.72rem;padding:6px 4px"
+                onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','inspeccion')">🔍 Inspección</button>
+              <button class="ibtn ibtn-sm" style="background:#5b21b6;color:#fff;font-size:.72rem;padding:6px 4px"
+                onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','circunstanciada')">📋 Circunstanciada</button>
+            </div>
+          </div>`;
+      } else if (rep.estado === 'pendiente_medida') {
+        btnAccion = `
+          <div style="display:flex;flex-direction:column;gap:5px;width:100%">
+            <div style="font-size:.68rem;color:#92400e;font-weight:700;text-align:center;padding:2px 0">⚠️ Pendiente — elige la medida:</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
+              <button class="ibtn ibtn-sm" style="background:#b45309;color:#fff;font-size:.72rem;padding:6px 4px"
+                onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','apercibimiento')">⚠️ Apercibimiento</button>
+              <button class="ibtn ibtn-sm" style="background:#991b1b;color:#fff;font-size:.72rem;padding:6px 4px"
+                onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','sancion')">🚫 Sanción</button>
+            </div>
+          </div>`;
+      } else if (['apercibido','sancionado'].includes(rep.estado)) {
+        btnAccion = `<button class="ibtn ibtn-success ibtn-sm" onclick="event.stopPropagation();confirmarCierre(${rep.id},'${rep.folio}')">✅ Cerrar Caso</button>`;
+      }
+    }
+  }
+
   return `<div class="icard rep-card est-${rep.estado}" onclick="verDetalle(${rep.id})">
     <div class="icard-head">
       <div>
         <div class="rep-folio">${rep.folio}</div>
         <div class="rep-tipo">${tipoLabel(rep.tipo)}</div>
       </div>
-      <span class="est-badge est-${rep.estado}">${rep.estado.replace('_',' ')}</span>
+      <span class="est-badge est-${rep.estado}">${{ en_inspeccion:'En Inspección', pendiente_medida:'⚠️ Pendiente Medida', apercibido:'Apercibido', sancionado:'Sancionado', asignado:'Asignado', en_proceso:'En Proceso', cerrado:'Cerrado', reportado:'Reportado' }[rep.estado] || rep.estado.replace('_',' ')}</span>
     </div>
     <div class="icard-body">
       <div class="rep-desc">${rep.descripcion}</div>
@@ -680,10 +884,8 @@ function repCard(rep) {
       </div>
     </div>
     <div class="icard-foot">
-      <button class="ibtn ibtn-primary ibtn-sm" onclick="event.stopPropagation();verDetalle(${rep.id})">👁 Ver detalle</button>
-      <button class="ibtn ibtn-acento ibtn-sm" onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}')">📄 Levantar Acta</button>
-      ${rep.estado==='asignado'?`<button class="ibtn ibtn-warning ibtn-sm" onclick="event.stopPropagation();cambiarEstado(${rep.id},'en_proceso')">🔄 Iniciar</button>`:''}
-      ${rep.estado==='en_proceso'?`<button class="ibtn ibtn-success ibtn-sm" onclick="event.stopPropagation();cambiarEstado(${rep.id},'cerrado')">✅ Cerrar</button>`:''}
+      <button class="ibtn ibtn-primary ibtn-sm" onclick="event.stopPropagation();verDetalle(${rep.id})">👁 Ver</button>
+      ${btnAccion}
     </div>
   </div>`;
 }
@@ -925,18 +1127,86 @@ let tipoActaSel = 'circunstanciada';
 
 function selTipoActa(tipo) {
   tipoActaSel = tipo;
-  document.getElementById('acta-tipo').value = tipo;
+  var _te = document.getElementById('acta-tipo'); if (_te) _te.value = tipo;
   ['circunstanciada','apercibimiento','sancion','inspeccion'].forEach(t => {
-    document.getElementById('ta-' + t).classList.toggle('sel', t === tipo);
+    var _chip = document.getElementById('ta-' + t); if (_chip) _chip.classList.toggle('sel', t === tipo);
   });
-  // Mostrar/ocultar sección de medidas según tipo
-  const secMed = document.getElementById('seccion-medidas');
-  const secMonto = document.getElementById('sec-monto');
-  secMed.style.display = tipo === 'circunstanciada' ? 'none' : 'block';
-  if (secMonto) secMonto.style.display = tipo === 'sancion' ? 'block' : 'none';
+  // Rebuild the form so adaptive sections update
+  var d = document.getElementById('acta-form-dynamic');
+  if (d) { delete d.dataset.built; }
+  _buildActaForm();
+  // Re-init sig canvases after rebuild
+  setTimeout(function() { initSig(); }, 50);
 }
 
-function abrirNuevaActa(reportId, folio) {
+// ════════════════════════════════════════════════════════════════
+// PRECARGA DE DATOS DESDE ACTAS PREVIAS
+// ════════════════════════════════════════════════════════════════
+var _actasPrevias = [];  // actas del reporte actual
+
+async function cargarActasPrevias(reportId) {
+  _actasPrevias = [];
+  try {
+    var r = await fetch(SERVER_URL + '/api/reports/' + reportId, {
+      headers: { 'Authorization': 'Bearer ' + TOKEN },
+      signal: AbortSignal.timeout(10000)
+    });
+    var d = await r.json();
+    if (d.success && d.data && d.data.actas) {
+      _actasPrevias = d.data.actas;
+    }
+  } catch(e) {
+    // Local fallback: use misActas
+    _actasPrevias = misActas.filter(function(a){ return String(a.report_id) === String(reportId); });
+  }
+  return _actasPrevias;
+}
+
+function getActaPrevia(tipo) {
+  // Get most recent acta of given type for current report
+  return _actasPrevias.filter(function(a){ return a.tipo_acta === tipo; })
+    .sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); })[0] || null;
+}
+
+function precargarDesdeActa(acta) {
+  if (!acta) return;
+  var s = function(id, v) { var el = document.getElementById(id); if (el && v) el.value = v; };
+  // Datos institucionales
+  s('acta-firmante',          acta.inspector || acta.nombre_firmante_inspector || '');
+  s('acta-num-inspector',     acta.num_inspector || '');
+  s('acta-orden-inspeccion',  acta.orden_inspeccion || '');
+  s('acta-motivo',            acta.motivo_inspeccion || '');
+  s('acta-expediente-prev',   acta.folio_acta || '');
+  // Datos del visitado/predio
+  s('acta-infractor',         acta.infractor || '');
+  s('acta-domicilio',         acta.domicilio || '');
+  s('acta-cargo-visitado',    acta.cargo_visitado || '');
+  s('acta-actividad-predio',  acta.actividad_predio || '');
+  // GPS
+  s('acta-lat',               acta.lat_acta || acta.lat || '');
+  s('acta-lon',               acta.lon_acta || acta.lon || '');
+  var bar = document.getElementById('acta-coords-bar');
+  if (bar && (acta.lat_acta || acta.lat)) {
+    bar.textContent = '📍 ' + (acta.lat_acta||acta.lat) + ', ' + (acta.lon_acta||acta.lon);
+  }
+  // Descripción de hechos (solo para apercibimiento/sancion — pre-llena desde circunstanciada)
+  s('acta-descripcion',       acta.descripcion || '');
+  s('acta-fundamento',        '');  // Se llenará por tipoActaSel
+}
+
+function construirReferenciasAntecedentes() {
+  // Build antecedentes text from previous actas
+  var partes = [];
+  var insp_a  = getActaPrevia('inspeccion');
+  var circ_a  = getActaPrevia('circunstanciada');
+  var aper_a  = getActaPrevia('apercibimiento');
+  if (insp_a)  partes.push('Acta de Inspección ' + insp_a.folio_acta + ' (' + (insp_a.fecha ? new Date(insp_a.fecha).toLocaleDateString('es-MX') : 'fecha') + ')');
+  if (circ_a)  partes.push('Acta Circunstanciada ' + circ_a.folio_acta + ' (' + (circ_a.fecha ? new Date(circ_a.fecha).toLocaleDateString('es-MX') : 'fecha') + ')');
+  if (aper_a)  partes.push('Acta de Apercibimiento ' + aper_a.folio_acta + ' (' + (aper_a.fecha ? new Date(aper_a.fecha).toLocaleDateString('es-MX') : 'fecha') + ')');
+  return partes.length ? 'Con base en los antecedentes: ' + partes.join('; ') + '.' : '';
+}
+
+async function abrirNuevaActa(reportId, folio, tipoInicial) {
   currentReporteId = reportId;
   var s = function(id, val) { var el=document.getElementById(id); if(el) el.value=val; };
   var si = function(id, html) { var el=document.getElementById(id); if(el) el.innerHTML=html; };
@@ -973,11 +1243,73 @@ function abrirNuevaActa(reportId, folio) {
   actaFotos = [];
   renderFotosGrid();
   clearSig();
-  selTipoActa('circunstanciada');
+
+  // ── Cargar actas previas y precargar datos ──────────────────
+  await cargarActasPrevias(reportId);
+  var _tipoActaFinal = tipoInicial || 'circunstanciada';
+  var _insp_prev = getActaPrevia('inspeccion');
+  var _circ_prev = getActaPrevia('circunstanciada');
+  var _aper_prev = getActaPrevia('apercibimiento');
+
+  if (_tipoActaFinal === 'circunstanciada' && _insp_prev) {
+    precargarDesdeActa(_insp_prev);
+  } else if (_tipoActaFinal === 'apercibimiento') {
+    var _fuente_a = _circ_prev || _insp_prev;
+    if (_fuente_a) {
+      precargarDesdeActa(_fuente_a);
+      var _obs_a = document.getElementById('acta-observaciones');
+      if (_obs_a && !_obs_a.value) _obs_a.value = construirReferenciasAntecedentes();
+    }
+  } else if (_tipoActaFinal === 'sancion') {
+    var _fuente_s = _aper_prev || _circ_prev || _insp_prev;
+    if (_fuente_s) {
+      precargarDesdeActa(_fuente_s);
+      var _obs_s = document.getElementById('acta-observaciones');
+      if (_obs_s && !_obs_s.value) _obs_s.value = construirReferenciasAntecedentes();
+    }
+  }
+
+  // ── Adaptar chips según tipo de reporte ─────────────────────
+  var _tipo = window._actaReporteTipo || '';
+  var _esArbolTec = ['poda_arbol','derribo_arbol','corte_arbol','arbol_riesgo'].includes(_tipo);
+  var _esAV       = _tipo === 'areas_verdes';
+  var _esAnimal   = ['perro_agresivo','animal_calle','animal_maltrato','fauna_silvestre','animal_abandonado'].includes(_tipo);
+  var _esAmbiental = !_esArbolTec && !_esAV && !_esAnimal;
+
+  // Grid de chips — solo mostrar para ambientales
+  var chipGrid = document.querySelector('.tipo-acta-grid');
+  var chipTitle = document.querySelector('[id="acta-tipo-guia"]')?.parentElement?.querySelector('.section-title');
+  var guiaDiv = document.getElementById('acta-tipo-guia');
+
+  // Find section title for tipo de acta
+  var tipoSection = document.querySelector('#acta-form-dynamic .section-title');
+
+  if (_esArbolTec) {
+    // Árbol técnico: ocultar toda la sección de tipo de acta
+    if (chipGrid) chipGrid.style.display = 'none';
+    if (guiaDiv)  { guiaDiv.style.display = 'none'; }
+    // Hide the "1. Tipo de Acta" section title
+    var secTitles = document.querySelectorAll('#acta-form-dynamic .section-title');
+    if (secTitles && secTitles[0]) secTitles[0].style.display = 'none';
+    selTipoActa('inspeccion');
+  } else if (_esAV) {
+    // Áreas verdes: ocultar chips de actas
+    if (chipGrid) chipGrid.style.display = 'none';
+    if (guiaDiv)  guiaDiv.innerHTML = '🌿 <b>Intervención en área verde</b> — Registre las actividades de mantenimiento realizadas.';
+    selTipoActa('inspeccion');
+  } else {
+    // Ambiental / animal: mostrar todos los chips
+    if (chipGrid) chipGrid.style.display = '';
+    if (guiaDiv)  { guiaDiv.style.display = ''; guiaDiv.innerHTML = '<b>Flujo:</b> Toda intervención inicia con <b>Inspección</b> → según hallazgos: <b>Circunstanciada</b> → <b>Apercibimiento</b> → <b>Sanción</b>'; }
+    selTipoActa(_tipoActaFinal || tipoInicial || 'circunstanciada');
+  }
+
   document.getElementById('modal-nueva-acta').style.display = 'flex';
   initSig();
   // Obtener GPS automáticamente al abrir
   obtenerGPSActa();
+  // Actualizar contexto de Matlacho
+  setTimeout(_matlachoSetContext, 300);
 }
 
 function closeNuevaActa() {
@@ -1047,6 +1379,7 @@ function agregarFotos(event) {
 
 function renderFotosGrid() {
   const grid = document.getElementById('acta-fotos-grid');
+  if (!grid) return;  // guard: form may not be built yet
   const items = actaFotos.map((f, i) => `
     <div class="foto-item">
       <img src="${f.dataUrl}" alt="foto">
@@ -1122,29 +1455,47 @@ function selRiesgo(nivel) {
 
 // ── ENVIAR ACTA ───────────────────────────────────────────
 async function enviarActa() {
-  const rid         = document.getElementById('acta-report-id').value;
-  const folio       = document.getElementById('acta-report-folio').value;
-  const tipo        = document.getElementById('acta-tipo').value;
-  const inspector   = document.getElementById('acta-inspector').value.trim();
-  const infractor   = document.getElementById('acta-infractor').value.trim();
-  const domicilio   = document.getElementById('acta-domicilio').value.trim();
-  const descripcion = document.getElementById('acta-descripcion').value.trim();
-  const fundamento  = document.getElementById('acta-fundamento').value.trim();
-  const medida      = document.getElementById('acta-medida').value.trim();
-  const monto       = document.getElementById('acta-monto').value.trim();
-  const plazo       = document.getElementById('acta-plazo').value.trim();
-  const observ      = document.getElementById('acta-observaciones').value.trim();
-  const lat         = document.getElementById('acta-lat').value;
-  const lon         = document.getElementById('acta-lon').value;
-  const nuevoEst    = document.getElementById('acta-nuevo-estado').value;
-  const firmante    = document.getElementById('acta-firmante').value.trim();
+  const rid         = document.getElementById('acta-report-id')?.value || '';
+  const folio       = document.getElementById('acta-report-folio')?.value || '';
+  const tipo        = (document.getElementById('acta-tipo')?.value || tipoActaSel || 'circunstanciada');
+  const inspector   = (document.getElementById('acta-inspector') || document.getElementById('acta-firmante') || {value:''}).value.trim();
+  const infractor   = document.getElementById('acta-infractor')?.value?.trim() || '';
+  const domicilio   = document.getElementById('acta-domicilio')?.value?.trim() || '';
+  const descripcion = document.getElementById('acta-descripcion')?.value?.trim() || '';
+  const fundamento  = document.getElementById('acta-fundamento')?.value?.trim() || '';
+  const medida      = document.getElementById('acta-medida')?.value?.trim() || '';
+  const monto       = document.getElementById('acta-monto')?.value?.trim() || '';
+  const plazo       = document.getElementById('acta-plazo')?.value?.trim() || '';
+  const observ      = document.getElementById('acta-observaciones')?.value?.trim() || '';
+  const lat         = document.getElementById('acta-lat')?.value || '';
+  const lon         = document.getElementById('acta-lon')?.value || '';
+  const nuevoEst    = document.getElementById('acta-nuevo-estado')?.value || '';
+  const firmante    = document.getElementById('acta-firmante')?.value?.trim() || '';
   // Datos dinámicos según tipo de reporte
   const tipoRepE    = window._actaReporteTipo || '';
-  const esArbolE    = ['poda_arbol','derribo_arbol','corte_arbol','arbol_riesgo','areas_verdes'].includes(tipoRepE);
+  const esArbolE    = ['poda_arbol','derribo_arbol','corte_arbol','arbol_riesgo'].includes(tipoRepE);
+  const esAVE       = tipoRepE === 'areas_verdes';
   const esAnimalE   = ['perro_agresivo','animal_calle','animal_maltrato','fauna_silvestre','animal_abandonado'].includes(tipoRepE);
   const esDenunciaE = ['denuncia_ambiental','residuos_solidos','tiradero_escombro','agua_contaminada','ruido','quema','contaminacion'].includes(tipoRepE);
   const gv  = id => { var el = document.getElementById(id); return el ? el.value : ''; };
   const gc2 = id => { var el = document.getElementById(id); return el ? el.checked : false; };
+  // Encabezado institucional
+  const numInspector    = gv('acta-num-inspector');
+  const medidasCorrectivas = gv('acta-medidas-correctivas');
+  const ordenInspeccion = gv('acta-orden-inspeccion');
+  const motivoInsp      = gv('acta-motivo');
+  const expedientePrev  = gv('acta-expediente-prev');
+  const cargoVisitado   = gv('acta-cargo-visitado');
+  const actividadPredio = gv('acta-actividad-predio');
+  // Campos adaptativos por tipo de acta
+  const vozImputado     = gv('acta-voz-imputado');
+  const imputadoPresente= gv('acta-imputado-presente');
+  const firmadoEnterado = gv('acta-firmado-enterado');
+  const gravedadInfrac  = gv('acta-gravedad-infraccion');
+  const reincidente     = gv('acta-reincidente');
+  const tienePermiso    = gv('acta-tiene-permiso');
+  const numPermiso      = gv('acta-num-permiso');
+  const permisoAutoridad= gv('acta-permiso-autoridad');
   const arbEsp    = esArbolE ? gv('arb-especie-cient') : '';
   const arbCom    = esArbolE ? gv('arb-especie-com') : '';
   const arbDap    = esArbolE ? gv('arb-dap') : '';
@@ -1157,17 +1508,27 @@ async function enviarActa() {
   const visitadoNombre = (document.getElementById('acta-nombre-visitado')?.value || document.getElementById('visitado-nombre')?.value || '').trim();
   const visitadoCargo  = (document.getElementById('visitado-cargo')?.value||'').trim();
   const svData = (svCanvas && visitadoNombre) ? svCanvas.toDataURL('image/png') : null;
-  const dictamen = ['d-formacion','d-reduccion','d-elevacion','d-aclareo','d-derribo','d-trasplante','d-fitosanitario','d-conservacion']
-    .filter(function(id){ return document.getElementById(id)?.checked; })
-    .map(function(id){ return id.replace('d-',''); });
-  const compCat = document.getElementById('comp-categoria')?.value || '';
+  const _dictMap = {
+    'd-poda':           'Poda sanitaria/correctiva',
+    'd-poda-form':      'Poda de formación',
+    'd-derribo':        'Derribo autorizado',
+    'd-derribo-riesgo': 'Derribo urgente por riesgo',
+    'd-tratamiento':    'Tratamiento fitosanitario',
+    'd-cable':          'Desmonte de cables',
+    'd-monitoreo':      'Monitoreo periódico',
+    'd-compensacion':   'Reforestación compensatoria'
+  };
+  const dictamen = Object.keys(_dictMap)
+    .filter(function(id){ var el=document.getElementById(id); return el&&el.checked; })
+    .map(function(id){ return _dictMap[id]; });
+  const compCat = document.getElementById('comp-cat')?.value || document.getElementById('comp-categoria')?.value || '';
   const compArb = document.getElementById('comp-arboles')?.value || '';
   const compEsp = document.getElementById('comp-especie')?.value || '';
   const alertEl     = document.getElementById('acta-alert');
-  alertEl.innerHTML = '';
+  if (alertEl) alertEl.innerHTML = '';
 
-  if (!inspector)   { alertEl.innerHTML = alert_html('err','Ingresa el nombre del inspector.'); return; }
-  if (!descripcion || descripcion.length < 15) { alertEl.innerHTML = alert_html('err','La descripción debe tener al menos 15 caracteres.'); return; }
+  if (!inspector)   { if(alertEl) alertEl.innerHTML = alert_html('err','Ingresa el nombre del inspector.'); return; }
+  if (!descripcion || descripcion.length < 15) { if(alertEl) alertEl.innerHTML = alert_html('err','La descripción debe tener al menos 15 caracteres.'); return; }
 
   const formData = new FormData();
   formData.append('tipo_acta',     tipo);
@@ -1185,6 +1546,13 @@ async function enviarActa() {
   if (arbVigor)  formData.append('arb_vigor',      arbVigor);
   if (arbEst)    formData.append('arb_estructura', arbEst);
   if (arbMet)    formData.append('arb_metodo',     arbMet);
+  // Fitosanitario + copa (arbol form)
+  var gvA2 = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+  formData.append('arb_copa',       gvA2('arb-copa'));
+  formData.append('fs_plagas',      gvA2('fs-plagas'));
+  formData.append('fs_enfermedades',gvA2('fs-enfermedades'));
+  formData.append('fs_infra',       gvA2('fs-infra'));
+  formData.append('fs_raiz',        gvA2('fs-raiz'));
   if (dictamen.length) formData.append('dictamen', dictamen.join(','));
   if (compCat)   formData.append('comp_categoria', compCat);
   if (compArb)   formData.append('comp_arboles',   compArb);
@@ -1222,6 +1590,21 @@ async function enviarActa() {
   if (lat) formData.append('lat_acta', lat);
   if (lon) formData.append('lon_acta', lon);
   if (nuevoEst) formData.append('nuevo_estado', nuevoEst);
+  if (numInspector)    formData.append('num_inspector',      numInspector);
+  if (ordenInspeccion) formData.append('orden_inspeccion',   ordenInspeccion);
+  if (motivoInsp)      formData.append('motivo_inspeccion',  motivoInsp);
+  if (expedientePrev)  formData.append('expediente_previo',  expedientePrev);
+  if (cargoVisitado)   formData.append('cargo_visitado',     cargoVisitado);
+  if (actividadPredio) formData.append('actividad_predio',   actividadPredio);
+  if (vozImputado)     formData.append('voz_imputado',       vozImputado);
+  if (imputadoPresente)formData.append('imputado_presente',  imputadoPresente);
+  if (firmadoEnterado) formData.append('firmado_enterado',   firmadoEnterado);
+  if (gravedadInfrac)  formData.append('gravedad_infraccion',gravedadInfrac);
+  if (reincidente)     formData.append('reincidente',        reincidente);
+  if (tienePermiso)    formData.append('tiene_permiso',      tienePermiso);
+  if (numPermiso)      formData.append('num_permiso',        numPermiso);
+  if (permisoAutoridad)formData.append('permiso_autoridad',  permisoAutoridad);
+  if (medidasCorrectivas) formData.append('medidas_correctivas', medidasCorrectivas);
 
   // Campos dinámicos según tipo de reporte
   var tipoRepForm = window._actaReporteTipo || '';
@@ -1237,11 +1620,13 @@ async function enviarActa() {
     formData.append('vic_domicilio',  gvA('vic-domicilio'));
     formData.append('vic_atencion',   gvA('vic-atencion'));
     formData.append('vic_gravedad',   gvA('vic-gravedad'));
-    var zonasEl = document.getElementById('an-zonas-mordida');
+    var zonasEl = document.getElementById('mordida-zonas-data') || document.getElementById('an-zonas-mordida');
     formData.append('mordida_zonas',  zonasEl ? zonasEl.value : '');
-    var gravEl = document.getElementById('an-gravedad');
+    var gravEl = document.getElementById('mordida-gravedad-data') || document.getElementById('an-gravedad');
     formData.append('mordida_gravedad', gravEl ? gravEl.value : '');
     formData.append('anim_especie',   gvA('anim-especie'));
+    formData.append('anim_raza',      gvA('anim-raza'));
+    formData.append('anim_cantidad',  gvA('anim-cantidad'));
     formData.append('anim_condicion', gvA('anim-condicion'));
     formData.append('anim_situacion', gvA('anim-situacion'));
     formData.append('anim_duenio',    gvA('anim-duenio'));
@@ -1253,6 +1638,13 @@ async function enviarActa() {
     var gvD = function(id){ var el=document.getElementById(id); return el?el.value:''; };
     var gcD = function(id){ var el=document.getElementById(id); return el?el.checked:false; };
     formData.append('da_tipo_infraccion', gvD('da-tipo-infraccion'));
+    formData.append('da_tipo_residuo',    gvD('da-tipo-residuo'));
+    formData.append('da_volumen',         gvD('da-volumen'));
+    formData.append('da_cuerpo_agua',     gvD('da-cuerpo-agua'));
+    formData.append('da_tipo_contaminante',gvD('da-tipo-contaminante'));
+    formData.append('da_fuente_ruido',    gvD('da-fuente-ruido'));
+    formData.append('da_horario_ruido',   gvD('da-horario-ruido'));
+    formData.append('da_tiempo',          gvD('da-tiempo'));
     formData.append('da_superficie',      gvD('da-superficie'));
     formData.append('da_severidad',       gvD('da-severidad'));
     formData.append('da_responsable',     gvD('da-responsable'));
@@ -1315,23 +1707,179 @@ async function enviarActa() {
   }
 }
 
-function showExitoActa(folio, tipo) {
+function showExitoActa(folio, tipo, reportId, reportFolio) {
   const labels = { circunstanciada:'Acta Circunstanciada', apercibimiento:'Acta de Apercibimiento', sancion:'Acta de Sanción', inspeccion:'Acta de Inspección' };
-  // Show a full-screen success message briefly
   const div = document.createElement('div');
-  div.style.cssText = 'position:fixed;inset:0;z-index:9000;background:linear-gradient(160deg,#0d1f35,#1a3a5c);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center';
+  div.id = 'exito-acta-overlay';
+  div.style.cssText = 'position:fixed;inset:0;z-index:9000;background:linear-gradient(160deg,#0d1f35,#1a3a5c);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;overflow-y:auto';
+
+  // Decision panel for circunstanciada
+  const esCirc = tipo === 'circunstanciada';
+  const esCierre = tipo === 'apercibimiento' || tipo === 'sancion';
+
   div.innerHTML = `
-    <div style="font-size:4.5rem;margin-bottom:16px;animation:pop .4s cubic-bezier(.34,1.56,.64,1)">✅</div>
-    <div style="color:#fff;font-size:1.4rem;font-weight:800">Acta Generada</div>
-    <div style="color:rgba(255,255,255,.7);font-size:.88rem;margin-top:8px">${labels[tipo]||tipo}</div>
-    <div style="color:var(--acento);font-family:monospace;font-size:1rem;margin-top:12px;font-weight:800">${folio}</div>
-    <button onclick="descargarPDFActa(window._lastActa)" style="margin-top:24px;padding:12px 28px;background:#f59e0b;color:#000;border:none;border-radius:12px;font-size:.9rem;font-weight:800;cursor:pointer">📥 Descargar PDF</button>
-    <button onclick="compartirPDFActa(window._lastActa)" style="margin-top:8px;padding:12px 28px;background:#16a34a;color:#fff;border:none;border-radius:12px;font-size:.9rem;font-weight:700;cursor:pointer">📤 Compartir por WhatsApp</button>
-    <button onclick="this.parentElement.remove()" style="margin-top:8px;padding:12px 28px;background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.35);border-radius:12px;font-size:.9rem;font-weight:700;cursor:pointer">← Volver</button>`;
+    <div style="font-size:4rem;margin-bottom:12px;animation:pop .4s cubic-bezier(.34,1.56,.64,1)">${esCirc ? '📋' : esCierre ? '✅' : '🔍'}</div>
+    <div style="color:#fff;font-size:1.3rem;font-weight:800">Acta Generada</div>
+    <div style="color:rgba(255,255,255,.7);font-size:.85rem;margin-top:6px">${labels[tipo]||tipo}</div>
+    <div style="color:var(--acento);font-family:monospace;font-size:.95rem;margin-top:10px;font-weight:800">${folio}</div>
+
+    <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap;justify-content:center">
+      <button onclick="compartirPDFActa(window._lastActa)" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer">📤 Compartir PDF</button>
+    </div>
+
+    ${esCirc ? `
+    <div style="margin-top:24px;background:rgba(245,158,11,.15);border:2px solid #f59e0b;border-radius:14px;padding:18px 20px;max-width:340px;width:100%">
+      <div style="color:#f59e0b;font-weight:800;font-size:.95rem;margin-bottom:6px">⚖️ Seleccione la medida administrativa</div>
+      <div style="color:rgba(255,255,255,.7);font-size:.78rem;margin-bottom:14px">Una acta circunstanciada no resuelve el expediente.<br>Debe elegir una de las siguientes opciones:</div>
+      <button onclick="document.getElementById('exito-acta-overlay').remove();abrirNuevaActa(${reportId},'${reportFolio}','apercibimiento')"
+        style="width:100%;padding:12px;background:#f59e0b;color:#000;border:none;border-radius:10px;font-size:.88rem;font-weight:800;cursor:pointer;margin-bottom:8px">
+        ⚠️ Generar Acta de Apercibimiento
+      </button>
+      <button onclick="document.getElementById('exito-acta-overlay').remove();abrirNuevaActa(${reportId},'${reportFolio}','sancion')"
+        style="width:100%;padding:12px;background:#dc2626;color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:800;cursor:pointer">
+        🚫 Generar Acta de Sanción
+      </button>
+    </div>
+    <button onclick="document.getElementById('exito-acta-overlay').remove()" style="margin-top:12px;padding:10px 24px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2);border-radius:10px;font-size:.8rem;cursor:pointer">
+      Decidir después (el caso queda pendiente)
+    </button>
+    ` : esCierre ? `
+    <div style="margin-top:20px;background:rgba(22,163,74,.15);border:2px solid #16a34a;border-radius:14px;padding:16px 20px;max-width:340px;width:100%">
+      <div style="color:#4ade80;font-weight:800;margin-bottom:8px">✅ Medida administrativa aplicada</div>
+      <div style="color:rgba(255,255,255,.7);font-size:.8rem">Ahora puede cerrar el expediente o volver a los reportes.</div>
+    </div>
+    <button onclick="confirmarCierre(${reportId},'${reportFolio}');document.getElementById('exito-acta-overlay').remove()"
+      style="margin-top:14px;padding:12px 28px;background:#16a34a;color:#fff;border:none;border-radius:12px;font-size:.9rem;font-weight:800;cursor:pointer">
+      ✅ Cerrar el Caso
+    </button>
+    <button onclick="document.getElementById('exito-acta-overlay').remove()" style="margin-top:8px;padding:10px 24px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2);border-radius:10px;font-size:.8rem;cursor:pointer">
+      Volver a los reportes
+    </button>
+    ` : `
+    <button onclick="document.getElementById('exito-acta-overlay').remove()" style="margin-top:18px;padding:12px 28px;background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.35);border-radius:12px;font-size:.9rem;font-weight:700;cursor:pointer">← Volver</button>
+    `}`;
   document.body.appendChild(div);
 }
 
+async function confirmarCierre(id, folio) {
+  if (!confirm('¿Cerrar el caso ' + folio + '? Esta acción no se puede deshacer.')) return;
+  const r = await api('/api/reports/' + id + '/evidence', 'POST', { nuevo_estado: 'cerrado' });
+  if (r.success) {
+    loadReportes('asignado');
+    loadReportes('en_proceso');
+    alert('✅ Caso ' + folio + ' cerrado correctamente.');
+  } else {
+    alert('Error: ' + (r.message || 'No se pudo cerrar el caso.'));
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// REPORTE DE INTERVENCIÓN — ÁREAS VERDES
+// ════════════════════════════════════════════════════════════
+function abrirIntervencionAV(reportId, folio) {
+  // Set current report
+  var s = function(id,v){var el=document.getElementById(id);if(el)el.value=v;};
+  s('av-report-id', reportId);
+  s('av-report-folio', folio);
+  s('av-inspector', USER.nombre || USER.username || '');
+  var now = new Date();
+  s('av-fecha', now.toISOString().slice(0,10));
+  s('av-hora-inicio', now.toTimeString().slice(0,5));
+  s('av-hora-fin', '');
+  s('av-nombre-area', '');
+  s('av-superficie', '');
+  s('av-descripcion', '');
+  s('av-observaciones', '');
+  // Clear checkboxes
+  ['deshierbe','poda','derribo','fertilizacion','limpieza','riego','residuos_vegetales','mantenimiento_gral'].forEach(function(a){
+    var el = document.getElementById('av-acc-' + a);
+    if (el) el.checked = false;
+  });
+  document.getElementById('modal-intervencion-av').style.display = 'flex';
+  obtenerGPSAV();
+}
+
+async function enviarIntervencionAV() {
+  var gv = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+  var rid    = gv('av-report-id');
+  var folio  = gv('av-report-folio');
+  var alertEl = document.getElementById('av-alert');
+  if (!rid) { alertEl.innerHTML = alert_html('err','Error: sin reporte vinculado.'); return; }
+
+  var acciones = ['deshierbe','poda','derribo','fertilizacion','limpieza','riego','residuos_vegetales','mantenimiento_gral']
+    .filter(function(a){ return document.getElementById('av-acc-'+a)?.checked; });
+
+  if (!acciones.length) {
+    alertEl.innerHTML = alert_html('err','Selecciona al menos una acción realizada.');
+    return;
+  }
+
+  var fd = new FormData();
+  fd.append('report_id',    rid);
+  fd.append('tipo_registro','intervencion_av');
+  fd.append('inspector',    gv('av-inspector'));
+  fd.append('brigada',      USER.brigada || '');
+  fd.append('fecha',        gv('av-fecha'));
+  fd.append('hora_inicio',  gv('av-hora-inicio'));
+  fd.append('hora_fin',     gv('av-hora-fin'));
+  fd.append('nombre_area',  gv('av-nombre-area'));
+  fd.append('superficie',   gv('av-superficie'));
+  fd.append('acciones',     acciones.join(','));
+  fd.append('descripcion',  gv('av-descripcion'));
+  fd.append('observaciones',gv('av-observaciones'));
+  fd.append('lat',          gv('av-lat'));
+  fd.append('lon',          gv('av-lon'));
+
+  showLoading(true);
+  try {
+    var resp = await fetch(SERVER_URL + '/api/reports/' + rid + '/evidence', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN },
+      body: fd,
+      signal: AbortSignal.timeout(20000)
+    });
+    var d = await resp.json();
+    showLoading(false);
+    if (d.success) {
+      document.getElementById('modal-intervencion-av').style.display = 'none';
+      loadReportes('asignado');
+      loadReportes('en_proceso');
+      alert('✅ Intervención registrada correctamente.');
+    } else {
+      alertEl.innerHTML = alert_html('err', d.message || 'Error al registrar.');
+    }
+  } catch(e) {
+    showLoading(false);
+    alertEl.innerHTML = alert_html('err', 'Error de conexión: ' + e.message);
+  }
+}
+
+function obtenerGPSAV() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    var s = function(id,v){var el=document.getElementById(id);if(el)el.value=v;};
+    s('av-lat', pos.coords.latitude.toFixed(7));
+    s('av-lon', pos.coords.longitude.toFixed(7));
+    var bar = document.getElementById('av-coords-bar');
+    if (bar) bar.textContent = '📍 ' + pos.coords.latitude.toFixed(5) + ', ' + pos.coords.longitude.toFixed(5);
+  }, function(){});
+}
+
 // ── MIS ACTAS ─────────────────────────────────────────────
+async function borrarActaLocal(id, idx) {
+  var acta = (typeof idx === 'number') ? misActas[idx] : misActas.find(function(a){ return a.id === id; });
+  var folioStr = acta ? (acta.folio_acta || 'esta acta') : 'esta acta';
+  if (!confirm('¿Eliminar ' + folioStr + ' de tu app?\nEl acta seguirá disponible en el panel de control.')) return;
+  if (typeof idx === 'number') {
+    misActas.splice(idx, 1);
+  } else {
+    misActas = misActas.filter(function(a){ return a.id !== id; });
+  }
+  localStorage.setItem('imbio_actas_local', JSON.stringify(misActas));
+  renderMisActas();
+}
+
+
 function renderMisActas() {
   const el = document.getElementById('lista-actas');
   if (!misActas.length) {
@@ -1339,7 +1887,7 @@ function renderMisActas() {
     return;
   }
   const labels = { circunstanciada:'Circunstanciada', apercibimiento:'Apercibimiento', sancion:'Sanción', inspeccion:'Inspección' };
-  el.innerHTML = misActas.map(a => `
+  el.innerHTML = misActas.map((a, idx) => `
     <div class="acta-card">
       <div class="acta-card-head">
         <span class="acta-folio">${a.folio_acta}</span>
@@ -1353,8 +1901,8 @@ function renderMisActas() {
         <div class="acta-row"><label>Estado</label><span class="est-badge est-asignado">${a.estado}</span></div>
       </div>
       <div class="icard-foot">
-        <button class="ibtn ibtn-danger ibtn-sm" style="flex:1" onclick="descargarPDFActa(${JSON.stringify(a).replace(/'/g,'&#39;')})">📥 PDF</button>
-        <button class="ibtn ibtn-success ibtn-sm" style="flex:1" onclick="compartirPDFActa(${JSON.stringify(a).replace(/'/g,'&#39;')})">📤 WhatsApp</button>
+        <button class="ibtn ibtn-success ibtn-sm" style="flex:1" onclick="compartirPDFActa(misActas[${idx}])">📤 Compartir PDF por WhatsApp</button>
+        <button class="ibtn ibtn-sm" style="background:#dc2626;color:#fff;padding:0 14px;flex:none" onclick="borrarActaLocal(${a.id||0}, ${idx})">🗑️</button>
       </div>
     </div>`).join('');
 }
@@ -1482,43 +2030,111 @@ function _buildActaForm() {
 
   // Detectar tipo de reporte para secciones dinámicas
   var tipoRep = window._actaReporteTipo || '';
-  var esArbol = ['poda_arbol','derribo_arbol','corte_arbol','arbol_riesgo','areas_verdes'].includes(tipoRep);
+  var esArbol   = ['poda_arbol','derribo_arbol','corte_arbol','arbol_riesgo'].includes(tipoRep);
+  var esAV      = tipoRep === 'areas_verdes';
   var esAnimal = ['perro_agresivo','animal_calle','animal_maltrato','fauna_silvestre','animal_abandonado'].includes(tipoRep);
-  var esDenuncia = ['denuncia_ambiental','residuos_solidos','tiradero_escombro','agua_contaminada','ruido','quema','contaminacion'].includes(tipoRep);
+  var esDenuncia = ['denuncia_ambiental','residuos_solidos','tiradero_escombro','tiradero_basura','agua_contaminada','ruido','quema','contaminacion'].includes(tipoRep);
 
   // Secciones comunes (siempre aparecen)
   var seccionComun = `
     <input type="hidden" id="acta-report-id">
     <input type="hidden" id="acta-report-folio">
 
-    <!-- TIPO DE ACTA -->
-    <div class="section-title">📋 Tipo de Documento</div>
+    <!-- ── TIPO DE ACTA ── -->
+    <div class="section-title" style="background:#003B7A">📋 1. Tipo de Acta Administrativa</div>
+    <div id="acta-tipo-guia" style="background:#EEF5FC;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:.78rem;color:#1a3a5c;line-height:1.5">
+      <b>Flujo:</b> Toda intervención inicia con <b>Inspección</b> → según hallazgos: <b>Circunstanciada</b> (documentar hechos) → <b>Apercibimiento</b> (irregularidad corregible) → <b>Sanción</b> (infracción / reincidencia)
+    </div>
     <div class="tipo-acta-grid">
+      <div class="ta-chip" onclick="selTipoActa('inspeccion')" id="ta-inspeccion">
+        <span class="ta-ic">🔍</span><span class="ta-lbl">Inspección</span>
+        <span style="font-size:.62rem;color:#64748b;line-height:1.2">Visita inicial al sitio</span>
+      </div>
       <div class="ta-chip sel" onclick="selTipoActa('circunstanciada')" id="ta-circunstanciada">
         <span class="ta-ic">📋</span><span class="ta-lbl">Circunstanciada</span>
+        <span style="font-size:.62rem;color:#64748b;line-height:1.2">Documenta los hechos</span>
       </div>
       <div class="ta-chip" onclick="selTipoActa('apercibimiento')" id="ta-apercibimiento">
         <span class="ta-ic">⚠️</span><span class="ta-lbl">Apercibimiento</span>
+        <span style="font-size:.62rem;color:#64748b;line-height:1.2">Irregularidad corregible</span>
       </div>
       <div class="ta-chip" onclick="selTipoActa('sancion')" id="ta-sancion">
         <span class="ta-ic">🚫</span><span class="ta-lbl">Sanción</span>
+        <span style="font-size:.62rem;color:#64748b;line-height:1.2">Infracción / reincidencia</span>
       </div>
-      <div class="ta-chip" onclick="selTipoActa('inspeccion')" id="ta-inspeccion">
-        <span class="ta-ic">🔍</span><span class="ta-lbl">Inspección</span>
+    </div>
+    <input type="hidden" id="acta-tipo" value="circunstanciada">
+
+    <!-- ── ENCABEZADO INSTITUCIONAL (Sec. 2) ── -->
+    <div class="section-title" style="background:#1a3a5c">🏛️ 2. Encabezado Institucional</div>
+    <div class="form-grid">
+      <div class="fg fg2">
+        <label>Inspector actuante *</label>
+        <input id="acta-firmante" placeholder="Nombre completo del inspector">
+      </div>
+      <div class="fg">
+        <label>No. de identificación oficial</label>
+        <input id="acta-num-inspector" placeholder="Ej: INSP-001">
+      </div>
+      <div class="fg">
+        <label>No. de orden de inspección</label>
+        <input id="acta-orden-inspeccion" placeholder="Ej: OI-2026-001 (si aplica)">
+      </div>
+      <div class="fg">
+        <label>Motivo de la inspección</label>
+        <select id="acta-motivo" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="denuncia">Denuncia ciudadana</option>
+          <option value="programa">Programa de vigilancia ambiental</option>
+          <option value="seguimiento">Seguimiento de expediente previo</option>
+          <option value="reincidencia">Reincidencia / incumplimiento</option>
+          <option value="otro">Otro motivo</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Folio expediente previo (si aplica)</label>
+        <input id="acta-expediente-prev" placeholder="Ej: ACTA-INS-20260315-0001">
       </div>
     </div>
 
-    <!-- DATOS DE LA VISITA -->
-    <div class="section-title">1. Datos de la Visita de Inspección</div>
+    <!-- ── DATOS DE LA DILIGENCIA (Sec. 3) ── -->
+    <div class="section-title" style="background:#1a3a5c">📍 3. Datos de la Diligencia</div>
     <div class="form-grid">
       <div class="fg fg2">
-        <label>Propietario / Visitado</label>
-        <input id="acta-infractor" placeholder="Nombre completo del visitado o propietario">
+        <label>Persona con quien se entiende la diligencia *</label>
+        <input id="acta-infractor" placeholder="Nombre completo del visitado, propietario o representante">
+      </div>
+      <div class="fg">
+        <label>Cargo o relación con el predio</label>
+        <select id="acta-cargo-visitado" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="">Seleccionar...</option>
+          <option>Propietario</option>
+          <option>Inquilino / arrendatario</option>
+          <option>Encargado / representante</option>
+          <option>Empleado presente</option>
+          <option>No se encontró persona</option>
+        </select>
       </div>
       <div class="fg fg2">
-        <label>Domicilio inspeccionado</label>
-        <input id="acta-domicilio" placeholder="Dirección completa del predio">
+        <label>Domicilio del predio inspeccionado *</label>
+        <input id="acta-domicilio" placeholder="Calle, número, colonia, C.P.">
       </div>
+      <div class="fg fg2">
+        <label>Descripción de la actividad que se realiza en el predio</label>
+        <input id="acta-actividad-predio" placeholder="Ej: Comercio, bodega, taller mecánico, vivienda, predio baldío...">
+      </div>
+    </div>
+
+    <!-- FECHA / HORA (ocultos para envío, se llenan automáticamente) -->
+    <input type="hidden" id="acta-fecha-insp">
+    <input type="hidden" id="acta-hora-insp">
+
+    <!-- ── UBICACIÓN GPS ── -->
+    <div class="section-title" style="background:#1a3a5c">📡 Ubicación GPS</div>
+    <div class="acta-card-body">
+      <button type="button" class="ibtn ibtn-secondary" style="width:100%;margin-bottom:6px" onclick="obtenerGPSActa()">📡 Capturar ubicación GPS</button>
+      <div id="acta-coords-bar" style="font-size:.78rem;color:var(--muted);text-align:center;padding:4px 0;min-height:20px">📍 Toca para capturar coordenadas del sitio</div>
+      <input type="hidden" id="acta-lat">
+      <input type="hidden" id="acta-lon">
     </div>`;
 
   // ── SECCIÓN ÁRBOL (solo poda/derribo/arbol) ─────────────────────────────
@@ -1668,6 +2284,63 @@ function _buildActaForm() {
         <label>Especie para reforestación</label>
         <input id="comp-especie" placeholder="Ej: Prosopis laevigata (Mezquite nativo)">
       </div>
+    </div>
+
+    <!-- AVISO DE REQUISITOS IMBIO -->
+    <div class="section-title" style="background:#1a3a5c">📋 6. Requisitos para el Trámite en Oficinas IMBIO</div>
+    <div style="background:#EEF5FC;border-radius:10px;padding:14px 16px;margin-bottom:10px;font-size:.82rem;line-height:1.7;color:#1a3a5c">
+      <div style="font-weight:800;margin-bottom:8px;font-size:.88rem">⚠️ Concluida la inspección, el solicitante debe presentarse a las oficinas del IMBIO con:</div>
+      <div style="display:grid;grid-template-columns:1fr;gap:4px">
+        <div style="padding:4px 0">✔️ Solicitud por escrito dirigida al Director del IMBIO</div>
+        <div style="padding:4px 0">✔️ Comprobante de domicilio <b>o</b> pago de predial a nombre del solicitante</div>
+        <label class="chk-lbl"><input type="checkbox" id="req-impacto"> 🌿 Resolutivo de impacto ambiental <span style="color:#64748b;font-size:.75rem">(si amerita por magnitud del proyecto)</span></label>
+        <label class="chk-lbl"><input type="checkbox" id="req-licencia"> 🏗️ Licencia de construcción vigente <span style="color:#64748b;font-size:.75rem">(si la obra lo requiere)</span></label>
+        <label class="chk-lbl"><input type="checkbox" id="req-croquis"> 🗺️ Croquis o plano de ubicación del árbol en el predio</label>
+        <label class="chk-lbl"><input type="checkbox" id="req-fotografia"> 📸 Fotografías del árbol (mínimo 3 vistas)</label>
+      </div>
+      <div style="margin-top:10px;background:#fff3cd;border-radius:7px;padding:8px 10px;font-size:.78rem;color:#92400e">
+        <b>⏱ Plazo de resolución:</b> El IMBIO resolverá en un plazo de <b>15 días hábiles</b> a partir de la recepción del expediente completo.
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label>Observaciones para el solicitante</label>
+      <textarea id="arb-obs-solicitante" rows="2" placeholder="Indicaciones adicionales al ciudadano sobre su trámite..." style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;resize:vertical"></textarea>
+    </div>
+    <!-- Firmas -->
+    <div class="section-title" style="background:#1a3a5c">✍️ Firmas</div>
+    <div class="firmante-wrap">
+      <div class="firmante-header">
+        <span>✍️ Firma del Inspector</span>
+        <button class="ibtn ibtn-ghost ibtn-sm" onclick="clearSig('sig-inspector')" style="padding:3px 8px">🗑 Borrar</button>
+      </div>
+      <canvas id="sig-inspector" class="sig-visitado"></canvas>
+      <div style="padding:8px 10px">
+        <input id="acta-firmante" placeholder="Nombre completo del inspector" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+      </div>
+    </div>
+    <div class="firmante-wrap">
+      <div class="firmante-header">
+        <span>✍️ Firma del Solicitante <span style="font-weight:400;font-size:.72rem">(opcional)</span></span>
+        <button class="ibtn ibtn-ghost ibtn-sm" onclick="clearSig('sig-visitado')" style="padding:3px 8px">🗑 Borrar</button>
+      </div>
+      <canvas id="sig-visitado" class="sig-visitado"></canvas>
+      <div style="padding:8px 10px">
+        <input id="acta-nombre-visitado" placeholder="Nombre del solicitante" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+      </div>
+    </div>
+    <!-- Estado del reporte -->
+    <div class="section-title" style="background:#1a3a5c">🔄 Estado del Reporte</div>
+    <select id="acta-nuevo-estado" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;margin-bottom:10px">
+      <option value="">— Sin cambio —</option>
+      <option value="en_inspeccion">🔍 En Inspección</option>
+      <option value="en_proceso">🔄 En Proceso</option>
+    </select>
+    <!-- Evidencia fotográfica -->
+    <div class="section-title" style="background:#1a3a5c">📷 Evidencia Fotográfica</div>
+    <div class="acta-card-body">
+      <input type="file" id="acta-foto-input" accept="image/*" multiple style="display:none" onchange="agregarFotosActa(event)">
+      <div id="acta-fotos-grid" class="fotos-grid"></div>
+      <button class="ibtn ibtn-ghost ibtn-sm" onclick="document.getElementById('acta-foto-input').click()" style="width:100%;margin-top:6px">📷 Agregar Fotos</button>
     </div>` : '';
 
   // ── SECCIÓN ANIMAL (denuncia animal) ────────────────────────────────────
@@ -1971,39 +2644,153 @@ function _buildActaForm() {
 
 
   // ── SECCIÓN DENUNCIA AMBIENTAL ──────────────────────────────────────────
+  var _denSubtipo = tipoRep; // 'residuos_solidos','tiradero_escombro','tiradero_basura','agua_contaminada','ruido','denuncia_ambiental',...
+  var _denLabel = {
+    residuos_solidos:  '🗑️ Residuos Sólidos',
+    tiradero_escombro: '🧱 Tiradero de Escombro',
+    tiradero_basura:   '🗑 Tiradero de Basura',
+    agua_contaminada:  '💧 Agua Contaminada',
+    ruido:             '🔊 Ruido / Contaminación Sonora',
+    denuncia_ambiental:'🌿 Denuncia Ambiental General',
+  }[_denSubtipo] || '🌿 Infracción Ambiental';
+
+  var _denFundo = {
+    residuos_solidos:  'Código Municipal · Ley de Ingresos · LGPGIR Art. 95-98 · NOM-083-SEMARNAT-2003 · LPAEA',
+    tiradero_escombro: 'Código Municipal · LGPGIR · NOM-161-SEMARNAT-2011 · Reglamento de Construcción · LPAEA',
+    tiradero_basura:   'Código Municipal · LGPGIR Art. 95 · Bando de Policía y Buen Gobierno · LPAEA',
+    agua_contaminada:  'Código Municipal · LAN Art. 86 · NOM-001-SEMARNAT-2021 · LGEEPA Art. 117-121 · LPAEA',
+    ruido:             'Código Municipal · NOM-081-SEMARNAT-1994 · Bando de Policía y Buen Gobierno',
+  }[_denSubtipo] || 'Código Municipal · LGEEPA Art. 134-141 · LPAEA · Bando de Policía y Buen Gobierno';
+
+  // Campos específicos por subtipo de denuncia
+  var _denEspecifico = '';
+  if (_denSubtipo === 'residuos_solidos' || _denSubtipo === 'tiradero_basura') {
+    _denEspecifico = `
+      <div class="fg">
+        <label>Tipo de residuos</label>
+        <select id="da-tipo-residuo" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="">Seleccionar...</option>
+          <option>Residuos domésticos mezclados</option>
+          <option>Residuos orgánicos</option>
+          <option>Residuos inorgánicos (plástico, vidrio, metal)</option>
+          <option>Residuos de manejo especial</option>
+          <option>Residuos peligrosos / tóxicos</option>
+          <option>Mezcla de varios tipos</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Volumen estimado</label>
+        <select id="da-volumen" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="">Seleccionar...</option>
+          <option>Pequeño (menos de 1 m³)</option>
+          <option>Mediano (1–5 m³)</option>
+          <option>Grande (5–20 m³)</option>
+          <option>Masivo (más de 20 m³)</option>
+        </select>
+      </div>`;
+  } else if (_denSubtipo === 'tiradero_escombro') {
+    _denEspecifico = `
+      <div class="fg">
+        <label>Tipo de escombro</label>
+        <select id="da-tipo-residuo" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="">Seleccionar...</option>
+          <option>Concreto / block / tabique</option>
+          <option>Tierra y materiales de excavación</option>
+          <option>Madera y carpintería</option>
+          <option>Mezcla de escombro y residuos</option>
+          <option>Materiales con asbesto (peligroso)</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Volumen estimado (m³)</label>
+        <input id="da-volumen" type="number" min="0" placeholder="m³ aproximados" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+      </div>`;
+  } else if (_denSubtipo === 'agua_contaminada') {
+    _denEspecifico = `
+      <div class="fg">
+        <label>Tipo de cuerpo de agua afectado</label>
+        <select id="da-cuerpo-agua" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="">Seleccionar...</option>
+          <option>Canal / acequia de riego</option>
+          <option>Arroyo o barranca</option>
+          <option>Laguna / estanque</option>
+          <option>Pozo / noria</option>
+          <option>Red de drenaje municipal</option>
+          <option>Suelo / subsuelo (escorrentía)</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Tipo de contaminante</label>
+        <select id="da-tipo-contaminante" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="">Seleccionar...</option>
+          <option>Aguas residuales domésticas</option>
+          <option>Aguas residuales industriales</option>
+          <option>Agroquímicos / pesticidas</option>
+          <option>Aceites o hidrocarburos</option>
+          <option>Residuos sólidos arrastrados</option>
+          <option>Colorantes o sustancias químicas</option>
+        </select>
+      </div>`;
+  } else if (_denSubtipo === 'ruido') {
+    _denEspecifico = `
+      <div class="fg">
+        <label>Fuente del ruido</label>
+        <select id="da-fuente-ruido" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="">Seleccionar...</option>
+          <option>Establecimiento comercial / bar / antro</option>
+          <option>Industria / taller / maquinaria</option>
+          <option>Evento social / fiesta</option>
+          <option>Bocinas / equipo de sonido</option>
+          <option>Construcción fuera de horario</option>
+          <option>Animales (ladridos, etc.)</option>
+          <option>Vehículo / escapes modificados</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Horario del problema</label>
+        <select id="da-horario-ruido" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="">Seleccionar...</option>
+          <option>Diurno (6:00–22:00 hrs)</option>
+          <option>Nocturno (22:00–6:00 hrs)</option>
+          <option>Ambos / recurrente</option>
+        </select>
+      </div>`;
+  }
+
   var seccionDenuncia = esDenuncia ? `
-    <div class="section-title">🌿 2. Descripción de la Situación Ambiental</div>
+    <div class="section-title">🌿 2. Datos de la ${_denLabel}</div>
     <div class="form-note" style="background:#fce4ec;padding:8px 12px;border-radius:7px;font-size:.78rem;color:#b71c1c;margin-bottom:10px">
-      Registrar la situación ambiental encontrada durante la inspección en campo
+      Registrar la situación encontrada durante la inspección en campo.
+      <b>Fundamento:</b> ${_denFundo}
     </div>
     <div class="form-grid">
+      ${_denEspecifico}
       <div class="fg fg2">
-        <label>Tipo de infracción ambiental</label>
+        <label>Infracción específica detectada</label>
         <select id="da-tipo-infraccion">
           <option value="">Seleccionar...</option>
+          <option>Depósito o abandono ilegal de residuos</option>
           <option>Quema de residuos a cielo abierto</option>
-          <option>Depósito ilegal de residuos sólidos</option>
-          <option>Tiradero clandestino de escombro</option>
-          <option>Descarga de aguas residuales</option>
-          <option>Contaminación de suelo</option>
-          <option>Ruido excesivo fuera de norma</option>
-          <option>Emisiones de humo / vapores</option>
-          <option>Tala ilegal de vegetación</option>
-          <option>Afectación a cuerpo de agua</option>
+          <option>Descarga de aguas residuales sin tratamiento</option>
+          <option>Contaminación de suelo o subsuelo</option>
+          <option>Contaminación de cuerpo de agua</option>
+          <option>Emisión de ruido fuera de norma</option>
+          <option>Emisiones de humo o vapores</option>
+          <option>Tala o poda ilegal de vegetación</option>
           <option>Otra infracción ambiental</option>
         </select>
       </div>
       <div class="fg">
-        <label>Superficie afectada (m² estimados)</label>
+        <label>Superficie afectada (m²)</label>
         <input id="da-superficie" type="number" min="0" placeholder="m²">
       </div>
       <div class="fg">
-        <label>Tiempo de afectación estimado</label>
+        <label>Tiempo de afectación</label>
         <select id="da-tiempo">
           <option value="">No determinado</option>
           <option>Reciente (menos de 24 horas)</option>
-          <option>Días (2-7 días)</option>
-          <option>Semanas (1-4 semanas)</option>
+          <option>Días (2–7 días)</option>
+          <option>Semanas (1–4 semanas)</option>
           <option>Meses (más de 1 mes)</option>
           <option>Crónico / recurrente</option>
         </select>
@@ -2019,7 +2806,7 @@ function _buildActaForm() {
         </select>
       </div>
       <div class="fg fg2">
-        <label>¿Se identificó al responsable?</label>
+        <label>¿Se identificó al presunto responsable?</label>
         <select id="da-responsable">
           <option value="no">No identificado</option>
           <option value="si">Sí — presente en el momento</option>
@@ -2028,7 +2815,7 @@ function _buildActaForm() {
       </div>
     </div>
 
-    <div class="section-title">⚡ 3. Medidas Adoptadas</div>
+    <div class="section-title">⚡ 3. Medidas Adoptadas en Campo</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
       <label class="chk-lbl"><input type="checkbox" id="dm-apercibimiento"> Apercibimiento verbal</label>
       <label class="chk-lbl"><input type="checkbox" id="dm-acta-infraccion"> Acta de infracción</label>
@@ -2044,18 +2831,276 @@ function _buildActaForm() {
 
   // ── DESCRIPCIÓN GENERAL (siempre aparece) ───────────────────────────────
   var numSeccion = esArbol ? '6' : esDenuncia ? '4' : esAnimal ? '4' : '2';
+  // ── SECCIÓN ADAPTATIVA SEGÚN TIPO DE ACTA ──────────────────────
+  // tipoActaSel: 'circunstanciada' | 'apercibimiento' | 'sancion' | 'inspeccion'
+  // tipoRep: 'poda_arbol' | 'derribo_arbol' | 'perro_agresivo' | etc.
+
+  var FUNDO_ARBOL   = 'Código Municipal · Ley de Ingresos · LPAEA Art. 5 · LGEEPA Art. 134 · NTEA-AGS-ARBOLADO-2026';
+  var FUNDO_ANIMAL  = 'Código Municipal · Ley de Protección Animal · NOM-042-SSA2-2006 · LGVS · Bando de Policía y Buen Gobierno';
+  var FUNDO_GENERAL = 'Código Municipal · Ley de Ingresos · LPAEA · LGEEPA Art. 134-141 · Bando de Policía y Buen Gobierno';
+  var fundoDefault  = esArbol ? FUNDO_ARBOL : (esAnimal ? FUNDO_ANIMAL : FUNDO_GENERAL);
+  // Fundamento legal específico por tipo de acta
+  if (tipoActaSel === 'circunstanciada') {
+    fundoDefault = 'La presente diligencia y el levantamiento de esta acta circunstanciada se fundamentan en lo dispuesto por el Artículo 1796 del Código Municipal de Pabellón de Arteaga, que establece los requisitos de validez del acto administrativo, en relación con el Artículo 1800, el cual otorga carácter de exigibilidad inmediata a los actos de inspección, verificación y vigilancia. Asimismo, se actúa bajo las facultades conferidas en el Artículo 1805, fracción I, que autoriza a la autoridad municipal a requerir informes y documentos durante las visitas de verificación para asegurar el cumplimiento de la normativa vigente.';
+  } else if (tipoActaSel === 'sancion') {
+    fundoDefault = 'La determinación de la presente sanción se sustenta legalmente en el Artículo 477 BIS, que faculta al Instituto Municipal de Biodiversidad para imponer las sanciones correspondientes ante infracciones normativas, y el Artículo 672, que autoriza al IMBIO a ejecutar medidas de seguridad y acciones legales ante actos u omisiones que contravengan las disposiciones de protección animal y ambiental en el municipio. Lo anterior, en estricto cumplimiento al procedimiento administrativo sancionador previsto en este cuerpo normativo.';
+  }
+
+  // ── SECCIÓN DESCRIPCIÓN (varía según tipo de ACTA) ──────────────
+  var descLabel = 'Descripción de los Hechos y Observaciones';
+  var descPlaceholder = 'Describir detalladamente los hechos observados en campo, condiciones del lugar, acciones realizadas y cualquier observación relevante...';
+
+  if (tipoActaSel === 'circunstanciada') {
+    descLabel = 'Descripción Circunstanciada de los Hechos';
+    descPlaceholder = 'Describir con exactitud los hechos observados: fecha, hora, lugar, personas presentes, situación encontrada, acciones del presunto infractor y cualquier circunstancia relevante. Si el imputado está presente, registrar su versión de los hechos...';
+  } else if (tipoActaSel === 'apercibimiento') {
+    descLabel = 'Descripción de los Hechos y Advertencia';
+    descPlaceholder = 'Describir los hechos que motivan el apercibimiento. Indicar qué conducta infractora se detectó, disposiciones que contraviene y la advertencia formal de que en caso de reincidencia se procederá a sanción económica o clausura...';
+  } else if (tipoActaSel === 'sancion') {
+    descLabel = 'Descripción de los Hechos y Circunstancias Agravantes';
+    descPlaceholder = 'Describir detalladamente los hechos infractores, daños ambientales causados, reincidencia (si aplica), circunstancias agravantes que justifican la sanción económica, así como los artículos del ordenamiento legal infringidos...';
+  } else if (tipoActaSel === 'inspeccion') {
+    descLabel = 'Hallazgos de la Visita de Inspección';
+    descPlaceholder = 'Describir las condiciones encontradas en el sitio: estado general, actividades que se realizan, permisos exhibidos (o ausencia de ellos), irregularidades detectadas, personal presente, acciones requeridas y plazo otorgado para regularización...';
+  }
+
+  // ── SECCIÓN RESOLUCIÓN (varía según tipo de ACTA) ───────────────
+  var secResolucion = '';
+
+  if (tipoActaSel === 'circunstanciada') {
+    secResolucion = `
+    <!-- CIRCUNSTANCIADA: Voz y voto del imputado + observaciones -->
+    <div class="section-title" style="background:#1a3a5c">🗣️ Voz y Voto del Imputado</div>
+    <div style="display:grid;grid-template-columns:1fr;gap:10px">
+      <div class="fg">
+        <label>¿El imputado estuvo presente?</label>
+        <select id="acta-imputado-presente" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem"
+          onchange="document.getElementById('sec-voz-voto').style.display=this.value==='si'?'block':'none'">
+          <option value="no">No — Ausente / No identificado</option>
+          <option value="si">Sí — Presente en la diligencia</option>
+        </select>
+      </div>
+      <div id="sec-voz-voto" style="display:none">
+        <div class="fg">
+          <label>Versión del imputado (voz y voto)</label>
+          <textarea id="acta-voz-imputado" rows="3" placeholder="Registrar textualmente lo manifestado por el presunto infractor en su defensa o aclaración..." style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none;resize:vertical"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="section-title" style="background:#1a3a5c">📝 Manifestaciones del Visitado</div>
+    <div style="display:grid;grid-template-columns:1fr;gap:10px">
+      <div class="fg">
+        <label>Manifestaciones del visitado / responsable</label>
+        <textarea id="acta-medida" rows="3" placeholder="Registrar textualmente las manifestaciones, alegatos o declaraciones del visitado en relación a los hechos observados. Si se negó a declarar o no estaba presente, indicarlo..." style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none;resize:vertical"></textarea>
+      </div>
+      <div class="fg">
+        <label>Observaciones del Inspector</label>
+        <textarea id="acta-observaciones" rows="2" placeholder="Observaciones adicionales del inspector actuante sobre la diligencia, condiciones del lugar u otras circunstancias relevantes..." style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none;resize:vertical"></textarea>
+      </div>
+    </div>`;
+
+  } else if (tipoActaSel === 'apercibimiento') {
+    secResolucion = `
+    <!-- APERCIBIMIENTO: Advertencia formal + compromisos -->
+    ${construirReferenciasAntecedentes() ? `<div style="background:#fef9c3;border:1.5px solid #f59e0b;border-radius:9px;padding:10px 14px;margin-bottom:10px;font-size:.78rem;color:#92400e;line-height:1.5"><b>📎 Antecedentes:</b> ${construirReferenciasAntecedentes()}</div>` : ''}
+    <div class="section-title" style="background:#92400e">⚠️ Advertencia Formal</div>
+    <div style="display:grid;grid-template-columns:1fr;gap:10px">
+      <div class="fg">
+        <label>Texto del Apercibimiento</label>
+        <textarea id="acta-medida" rows="4" placeholder="Se apercibe formalmente al C. [nombre completo del responsable] que en un plazo de [X días] deberá realizar las acciones necesarias para corregir la irregularidad detectada consistente en: [descripción de la irregularidad]. En caso de incumplimiento del presente apercibimiento se podrá iniciar el procedimiento administrativo sancionador correspondiente, de conformidad con la normativa aplicable." style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none;resize:vertical"></textarea>
+      </div>
+      <div class="fg" style="grid-column:1/-1">
+        <label>Medidas correctivas requeridas al responsable</label>
+        <textarea id="acta-medidas-correctivas" rows="2" placeholder="Ej: Retiro de residuos sólidos del predio en un plazo de 72 horas · Limpieza y saneamiento del área afectada · Suspensión de la actividad contaminante..." style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none;resize:vertical"></textarea>
+      </div>
+      <div class="fg">
+        <label>Plazo para cumplimiento *</label>
+        <select id="acta-plazo" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="">Seleccionar plazo...</option>
+          <option value="24 horas">⚡ 24 horas</option>
+          <option value="72 horas">⏱ 72 horas</option>
+          <option value="5 días naturales">📅 5 días naturales</option>
+          <option value="15 días naturales">📅 15 días naturales</option>
+          <option value="30 días naturales">📅 30 días naturales</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>¿El apercibido firmó de enterado?</label>
+        <select id="acta-firmado-enterado" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="si">Sí — Firmó de enterado</option>
+          <option value="no">No — Se negó a firmar</option>
+          <option value="ausente">Ausente — Se dejó citatorio</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Observaciones</label>
+        <textarea id="acta-observaciones" rows="2" placeholder="Notas adicionales" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none;resize:vertical"></textarea>
+      </div>
+    </div>`;
+
+  } else if (tipoActaSel === 'sancion') {
+    secResolucion = `
+    <!-- SANCIÓN: Gravedad + monto + resolución -->
+    ${construirReferenciasAntecedentes() ? `<div style="background:#fee2e2;border:1.5px solid #dc2626;border-radius:9px;padding:10px 14px;margin-bottom:10px;font-size:.78rem;color:#991b1b;line-height:1.5"><b>📎 Antecedentes:</b> ${construirReferenciasAntecedentes()}</div>` : ''}
+    <div class="section-title" style="background:#991b1b">🚨 Evaluación de la Infracción</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg">
+        <label>Gravedad de la infracción</label>
+        <select id="acta-gravedad-infraccion" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="">Seleccionar...</option>
+          <option value="leve">🟡 Leve — Primera falta, daño mínimo</option>
+          <option value="moderada">🟠 Moderada — Reincidencia o daño considerable</option>
+          <option value="grave">🔴 Grave — Daño significativo al ambiente</option>
+          <option value="muy_grave">⛔ Muy grave — Daño irreversible / reincidencia grave</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>¿Es reincidente?</label>
+        <select id="acta-reincidente" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="no">No — Primera infracción</option>
+          <option value="si">Sí — Reincidente (agravante)</option>
+        </select>
+      </div>
+    </div>
+    <div class="section-title" style="background:#991b1b">⚖️ Resolución Sancionatoria</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg" style="grid-column:1/-1">
+        <label>Sanción impuesta</label>
+        <textarea id="acta-medida" rows="3" placeholder="Multa de [monto] equivalente a [X] UMA(s) conforme al Art. [X] del Código Municipal / Ley de Ingresos, por [descripción de la infracción]..." style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none;resize:vertical"></textarea>
+      </div>
+      <div class="fg">
+        <label>Monto de la Sanción (MXN)</label>
+        <input id="acta-monto" type="number" placeholder="0.00" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+      </div>
+      <div class="fg">
+        <label>Plazo de pago</label>
+        <select id="acta-plazo" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="">Seleccionar plazo...</option>
+          <option value="72 horas">⏱ 72 horas</option>
+          <option value="5 días naturales">📅 5 días naturales</option>
+          <option value="15 días naturales">📅 15 días naturales</option>
+          <option value="30 días naturales">📅 30 días naturales</option>
+        </select>
+      </div>
+      <div class="fg" style="grid-column:1/-1">
+        <label>Medidas adicionales (clausura, suspensión, etc.)</label>
+        <textarea id="acta-observaciones" rows="2" placeholder="Indicar si además de la multa se imponen otras medidas: clausura temporal, suspensión de actividades, remediación obligatoria..." style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none;resize:vertical"></textarea>
+      </div>
+    </div>`;
+
+  } else if (tipoActaSel === 'inspeccion') {
+    secResolucion = `
+    <!-- INSPECCIÓN: Permisos + cumplimiento + requerimientos -->
+    <div class="section-title" style="background:#1e3a5f">📋 Verificación de Permisos y Cumplimiento</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg">
+        <label>¿Cuenta con permiso/autorización?</label>
+        <select id="acta-tiene-permiso" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem"
+          onchange="document.getElementById('sec-permiso-datos').style.display=this.value==='si'?'block':'none';document.getElementById('sec-sin-permiso').style.display=this.value!=='si'?'block':'none'">
+          <option value="">Seleccionar...</option>
+          <option value="si">✅ Sí — Exhibió permisos vigentes</option>
+          <option value="vencido">⚠️ Sí — Pero están vencidos</option>
+          <option value="no">❌ No — Carece de autorización</option>
+          <option value="tramite">🔄 En trámite — Presenta comprobante</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Número de permiso / expediente</label>
+        <input id="acta-num-permiso" placeholder="Folio o número de permiso exhibido" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+      </div>
+      <div id="sec-permiso-datos" style="display:none;grid-column:1/-1">
+        <div class="fg">
+          <label>Autoridad que emitió el permiso</label>
+          <input id="acta-permiso-autoridad" placeholder="Ej: Dirección IMBIO, SEMARNAT, Municipio..." style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        </div>
+      </div>
+      <div id="sec-sin-permiso" style="display:none;grid-column:1/-1">
+        <div class="fg">
+          <label>Plazo para regularización</label>
+          <input id="acta-plazo" placeholder="Ej: 10 días hábiles a partir de esta fecha" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        </div>
+      </div>
+    </div>
+    <div class="section-title" style="background:#1e3a5f">📌 Requerimientos y Seguimiento</div>
+    <div style="display:grid;grid-template-columns:1fr;gap:10px">
+      <div class="fg">
+        <label>Requerimientos al inspeccionado</label>
+        <textarea id="acta-medida" rows="3" placeholder="Se le requiere al C. [nombre] que en un plazo de [X] días presente ante la Dirección del IMBIO: [lista de documentos/acciones requeridas]..." style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none;resize:vertical"></textarea>
+      </div>
+      <div class="fg">
+        <label>Consecuencias de incumplimiento</label>
+        <textarea id="acta-observaciones" rows="2" placeholder="En caso de no atender este requerimiento en el plazo señalado, se procederá a [sanción / clausura / denuncia penal]..." style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none;resize:vertical"></textarea>
+      </div>
+    </div>`;
+  } else {
+    // Fallback genérico
+    secResolucion = `
+    <div class="section-title">⚖️ Resolución y Seguimiento</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg" style="grid-column:1/-1">
+        <label>Medida adoptada / Sanción</label>
+        <textarea id="acta-medida" rows="2" placeholder="Descripción de la medida impuesta" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none;resize:vertical"></textarea>
+      </div>
+      <div class="fg">
+        <label>Monto de Sanción (MXN)</label>
+        <input id="acta-monto" type="number" placeholder="0.00" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+      </div>
+      <div class="fg">
+        <label>Plazo de Cumplimiento</label>
+        <input id="acta-plazo" placeholder="Ej: 15 días hábiles" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+      </div>
+      <div class="fg" style="grid-column:1/-1">
+        <label>Observaciones</label>
+        <textarea id="acta-observaciones" rows="2" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none;resize:vertical"></textarea>
+      </div>
+    </div>`;
+  }
+
   var seccionDesc = `
-    <div class="section-title">${numSeccion}. Descripción de Hechos y Observaciones</div>
-    <textarea id="acta-descripcion" rows="4" placeholder="Describir detalladamente los hechos observados en campo, condiciones del lugar, acciones tomadas y cualquier observación relevante..."
+    <div class="section-title">${numSeccion}. ${descLabel}</div>
+    <textarea id="acta-descripcion" rows="5" placeholder="${descPlaceholder}"
       style="width:100%;padding:10px 12px;border:1.5px solid var(--borde);border-radius:8px;font-size:.85rem;resize:vertical;outline:none;line-height:1.5"></textarea>
+    ${(tipoActaSel==='circunstanciada'||tipoActaSel==='inspeccion') ? `
+    <button type="button" onclick="llamarIAActa(this)"
+      style="margin-top:6px;width:100%;padding:9px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;border-radius:9px;font-size:.82rem;font-weight:700;cursor:pointer">
+      🐭 Matlacho redacta la descripción
+    </button>
+    <div style="font-size:.7rem;color:var(--muted);text-align:center;margin-top:3px">Matlacho sugiere — edita antes de guardar</div>
+    ` : (tipoActaSel==='apercibimiento') ? `
+    <button type="button" onclick="llamarIAApercibimiento(this)"
+      style="margin-top:6px;width:100%;padding:9px;background:linear-gradient(135deg,#92400e,#b45309);color:#fff;border:none;border-radius:9px;font-size:.82rem;font-weight:700;cursor:pointer">
+      🐭 Matlacho redacta el apercibimiento
+    </button>
+    <div style="font-size:.7rem;color:var(--muted);text-align:center;margin-top:3px">Matlacho sugiere — edita antes de guardar</div>
+    ` : (tipoActaSel==='sancion') ? `
+    <button type="button" onclick="llamarIASancion(this)"
+      style="margin-top:6px;width:100%;padding:9px;background:linear-gradient(135deg,#991b1b,#dc2626);color:#fff;border:none;border-radius:9px;font-size:.82rem;font-weight:700;cursor:pointer">
+      🐭 Matlacho redacta la motivación
+    </button>
+    <div style="font-size:.7rem;color:var(--muted);text-align:center;margin-top:3px">Matlacho sugiere — edita antes de guardar</div>
+    ` : ''}
 
     <div class="section-title">📜 Fundamento Legal</div>
-    <textarea id="acta-fundamento" rows="2" placeholder="${
-      esArbol ? 'Código Municipal Art. X · Ley de Ingresos Art. X · LPAEA Art. X · LGEEPA Art. 134 · NTEA-AGS-ARBOLADO-2026' :
-      esAnimal ? 'Código Municipal Art. X · Ley de Protección Animal · NOM-042-SSA2-2006 · LGVS' :
-      'Código Municipal Art. X · Ley de Ingresos Art. X · LPAEA Art. X · LGEEPA Art. 134-141'
-    }"
-      style="width:100%;padding:10px 12px;border:1.5px solid var(--borde);border-radius:8px;font-size:.85rem;resize:vertical;outline:none"></textarea>
+    <textarea id="acta-fundamento" rows="4" placeholder="${fundoDefault}"
+      style="width:100%;padding:10px 12px;border:1.5px solid var(--borde);border-radius:8px;font-size:.82rem;resize:vertical;outline:none;line-height:1.5">${fundoDefault}</textarea>
+
+    ${secResolucion}
+
+    <!-- ESTADO DEL REPORTE -->
+    <div class="section-title">🔄 Actualizar Estado del Reporte</div>
+    <select id="acta-nuevo-estado" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;margin-bottom:10px">
+      <option value="">— Sin cambio —</option>
+      <option value="en_inspeccion">🔍 En Inspección</option>
+      <option value="en_proceso">🔄 En Proceso</option>option>
+    </select>
+
+    <!-- EVIDENCIA FOTOGRÁFICA -->
+    <div class="section-title">📷 Evidencia Fotográfica</div>
+    <div class="acta-card-body">
+      <input type="file" id="acta-foto-input" accept="image/*" multiple style="display:none" onchange="agregarFotosActa(event)">
+      <div id="acta-fotos-grid" class="fotos-grid"></div>
+      <button class="ibtn ibtn-ghost ibtn-sm" onclick="document.getElementById('acta-foto-input').click()" style="width:100%;margin-top:6px">📷 Agregar Fotos</button>
+    </div>
 
     <div class="section-title">✍️ Firmas de Responsabilidad</div>
     <div class="firmante-wrap">
@@ -2079,7 +3124,8 @@ function _buildActaForm() {
       </div>
     </div>`;
 
-  d.innerHTML = seccionComun + seccionArbol + seccionAnimal + seccionDenuncia + seccionDesc;
+
+  d.innerHTML = seccionComun + seccionArbol + seccionAnimal + seccionDenuncia + (esArbol ? '' : seccionDesc);
   d.dataset.built = '1';
   d.dataset.tipo  = tipoRep;
 
@@ -2125,14 +3171,17 @@ function buildActaHTML(acta) {
     circunstanciada: 'ACTA CIRCUNSTANCIADA',
     apercibimiento:  'ACTA DE APERCIBIMIENTO',
     sancion:         'ACTA DE SANCIÓN AMBIENTAL',
-    inspeccion:      'ACTA DE INSPECCIÓN'
+    inspeccion:      'ACTA DE INSPECCIÓN Y VIGILANCIA'
   };
-  const tituloActa = tipoLabels[acta.tipo_acta] || 'ACTA DE INSPECCIÓN';
+  const tituloActa = tipoLabels[acta.tipo_acta] || 'ACTA CIRCUNSTANCIADA';
+  const esInspeccion = (acta.tipo_acta === 'inspeccion');
+  const esCircunstanciada = (!acta.tipo_acta || acta.tipo_acta === 'circunstanciada');
+  const esSancion = (acta.tipo_acta === 'sancion');
 
   // Construir filas de datos arbóreos si existen
   // ── Sección dinámica según tipo de reporte ───────────────────────────
   const tipoRepPDF = acta.tipo_reporte || '';
-  const esArbolPDF    = ['poda_arbol','derribo_arbol','corte_arbol','arbol_riesgo','areas_verdes'].includes(tipoRepPDF);
+  const esArbolPDF    = ['poda_arbol','derribo_arbol','corte_arbol','arbol_riesgo'].includes(tipoRepPDF);
   const esAnimalPDF   = ['perro_agresivo','animal_calle','animal_maltrato','fauna_silvestre','animal_abandonado'].includes(tipoRepPDF);
   const esDenunciaPDF = ['denuncia_ambiental','residuos_solidos','tiradero_escombro','agua_contaminada','ruido','quema','contaminacion'].includes(tipoRepPDF);
 
@@ -2145,6 +3194,17 @@ function buildActaHTML(acta) {
       <tr><td class="lbl">Altura (m)</td><td>${acta.arb_altura||'—'}</td><td class="lbl">Copa (m)</td><td>${acta.arb_copa||'—'}</td></tr>
       <tr><td class="lbl">Vigor</td><td>${acta.arb_vigor||'—'}</td><td class="lbl">Estructura</td><td>${acta.arb_estructura||'—'}</td></tr>
       <tr><td class="lbl">Método eval.</td><td colspan="3">${acta.arb_metodo||'Inspección Visual Nivel 1'}</td></tr>
+      ${acta.arb_copa ? `<tr><td class="lbl">Diámetro copa</td><td colspan="3">${acta.arb_copa} m</td></tr>` : ''}
+      ${(acta.fs_plagas||acta.fs_enfermedades||acta.fs_infra||acta.fs_raiz) ? `
+      <tr>
+        <td class="lbl">Fitosanitario</td>
+        <td colspan="3">
+          ${acta.fs_plagas ? '<b>Plagas:</b> ' + acta.fs_plagas + '&nbsp;&nbsp;' : ''}
+          ${acta.fs_enfermedades ? '<b>Enf:</b> ' + acta.fs_enfermedades + '&nbsp;&nbsp;' : ''}
+          ${acta.fs_infra ? '<b>Infra:</b> ' + acta.fs_infra + '&nbsp;&nbsp;' : ''}
+          ${acta.fs_raiz ? '<b>Raíz:</b> ' + acta.fs_raiz : ''}
+        </td>
+      </tr>` : ''}
     </table>`;
   }
 
@@ -2166,7 +3226,8 @@ function buildActaHTML(acta) {
 <style>
   @page { size: letter; margin: 15mm 12mm; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 10px; color: #1a1a1a; background: #fff; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 10px; color: #1a1a1a; background: #fff; width: 100%; }
+  section, article, div { max-width: 100%; }
   .header { display: flex; align-items: center; border-bottom: 3px solid #1a3a5c; padding-bottom: 10px; margin-bottom: 10px; }
   .header-logo { width: 140px; margin-right: 12px; flex-shrink: 0; }
   .header-logo img { width: 100%; }
@@ -2182,7 +3243,7 @@ function buildActaHTML(acta) {
   .data-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; font-size: 9px; }
   .data-table td { border: 1px solid #ccc; padding: 3px 6px; vertical-align: top; }
   .data-table .lbl { background: #f0f4fa; font-weight: bold; color: #1a3a5c; width: 90px; }
-  .desc-box { border: 1px solid #ccc; border-radius: 4px; padding: 8px; margin-bottom: 8px; font-size: 9.5px; line-height: 1.6; min-height: 60px; word-break: break-word; overflow-wrap: break-word; }
+  .desc-box { display: block; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; padding: 8px; margin-bottom: 8px; font-size: 9.5px; line-height: 1.6; min-height: 60px; white-space: pre-wrap; word-break: break-word; overflow-wrap: break-word; }
   .risk-badge { display: inline-block; padding: 2px 10px; border-radius: 3px; font-weight: bold; font-size: 10px; }
   .risk-bajo { background: #dcfce7; color: #166534; }
   .risk-moderado { background: #fef3c7; color: #92400e; }
@@ -2229,22 +3290,42 @@ function buildActaHTML(acta) {
   ${acta.nivel_riesgo ? `<div><b>Nivel de Riesgo:</b> <span class="risk-badge risk-${acta.nivel_riesgo.toLowerCase()}">${acta.nivel_riesgo}</span></div>` : ''}
 </div>
 
+<!-- SECCIÓN ENCABEZADO INSTITUCIONAL -->
+<table class="data-table" style="margin-bottom:4px">
+  <tr>
+    <td class="lbl" style="width:120px">Dependencia</td>
+    <td colspan="3">H. Ayuntamiento de Pabellón de Arteaga — Instituto Municipal de Biodiversidad y Protección Ambiental (IMBIO)</td>
+  </tr>
+  <tr>
+    <td class="lbl">Inspector</td>
+    <td>${acta.inspector || acta.nombre_firmante_inspector || '—'}</td>
+    <td class="lbl">No. Identificación</td>
+    <td>${acta.num_inspector || '—'}</td>
+  </tr>
+  <tr>
+    <td class="lbl">No. Orden Inspección</td>
+    <td>${acta.orden_inspeccion || '—'}</td>
+    <td class="lbl">Motivo</td>
+    <td>${{denuncia:'Denuncia ciudadana',programa:'Programa de vigilancia',seguimiento:'Seguimiento de expediente',reincidencia:'Reincidencia/incumplimiento'}[acta.motivo_inspeccion] || acta.motivo_inspeccion || 'Denuncia ciudadana'}</td>
+  </tr>
+  ${acta.expediente_previo ? `<tr><td class="lbl">Expediente previo</td><td colspan="3">${acta.expediente_previo}</td></tr>` : ''}
+</table>
+
 <!-- SECCIÓN 1: DATOS DE LA DILIGENCIA -->
-<div class="section-title">1. Datos de la Diligencia</div>
+<div class="section-title">1. ${esInspeccion ? "Datos de la Visita de Inspección" : "Datos de la Diligencia"}</div>
 <table class="data-table">
   <tr>
-    <td class="lbl">Propietario / Visitado</td>
-    <td colspan="3">${acta.infractor || '—'}</td>
+    <td class="lbl">${esInspeccion ? "Persona con quien se atiende" : "Propietario / Visitado"}</td>
+    <td colspan="3">${acta.infractor || '—'} ${acta.cargo_visitado ? '('+acta.cargo_visitado+')' : ''}</td>
   </tr>
   <tr>
-    <td class="lbl">Domicilio</td>
+    <td class="lbl">Domicilio inspeccionado</td>
     <td colspan="3">${acta.domicilio || '—'}</td>
   </tr>
+  ${acta.actividad_predio ? `<tr><td class="lbl">Actividad en predio</td><td colspan="3">${acta.actividad_predio}</td></tr>` : ''}
   <tr>
-    <td class="lbl">Inspector actuante</td>
-    <td>${acta.inspector || '—'}</td>
     <td class="lbl">Fecha / Hora</td>
-    <td>${fechaStr} — ${horaStr}</td>
+    <td colspan="3">${fechaStr} — ${horaStr} hrs.</td>
   </tr>
 </table>
 
@@ -2265,9 +3346,11 @@ ${arbóreoHTML}
     <div class="section-title">3. Descripción del Animal Agresor</div>
     <table class="data-table">
       <tr><td class="lbl">Especie</td><td>${acta.anim_especie||'—'}</td><td class="lbl">Cantidad</td><td>${acta.anim_cantidad||'1'}</td></tr>
+      ${acta.anim_raza ? `<tr><td class="lbl">Raza / descripción</td><td colspan="3">${acta.anim_raza}</td></tr>` : ''}
       <tr><td class="lbl">Condición</td><td>${acta.anim_condicion||'—'}</td><td class="lbl">Situación</td><td>${acta.anim_situacion||'—'}</td></tr>
-      ${acta.anim_destino ? `<tr><td class="lbl">Destino</td><td colspan="3">${acta.anim_destino}</td></tr>` : ''}
-      ${acta.acciones_animal ? `<tr><td class="lbl">Acciones campo</td><td colspan="3">${acta.acciones_animal}</td></tr>` : ''}
+      ${acta.anim_duenio ? `<tr><td class="lbl">Dueño / responsable</td><td colspan="3">${acta.anim_duenio}</td></tr>` : ''}
+      ${acta.anim_destino ? `<tr><td class="lbl">Destino animal</td><td colspan="3">${acta.anim_destino}</td></tr>` : ''}
+      ${acta.acciones_animal ? `<tr><td class="lbl">Acciones en campo</td><td colspan="3">${acta.acciones_animal}</td></tr>` : ''}
     </table>` : ''}
 
     <!-- SECCIÓN DENUNCIA AMBIENTAL -->
@@ -2275,15 +3358,15 @@ ${arbóreoHTML}
     <div class="section-title">2. Situación Ambiental Detectada</div>
     <table class="data-table">
       <tr><td class="lbl">Tipo de infracción</td><td colspan="3">${acta.da_tipo_infraccion||'—'}</td></tr>
-      <tr><td class="lbl">Severidad</td><td>${acta.da_severidad||'—'}</td><td class="lbl">Responsable</td><td>${acta.da_responsable||'—'}</td></tr>
-      ${acta.medidas_denuncia ? `<tr><td class="lbl">Medidas adoptadas</td><td colspan="3">${acta.medidas_denuncia}</td></tr>` : ''}
-      ${acta.da_plazo ? `<tr><td class="lbl">Plazo remediación</td><td colspan="3">${acta.da_plazo}</td></tr>` : ''}
+      <tr><td class="lbl">Severidad</td><td>${acta.da_severidad||'—'}</td><td class="lbl">Tiempo afectación</td><td>${acta.da_tiempo||'No determinado'}</td></tr>
+      <tr><td class="lbl">Superficie (m²)</td><td>${acta.da_superficie||'—'}</td><td class="lbl">Presunto responsable</td><td>${acta.da_responsable==='si'?'Sí — presente':acta.da_responsable==='ubicado'?'Identificado / ausente':'No identificado'}</td></tr>
+      ${acta.medidas_denuncia ? `<tr><td class="lbl" style="color:#003B7A;font-weight:bold">⚡ Medidas adoptadas</td><td colspan="3" style="font-weight:600">${acta.medidas_denuncia}</td></tr>` : ''}
+      ${acta.da_plazo ? `<tr><td class="lbl">Plazo para remediación</td><td colspan="3">${acta.da_plazo}</td></tr>` : ''}
     </table>` : ''}
 
     <!-- SECCIÓN DE DIAGNÓSTICO -->
-<div class="section-title">${arbóreoHTML ? '3.' : '2.'} Diagnóstico y Descripción de los Hechos</div>
-<div class="desc-box">${(acta.descripcion || '—').split("\
-").join("<br>")}</div>
+<div class="section-title">${arbóreoHTML ? '3.' : '2.'} ${esInspeccion ? 'Hallazgos de la Inspección' : 'Diagnóstico y Descripción de los Hechos'}</div>
+<div class="desc-box">${(acta.descripcion || '—').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
 
 ${acta.nivel_riesgo ? `<div class="badge-row"><b>Nivel de Riesgo Calculado:</b> <span class="risk-badge risk-${acta.nivel_riesgo.toLowerCase()}">${acta.nivel_riesgo}</span></div>` : ''}
 
@@ -2293,24 +3376,32 @@ ${acta.fundamento ? `
 <div class="legal-ref">${acta.fundamento}</div>` : ''}
 
 <!-- DICTAMEN Y MEDIDAS -->
-<div class="section-title">${arbóreoHTML ? '5.' : '3.'} Dictamen y Medidas de Manejo</div>
+<div class="section-title">${arbóreoHTML ? '5.' : '3.'} ${esInspeccion ? 'Conclusiones y Medidas Ordenadas' : esSancion ? 'Resolución y Sanción' : 'Dictamen y Medidas de Manejo'}</div>
 ${dictamenHTML}
-${acta.medida ? `<p><b>Medida correctiva / Apercibimiento:</b> ${acta.medida}</p>` : ''}
-${acta.monto_sancion ? `<p><b>Monto de sanción:</b> ${acta.monto_sancion} UMA</p>` : ''}
+${acta.medida ? `<p><b>Medida / Sanción impuesta:</b> ${acta.medida}</p>` : ''}
+${acta.monto_sancion ? `<p><b>Monto de sanción:</b> $${acta.monto_sancion} MXN</p>` : ''}
+${acta.acta_plazo || acta.plazo ? `<p><b>Plazo:</b> ${acta.acta_plazo||acta.plazo}</p>` : ''}
 ${acta.observaciones ? `<p><b>Observaciones:</b> ${acta.observaciones}</p>` : ''}
+${acta.medidas_correctivas ? `<div style="background:#fef9c3;border-left:4px solid #f59e0b;padding:10px 14px;margin:8px 0;border-radius:0 8px 8px 0"><b>📋 Medidas correctivas requeridas:</b><br>${acta.medidas_correctivas}</div>` : ''}
+${acta.arb_obs_solicitante ? `<p><b>Observaciones al solicitante:</b> ${acta.arb_obs_solicitante}</p>` : ''}
+${esArbolPDF && acta.arb_requisitos ? `<p><b>Requisitos solicitados al ciudadano:</b> ${acta.arb_requisitos.split(',').join(', ')}</p>` : ''}
+${acta.gravedad_infraccion ? `<p><b>Gravedad:</b> ${acta.gravedad_infraccion} ${acta.reincidente==='si' ? '⚠️ Reincidente' : ''}</p>` : ''}
+${acta.firmado_enterado ? `<p><b>Firmado de enterado:</b> ${acta.firmado_enterado==='si'?'Sí firmó':'No firmó / '+acta.firmado_enterado}</p>` : ''}
+${acta.tiene_permiso ? `<p><b>Permisos:</b> ${acta.tiene_permiso==='si'?'Exhibidos y vigentes':acta.tiene_permiso==='no'?'Sin autorización':acta.tiene_permiso==='vencido'?'Vencidos':acta.tiene_permiso}${acta.num_permiso?' — Folio: '+acta.num_permiso:''}</p>` : ''}
+${acta.voz_imputado ? `<p><b>Versión del imputado:</b> ${acta.voz_imputado}</p>` : ''}
 ${compensHTML}
 
 <!-- FIRMAS -->
 <div class="firma-section">
   <div class="firma-box" style="flex:1">
-    <div style="font-size:8px;font-weight:bold;color:#1a3a5c;margin-bottom:4px">INSPECTOR ACTUANTE</div>
+    <div style="font-size:8px;font-weight:bold;color:#1a3a5c;margin-bottom:4px">${esInspeccion ? "INSPECTOR DE VIGILANCIA" : "INSPECTOR ACTUANTE"}</div>
     ${acta.firma_inspector_base64 ? `<img src="${acta.firma_inspector_base64}" alt="Firma inspector" style="max-width:220px;max-height:80px;display:block;margin:0 auto">` : '<div class="firma-line"></div>'}
     <div class="firma-name">${acta.inspector || '________________________'}</div>
     <div class="firma-label">Inspector IMBIO · Firma y Nombre</div>
   </div>
   ${acta.firma_visitado_base64 || acta.nombre_visitado ? `
   <div class="firma-box" style="flex:1">
-    <div style="font-size:8px;font-weight:bold;color:#1a3a5c;margin-bottom:4px">VISITADO / PROPIETARIO</div>
+    <div style="font-size:8px;font-weight:bold;color:#1a3a5c;margin-bottom:4px">${esInspeccion ? "RESPONSABLE / REPRESENTANTE" : "VISITADO / PROPIETARIO"}</div>
     ${acta.firma_visitado_base64 ? `<img src="${acta.firma_visitado_base64}" alt="Firma visitado" style="max-width:220px;max-height:80px;display:block;margin:0 auto">` : '<div class="firma-line"></div>'}
     <div class="firma-name">${acta.nombre_visitado || '________________________'}</div>
     <div class="firma-label">Nombre y Firma del Visitado</div>
@@ -2325,8 +3416,13 @@ ${compensHTML}
 <!-- PIE DE PÁGINA -->
 <div class="footer">
   <b>H. Ayuntamiento de Pabellón de Arteaga 2024-2027 · Instituto Municipal de Biodiversidad y Protección Ambiental (IMBIO)</b><br>
-  Marco legal: Código Municipal · Ley de Ingresos · LPAEA · LGEEPA · NTEA-AGS-ARBOLADO-2026<br>
-  Este documento tiene validez técnica y legal para trámites ambientales ante la Dirección del IMBIO.<br>
+  Marco legal: Código Municipal · Ley de Ingresos · LPAEA · LGEEPA${esArbolPDF ? ' · NTEA-AGS-ARBOLADO-2026' : ''}<br>
+  ${esInspeccion
+    ? 'Este documento hace constar la visita de inspección y vigilancia ambiental practicada por el IMBIO en el domicilio señalado. Tiene validez legal ante la Dirección del IMBIO.'
+    : esSancion
+    ? 'Este documento constituye resolución administrativa con efectos legales. Su incumplimiento genera responsabilidades ante la Dirección del IMBIO y las autoridades competentes.'
+    : 'Este documento tiene validez técnica y legal para trámites ambientales ante la Dirección del IMBIO.'
+  }<br>
   Generado el ${new Date().toLocaleString('es-MX')}
 </div>
 
@@ -2336,64 +3432,579 @@ ${compensHTML}
 function descargarPDFActa(acta) {
   if (!acta) { alert('Sin datos del acta para generar PDF.'); return; }
   const htmlContent = buildActaHTML(acta);
-  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = (acta.folio_acta || 'ACTA-IMBIO') + '.html';
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 3000);
-  // En Android WebView, usar window.print() como alternativa
-  setTimeout(() => {
-    if (typeof Android !== 'undefined') {
-      // Abrir en nueva ventana para imprimir/compartir
-      const w = window.open('', '_blank');
-      if (w) { w.document.write(htmlContent); w.document.close(); w.print(); }
-    }
-  }, 500);
+  const w = window.open('', '_blank');
+  if (w) {
+    w.document.write(htmlContent);
+    w.document.close();
+    // Esperar carga de imágenes y abrir diálogo de impresión
+    w.onload = function() { w.focus(); w.print(); };
+    setTimeout(function() { try { w.focus(); w.print(); } catch(e){} }, 800);
+  } else {
+    // Fallback si el navegador bloquea popups: descarga HTML
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = (acta.folio_acta || 'ACTA-IMBIO') + '.html';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+    alert('⚠️ El navegador bloqueó la ventana emergente.\nPermite ventanas emergentes para localhost y vuelve a intentarlo para obtener el PDF.');
+  }
 }
 
 function compartirPDFActa(acta) {
   if (!acta) { alert('Sin datos del acta.'); return; }
   const htmlContent = buildActaHTML(acta);
-  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
   const folio = acta.folio_acta || 'ACTA-IMBIO';
-  // Usar Web Share API si está disponible (Android Chrome)
-  if (navigator.share) {
+
+  // Paso 1: abrir ventana con el acta y diálogo de impresión → guardar como PDF
+  const w = window.open('', '_blank');
+  if (w) {
+    w.document.write(htmlContent);
+    w.document.close();
+    w.onload = function() { w.focus(); w.print(); };
+    setTimeout(function() { try { w.focus(); w.print(); } catch(e){} }, 800);
+  }
+
+  // Paso 2: ofrecer compartir por WhatsApp (con resumen de texto)
+  setTimeout(function() {
+    const blob = new Blob([htmlContent], { type: 'text/html' });
     const file = new File([blob], folio + '.html', { type: 'text/html' });
-    navigator.share({
-      title: folio + ' — IMBIO Pabellón de Arteaga',
-      text: 'Adjunto ' + folio + ' generado por el Sistema IMBIO.',
-      files: [file]
-    }).catch(e => {
-      if (e.name !== 'AbortError') fallbackShare(acta, htmlContent, folio);
-    });
+    // Web Share API con archivo (Android Chrome soporta esto)
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({
+        title: folio + ' — IMBIO',
+        text: 'Acta ' + folio + ' emitida por IMBIO Pabellón de Arteaga.',
+        files: [file]
+      }).catch(function(e) {
+        if (e.name !== 'AbortError') fallbackShare(acta, folio);
+      });
+    } else {
+      fallbackShare(acta, folio);
+    }
+  }, 1200);
+}
+
+function fallbackShare(acta, folio) {
+  var t = '\u{1F4CB} *' + folio + '*%0A' +
+    '\u{1F3DB} IMBIO - Pabellon de Arteaga%0A' +
+    'Inspector: ' + encodeURIComponent(acta.inspector||'-') + '%0A' +
+    'Visitado: '  + encodeURIComponent(acta.infractor||'-') + '%0A' +
+    'Domicilio: ' + encodeURIComponent(acta.domicilio||'-') + '%0A' +
+    'Fecha: ' + encodeURIComponent(new Date(acta.fecha||Date.now()).toLocaleDateString('es-MX')) +
+    (acta.nivel_riesgo ? '%0ARiesgo: '+encodeURIComponent(acta.nivel_riesgo) : '') +
+    '%0A%0ADocumento oficial IMBIO Pabellon de Arteaga';
+  window.open('https://wa.me/?text=' + t, '_blank');
+}
+
+
+// ══ MATLACHO WIDGET ══
+// ════════════════════════════════════════════════════════════════
+// MATLACHO — Asistente Ambiental Inteligente IMBIO
+// ════════════════════════════════════════════════════════════════
+
+var _matlachoVisible = false;
+var _matlachoChatHistory = [];
+
+function _matlachoInit() {
+  if (document.getElementById('matlacho-widget')) return;
+
+  var widget = document.createElement('div');
+  widget.id = 'matlacho-widget';
+  widget.innerHTML = `
+    <style>
+      #matlacho-fab {
+        position:fixed;bottom:22px;right:18px;z-index:8000;
+        width:58px;height:58px;border-radius:50%;
+        background:linear-gradient(135deg,#16a34a,#15803d);
+        box-shadow:0 4px 18px rgba(22,163,74,.45);
+        cursor:pointer;display:flex;align-items:center;justify-content:center;
+        font-size:1.7rem;border:none;transition:transform .2s;
+        animation:matlacho-bounce 3s ease-in-out infinite;
+      }
+      #matlacho-fab:hover { transform:scale(1.12); }
+      @keyframes matlacho-bounce {
+        0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)}
+      }
+      #matlacho-panel {
+        position:fixed;bottom:92px;right:18px;z-index:7999;
+        width:320px;max-height:520px;
+        background:#fff;border-radius:18px;
+        box-shadow:0 8px 40px rgba(0,0,0,.18);
+        display:none;flex-direction:column;overflow:hidden;
+        border:1.5px solid #e2e8f0;
+      }
+      #matlacho-panel.open { display:flex; }
+      .matlacho-header {
+        background:linear-gradient(135deg,#166534,#16a34a);
+        padding:14px 16px;display:flex;align-items:center;gap:10px;
+      }
+      .matlacho-avatar {
+        width:40px;height:40px;border-radius:50%;
+        background:#fff;display:flex;align-items:center;justify-content:center;
+        font-size:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.15);flex-shrink:0;
+      }
+      .matlacho-name { color:#fff;font-weight:800;font-size:.9rem; }
+      .matlacho-role { color:rgba(255,255,255,.75);font-size:.72rem; }
+      .matlacho-close {
+        margin-left:auto;background:none;border:none;color:#fff;
+        font-size:1.2rem;cursor:pointer;padding:2px 6px;opacity:.8;
+      }
+      .matlacho-body {
+        flex:1;overflow-y:auto;padding:12px;
+        display:flex;flex-direction:column;gap:8px;
+        max-height:320px;
+      }
+      .matlacho-bubble {
+        background:#f0fdf4;border-radius:12px 12px 12px 2px;
+        padding:10px 13px;font-size:.8rem;color:#1a3a5c;line-height:1.5;
+        border:1px solid #bbf7d0;max-width:92%;
+      }
+      .matlacho-bubble.user {
+        background:#eff6ff;border-color:#bfdbfe;
+        border-radius:12px 12px 2px 12px;align-self:flex-end;color:#1e3a5f;
+      }
+      .matlacho-bubble.loading {
+        background:#f8fafc;color:#94a3b8;font-style:italic;
+      }
+      .matlacho-actions {
+        padding:10px 12px;border-top:1px solid #f1f5f9;
+        display:flex;flex-direction:column;gap:6px;
+      }
+      .matlacho-btn {
+        padding:8px 12px;border:none;border-radius:9px;
+        font-size:.78rem;font-weight:700;cursor:pointer;
+        display:flex;align-items:center;gap:6px;text-align:left;
+        transition:opacity .15s;
+      }
+      .matlacho-btn:hover { opacity:.88; }
+      .matlacho-btn.verde { background:#dcfce7;color:#166534; }
+      .matlacho-btn.azul  { background:#dbeafe;color:#1e40af; }
+      .matlacho-btn.naranja{ background:#fef3c7;color:#92400e; }
+      .matlacho-btn.rojo  { background:#fee2e2;color:#991b1b; }
+      .matlacho-btn.morado{ background:#ede9fe;color:#5b21b6; }
+      .matlacho-input-row {
+        display:flex;gap:6px;padding:8px 12px;border-top:1px solid #f1f5f9;
+      }
+      .matlacho-input {
+        flex:1;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:9px;
+        font-size:.8rem;outline:none;
+      }
+      .matlacho-input:focus { border-color:#16a34a; }
+      .matlacho-send {
+        padding:7px 12px;background:#16a34a;color:#fff;border:none;
+        border-radius:9px;cursor:pointer;font-size:.85rem;
+      }
+      .matlacho-suggestion-banner {
+        background:linear-gradient(135deg,#166534,#16a34a);
+        color:#fff;border-radius:10px;padding:10px 13px;
+        font-size:.8rem;font-weight:700;margin-top:4px;
+      }
+    </style>
+
+    <!-- FAB botón flotante -->
+    <button id="matlacho-fab" onclick="_matlachoToggle()" title="Matlacho — Asistente IMBIO">
+      🐭
+    </button>
+
+    <!-- Panel del asistente -->
+    <div id="matlacho-panel">
+      <div class="matlacho-header">
+        <div class="matlacho-avatar">🐭</div>
+        <div>
+          <div class="matlacho-name">Matlacho</div>
+          <div class="matlacho-role">Asistente Ambiental IMBIO</div>
+        </div>
+        <button class="matlacho-close" onclick="_matlachoToggle()">✕</button>
+      </div>
+      <div class="matlacho-body" id="matlacho-chat">
+        <div class="matlacho-bubble">
+          ¡Hola! 👋 Soy <b>Matlacho</b>, el asistente ambiental de IMBIO Pabellón de Arteaga.<br>
+          ¿En qué te puedo ayudar hoy?
+        </div>
+      </div>
+      <div class="matlacho-actions" id="matlacho-quick-actions">
+      </div>
+      <div class="matlacho-input-row">
+        <input id="matlacho-msg" class="matlacho-input" placeholder="Escribe tu pregunta..." onkeydown="if(event.key==='Enter')_matlachoChat()">
+        <button class="matlacho-send" onclick="_matlachoChat()">↑</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(widget);
+  _matlachoSetContext();
+}
+
+function _matlachoToggle() {
+  var panel = document.getElementById('matlacho-panel');
+  if (!panel) return;
+  _matlachoVisible = !_matlachoVisible;
+  panel.classList.toggle('open', _matlachoVisible);
+  if (_matlachoVisible) _matlachoSetContext();
+}
+
+function _matlachoSetContext() {
+  // Detect current context and show relevant quick actions
+  var actions = document.getElementById('matlacho-quick-actions');
+  if (!actions) return;
+  var isInspector = typeof tipoActaSel !== 'undefined';
+  var isModal = document.getElementById('modal-nueva-acta') &&
+                document.getElementById('modal-nueva-acta').style.display === 'flex';
+  var tipo = (typeof tipoActaSel !== 'undefined') ? tipoActaSel : '';
+
+  var btns = [];
+
+  if (isModal || isInspector) {
+    // Inspector context
+    if (tipo === 'circunstanciada' || tipo === 'inspeccion' || tipo === '') {
+      btns.push({cls:'verde', icon:'📝', label:'Redactar descripción', fn:'_matlachoRedactarDesc()'});
+    }
+    if (tipo === 'apercibimiento') {
+      btns.push({cls:'naranja', icon:'⚠️', label:'Redactar apercibimiento', fn:'_matlachoRedactarAper()'});
+    }
+    if (tipo === 'sancion') {
+      btns.push({cls:'rojo', icon:'🚫', label:'Redactar motivación sanción', fn:'_matlachoRedactarSanc()'});
+    }
+    btns.push({cls:'morado', icon:'🔍', label:'Sugerir medida administrativa', fn:'_matlachoSugerirMedida()'});
   } else {
-    fallbackShare(acta, htmlContent, folio);
+    // Ciudadano o panel context
+    btns.push({cls:'verde', icon:'✍️', label:'Mejorar mi descripción', fn:'_matlachoCiudadano()'});
+  }
+  btns.push({cls:'azul', icon:'❓', label:'¿Cómo uso la plataforma?', fn:"_matlachoChat('¿Cómo puedo usar la plataforma IMBIO?')"});
+
+  actions.innerHTML = btns.map(function(b){
+    return '<button class="matlacho-btn '+b.cls+'" onclick="'+b.fn+'">'+b.icon+' '+b.label+'</button>';
+  }).join('');
+}
+
+function _matlachoAddBubble(text, isUser, isLoading) {
+  var chat = document.getElementById('matlacho-chat');
+  if (!chat) return null;
+  var div = document.createElement('div');
+  div.className = 'matlacho-bubble' + (isUser?' user':'') + (isLoading?' loading':'');
+  div.innerHTML = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+async function _matlachoCallAPI(tipo, datos) {
+  var loading = _matlachoAddBubble('🐭 Matlacho está pensando...', false, true);
+  try {
+    var serverUrl = (typeof SERVER_URL !== 'undefined') ? SERVER_URL : window.location.origin;
+    var token = (typeof TOKEN !== 'undefined') ? TOKEN : (localStorage.getItem('imbio_token') || '');
+    var resp = await fetch(serverUrl + '/api/ai/matlacho', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ tipo: tipo, datos: datos }),
+      signal: AbortSignal.timeout(35000)
+    });
+    var d = await resp.json();
+    if (loading) loading.remove();
+    return d.success ? d.data : null;
+  } catch(e) {
+    if (loading) loading.remove();
+    _matlachoAddBubble('⚠️ No pude conectarme. Verifica tu conexión e intenta de nuevo.', false);
+    return null;
   }
 }
 
-function fallbackShare(acta, htmlContent, folio) {
-  // Generar enlace de WhatsApp con texto del acta
-  const texto = encodeURIComponent(
-    '📋 *' + (folio) + '*\
-' +
-    '🏛️ IMBIO — Pabellón de Arteaga\
-' +
-    '👷 Inspector: ' + (acta.inspector || '—') + '\
-' +
-    '📍 Domicilio: ' + (acta.domicilio || '—') + '\
-' +
-    '📅 Fecha: ' + new Date(acta.fecha||Date.now()).toLocaleDateString('es-MX') + '\
-' +
-    (acta.nivel_riesgo ? '⚠️ Nivel de Riesgo: ' + acta.nivel_riesgo + '\
-' : '') +
-    '\
-_Documento oficial IMBIO. Solicite el PDF completo al inspector._'
-  );
-  window.open('https://wa.me/?text=' + texto, '_blank');
+async function _matlachoChat(msgOverride) {
+  var input = document.getElementById('matlacho-msg');
+  var msg = msgOverride || (input ? input.value.trim() : '');
+  if (!msg) return;
+  if (input) input.value = '';
+  _matlachoAddBubble(msg, true);
+  var result = await _matlachoCallAPI('chat', { mensaje: msg });
+  if (result) _matlachoAddBubble(result.texto, false);
+}
+
+async function _matlachoCiudadano() {
+  var descEl = document.getElementById('nr-desc') || document.getElementById('acta-descripcion');
+  var desc = descEl ? descEl.value.trim() : '';
+  if (!desc) {
+    _matlachoAddBubble('📝 Primero escribe una descripción del problema y luego te ayudo a mejorarla.', false);
+    return;
+  }
+  _matlachoAddBubble('Mejora esta descripción: "' + desc.substring(0,80) + (desc.length>80?'...':'"'), true);
+  var result = await _matlachoCallAPI('reporte_ciudadano', { descripcion: desc });
+  if (result) {
+    _matlachoAddBubble('✅ Aquí tienes una versión mejorada:<br><br><i>' + result.texto + '</i><br><br>' +
+      '<button class="matlacho-btn verde" onclick="_matlachoAplicar(\'nr-desc\',\'' +
+      result.texto.replace(/'/g,'&#39;').replace(/\n/g,' ') + '\')" style="margin-top:6px">✅ Aplicar texto</button>', false);
+  }
+}
+
+async function _matlachoRedactarDesc() {
+  var gv = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+  var repCache = (typeof window._reportesCache!=='undefined' && window._reportesCache) ? window._reportesCache : [];
+  var repActual = repCache.find ? repCache.find(function(r){ return String(r.id)===String(typeof window.currentReporteId!=='undefined'?window.currentReporteId:''); }) || {} : {};
+  var datos = {
+    tipo_incidencia: typeof window._actaReporteTipo!=='undefined' ? window._actaReporteTipo : '',
+    fecha: gv('acta-fecha-insp') || new Date().toLocaleDateString('es-MX'),
+    hora:  gv('acta-hora-insp')  || new Date().toLocaleTimeString('es-MX'),
+    colonia: repActual.colonia || '',
+    inspector: gv('acta-firmante') || '',
+    descripcion: gv('acta-descripcion'),
+    tipo_residuo: gv('da-tipo-residuo')||gv('da-tipo-infraccion')||'',
+    volumen: gv('da-volumen')||'', superficie: gv('da-superficie')||'',
+    visitado: gv('acta-infractor')||''
+  };
+  _matlachoAddBubble('📋 Redactando descripción circunstanciada...', true);
+  var result = await _matlachoCallAPI('acta_circunstanciada', datos);
+  if (result) {
+    _matlachoAddBubble('✅ Descripción generada:<br><br><i style="font-size:.75rem">' +
+      result.texto.substring(0,200) + (result.texto.length>200?'...':'') + '</i><br><br>' +
+      '<button class="matlacho-btn verde" onclick="_matlachoAplicarTextarea(\'acta-descripcion\',\'' +
+      result.texto.replace(/'/g,'&#39;').replace(/\n/g,' ').replace(/"/g,'&quot;') + '\')" style="margin-top:4px">✅ Aplicar al campo</button>', false);
+  }
+}
+
+async function _matlachoRedactarAper() {
+  var gv = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+  var datos = {
+    irregularidad: gv('acta-descripcion'),
+    tipo_infraccion: gv('da-tipo-infraccion')||'',
+    medidas: gv('acta-medidas-correctivas')||gv('acta-medida')||'',
+    plazo: gv('acta-plazo')||''
+  };
+  _matlachoAddBubble('⚠️ Redactando apercibimiento...', true);
+  var result = await _matlachoCallAPI('acta_apercibimiento', datos);
+  if (result) {
+    _matlachoAddBubble('✅ Texto del apercibimiento:<br><br><i style="font-size:.75rem">' +
+      result.texto.substring(0,200) + (result.texto.length>200?'...':'') + '</i><br><br>' +
+      '<button class="matlacho-btn naranja" onclick="_matlachoAplicarTextarea(\'acta-medida\',\'' +
+      result.texto.replace(/'/g,'&#39;').replace(/\n/g,' ').replace(/"/g,'&quot;') + '\')" style="margin-top:4px">✅ Aplicar al campo</button>', false);
+  }
+}
+
+async function _matlachoRedactarSanc() {
+  var gv = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+  var datos = {
+    conducta: gv('acta-descripcion'),
+    tipo_infraccion: gv('da-tipo-infraccion')||'',
+    gravedad: gv('acta-gravedad-infraccion')||'',
+    reincidente: gv('acta-reincidente')||'no',
+    sancion: gv('acta-medida')||''
+  };
+  _matlachoAddBubble('🚫 Redactando motivación de sanción...', true);
+  var result = await _matlachoCallAPI('acta_sancion', datos);
+  if (result) {
+    _matlachoAddBubble('✅ Motivación de sanción:<br><br><i style="font-size:.75rem">' +
+      result.texto.substring(0,200) + (result.texto.length>200?'...':'') + '</i><br><br>' +
+      '<button class="matlacho-btn rojo" onclick="_matlachoAplicarTextarea(\'acta-medida\',\'' +
+      result.texto.replace(/'/g,'&#39;').replace(/\n/g,' ').replace(/"/g,'&quot;') + '\')" style="margin-top:4px">✅ Aplicar al campo</button>', false);
+  }
+}
+
+async function _matlachoSugerirMedida() {
+  var gv = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+  var datos = {
+    tipo_infraccion: gv('da-tipo-infraccion')||'',
+    tipo_residuo: gv('da-tipo-residuo')||'',
+    volumen: gv('da-volumen')||'',
+    superficie: gv('da-superficie')||'',
+    severidad: gv('da-severidad')||'',
+    tiempo: gv('da-tiempo')||'',
+    responsable: gv('da-responsable')||'',
+    reincidente: gv('acta-reincidente')||'no',
+    medidas_adoptadas: ['dm-apercibimiento','dm-acta-infraccion','dm-clausura','dm-remediacion','dm-sancion']
+      .filter(function(id){ var el=document.getElementById(id); return el&&el.checked; }).join(', ')
+  };
+  _matlachoAddBubble('🔍 Analizando los datos para sugerir la medida administrativa...', true);
+  var result = await _matlachoCallAPI('sugerencia_medida', datos);
+  if (result) {
+    var color = result.sugerencia_medida === 'sancion' ? 'rojo' : 'naranja';
+    var banner = result.sugerencia_medida
+      ? '<div class="matlacho-suggestion-banner" style="margin-top:8px;font-size:.78rem">' +
+        (result.sugerencia_medida === 'sancion' ? '🚫 Posible: Acta de Sanción' : '⚠️ Posible: Acta de Apercibimiento') +
+        '</div>' : '';
+    _matlachoAddBubble('<b>🐭 Matlacho sugiere:</b><br><br>' + result.texto + banner +
+      '<br><span style="font-size:.7rem;color:#94a3b8;display:block;margin-top:6px">Solo sugerencia — el inspector decide.</span>', false);
+  }
+}
+
+function _matlachoAplicar(campoId, texto) {
+  var campo = document.getElementById(campoId);
+  if (campo) {
+    campo.value = texto;
+    campo.style.borderColor = '#16a34a';
+    setTimeout(function(){ campo.style.borderColor=''; }, 2000);
+  }
+  _matlachoAddBubble('✅ Texto aplicado. Puedes editarlo antes de enviar.', false);
+}
+
+function _matlachoAplicarTextarea(campoId, texto) {
+  _matlachoAplicar(campoId, texto.replace(/&quot;/g,'"').replace(/&#39;/g,"'"));
+}
+
+// Auto-init when DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _matlachoInit);
+} else {
+  _matlachoInit();
+}
+
+// ══ END MATLACHO ══
+
+  // Registrar Service Worker para instalar como app
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('/inspector/sw.js').catch(function() {});
+    });
+  }
+
+
+// ════════════════════════════════════════════════════════════════
+// ASISTENTE IA — Helper compartido
+// ════════════════════════════════════════════════════════════════
+async function llamarIA(tipo, datos, campoDestino, btnEl) {
+  var original = btnEl.innerHTML;
+  btnEl.innerHTML = '&#9203; Generando...';
+  btnEl.disabled = true;
+  try {
+    var resp = await fetch(SERVER_URL + '/api/ai/generar-texto', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify({ tipo: tipo, datos: datos }),
+      signal: AbortSignal.timeout(35000)
+    });
+    var d = await resp.json();
+    if (d.success && d.data && d.data.texto) {
+      var campo = document.getElementById(campoDestino);
+      if (campo) {
+        campo.value = d.data.texto;
+        campo.style.borderColor = '#16a34a';
+        campo.style.background = '#f0fdf4';
+        setTimeout(function(){ campo.style.borderColor=''; campo.style.background=''; }, 3000);
+        campo.focus();
+      }
+    } else {
+      alert('No se pudo generar texto: ' + (d.message || 'Error desconocido'));
+    }
+  } catch(e) {
+    alert(e.name === 'TimeoutError' ? 'La IA tardó demasiado. Intenta de nuevo.' : 'Error: ' + e.message);
+  } finally {
+    btnEl.innerHTML = original;
+    btnEl.disabled = false;
+  }
+}
+
+function llamarIAActa(btnEl) {
+  var gv = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+  var repCache = window._reportesCache || [];
+  var repActual = repCache.find(function(r){ return String(r.id)===String(window.currentReporteId); }) || {};
+  llamarIA('acta_circunstanciada', {
+    tipo_incidencia: window._actaReporteTipo || '',
+    fecha:      gv('acta-fecha-insp') || new Date().toLocaleDateString('es-MX'),
+    hora:       gv('acta-hora-insp')  || new Date().toLocaleTimeString('es-MX'),
+    colonia:    repActual.colonia || '',
+    inspector:  gv('acta-firmante') || (typeof USER!=='undefined'?USER.nombre||USER.username:''),
+    descripcion:gv('acta-descripcion'),
+    tipo_residuo: gv('da-tipo-residuo')||gv('da-tipo-infraccion')||gv('da-cuerpo-agua')||'',
+    volumen:    gv('da-volumen') || '',
+    superficie: gv('da-superficie') || '',
+    visitado:   gv('acta-infractor') || ''
+  }, 'acta-descripcion', btnEl);
+}
+
+function llamarIAApercibimiento(btnEl) {
+  var gv = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+  llamarIA('acta_apercibimiento', {
+    irregularidad:   gv('acta-descripcion'),
+    tipo_infraccion: gv('da-tipo-infraccion') || window._actaReporteTipo || '',
+    medidas:         gv('acta-medidas-correctivas') || gv('acta-medida') || '',
+    plazo:           gv('acta-plazo') || ''
+  }, 'acta-medida', btnEl);
+}
+
+function llamarIASancion(btnEl) {
+  var gv = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+  llamarIA('acta_sancion', {
+    conducta:        gv('acta-descripcion'),
+    tipo_infraccion: gv('da-tipo-infraccion') || window._actaReporteTipo || '',
+    gravedad:        gv('acta-gravedad-infraccion') || '',
+    reincidente:     gv('acta-reincidente') || 'no',
+    sancion:         gv('acta-medida') || ''
+  }, 'acta-medida', btnEl);
 }
 
 </script>
+
+<!-- ══ MODAL INTERVENCIÓN ÁREAS VERDES ══════════════════════════════════ -->
+<div id="modal-intervencion-av" class="modal-bg" style="display:none;z-index:2000">
+  <div class="modal" style="max-width:480px;max-height:90vh;overflow-y:auto">
+    <div style="background:linear-gradient(135deg,#14532d,#166534);margin:-20px -20px 18px;padding:18px 20px;border-radius:14px 14px 0 0">
+      <div style="color:#fff;font-size:1.1rem;font-weight:800">🌿 Reporte de Intervención</div>
+      <div style="color:rgba(255,255,255,.7);font-size:.78rem;margin-top:2px">Área Verde — Actividades de Mantenimiento</div>
+    </div>
+    <input type="hidden" id="av-report-id">
+    <input type="hidden" id="av-report-folio">
+    <input type="hidden" id="av-lat">
+    <input type="hidden" id="av-lon">
+    <div id="av-alert"></div>
+
+    <!-- Datos generales -->
+    <div class="section-title" style="background:#14532d">📋 Datos de la Intervención</div>
+    <div class="form-grid">
+      <div class="fg fg2">
+        <label>Nombre del Área Verde *</label>
+        <input id="av-nombre-area" placeholder="Ej: Parque Jardines, Plaza Central...">
+      </div>
+      <div class="fg">
+        <label>Fecha</label>
+        <input id="av-fecha" type="date">
+      </div>
+      <div class="fg">
+        <label>Superficie intervenida (m²)</label>
+        <input id="av-superficie" type="number" placeholder="m²">
+      </div>
+      <div class="fg">
+        <label>Hora inicio</label>
+        <input id="av-hora-inicio" type="time">
+      </div>
+      <div class="fg">
+        <label>Hora finalización</label>
+        <input id="av-hora-fin" type="time">
+      </div>
+      <div class="fg fg2">
+        <label>Inspector / Responsable</label>
+        <input id="av-inspector" placeholder="Nombre del inspector">
+      </div>
+    </div>
+
+    <!-- Ubicación GPS -->
+    <div class="section-title" style="background:#14532d">📡 Ubicación GPS</div>
+    <button type="button" class="ibtn ibtn-secondary" style="width:100%;margin-bottom:6px" onclick="obtenerGPSAV()">📡 Capturar GPS</button>
+    <div id="av-coords-bar" style="font-size:.78rem;color:var(--muted);text-align:center;padding:4px 0;min-height:20px">📍 Sin coordenadas capturadas</div>
+
+    <!-- Acciones realizadas -->
+    <div class="section-title" style="background:#14532d">✅ Acciones Realizadas *</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:4px 0 12px">
+      <label class="chk-lbl"><input type="checkbox" id="av-acc-deshierbe"> 🌱 Deshierbe</label>
+      <label class="chk-lbl"><input type="checkbox" id="av-acc-poda"> ✂️ Poda</label>
+      <label class="chk-lbl"><input type="checkbox" id="av-acc-derribo"> 🪓 Derribo</label>
+      <label class="chk-lbl"><input type="checkbox" id="av-acc-fertilizacion"> 🌿 Fertilización</label>
+      <label class="chk-lbl"><input type="checkbox" id="av-acc-limpieza"> 🧹 Limpieza</label>
+      <label class="chk-lbl"><input type="checkbox" id="av-acc-riego"> 💧 Riego</label>
+      <label class="chk-lbl"><input type="checkbox" id="av-acc-residuos_vegetales"> 🍂 Residuos vegetales</label>
+      <label class="chk-lbl"><input type="checkbox" id="av-acc-mantenimiento_gral"> 🔧 Mantenimiento general</label>
+    </div>
+
+    <!-- Descripción -->
+    <div class="section-title" style="background:#14532d">📝 Descripción de Actividades</div>
+    <textarea id="av-descripcion" rows="3" placeholder="Describir detalladamente las actividades realizadas, condiciones del área, materiales utilizados..." style="width:100%;padding:10px;border:1.5px solid var(--borde);border-radius:8px;font-size:.82rem;resize:vertical;margin-bottom:10px"></textarea>
+
+    <div class="section-title" style="background:#14532d">📌 Observaciones</div>
+    <textarea id="av-observaciones" rows="2" placeholder="Observaciones adicionales, condiciones especiales, seguimiento requerido..." style="width:100%;padding:10px;border:1.5px solid var(--borde);border-radius:8px;font-size:.82rem;resize:vertical;margin-bottom:10px"></textarea>
+
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="ibtn ibtn-secondary" style="flex:1" onclick="document.getElementById('modal-intervencion-av').style.display='none'">Cancelar</button>
+      <button class="ibtn" style="flex:2;background:#16a34a;color:#fff;font-weight:800" onclick="enviarIntervencionAV()">🌿 Registrar Intervención</button>
+    </div>
+  </div>
+</div>
+
+
 </body>
 </html>
