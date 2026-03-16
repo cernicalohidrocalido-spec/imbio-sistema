@@ -736,9 +736,10 @@ async function doLogin() {
       body: JSON.stringify({ username, password }),
       signal: AbortSignal.timeout(55000)
     });
-    const d = await r.json();
+    var d = null;
+    try { d = await r.json(); } catch (_) { d = { success: false, message: 'Respuesta inválida del servidor' }; }
     showLoading(false);
-    if (!d.success) { errEl.textContent = d.message || 'Credenciales incorrectas.'; return; }
+    if (!d || !d.success) { errEl.textContent = (d && d.message) || 'Credenciales incorrectas.'; return; }
     TOKEN = d.data.token;
     USER  = d.data.usuario;
     localStorage.setItem('imbio_inspector_token', TOKEN);

@@ -1054,17 +1054,28 @@ async function doLogin() {
   const username = document.getElementById('l-user').value.trim();
   const password = document.getElementById('l-pass').value.trim();
   const errEl    = document.getElementById('login-error');
+  const btn      = document.querySelector('#login-screen .btn-primary');
   errEl.innerHTML = '';
+  if (!username || !password) {
+    errEl.innerHTML = alert_html('error', 'Ingresa usuario y contraseña.');
+    return;
+  }
+  var btnText = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Enviando…'; }
   try {
-    // Timeout 55s: en Railway el cold start puede tardar 30–60 s
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
       signal: AbortSignal.timeout(55000)
     });
-    const r = await res.json();
-    if (!r.success) { errEl.innerHTML = alert_html('error', r.message); return; }
+    var r = null;
+    try { r = await res.json(); } catch (_) { r = { success: false, message: 'Respuesta inválida del servidor' }; }
+    if (!r || !r.success) {
+      errEl.innerHTML = alert_html('error', (r && r.message) || 'Credenciales incorrectas.');
+      if (btn) { btn.disabled = false; btn.innerHTML = btnText; }
+      return;
+    }
     TOKEN = r.data.token; USER = r.data.usuario;
     document.getElementById('nav-nombre').textContent = USER.nombre;
     document.getElementById('nav-rol').textContent    = USER.rol;
@@ -1080,6 +1091,7 @@ async function doLogin() {
       : ('Error de conexión: ' + (e.message || 'sin respuesta del servidor'));
     errEl.innerHTML = alert_html('error', msg);
   }
+  if (btn) { btn.disabled = false; btn.innerHTML = btnText; }
 }
 function doLogout() {
   TOKEN=null; USER=null;
