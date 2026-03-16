@@ -19,10 +19,10 @@ UPLOAD_SIG = BASE_DIR / "uploads" / "signatures"
 # ── Seguridad: JWT Secret desde variable de entorno ─────────────────
 JWT_SECRET = os.environ.get("JWT_SECRET", "")
 if not JWT_SECRET:
-    import secrets as _sec
-    JWT_SECRET = _sec.token_hex(32)  # Aleatorio en memoria si no está configurado
-    print("[SEGURIDAD] ⚠️  JWT_SECRET no configurado en env. Usando clave aleatoria (sesiones no persisten entre reinicios).")
-    print("[SEGURIDAD]    Agrega JWT_SECRET=<clave-segura> en las variables de entorno de Railway.")
+    # Fallback estable derivado del path de la DB (mismo valor entre reinicios)
+    JWT_SECRET = hashlib.sha256(str(DB_SQLITE).encode()).hexdigest()
+    print("[SEGURIDAD] ⚠️  JWT_SECRET no configurado en env. Usando clave derivada de DB (sesiones persisten entre reinicios).")
+    print("[SEGURIDAD]    Para producción, agrega JWT_SECRET=<clave-segura> en las variables de entorno de Railway.")
 
 # ── App Ciudadano (embebida) ─────────────────────────────────────────────────
 import pathlib as _pl
