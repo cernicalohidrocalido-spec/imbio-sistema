@@ -1,3 +1,68 @@
+function renderMisActas() {
+  const el = document.getElementById('lista-actas');
+
+  // ── Actualizar contadores del dashboard ──
+  const tipos = ['inspeccion','circunstanciada','apercibimiento','sancion'];
+  tipos.forEach(function(t) {
+    var cnt = document.getElementById('cnt-' + t);
+    if (cnt) cnt.textContent = misActas.filter(function(a){ return a.tipo_acta === t; }).length;
+  });
+
+  // ── Filtrar si hay filtro activo ──
+  var actasMostrar = misActas;
+  if (window._actasFiltro) {
+    actasMostrar = misActas.filter(function(a){ return a.tipo_acta === window._actasFiltro; });
+  }
+
+  if (!actasMostrar.length) {
+    var msg = window._actasFiltro
+      ? 'No tienes actas de tipo ' + ({inspeccion:'Inspección',circunstanciada:'Circunstanciada',apercibimiento:'Apercibimiento',sancion:'Sanción'}[window._actasFiltro]||window._actasFiltro) + '.'
+      : 'Las actas que generes aparecerán aquí.';
+    el.innerHTML = '<div class="empty"><div class="em-ic">📄</div><p>' + msg + '</p></div>';
+    return;
+  }
+
+  const labels = { circunstanciada:'Circunstanciada', apercibimiento:'Apercibimiento', sancion:'Sanción', inspeccion:'Inspección' };
+  const colors = { inspeccion:'#1a3a5c', circunstanciada:'#5b21b6', apercibimiento:'#92400e', sancion:'#991b1b' };
+
+  el.innerHTML = actasMostrar.map((a, idx) => `
+    <div class="acta-card">
+      <div class="acta-card-head">
+        <span class="acta-folio">${a.folio_acta || '—'}</span>
+        <span class="acta-tipo-badge" style="background:${colors[a.tipo_acta]||'#1a3a5c'};color:#fff;padding:3px 9px;border-radius:20px;font-size:.68rem;font-weight:800">
+          ${labels[a.tipo_acta] || a.tipo_acta || 'Acta'}
+        </span>
+      </div>
+      <div class="acta-card-body">
+        <div class="acta-row"><span class="acta-lbl">Reporte</span><span>${a.report_folio || a.folio_acta || '—'}</span></div>
+        <div class="acta-row"><span class="acta-lbl">Infractor</span><span>${a.infractor || '—'}</span></div>
+        <div class="acta-row"><span class="acta-lbl">Descripción</span><span>${(a.descripcion||'').substring(0,60)}${(a.descripcion||'').length>60?'...':''}</span></div>
+        <div class="acta-row"><span class="acta-lbl">Fecha</span><span>${a.fecha ? new Date(a.fecha).toLocaleString('es-MX') : '—'}</span></div>
+        <div class="acta-row"><span class="acta-lbl">Estado</span><span class="est-badge est-${a.estado_acta||'emitida'}">${(a.estado_acta||'EMITIDA').toUpperCase()}</span></div>
+      </div>
+      <div class="icard-foot">
+        <button class="ibtn ibtn-success ibtn-sm" style="flex:1" onclick="compartirPDFActa(misActas[${misActas.indexOf(a)}])">📤 Compartir PDF por WhatsApp</button>
+        <button class="ibtn ibtn-sm" style="background:#dc2626;color:#fff;padding:0 14px;flex:none" onclick="borrarActaLocal(${a.id||0}, ${misActas.indexOf(a)})">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+function filtrarActas(tipo) {
+  window._actasFiltro = tipo;
+  // Update visual state of cards
+  ['inspeccion','circunstanciada','apercibimiento','sancion'].forEach(function(t) {
+    var card = document.getElementById('card-' + t);
+    if (card) card.style.opacity = (!tipo || tipo === t) ? '1' : '0.5';
+  });
+  // Update label
+  var lbl = document.getElementById('actas-filtro-label');
+  var txt = document.getElementById('actas-filtro-txt');
+  var labels = {inspeccion:'🔍 Inspección',circunstanciada:'📋 Circunstanciada',apercibimiento:'⚠️ Apercibimiento',sancion:'🚫 Sanción'};
+  if (lbl) lbl.style.display = tipo ? 'flex' : 'none';
+  if (txt) txt.textContent = tipo ? ('Mostrando: ' + (labels[tipo]||tipo)) : '';
+  renderMisActas();
+}
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -8,10 +73,6 @@
 <meta name="apple-mobile-web-app-title" content="IMBIO Inspector">
 <title>IMBIO Inspector</title>
 <link rel="stylesheet" href="/static/leaflet.css"/>
-<!-- PDF generation -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<!-- QR Code -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root {
   --azul:       #003B7A;
@@ -173,6 +234,11 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 .ialert-warn{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
 
 /* ACTA PREVIEW */
+/* ── actas dashboard ────────────────────────────────────────── */
+.acta-tipo-card { transition: transform .15s, box-shadow .15s; }
+.acta-tipo-card:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+.acta-tipo-card:active { transform: scale(.97); }
+
 .acta-card{background:#fff;border-radius:12px;border:2px solid var(--borde);overflow:hidden;margin-bottom:10px}
 .acta-card-head{background:var(--inspector);padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
 .acta-folio{color:#fff;font-family:monospace;font-size:.82rem;font-weight:800}
@@ -315,6 +381,7 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
       <p>Acceso exclusivo para inspectores</p>
     </div>
     <div class="lb-badge">🔒 Personal autorizado IMBIO</div>
+    <div id="login-status" style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:8px;font-size:.82rem;background:#E8F1FB;border:1px solid #B3CFF0;color:#0d1f35"></div>
     <div class="lf">
       <label>Usuario</label>
       <input id="l-user" type="text" placeholder="inspector01" autocomplete="username">
@@ -352,6 +419,9 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
     <div class="itab" id="tab-proceso" onclick="setTab('proceso')">
       <span class="ic">🔄</span><span>En Proceso</span>
     </div>
+    <div class="itab" id="tab-verificaciones" onclick="setTab('verificaciones-insp')">
+      <span class="ic">🔍</span><span>Verificaciones</span>
+    </div>
     <div class="itab" id="tab-actas" onclick="setTab('actas-list')">
       <span class="ic">📄</span><span>Mis Actas</span>
     </div>
@@ -374,8 +444,21 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
     <!-- EN PROCESO -->
     <div id="screen-proceso" class="iscreen">
       <div class="ipad">
+        <!-- Context banner -->
+        <div style="background:linear-gradient(135deg,#0d1f35,#1a3a5c);border-radius:12px;padding:12px 14px;margin-bottom:12px">
+          <div style="color:#fff;font-weight:800;font-size:.88rem;margin-bottom:4px">🔄 Registros En Proceso</div>
+          <div style="color:rgba(255,255,255,.75);font-size:.75rem;line-height:1.5">
+            Selecciona el tipo de acta según corresponda al trámite o denuncia.
+          </div>
+          <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px">
+            <span style="background:rgba(255,255,255,.15);color:#fff;padding:3px 9px;border-radius:20px;font-size:.68rem">🔍 Inspección → Arbolado / Animales</span>
+            <span style="background:rgba(255,255,255,.15);color:#fff;padding:3px 9px;border-radius:20px;font-size:.68rem">📋 Circunstanciada → Documentar hechos</span>
+            <span style="background:rgba(255,255,255,.15);color:#fff;padding:3px 9px;border-radius:20px;font-size:.68rem">⚠️ Apercibimiento → Irregularidad corregible</span>
+            <span style="background:rgba(255,255,255,.15);color:#fff;padding:3px 9px;border-radius:20px;font-size:.68rem">🚫 Sanción → Infracción / Reincidencia</span>
+          </div>
+        </div>
         <div id="lista-proceso">
-          <div class="empty"><div class="em-ic">🔄</div><p>Cargando reportes en proceso...</p></div>
+          <div class="empty"><div class="em-ic">🔄</div><p>Cargando registros en proceso...</p></div>
         </div>
       </div>
     </div>
@@ -383,12 +466,132 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
     <!-- MIS ACTAS -->
     <div id="screen-actas-list" class="iscreen">
       <div class="ipad">
+
+        <!-- Dashboard header -->
+        <div style="padding:4px 0 12px">
+          <div style="font-size:.72rem;color:var(--muted);text-align:center">Toca una sección para ver las actas</div>
+        </div>
+
+        <!-- Contadores / tarjetas de tipo -->
+        <div id="actas-dashboard" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+          <div class="acta-tipo-card" onclick="filtrarActas('inspeccion')" id="card-inspeccion"
+            style="background:linear-gradient(135deg,#1a3a5c,#2563eb);border-radius:14px;padding:14px 12px;cursor:pointer;text-align:center;transition:.2s">
+            <div style="font-size:1.6rem">🔍</div>
+            <div style="color:#fff;font-weight:800;font-size:.88rem;margin-top:4px">Inspección</div>
+            <div id="cnt-inspeccion" style="color:rgba(255,255,255,.8);font-size:1.4rem;font-weight:900;margin-top:2px">0</div>
+          </div>
+          <div class="acta-tipo-card" onclick="filtrarActas('circunstanciada')" id="card-circunstanciada"
+            style="background:linear-gradient(135deg,#1a3a5c,#7c3aed);border-radius:14px;padding:14px 12px;cursor:pointer;text-align:center;transition:.2s">
+            <div style="font-size:1.6rem">📋</div>
+            <div style="color:#fff;font-weight:800;font-size:.88rem;margin-top:4px">Circunstanciada</div>
+            <div id="cnt-circunstanciada" style="color:rgba(255,255,255,.8);font-size:1.4rem;font-weight:900;margin-top:2px">0</div>
+          </div>
+          <div class="acta-tipo-card" onclick="filtrarActas('apercibimiento')" id="card-apercibimiento"
+            style="background:linear-gradient(135deg,#92400e,#d97706);border-radius:14px;padding:14px 12px;cursor:pointer;text-align:center;transition:.2s">
+            <div style="font-size:1.6rem">⚠️</div>
+            <div style="color:#fff;font-weight:800;font-size:.88rem;margin-top:4px">Apercibimiento</div>
+            <div id="cnt-apercibimiento" style="color:rgba(255,255,255,.8);font-size:1.4rem;font-weight:900;margin-top:2px">0</div>
+          </div>
+          <div class="acta-tipo-card" onclick="filtrarActas('sancion')" id="card-sancion"
+            style="background:linear-gradient(135deg,#991b1b,#dc2626);border-radius:14px;padding:14px 12px;cursor:pointer;text-align:center;transition:.2s">
+            <div style="font-size:1.6rem">🚫</div>
+            <div style="color:#fff;font-weight:800;font-size:.88rem;margin-top:4px">Sanción</div>
+            <div id="cnt-sancion" style="color:rgba(255,255,255,.8);font-size:1.4rem;font-weight:900;margin-top:2px">0</div>
+          </div>
+        </div>
+
+        <!-- Filtro activo label -->
+        <div id="actas-filtro-label" style="display:none;margin-bottom:8px;display:flex;align-items:center;gap:8px">
+          <span id="actas-filtro-txt" style="font-size:.8rem;font-weight:700;color:var(--accent)"></span>
+          <button onclick="filtrarActas(null)" style="background:none;border:none;color:var(--muted);font-size:.75rem;cursor:pointer;padding:2px 6px;border-radius:6px;background:#f1f5f9">✕ Ver todas</button>
+        </div>
+
+        <!-- Lista filtrada -->
         <div id="lista-actas">
           <div class="empty"><div class="em-ic">📄</div><p>Las actas generadas aparecerán aquí.</p></div>
         </div>
       </div>
     </div>
 
+
+    <!-- VERIFICACIONES AMBIENTALES -->
+    <div id="screen-verificaciones-insp" class="iscreen">
+      <div class="ipad">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h3 style="margin:0;font-size:1rem;color:#fff">🔍 Mis Verificaciones</h3>
+          <button onclick="cargarVerificacionesInsp()" style="background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:.75rem;cursor:pointer">🔄 Actualizar</button>
+        </div>
+
+        <!-- Filtro -->
+        <div style="margin-bottom:10px">
+          <select id="vinsp-filtro" onchange="cargarVerificacionesInsp()" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-size:.85rem">
+            <option value="">Todas mis verificaciones</option>
+            <option value="programada">📅 Programadas</option>
+            <option value="en_proceso">🔄 En Proceso</option>
+            <option value="completada">✅ Completadas</option>
+          </select>
+        </div>
+
+        <div id="vinsp-lista">
+          <div style="text-align:center;padding:32px;color:rgba(255,255,255,.5)">Cargando...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: REALIZAR VERIFICACIÓN EN CAMPO -->
+    <div id="modal-realizar-ver" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:3000;overflow-y:auto;padding:20px 0">
+      <div style="background:#0d1f35;border-radius:14px;padding:20px;margin:0 12px 40px;max-width:480px;margin-left:auto;margin-right:auto">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 id="mver-titulo" style="margin:0;color:#fff;font-size:.95rem">🔍 Realizar Verificación</h3>
+          <button onclick="cerrarModalRealizarVer()" style="background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer">✕</button>
+        </div>
+
+        <div id="mver-est-info" style="background:rgba(255,255,255,.07);border-radius:8px;padding:12px;margin-bottom:14px;font-size:.82rem;color:rgba(255,255,255,.85);line-height:1.6"></div>
+
+        <!-- Checklist campo -->
+        <div style="margin-bottom:14px">
+          <div style="color:var(--acento);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">✅ Checklist de Verificación</div>
+          <div id="mver-checklist" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto"></div>
+        </div>
+
+        <!-- Hallazgos -->
+        <div style="margin-bottom:12px">
+          <div style="color:var(--acento);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📝 Hallazgos / Observaciones</div>
+          <textarea id="mver-hallazgos" rows="4" placeholder="Describe detalladamente lo que encontraste: permisos presentes, condiciones del local, irregularidades observadas, acciones del responsable..." style="width:100%;padding:10px 12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;font-size:.85rem;resize:vertical"></textarea>
+        </div>
+
+        <!-- Resultado -->
+        <div style="margin-bottom:12px">
+          <div style="color:var(--acento);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">🎯 Resultado General *</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <button onclick="selResultadoVer('cumple')" id="vres-cumple" style="padding:10px 6px;background:rgba(34,197,94,.15);border:2px solid rgba(34,197,94,.3);border-radius:8px;color:#4ade80;font-size:.78rem;font-weight:700;cursor:pointer">✅ Cumple</button>
+            <button onclick="selResultadoVer('cumple_con_observaciones')" id="vres-parcial" style="padding:10px 6px;background:rgba(245,158,11,.1);border:2px solid rgba(245,158,11,.3);border-radius:8px;color:#fbbf24;font-size:.78rem;font-weight:700;cursor:pointer">⚠️ Con Observaciones</button>
+            <button onclick="selResultadoVer('no_cumple')" id="vres-nocumple" style="padding:10px 6px;background:rgba(239,68,68,.1);border:2px solid rgba(239,68,68,.3);border-radius:8px;color:#f87171;font-size:.78rem;font-weight:700;cursor:pointer">❌ No Cumple</button>
+            <button onclick="selResultadoVer('no_aplica')" id="vres-noaplica" style="padding:10px 6px;background:rgba(107,114,128,.1);border:2px solid rgba(107,114,128,.3);border-radius:8px;color:#9ca3af;font-size:.78rem;font-weight:700;cursor:pointer">➖ No Aplica</button>
+          </div>
+          <input type="hidden" id="mver-resultado">
+        </div>
+
+        <!-- Acción sugerida -->
+        <div style="margin-bottom:14px">
+          <div style="color:var(--acento);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">⚖️ Acción Requerida</div>
+          <select id="mver-accion" style="width:100%;padding:8px 12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;font-size:.85rem">
+            <option value="ninguna" style="background:#1a3a5c">✅ Ninguna acción requerida</option>
+            <option value="apercibimiento" style="background:#1a3a5c">📋 Generar Apercibimiento</option>
+            <option value="sancion" style="background:#1a3a5c">⚖️ Iniciar Sanción</option>
+            <option value="seguimiento_30" style="background:#1a3a5c">🔄 Seguimiento en 30 días</option>
+            <option value="seguimiento_15" style="background:#1a3a5c">🔄 Seguimiento en 15 días</option>
+            <option value="clausura" style="background:#1a3a5c">🚫 Clausura temporal</option>
+          </select>
+        </div>
+
+        <input type="hidden" id="mver-id">
+        <div id="mver-alert" style="margin-bottom:8px"></div>
+        <button onclick="enviarVerificacionCampo()" style="width:100%;padding:13px;background:var(--acento);color:#0d1f35;border:none;border-radius:10px;font-size:.95rem;font-weight:800;cursor:pointer">
+          ✅ Completar Verificación
+        </button>
+      </div>
+    </div>
 
     <!-- ACERCA -->
     <div id="screen-acerca" class="iscreen">
@@ -492,10 +695,7 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
 <!-- MODAL NUEVA ACTA (pantalla completa) -->
 <div id="modal-nueva-acta" style="position:fixed;inset:0;z-index:850;background:var(--gris);display:none;flex-direction:column;overflow:hidden">
   <div class="modal-header">
-    <div style="display:flex;flex-direction:column;gap:3px">
-      <h2 style="margin:0">📄 Nueva Acta</h2>
-      <span id="acta-expediente-badge" style="display:none;font-size:.68rem;font-family:monospace;font-weight:800;color:#166534;background:#dcfce7;padding:2px 8px;border-radius:20px;width:fit-content"></span>
-    </div>
+    <h2>📄 Nueva Acta</h2>
     <button onclick="closeNuevaActa()">✕ Cancelar</button>
   </div>
   <div style="flex:1;overflow-y:auto;padding:14px" id="acta-form-body">
@@ -515,6 +715,207 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
 //  IMBIO INSPECTOR — App JavaScript
 // ════════════════════════════════════════════════════════
 // Captura errores globales para evitar recargas
+// ═══════════════════════════════════════════════════════════════
+//  MÓDULO: VERIFICACIONES AMBIENTALES — INSPECTOR
+// ═══════════════════════════════════════════════════════════════
+
+const GIRO_LABELS_INSP = {
+  restaurante:'🍽️ Restaurante', cocina_economica:'🥘 Cocina Económica',
+  taqueria:'🌮 Taquería', panaderia:'🥖 Panadería', carniceria:'🥩 Carnicería',
+  taller_mecanico:'🔧 Taller Mecánico', taller_hojalateria:'🚗 Hojalatería',
+  taller_carpinteria:'🪚 Carpintería', taller_soldadura:'⚡ Soldadura',
+  lavanderia:'👕 Lavandería', car_wash:'🚿 Car Wash', gasolinera:'⛽ Gasolinera',
+  tlapaleria:'🪣 Tlapalería', ferreteria:'🔩 Ferretería',
+  veterinaria:'🐾 Veterinaria', criadero_animales:'🐕 Criadero',
+  bar:'🍺 Bar/Cantina', salon_eventos:'🎉 Salón de Eventos',
+  hotel:'🏨 Hotel/Motel', fabrica:'🏭 Fábrica', clinica:'🏥 Clínica',
+  escuela:'🏫 Escuela', otro:'📌 Otro'
+};
+
+const ITEM_LABELS_INSP = {
+  licencia_vigente:'Licencia de funcionamiento vigente',
+  dictamen_ambiental:'Dictamen ambiental municipal',
+  contenedores_residuos:'Contenedores de residuos adecuados',
+  separacion_residuos:'Separación orgánicos/inorgánicos',
+  trampa_grasas:'Trampa de grasas',
+  descarga_aguas:'Descarga de aguas controlada',
+  nivel_ruido:'Nivel de ruido dentro de norma',
+  emisiones_aire:'Sin emisiones contaminantes',
+  almacen_productos:'Almacenamiento de productos peligrosos',
+  areas_verdes_predio:'Áreas verdes del predio',
+  fauna_control:'Control de fauna nociva',
+  senaletica:'Señalética ambiental visible',
+  uso_suelo:'Uso de suelo conforme',
+  proteccion_civil:'Protección Civil al corriente'
+};
+
+let _verResultadoSel = '';
+
+async function cargarVerificacionesInsp() {
+  const estado = document.getElementById('vinsp-filtro')?.value || '';
+  let url = '/api/verificaciones?';
+  if (estado) url += '&estado=' + estado;
+  const r = await api(url);
+  const lista = document.getElementById('vinsp-lista');
+  if (!lista) return;
+  if (!r || !r.success) {
+    lista.innerHTML = '<div style="text-align:center;padding:24px;color:rgba(255,255,255,.4)">Error al cargar verificaciones.</div>';
+    return;
+  }
+  const vers = r.data.verificaciones;
+  if (!vers.length) {
+    lista.innerHTML = '<div style="text-align:center;padding:32px;color:rgba(255,255,255,.4)">No tienes verificaciones asignadas.</div>';
+    return;
+  }
+  const EST_COLORS = { programada:'#60a5fa', en_proceso:'#fbbf24', completada:'#4ade80', cancelada:'#9ca3af' };
+  const EST_LABELS = { programada:'📅 Programada', en_proceso:'🔄 En Proceso', completada:'✅ Completada', cancelada:'❌ Cancelada' };
+  lista.innerHTML = vers.map(v => `
+    <div style="background:rgba(255,255,255,.06);border-radius:12px;margin-bottom:10px;overflow:hidden;border-left:3px solid ${EST_COLORS[v.estado]||'#888'}">
+      <div style="padding:12px 14px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+          <div style="font-family:monospace;font-size:.75rem;font-weight:700;color:var(--acento)">${v.folio}</div>
+          <span style="background:${EST_COLORS[v.estado]||'#888'}22;color:${EST_COLORS[v.estado]||'#888'};padding:2px 8px;border-radius:99px;font-size:.7rem;font-weight:700">${EST_LABELS[v.estado]||v.estado}</span>
+        </div>
+        <div style="font-weight:700;color:#fff;font-size:.9rem">${v.establecimiento_nombre||'–'}</div>
+        <div style="font-size:.78rem;color:rgba(255,255,255,.55);margin-top:2px">${GIRO_LABELS_INSP[v.establecimiento_giro]||v.establecimiento_giro||''}</div>
+        <div style="font-size:.78rem;color:rgba(255,255,255,.5);margin-top:3px">📍 ${v.establecimiento_domicilio||'–'}</div>
+        ${v.fecha_programada ? `<div style="font-size:.78rem;color:rgba(255,255,255,.5);margin-top:2px">📅 ${new Date(v.fecha_programada+'T00:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}</div>` : ''}
+        ${v.motivo ? `<div style="font-size:.78rem;color:rgba(255,255,255,.4);margin-top:4px;font-style:italic">"${v.motivo.substring(0,80)}${v.motivo.length>80?'...':''}"</div>` : ''}
+      </div>
+      ${v.estado !== 'completada' && v.estado !== 'cancelada' ? `
+      <div style="padding:8px 14px;background:rgba(0,0,0,.2);border-top:1px solid rgba(255,255,255,.06)">
+        <button onclick="abrirRealizarVerificacion(${v.id})"
+          style="width:100%;padding:10px;background:var(--acento);color:#0d1f35;border:none;border-radius:8px;font-size:.85rem;font-weight:800;cursor:pointer">
+          🔍 Iniciar Verificación en Campo
+        </button>
+      </div>` : `
+      <div style="padding:8px 14px;background:rgba(0,0,0,.2);border-top:1px solid rgba(255,255,255,.06)">
+        <button onclick="verDetalleVerificacionInsp(${v.id})"
+          style="width:100%;padding:8px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15);border-radius:8px;font-size:.82rem;cursor:pointer">
+          👁️ Ver Resultado
+        </button>
+      </div>`}
+    </div>`).join('');
+}
+
+async function abrirRealizarVerificacion(vid) {
+  const r = await api('/api/verificaciones/' + vid);
+  if (!r || !r.success) { alert('No se pudo cargar la verificación.'); return; }
+  const ver = r.data.verificacion;
+  document.getElementById('mver-id').value = vid;
+  document.getElementById('mver-titulo').textContent = '🔍 ' + (ver.establecimiento_nombre||'Verificación');
+  document.getElementById('mver-est-info').innerHTML =
+    `<b>🏪 ${ver.establecimiento_nombre}</b><br>` +
+    `<span style="color:rgba(255,255,255,.7)">🏷️ ${GIRO_LABELS_INSP[ver.establecimiento_giro]||ver.establecimiento_giro||'–'}</span><br>` +
+    `<span style="color:rgba(255,255,255,.6)">📍 ${ver.establecimiento_domicilio||'–'}</span>` +
+    (ver.motivo ? `<br><span style="color:rgba(255,255,255,.5);font-style:italic">📝 ${ver.motivo}</span>` : '');
+  // Checklist
+  const ckDiv = document.getElementById('mver-checklist');
+  _verResultadoSel = '';
+  document.getElementById('mver-resultado').value = '';
+  ['vres-cumple','vres-parcial','vres-nocumple','vres-noaplica'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.style.opacity = '0.6';
+  });
+  if (ver.checklist && ver.checklist.length) {
+    ckDiv.innerHTML = ver.checklist.map(ck => `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,.05);border-radius:8px">
+        <div style="display:flex;gap:4px">
+          <button onclick="setCkResult(this,'cumple')" data-item="${ck.item}" data-val="cumple"
+            style="padding:3px 7px;border-radius:4px;border:1px solid rgba(74,222,128,.4);background:${ck.resultado==='cumple'?'rgba(74,222,128,.3)':'transparent'};color:#4ade80;font-size:.7rem;cursor:pointer">✅</button>
+          <button onclick="setCkResult(this,'no_cumple')" data-item="${ck.item}" data-val="no_cumple"
+            style="padding:3px 7px;border-radius:4px;border:1px solid rgba(248,113,113,.4);background:${ck.resultado==='no_cumple'?'rgba(248,113,113,.3)':'transparent'};color:#f87171;font-size:.7rem;cursor:pointer">❌</button>
+          <button onclick="setCkResult(this,'no_aplica')" data-item="${ck.item}" data-val="no_aplica"
+            style="padding:3px 7px;border-radius:4px;border:1px solid rgba(156,163,175,.3);background:${ck.resultado==='no_aplica'?'rgba(156,163,175,.2)':'transparent'};color:#9ca3af;font-size:.7rem;cursor:pointer">➖</button>
+        </div>
+        <span style="font-size:.8rem;color:rgba(255,255,255,.8);line-height:1.3">${ITEM_LABELS_INSP[ck.item]||ck.item}</span>
+      </div>`).join('');
+  } else {
+    ckDiv.innerHTML = '<div style="color:rgba(255,255,255,.4);font-size:.82rem;padding:8px">Sin checklist definido para esta verificación.</div>';
+  }
+  document.getElementById('mver-hallazgos').value = ver.hallazgos || '';
+  document.getElementById('mver-accion').value = ver.accion_requerida || 'ninguna';
+  document.getElementById('mver-alert').innerHTML = '';
+  document.getElementById('modal-realizar-ver').style.display = 'block';
+}
+
+function setCkResult(btn, val) {
+  const item = btn.dataset.item;
+  // Desactivar otros botones del mismo item
+  document.querySelectorAll(`[data-item="${item}"]`).forEach(b => {
+    const isActive = b.dataset.val === val;
+    if (b.dataset.val === 'cumple')    b.style.background = isActive ? 'rgba(74,222,128,.3)' : 'transparent';
+    if (b.dataset.val === 'no_cumple') b.style.background = isActive ? 'rgba(248,113,113,.3)' : 'transparent';
+    if (b.dataset.val === 'no_aplica') b.style.background = isActive ? 'rgba(156,163,175,.2)' : 'transparent';
+  });
+}
+
+function selResultadoVer(val) {
+  _verResultadoSel = val;
+  document.getElementById('mver-resultado').value = val;
+  const colorMap = { cumple:'rgba(74,222,128,.4)', cumple_con_observaciones:'rgba(251,191,36,.4)', no_cumple:'rgba(248,113,113,.4)', no_aplica:'rgba(156,163,175,.3)' };
+  const idMap = { cumple:'vres-cumple', cumple_con_observaciones:'vres-parcial', no_cumple:'vres-nocumple', no_aplica:'vres-noaplica' };
+  Object.keys(idMap).forEach(k => {
+    const btn = document.getElementById(idMap[k]);
+    if (btn) btn.style.background = k === val ? colorMap[k] : 'rgba(255,255,255,.05)';
+    if (btn) btn.style.opacity = '1';
+  });
+}
+
+function cerrarModalRealizarVer() {
+  document.getElementById('modal-realizar-ver').style.display = 'none';
+}
+
+async function enviarVerificacionCampo() {
+  const vid      = document.getElementById('mver-id').value;
+  const resultado = document.getElementById('mver-resultado').value;
+  const hallazgos = document.getElementById('mver-hallazgos').value.trim();
+  const alertEl   = document.getElementById('mver-alert');
+  if (!resultado) {
+    alertEl.innerHTML = '<div style="background:rgba(239,68,68,.2);color:#f87171;padding:8px 12px;border-radius:6px;font-size:.82rem;margin-bottom:4px">⚠️ Selecciona el resultado general.</div>';
+    return;
+  }
+  if (hallazgos.length < 10) {
+    alertEl.innerHTML = '<div style="background:rgba(239,68,68,.2);color:#f87171;padding:8px 12px;border-radius:6px;font-size:.82rem;margin-bottom:4px">⚠️ Describe los hallazgos encontrados (mínimo 10 caracteres).</div>';
+    return;
+  }
+  // Recoger checklist
+  const ckItems = {};
+  document.querySelectorAll('[data-item][data-val]').forEach(btn => {
+    const bg = btn.style.background;
+    if (bg && bg !== 'transparent' && !bg.includes('0.05')) {
+      ckItems[btn.dataset.item] = btn.dataset.val;
+    }
+  });
+  const checklist = Object.entries(ckItems).map(([item, resultado_ck]) => ({ item, resultado: resultado_ck }));
+  const body = {
+    estado: 'completada',
+    resultado,
+    hallazgos,
+    accion_requerida:  document.getElementById('mver-accion').value,
+    checklist: checklist.length ? checklist : undefined,
+    fecha_realizacion: new Date().toISOString()
+  };
+  const btn = document.querySelector('#modal-realizar-ver button:last-child');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Guardando...'; }
+  const r = await api('/api/verificaciones/' + vid, 'PATCH', body);
+  if (btn) { btn.disabled = false; btn.textContent = '✅ Completar Verificación'; }
+  if (r && r.success) {
+    cerrarModalRealizarVer();
+    cargarVerificacionesInsp();
+    const res_labels = { cumple:'✅ CUMPLE', cumple_con_observaciones:'⚠️ CUMPLE CON OBSERVACIONES', no_cumple:'❌ NO CUMPLE', no_aplica:'➖ NO APLICA' };
+    alert('✅ Verificación completada exitosamente.\nResultado: ' + (res_labels[resultado]||resultado));
+  } else {
+    alertEl.innerHTML = '<div style="background:rgba(239,68,68,.2);color:#f87171;padding:8px 12px;border-radius:6px;font-size:.82rem">Error: ' + (r && r.message ? r.message : 'Error de conexión') + '</div>';
+  }
+}
+
+function verDetalleVerificacionInsp(vid) {
+  // Reutiliza la función de abrir para modo solo lectura
+  abrirRealizarVerificacion(vid);
+}
+
+
 window.onerror = function(msg, src, line, col, err) {
   console.error("IMBIO Error:", msg, "linea:", line);
   // Mostrar error visible en pantalla (ayuda a depurar en celular)
@@ -552,20 +953,56 @@ window.addEventListener('load', () => {
     s.onerror = function() { console.warn('[IMBIO] Leaflet no disponible'); };
     document.head.appendChild(s);
   }
-  setTimeout(() => {
+  setTimeout(async () => {
     console.log('[IMBIO] Iniciando app...');
     document.getElementById('splash').classList.add('hide');
     const saved = localStorage.getItem('imbio_inspector_token');
     const savedUser = localStorage.getItem('imbio_inspector_user');
     if (saved && savedUser) {
-      TOKEN = saved;
-      USER  = JSON.parse(savedUser);
-      showApp();
-    } else {
-      document.getElementById('login-screen').classList.add('show');
+      try {
+        const r = await fetch(SERVER_URL + '/api/auth/me', {
+          headers: { 'Authorization': 'Bearer ' + saved },
+          signal: AbortSignal.timeout(8000)
+        });
+        if (r.ok) {
+          const d = await r.json();
+          if (d.success && d.data) {
+            TOKEN = saved;
+            USER = d.data;
+            showApp();
+            return;
+          }
+        }
+      } catch (e) { console.warn('[IMBIO] Validación token:', e); }
+      localStorage.removeItem('imbio_inspector_token');
+      localStorage.removeItem('imbio_inspector_user');
+      TOKEN = null; USER = null;
     }
+    document.getElementById('login-screen').classList.add('show');
+    wakeUpServerInsp();
   }, 1500);
 });
+
+// ── Despertar servidor (Railway cold start) ─────────────────────
+function setLoginStatusInsp(msg, isError) {
+  var el = document.getElementById('login-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+  el.style.background = isError ? '#fee2e2' : '#E8F1FB';
+  el.style.borderColor = isError ? '#fca5a5' : '#B3CFF0';
+}
+async function wakeUpServerInsp() {
+  var loginEl = document.getElementById('login-screen');
+  if (!loginEl || !loginEl.classList.contains('show')) return;
+  setLoginStatusInsp('⏳ Conectando con el servidor… (puede tardar hasta 1 min en Railway)', false);
+  try {
+    await fetch((typeof SERVER_URL !== 'undefined' ? SERVER_URL : '') + '/health', { method: 'GET', signal: AbortSignal.timeout(65000) });
+    setLoginStatusInsp('✅ Conectado. Introduce usuario y contraseña.', false);
+  } catch (e) {
+    setLoginStatusInsp('❌ Sin conexión. Espera 1 min, recarga (F5) e intenta de nuevo.', true);
+  }
+}
 
 // ── LOGIN ────────────────────────────────────────────────
 async function doLogin() {
@@ -580,11 +1017,12 @@ async function doLogin() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
-      signal: AbortSignal.timeout(20000)
+      signal: AbortSignal.timeout(55000)
     });
-    const d = await r.json();
+    var d = null;
+    try { d = await r.json(); } catch (_) { d = { success: false, message: 'Respuesta inválida del servidor' }; }
     showLoading(false);
-    if (!d.success) { errEl.textContent = d.message || 'Credenciales incorrectas.'; return; }
+    if (!d || !d.success) { errEl.textContent = (d && d.message) || 'Credenciales incorrectas.'; return; }
     TOKEN = d.data.token;
     USER  = d.data.usuario;
     localStorage.setItem('imbio_inspector_token', TOKEN);
@@ -593,7 +1031,9 @@ async function doLogin() {
     showApp();
   } catch(e) {
     showLoading(false);
-    errEl.textContent = 'Sin conexión al servidor. Verifica la URL.';
+    errEl.textContent = (e.name === 'TimeoutError' || e.name === 'AbortError')
+      ? 'El servidor no respondió a tiempo. Espera 1 minuto, recarga y vuelve a intentar.'
+      : 'Sin conexión al servidor. Verifica la URL.';
   }
 }
 document.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
@@ -604,6 +1044,7 @@ function doLogout() {
   localStorage.removeItem('imbio_inspector_user');
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-screen').classList.add('show');
+  wakeUpServerInsp();
 }
 
 function showApp() {
@@ -617,15 +1058,17 @@ function showApp() {
 
 // ── TABS ─────────────────────────────────────────────────
 function setTab(name) {
-  ['asignados','proceso','actas-list','acerca'].forEach(t => {
+  if (name === 'actas-list') { window._actasFiltro = null; }
+  ['asignados','proceso','actas-list','acerca','verificaciones-insp'].forEach(t => {
     document.getElementById('screen-' + t)?.classList.toggle('active', t === name);
-    const tabId = t === 'actas-list' ? 'actas' : t;
+    const tabId = t === 'actas-list' ? 'actas' : t === 'verificaciones-insp' ? 'verificaciones' : t;
     document.getElementById('tab-' + tabId)?.classList.toggle('active', t === name);
   });
-  if (name === 'asignados')  loadReportes('asignado');
-  if (name === 'proceso')    loadReportes('en_proceso');
-  if (name === 'actas-list') renderMisActas();
-  if (name === 'acerca')     initAcerca();
+  if (name === 'asignados')           loadReportes('asignado');
+  if (name === 'proceso')             loadReportes('en_proceso');
+  if (name === 'actas-list')          renderMisActas();
+  if (name === 'acerca')              initAcerca();
+  if (name === 'verificaciones-insp') cargarVerificacionesInsp();
 }
 
 // ── CONEXIÓN ─────────────────────────────────────────────
@@ -686,78 +1129,136 @@ async function loadReportes(estado) {
 }
 
 function repCard(rep) {
-  const asig = rep.asignacion;
-  const t = rep.tipo || '';
-  const esArbolTec = ['poda_arbol','derribo_arbol','corte_arbol','arbol_riesgo'].includes(t);
-  const esAV       = t === 'areas_verdes';
-  const esAnimal   = ['perro_agresivo','animal_calle','animal_maltrato','fauna_silvestre','animal_abandonado'].includes(t);
-  const esAmbiental= !esArbolTec && !esAV && !esAnimal;
-  const cerrado    = rep.estado === 'cerrado';
+  const t        = rep.tipo || '';
+  const estado   = rep.estado || '';
+  const cerrado  = estado === 'cerrado';
+  const asig     = rep.asignacion;
 
-  // ── Botones según tipo ──────────────────────────────────────
+  // ── Clasificar tipo de registro ──────────────────────────────────
+  // Tipos que solo usan Acta de Inspección propia
+  const TIPOS_INSPECCION_SIMPLE = [
+    'poda_arbol','derribo_arbol','corte_arbol','arbol_riesgo',   // arbolado técnico
+    'perro_agresivo','animal_calle','animal_maltrato',            // animales agresivos / calle
+    'fauna_silvestre','animal_abandonado'
+  ];
+  const esAV              = t === 'areas_verdes';
+  const esInspeccionSimple = TIPOS_INSPECCION_SIMPLE.includes(t);
+  const esDenunciaGeneral = !esAV && !esInspeccionSimple;        // resto → flujo completo
+
+  // ── Badge de estado ───────────────────────────────────────────────
+  const ESTADO_LABELS = {
+    asignado: '📬 Asignado', en_inspeccion: '🔍 En Inspección',
+    en_proceso: '🔄 En Proceso', pendiente_medida: '⚠️ Pendiente Medida',
+    apercibido: '📋 Apercibido', sancionado: '🚫 Sancionado',
+    cerrado: '✅ Cerrado', reportado: '📩 Reportado'
+  };
+  const badgeLabel = ESTADO_LABELS[estado] || estado.replace(/_/g,' ');
+
+  // ── LÓGICA DE BOTONES ─────────────────────────────────────────────
   let btnAccion = '';
+
   if (!cerrado) {
-    if (esArbolTec) {
-      // Arbol técnico: solo inspección → cerrar
-      if (rep.estado === 'asignado') {
-        btnAccion = `<button class="ibtn ibtn-warning ibtn-sm" onclick="event.stopPropagation();cambiarEstado(${rep.id},'en_inspeccion')">🔍 Iniciar Inspección</button>`;
-      } else if (rep.estado === 'en_inspeccion' || rep.estado === 'en_proceso') {
-        btnAccion = `<button class="ibtn ibtn-acento ibtn-sm" onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','inspeccion')">🌳 Llenar Inspección</button>
-                     <button class="ibtn ibtn-success ibtn-sm" onclick="event.stopPropagation();confirmarCierre(${rep.id},'${rep.folio}')">✅ Cerrar</button>`;
-      }
-    } else if (esAV) {
-      // Áreas verdes: reporte de intervención → cerrar
-      if (rep.estado === 'asignado') {
-        btnAccion = `<button class="ibtn ibtn-warning ibtn-sm" onclick="event.stopPropagation();cambiarEstado(${rep.id},'en_proceso')">🌿 Iniciar Intervención</button>`;
-      } else if (rep.estado === 'en_proceso') {
-        btnAccion = `<button class="ibtn" style="background:#16a34a;color:#fff;font-size:.75rem;padding:6px 10px;border-radius:8px;font-weight:700" onclick="event.stopPropagation();abrirIntervencionAV(${rep.id},'${rep.folio}')">🌿 Registrar Actividades</button>
-                     <button class="ibtn ibtn-success ibtn-sm" onclick="event.stopPropagation();confirmarCierre(${rep.id},'${rep.folio}')">✅ Cerrar</button>`;
-      }
-    } else if (esAnimal) {
-      // Animal: inspección con acta
-      if (rep.estado === 'asignado') {
-        btnAccion = `<button class="ibtn ibtn-warning ibtn-sm" onclick="event.stopPropagation();cambiarEstado(${rep.id},'en_inspeccion')">🔍 Iniciar</button>`;
+
+    // ── ASIGNADO: cualquier tipo → un solo botón "Iniciar" ──────────
+    if (estado === 'asignado') {
+      const nuevoEstado = esAV ? 'en_proceso' : 'en_inspeccion';
+      btnAccion = `<button class="ibtn ibtn-warning ibtn-sm" style="width:100%"
+        onclick="event.stopPropagation();iniciarRegistro(${rep.id},'${nuevoEstado}')">
+        ▶ Iniciar
+      </button>`;
+
+    // ── EN PROCESO / EN INSPECCIÓN: mostrar opciones de actas ───────
+    } else if (['en_proceso','en_inspeccion'].includes(estado)) {
+
+      if (esAV) {
+        // Áreas verdes: solo registro de intervención
+        btnAccion = `
+          <button class="ibtn ibtn-sm" style="background:#16a34a;color:#fff;width:100%"
+            onclick="event.stopPropagation();abrirIntervencionAV(${rep.id},'${rep.folio}')">
+            🌿 Registrar Intervención
+          </button>`;
+
+      } else if (esInspeccionSimple) {
+        // Arbolado técnico / animales: solo Acta de Inspección
+        btnAccion = `
+          <button class="ibtn ibtn-acento ibtn-sm" style="width:100%"
+            onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','inspeccion')">
+            🔍 Levantar Acta de Inspección
+          </button>`;
+
       } else {
-        btnAccion = `<button class="ibtn ibtn-acento ibtn-sm" onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','inspeccion')">📄 Levantar Acta</button>
-                     ${['apercibido','sancionado','en_proceso'].includes(rep.estado)?`<button class="ibtn ibtn-success ibtn-sm" onclick="event.stopPropagation();confirmarCierre(${rep.id},'${rep.folio}')">✅ Cerrar</button>`:''}`;
+        // Denuncia / trámite general: tres opciones
+        btnAccion = `
+          <div style="display:flex;flex-direction:column;gap:5px;width:100%">
+            <div style="font-size:.68rem;color:var(--muted);font-weight:700;text-align:center;margin-bottom:2px">
+              📄 Selecciona el tipo de acta
+            </div>
+            <button class="ibtn ibtn-sm" style="background:#1e3a8a;color:#fff;font-size:.75rem;padding:8px"
+              onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','circunstanciada')">
+              📋 Acta Circunstanciada
+            </button>
+            <button class="ibtn ibtn-sm" style="background:#92400e;color:#fff;font-size:.75rem;padding:8px"
+              onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','apercibimiento')">
+              ⚠️ Acta de Apercibimiento
+            </button>
+            <button class="ibtn ibtn-sm" style="background:#991b1b;color:#fff;font-size:.75rem;padding:8px"
+              onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','sancion')">
+              🚫 Acta de Sanción
+            </button>
+          </div>`;
       }
-    } else {
-      // Ambiental: flujo completo de actas administrativas
-      if (rep.estado === 'asignado') {
-        btnAccion = `<button class="ibtn ibtn-warning ibtn-sm" onclick="event.stopPropagation();cambiarEstado(${rep.id},'en_inspeccion')">🔍 Iniciar Inspección</button>`;
-      } else if (['en_inspeccion','en_proceso'].includes(rep.estado)) {
-        btnAccion = `<button class="ibtn ibtn-acento ibtn-sm" onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}')">📄 Levantar Acta</button>`;
-      } else if (rep.estado === 'pendiente_medida') {
-        btnAccion = `<button class="ibtn ibtn-warning ibtn-sm" style="background:#b45309" onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','apercibimiento')">⚠️ Apercibimiento</button>
-                     <button class="ibtn ibtn-danger ibtn-sm" onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','sancion')">🚫 Sanción</button>`;
-      } else if (['apercibido','sancionado'].includes(rep.estado)) {
-        btnAccion = `<button class="ibtn ibtn-success ibtn-sm" onclick="event.stopPropagation();confirmarCierre(${rep.id},'${rep.folio}')">✅ Cerrar Caso</button>`;
-      }
+
+    // ── PENDIENTE DE MEDIDA: apercibimiento o sanción ───────────────
+    } else if (estado === 'pendiente_medida') {
+      btnAccion = `
+        <div style="display:flex;flex-direction:column;gap:5px;width:100%">
+          <div style="font-size:.68rem;color:#92400e;font-weight:700;text-align:center;margin-bottom:2px">
+            ⚠️ Pendiente — elige la medida
+          </div>
+          <button class="ibtn ibtn-sm" style="background:#92400e;color:#fff;font-size:.75rem;padding:8px"
+            onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','apercibimiento')">
+            ⚠️ Acta de Apercibimiento
+          </button>
+          <button class="ibtn ibtn-sm" style="background:#991b1b;color:#fff;font-size:.75rem;padding:8px"
+            onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','sancion')">
+            🚫 Acta de Sanción
+          </button>
+        </div>`;
+
+    // ── APERCIBIDO / SANCIONADO: cerrar caso ────────────────────────
+    } else if (['apercibido','sancionado'].includes(estado)) {
+      btnAccion = `<button class="ibtn ibtn-success ibtn-sm" style="width:100%"
+        onclick="event.stopPropagation();confirmarCierre(${rep.id},'${rep.folio}')">
+        ✅ Cerrar Caso
+      </button>`;
     }
   }
 
-  return `<div class="icard rep-card est-${rep.estado}" onclick="verDetalle(${rep.id})">
+  // ── CARD HTML ─────────────────────────────────────────────────────
+  return `<div class="icard rep-card est-${estado}" onclick="verDetalle(${rep.id})">
     <div class="icard-head">
       <div>
         <div class="rep-folio">${rep.folio}</div>
-        <div class="rep-tipo">${tipoLabel(rep.tipo)}</div>
+        <div class="rep-tipo">${tipoLabel(t)}</div>
       </div>
-      <span class="est-badge est-${rep.estado}">${{ en_inspeccion:'En Inspección', pendiente_medida:'⚠️ Pendiente Medida', apercibido:'Apercibido', sancionado:'Sancionado', asignado:'Asignado', en_proceso:'En Proceso', cerrado:'Cerrado', reportado:'Reportado' }[rep.estado] || rep.estado.replace('_',' ')}</span>
+      <span class="est-badge est-${estado}">${badgeLabel}</span>
     </div>
     <div class="icard-body">
-      <div class="rep-desc">${rep.descripcion}</div>
+      <div class="rep-desc">${rep.descripcion || ''}</div>
       <div class="rep-meta">
-        <span>📍 ${rep.colonia}</span>
+        <span>📍 ${rep.colonia || ''}</span>
         ${asig ? `<span>👷 ${asig.inspector}</span>` : ''}
         <span>📅 ${fmtFecha(rep.fecha_creacion)}</span>
       </div>
     </div>
-    <div class="icard-foot">
-      <button class="ibtn ibtn-primary ibtn-sm" onclick="event.stopPropagation();verDetalle(${rep.id})">👁 Ver</button>
+    <div class="icard-foot" style="flex-direction:column;align-items:stretch;gap:6px;padding:10px 12px">
+      <button class="ibtn ibtn-primary ibtn-sm" style="width:100%"
+        onclick="event.stopPropagation();verDetalle(${rep.id})">👁 Ver Detalle</button>
       ${btnAccion}
     </div>
   </div>`;
 }
+
 
 // ── DETALLE ───────────────────────────────────────────────
 async function verDetalle(id) {
@@ -991,6 +1492,23 @@ async function cambiarEstado(id, estado) {
   } else alert(r.message);
 }
 
+// ── Iniciar registro: cambia estado Y navega a "En Proceso" ──────────────
+async function iniciarRegistro(id, nuevoEstado) {
+  showLoading(true);
+  const r = await api(`/api/reports/${id}`, 'PATCH', { estado: nuevoEstado });
+  showLoading(false);
+  if (r.success) {
+    // Navegar automáticamente a la pestaña "En Proceso"
+    setTab('proceso');
+    // Mostrar toast de confirmación
+    if (typeof showToast === 'function') {
+      showToast('Registro iniciado — selecciona el tipo de acta a levantar', 'ok');
+    }
+  } else {
+    alert(r.message || 'No se pudo iniciar el registro.');
+  }
+}
+
 // ── NUEVA ACTA ────────────────────────────────────────────
 let tipoActaSel = 'circunstanciada';
 
@@ -1082,13 +1600,6 @@ async function abrirNuevaActa(reportId, folio, tipoInicial) {
   s('acta-report-id', reportId);
   s('acta-report-folio', folio);
   si('acta-alert', '');
-  // Mostrar número de expediente en el formulario
-  var _repForExp = (window._reportesCache||[]).find(function(r){ return String(r.id)===String(reportId); });
-  var _expBadge = document.getElementById('acta-expediente-badge');
-  if (_expBadge && _repForExp && _repForExp.expediente) {
-    _expBadge.textContent = _repForExp.expediente;
-    _expBadge.style.display = 'inline-block';
-  } else if (_expBadge) { _expBadge.style.display = 'none'; }
   var inspEl = document.getElementById('acta-inspector') || document.getElementById('acta-firmante');
   if (inspEl) inspEl.value = USER.nombre || USER.username || '';
   var now = new Date();
@@ -1119,6 +1630,25 @@ async function abrirNuevaActa(reportId, folio, tipoInicial) {
   actaFotos = [];
   renderFotosGrid();
   clearSig();
+
+  // ── Heredar datos del registro original ────────────────────────
+  var _repOrigen = (window._reportesCache || []).find(function(r){
+    return String(r.id) === String(reportId);
+  }) || {};
+  // Pre-fill desde el reporte origen
+  if (_repOrigen.id) {
+    s('acta-infractor',    _repOrigen.solicitante || _repOrigen.nombre_reportante || '');
+    s('acta-domicilio',    _repOrigen.domicilio   || _repOrigen.colonia || '');
+    s('acta-descripcion',  _repOrigen.descripcion || '');
+    if (_repOrigen.lat)   { s('acta-lat', _repOrigen.lat); s('acta-lon', _repOrigen.lon); }
+    // GPS bar
+    if (_repOrigen.lat) {
+      var bar = document.getElementById('acta-coords-bar');
+      if (bar) bar.textContent = '📍 ' + _repOrigen.lat + ', ' + _repOrigen.lon;
+    }
+    // Motivo desde tipo de reporte
+    if (!s._motivo) s('acta-motivo', tipoLabel ? (tipoLabel(_repOrigen.tipo)||'') : (_repOrigen.tipo||''));
+  }
 
   // ── Cargar actas previas y precargar datos ──────────────────
   await cargarActasPrevias(reportId);
@@ -1153,20 +1683,17 @@ async function abrirNuevaActa(reportId, folio, tipoInicial) {
   var _esAmbiental = !_esArbolTec && !_esAV && !_esAnimal;
 
   // Grid de chips — solo mostrar para ambientales
-  var chipGrid = document.querySelector('.tipo-acta-grid');
-  var chipTitle = document.querySelector('[id="acta-tipo-guia"]')?.parentElement?.querySelector('.section-title');
-  var guiaDiv = document.getElementById('acta-tipo-guia');
+  var chipGrid  = document.querySelector('.tipo-acta-grid');
+  var chipTitle = null;  // removed
+  var guiaDiv   = document.getElementById('acta-tipo-badge');
 
   // Find section title for tipo de acta
   var tipoSection = document.querySelector('#acta-form-dynamic .section-title');
 
+  // Siempre ocultar el selector de tipo (se selecciona desde el repCard)
+  if (chipGrid) chipGrid.style.display = 'none';
+
   if (_esArbolTec) {
-    // Árbol técnico: ocultar toda la sección de tipo de acta
-    if (chipGrid) chipGrid.style.display = 'none';
-    if (guiaDiv)  { guiaDiv.style.display = 'none'; }
-    // Hide the "1. Tipo de Acta" section title
-    var secTitles = document.querySelectorAll('#acta-form-dynamic .section-title');
-    if (secTitles && secTitles[0]) secTitles[0].style.display = 'none';
     selTipoActa('inspeccion');
   } else if (_esAV) {
     // Áreas verdes: ocultar chips de actas
@@ -1174,14 +1701,34 @@ async function abrirNuevaActa(reportId, folio, tipoInicial) {
     if (guiaDiv)  guiaDiv.innerHTML = '🌿 <b>Intervención en área verde</b> — Registre las actividades de mantenimiento realizadas.';
     selTipoActa('inspeccion');
   } else {
-    // Ambiental / animal: mostrar todos los chips
-    if (chipGrid) chipGrid.style.display = '';
-    if (guiaDiv)  { guiaDiv.style.display = ''; guiaDiv.innerHTML = '<b>Flujo:</b> Toda intervención inicia con <b>Inspección</b> → según hallazgos: <b>Circunstanciada</b> → <b>Apercibimiento</b> → <b>Sanción</b>'; }
     selTipoActa(_tipoActaFinal || tipoInicial || 'circunstanciada');
   }
 
   document.getElementById('modal-nueva-acta').style.display = 'flex';
-  initSig();
+  // Esperar a que el modal tenga dimensiones reales antes de inicializar canvas
+  requestAnimationFrame(function() {
+    setTimeout(function() {
+      // Firma del inspector
+      var sc = document.getElementById('sig-inspector');
+      if (sc) {
+        sc.width  = sc.offsetWidth  || (sc.parentElement ? sc.parentElement.offsetWidth : 300);
+        sc.height = 110;
+        window.sigCanvas = sc;
+        window.sigCtx    = sc.getContext('2d');
+        sigCtx.strokeStyle = '#1a3a5c'; sigCtx.lineWidth = 2.5;
+        sigCtx.lineCap = 'round'; sigCtx.lineJoin = 'round';
+        // Re-attach touch/mouse events by calling initSig
+        initSig();
+      }
+      // Firma del visitado
+      var sv = document.getElementById('sig-visitado');
+      if (sv) {
+        sv.width  = sv.offsetWidth  || (sv.parentElement ? sv.parentElement.offsetWidth : 300);
+        sv.height = 90;
+        if (typeof initSigExtra === 'function') initSigExtra(sv);
+      }
+    }, 100);
+  });
   // Obtener GPS automáticamente al abrir
   obtenerGPSActa();
   // Actualizar contexto de Matlacho
@@ -1463,7 +2010,6 @@ async function enviarActa() {
   }
   var obsStr = [observ, plazo?'Plazo: '+plazo:''].filter(Boolean).join(' | ');
   formData.append('observaciones', obsStr);
-  if (plazo) formData.append('plazo', plazo);  // Campo separado para cálculo de vencimiento
   if (lat) formData.append('lat_acta', lat);
   if (lon) formData.append('lon_acta', lon);
   if (nuevoEst) formData.append('nuevo_estado', nuevoEst);
@@ -1918,10 +2464,7 @@ function _buildActaForm() {
     <input type="hidden" id="acta-report-folio">
 
     <!-- ── TIPO DE ACTA ── -->
-    <div class="section-title" style="background:#003B7A">📋 1. Tipo de Acta Administrativa</div>
-    <div id="acta-tipo-guia" style="background:#EEF5FC;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:.78rem;color:#1a3a5c;line-height:1.5">
-      <b>Flujo:</b> Toda intervención inicia con <b>Inspección</b> → según hallazgos: <b>Circunstanciada</b> (documentar hechos) → <b>Apercibimiento</b> (irregularidad corregible) → <b>Sanción</b> (infracción / reincidencia)
-    </div>
+    <div id="acta-tipo-badge" style="display:none"></div>
     <div class="tipo-acta-grid">
       <div class="ta-chip" onclick="selTipoActa('inspeccion')" id="ta-inspeccion">
         <span class="ta-ic">🔍</span><span class="ta-lbl">Inspección</span>
@@ -2785,6 +3328,10 @@ function _buildActaForm() {
       <div class="fg">
         <label>Texto del Apercibimiento</label>
         <textarea id="acta-medida" rows="4" placeholder="Se apercibe formalmente al C. [nombre completo del responsable] que en un plazo de [X días] deberá realizar las acciones necesarias para corregir la irregularidad detectada consistente en: [descripción de la irregularidad]. En caso de incumplimiento del presente apercibimiento se podrá iniciar el procedimiento administrativo sancionador correspondiente, de conformidad con la normativa aplicable." style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none;resize:vertical"></textarea>
+        <button type="button" onclick="llamarIAApercibimiento(this)"
+          style="margin-top:5px;width:100%;padding:8px;background:linear-gradient(135deg,#92400e,#d97706);color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer">
+          🐭 Matlacho redacta el apercibimiento
+        </button>
       </div>
       <div class="fg" style="grid-column:1/-1">
         <label>Medidas correctivas requeridas al responsable</label>
@@ -2844,6 +3391,10 @@ function _buildActaForm() {
       <div class="fg" style="grid-column:1/-1">
         <label>Sanción impuesta</label>
         <textarea id="acta-medida" rows="3" placeholder="Multa de [monto] equivalente a [X] UMA(s) conforme al Art. [X] del Código Municipal / Ley de Ingresos, por [descripción de la infracción]..." style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none;resize:vertical"></textarea>
+        <button type="button" onclick="llamarIASancion(this)"
+          style="margin-top:5px;width:100%;padding:8px;background:linear-gradient(135deg,#991b1b,#dc2626);color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer">
+          🐭 Matlacho redacta la motivación
+        </button>
       </div>
       <div class="fg">
         <label>Monto de la Sanción (MXN)</label>
@@ -3313,9 +3864,15 @@ function descargarPDFActa(acta) {
   if (w) {
     w.document.write(htmlContent);
     w.document.close();
-    // Esperar carga de imágenes y abrir diálogo de impresión
-    w.onload = function() { w.focus(); w.print(); };
-    setTimeout(function() { try { w.focus(); w.print(); } catch(e){} }, 800);
+    // Mostrar instrucciones sin auto-imprimir
+    setTimeout(function(){
+      try {
+        var bar = w.document.createElement('div');
+        bar.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#166534;color:#fff;padding:12px 16px;text-align:center;font-size:13px;z-index:9999;font-family:sans-serif';
+        bar.innerHTML = 'Para guardar como PDF: Menu → Imprimir → Guardar como PDF';
+        w.document.body.appendChild(bar); w.focus();
+      } catch(e){}
+    }, 400);
   } else {
     // Fallback si el navegador bloquea popups: descarga HTML
     const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
@@ -3329,221 +3886,59 @@ function descargarPDFActa(acta) {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════
-// PDF REAL — jsPDF + QR + compartir WhatsApp
-// ══════════════════════════════════════════════════════════════════
-
-function _buildQRDataURL(text) {
-  return new Promise(function(resolve) {
-    try {
-      var div = document.createElement('div');
-      div.style.cssText = 'position:absolute;left:-9999px;top:-9999px';
-      document.body.appendChild(div);
-      new QRCode(div, { text: text, width: 80, height: 80 });
-      setTimeout(function() {
-        var img = div.querySelector('img') || div.querySelector('canvas');
-        var src = img ? (img.src || img.toDataURL()) : null;
-        document.body.removeChild(div);
-        resolve(src);
-      }, 300);
-    } catch(e) { resolve(null); }
-  });
-}
-
-async function generarPDFActa(acta) {
-  if (typeof window.jspdf === 'undefined') return null;
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
-  const folio = acta.folio_acta || 'ACTA-IMBIO';
-  const fecha = new Date(acta.fecha || Date.now());
-  const fechaStr = fecha.toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
-  const horaStr  = fecha.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-  const W = 215.9, H = 279.4, M = 15, CW = W - M*2;
-  let y = M;
-
-  const chk = (n=20) => { if (y+n > H-M) { doc.addPage(); y = M; } };
-  const hdr = (txt, num) => {
-    chk(12);
-    doc.setFillColor(26,58,92); doc.rect(M, y, CW, 7, 'F');
-    doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
-    doc.text(num+'. '+txt.toUpperCase(), M+2, y+5); y += 10;
-  };
-  const fld = (lbl, val, x, yy, maxW) => {
-    doc.setFontSize(7.5); doc.setFont('helvetica','bold'); doc.setTextColor(100,100,100);
-    doc.text(lbl, x, yy);
-    doc.setFont('helvetica','normal'); doc.setTextColor(20,20,20); doc.setFontSize(9);
-    const lines = doc.splitTextToSize(String(val||'—'), maxW||CW);
-    doc.text(lines, x, yy+4);
-    return yy + 5 + lines.length*4.5;
-  };
-
-  // HEADER
-  doc.setFillColor(26,58,92); doc.rect(0,0,W,36,'F');
-  doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
-  const TIPOS = {circunstanciada:'ACTA CIRCUNSTANCIADA',apercibimiento:'ACTA DE APERCIBIMIENTO',
-                 sancion:'ACTA DE SANCIÓN AMBIENTAL',inspeccion:'ACTA DE INSPECCIÓN Y VIGILANCIA'};
-  doc.text(TIPOS[acta.tipo_acta]||'ACTA ADMINISTRATIVA', W/2, 12, {align:'center'});
-  doc.setFontSize(7.5); doc.setFont('helvetica','normal');
-  doc.text('INSTITUTO MUNICIPAL DE BIODIVERSIDAD — PABELLÓN DE ARTEAGA, AGS.', W/2, 18, {align:'center'});
-  doc.setFontSize(9); doc.setFont('helvetica','bold');
-  doc.text('Folio: '+folio, M, 28);
-  if (acta.expediente) doc.text('Exp: '+acta.expediente, W-M, 28, {align:'right'});
-  y = 42;
-
-  // DATOS
-  hdr('Datos de la Diligencia', 1);
-  const c1=M, c2=M+CW/2+2, cw=CW/2-2;
-  let ny = fld('FECHA', fechaStr, c1, y, cw);
-  fld('HORA', horaStr, c2, y, cw);
-  y = ny;
-  ny = fld('INSPECTOR ACTUANTE', acta.inspector, c1, y, cw);
-  fld('NO. IDENTIFICACIÓN', acta.num_inspector, c2, y, cw);
-  y = ny;
-  ny = fld('VISITADO / INFRACTOR', acta.infractor, c1, y, cw);
-  fld('DOMICILIO', acta.domicilio, c2, y, cw);
-  y = ny + 2;
-  if (acta.lat_acta) { y = fld('GPS', acta.lat_acta+', '+acta.lon_acta, c1, y, CW) + 2; }
-  doc.setDrawColor(180,180,180); doc.setLineWidth(0.3); doc.line(M,y,W-M,y); y += 5;
-
-  // DESCRIPCIÓN
-  if (acta.descripcion) {
-    hdr('Descripción Circunstanciada de los Hechos', 2);
-    chk(15);
-    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(20,20,20);
-    const dl = doc.splitTextToSize(acta.descripcion, CW);
-    chk(dl.length*5+5); doc.text(dl, M, y); y += dl.length*5+5;
-    doc.line(M,y,W-M,y); y += 5;
-  }
-
-  // FUNDAMENTO LEGAL
-  if (acta.fundamento) {
-    hdr('Fundamento Legal', 3);
-    chk(10);
-    doc.setFontSize(8.5); doc.setFont('helvetica','italic'); doc.setTextColor(30,30,80);
-    const fl = doc.splitTextToSize(acta.fundamento, CW);
-    chk(fl.length*4.5+5); doc.text(fl, M, y); y += fl.length*4.5+5;
-    doc.line(M,y,W-M,y); y += 5;
-  }
-
-  // MEDIDA / APERCIBIMIENTO / SANCIÓN
-  if (acta.medida) {
-    const secLabel = {circunstanciada:'Manifestaciones del Visitado',apercibimiento:'Texto del Apercibimiento',
-                      sancion:'Motivación de la Sanción',inspeccion:'Observaciones'}[acta.tipo_acta]||'Resolución';
-    hdr(secLabel, 4);
-    chk(10);
-    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(20,20,20);
-    const ml = doc.splitTextToSize(acta.medida, CW);
-    chk(ml.length*5+5); doc.text(ml, M, y); y += ml.length*5+5;
-    if (acta.plazo) {
-      doc.setFont('helvetica','bold'); doc.setTextColor(146,64,14);
-      doc.text('Plazo otorgado: '+acta.plazo, M, y); y += 5;
-    }
-    if (acta.monto_sancion) {
-      doc.setFont('helvetica','bold'); doc.setTextColor(153,27,27);
-      doc.text('Monto de sanción: $'+acta.monto_sancion+' MXN', M, y); y += 5;
-    }
-    doc.setDrawColor(180,180,180); doc.line(M,y,W-M,y); y += 5;
-  }
-
-  // FIRMAS
-  chk(50); hdr('Firmas', 5); y += 2;
-  const sw = CW/2-5;
-  if (acta.firma_inspector_base64 && acta.firma_inspector_base64.length>100) {
-    try { doc.addImage(acta.firma_inspector_base64,'PNG',c1,y,sw,20,'','FAST'); } catch(e){}
-  }
-  doc.setDrawColor(100,100,100); doc.line(c1,y+20,c1+sw,y+20);
-  if (acta.firma_visitado_base64 && acta.firma_visitado_base64.length>100) {
-    try { doc.addImage(acta.firma_visitado_base64,'PNG',c2,y,sw,20,'','FAST'); } catch(e){}
-  }
-  doc.line(c2,y+20,c2+sw,y+20);
-  y += 22;
-  doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(60,60,60);
-  doc.text(String(acta.inspector||'Inspector'), c1, y, {maxWidth:sw});
-  doc.text(String(acta.infractor||'Visitado'), c2, y, {maxWidth:sw});
-  doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100); doc.setFontSize(7.5);
-  doc.text('Inspector Actuante', c1, y+4);
-  doc.text('Visitado / Responsable', c2, y+4);
-  y += 10;
-
-  // QR
-  try {
-    const qrSrc = await _buildQRDataURL(SERVER_URL+'/api/reports/'+(acta.report_id||'')+'/status');
-    if (qrSrc) { doc.addImage(qrSrc,'PNG',W-M-22,y-30,22,22); }
-  } catch(e){}
-
-  // FOOTER
-  const tp = doc.internal.getNumberOfPages();
-  for (let p=1;p<=tp;p++) {
-    doc.setPage(p);
-    doc.setDrawColor(180,180,180); doc.line(M,H-12,W-M,H-12);
-    doc.setFontSize(6.5); doc.setFont('helvetica','normal'); doc.setTextColor(120,120,120);
-    doc.text('IMBIO — Instituto Municipal de Biodiversidad — Pabellón de Arteaga, Ags.', W/2, H-8, {align:'center'});
-    doc.text('Pág. '+p+' de '+tp+'  ·  '+folio, W-M, H-8, {align:'right'});
-  }
-  return doc;
-}
-
-async function compartirPDFActa(acta) {
+function compartirPDFActa(acta) {
   if (!acta) { alert('Sin datos del acta.'); return; }
+  const htmlContent = buildActaHTML(acta);
   const folio = acta.folio_acta || 'ACTA-IMBIO';
-  let pdfBlob = null;
-  try {
-    const doc = await generarPDFActa(acta);
-    if (doc) pdfBlob = doc.output('blob');
-  } catch(e) { console.warn('jsPDF error:', e); }
 
-  if (pdfBlob) {
-    _guardarPDFEnServidor(acta, pdfBlob, folio);
-    const pdfFile = new File([pdfBlob], folio+'.pdf', { type:'application/pdf' });
-    if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-      navigator.share({ title: folio+' — IMBIO', files: [pdfFile] })
-        .catch(e => { if (e.name !== 'AbortError') { _downloadPDF(pdfBlob, folio); fallbackShare(acta, folio); } });
-    } else {
-      _downloadPDF(pdfBlob, folio);
-      setTimeout(() => fallbackShare(acta, folio), 400);
-    }
+  // Intentar Web Share API con archivo HTML (funciona en Android Chrome)
+  const blob = new Blob([htmlContent], { type: 'text/html' });
+  const file = new File([blob], folio + '.html', { type: 'text/html' });
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    // Android / iOS con soporte nativo → comparte el archivo directo
+    navigator.share({
+      title: folio + ' — IMBIO Pabellón de Arteaga',
+      text: 'Acta ' + folio + ' emitida por IMBIO.',
+      files: [file]
+    }).catch(function(e) {
+      if (e.name !== 'AbortError') _compartirFallback(acta, folio, htmlContent);
+    });
   } else {
-    fallbackShare(acta, folio);
+    // Fallback: abrir en nueva ventana para imprimir/guardar + link WhatsApp
+    _compartirFallback(acta, folio, htmlContent);
   }
 }
 
-function _downloadPDF(blob, folio) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href=url; a.download=folio+'.pdf';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 3000);
-}
-
-async function _guardarPDFEnServidor(acta, blob, folio) {
-  try {
-    const ab = await blob.arrayBuffer();
-    const b64 = btoa(String.fromCharCode(...new Uint8Array(ab)));
-    await fetch(SERVER_URL+'/api/actas/'+(acta.id||0)+'/pdf', {
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},
-      body: JSON.stringify({pdf_base64:b64, folio}),
-      signal: AbortSignal.timeout(30000)
-    });
-  } catch(e) { console.warn('No se pudo guardar PDF en servidor:', e); }
+function _compartirFallback(acta, folio, htmlContent) {
+  // Abrir el acta en ventana nueva para que el usuario la guarde como PDF
+  var w = window.open('', '_blank');
+  if (w) {
+    w.document.write(htmlContent);
+    w.document.close();
+    // Mostrar opción de guardar/compartir
+    w.onload = function() {
+      var msg = w.document.createElement('div');
+      msg.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#16a34a;color:#fff;padding:14px;text-align:center;font-size:14px;z-index:9999;font-family:sans-serif';
+      msg.innerHTML = '📄 Guarda como PDF: Menú ⋮ → Imprimir → Guardar como PDF &nbsp;|&nbsp; <a onclick="window.close()" style="color:#fff;text-decoration:underline;cursor:pointer">Cerrar</a>';
+      w.document.body.appendChild(msg);
+    };
+    setTimeout(function(){ try{ w.focus(); } catch(e){} }, 300);
+  }
+  // Abrir WhatsApp con texto del acta
+  setTimeout(function() { fallbackShare(acta, folio); }, 400);
 }
 
 function fallbackShare(acta, folio) {
-  const tipos = {inspeccion:'Inspección',circunstanciada:'Circunstanciada',apercibimiento:'Apercibimiento',sancion:'Sanción'};
-  const tl = tipos[acta.tipo_acta]||'Acta';
-  const fecha = new Date(acta.fecha||Date.now()).toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-  const desc = (acta.descripcion||'').substring(0,120);
-  const medida = acta.medida ? '%0A⚖️ '+encodeURIComponent(acta.medida.substring(0,80)) : '';
-  const plazo  = acta.plazo  ? '%0A⏱ Plazo: '+encodeURIComponent(acta.plazo) : '';
-  const monto  = acta.monto_sancion ? '%0A💰 $'+encodeURIComponent(acta.monto_sancion)+' MXN' : '';
-  var t = '📋 *'+folio+'*%0A🏛 IMBIO - Pabellón de Arteaga%0A📄 Tipo: *'+tl+'*%0A'+
-    '👮 Inspector: '+encodeURIComponent(acta.inspector||'-')+'%0A'+
-    '👤 Visitado: '+encodeURIComponent(acta.infractor||'-')+'%0A'+
-    '📍 Domicilio: '+encodeURIComponent(acta.domicilio||'-')+'%0A'+
-    '📅 Fecha: '+encodeURIComponent(fecha)+
-    (desc?'%0A%0A📝 '+encodeURIComponent(desc)+(acta.descripcion&&acta.descripcion.length>120?'...':''):'') +
-    medida+plazo+monto+'%0A%0A_Documento oficial IMBIO Pabellón de Arteaga_';
-  window.open('https://wa.me/?text='+t, '_blank');
+  var t = '\u{1F4CB} *' + folio + '*%0A' +
+    '\u{1F3DB} IMBIO - Pabellon de Arteaga%0A' +
+    'Inspector: ' + encodeURIComponent(acta.inspector||'-') + '%0A' +
+    'Visitado: '  + encodeURIComponent(acta.infractor||'-') + '%0A' +
+    'Domicilio: ' + encodeURIComponent(acta.domicilio||'-') + '%0A' +
+    'Fecha: ' + encodeURIComponent(new Date(acta.fecha||Date.now()).toLocaleDateString('es-MX')) +
+    (acta.nivel_riesgo ? '%0ARiesgo: '+encodeURIComponent(acta.nivel_riesgo) : '') +
+    '%0A%0ADocumento oficial IMBIO Pabellon de Arteaga';
+  window.open('https://wa.me/?text=' + t, '_blank');
 }
 
 
