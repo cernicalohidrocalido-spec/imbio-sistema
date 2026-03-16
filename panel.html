@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SGO-IMBIO · Sistema de Gestión Operativa</title>
+<title>Plataforma de Monitoreo Ambiental IMBIO-Pabellón</title>
 <link rel="stylesheet" href="/static/leaflet.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="/static/leaflet.js"></script>
 <style>
   :root{
@@ -76,6 +77,10 @@
   .badge-asignado{background:#dbeafe;color:#1e40af}
   .badge-en_proceso{background:#fce7f3;color:#9d174d}
   .badge-cerrado{background:#dcfce7;color:#166534}
+.badge-en_inspeccion  { background:#ede9fe;color:#7c3aed }
+.badge-pendiente_medida{ background:#fee2e2;color:#dc2626 }
+.badge-apercibido     { background:#fef3c7;color:#92400e }
+.badge-sancionado     { background:#dbeafe;color:#1d4ed8 }
   .badge-admin{background:#ede9fe;color:#5b21b6}
   .badge-operador{background:#dbeafe;color:#1e40af}
   .badge-inspector{background:#dbeafe;color:#002A5C}
@@ -150,23 +155,26 @@
       <b>👤 Credenciales de acceso:</b>
       admin / admin123 &nbsp;·&nbsp; operador / operador123 &nbsp;·&nbsp; inspector01 / inspector123
     </div>
+    <div id="login-status" style="display:none;margin-bottom:12px;padding:10px 14px;border-radius:8px;font-size:.85rem;background:#E8F1FB;border:1px solid #B3CFF0;color:#002A5C"></div>
     <div id="login-error"></div>
-    <div class="form-group" style="margin-bottom:14px">
-      <label>Usuario</label>
-      <input id="l-user" type="text" value="admin">
-    </div>
-    <div class="form-group" style="margin-bottom:20px">
-      <label>Contraseña</label>
-      <input id="l-pass" type="password" value="admin123">
-    </div>
-    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()">🔐 Iniciar Sesión</button>
+    <form id="login-form" onsubmit="doLogin(); return false;" action="javascript:void(0)">
+      <div class="form-group" style="margin-bottom:14px">
+        <label for="l-user">Usuario</label>
+        <input id="l-user" name="username" type="text" value="admin" autocomplete="username">
+      </div>
+      <div class="form-group" style="margin-bottom:20px">
+        <label for="l-pass">Contraseña</label>
+        <input id="l-pass" name="password" type="password" value="admin123" autocomplete="current-password">
+      </div>
+      <button type="submit" id="btn-login" class="btn btn-primary" style="width:100%;justify-content:center">🔐 Iniciar Sesión</button>
+    </form>
   </div>
 </div>
 
 <!-- APP -->
 <div id="app">
   <nav>
-    <div class="brand"><span>🌿</span> IMBIO-Pabellón</div>
+    <div class="brand"><span>🌿</span> Plataforma de Monitoreo Ambiental IMBIO-Pabellón</div>
     <div class="user-info">
       <span id="nav-nombre"></span>
       <span id="nav-rol" class="badge-rol badge"></span>
@@ -181,24 +189,88 @@
       <a onclick="showPage('nuevo-reporte')"><span class="ic">➕</span> Nuevo Reporte</a>
       <a onclick="showPage('inspectores')" id="nav-inspectores"><span class="ic">👷</span> Inspectores</a>
       <a onclick="showPage('catalogo-inspectores')" id="nav-catalogo-inspectores"><span class="ic">👤</span> Catálogo Inspectores</a>
+      <a onclick="showPage('alertas')" id="nav-alertas" style="position:relative"><span class="ic">🔔</span> Alertas <span id="alertas-badge" style="display:none;background:#dc2626;color:#fff;border-radius:20px;padding:1px 7px;font-size:.72rem;font-weight:800;margin-left:4px">0</span></a>
       <a onclick="showPage('actas')" id="nav-actas"><span class="ic">📋</span> Actas</a>
+      <a onclick="showPage('establecimientos')" id="nav-establecimientos"><span class="ic">🏪</span> Establecimientos</a>
+      <a onclick="showPage('verificaciones')" id="nav-verificaciones"><span class="ic">🔍</span> Verificaciones</a>
     </aside>
     <main>
 
       <!-- DASHBOARD -->
       <div id="page-dashboard" class="page active">
-        <h2>📊 Panel de Control</h2>
-        <div class="stats-grid">
-          <div class="stat verde"><div class="num" id="st-total">–</div><div class="lbl">Total Reportes</div></div>
-          <div class="stat naranja"><div class="num" id="st-reportado">–</div><div class="lbl">Reportados</div></div>
-          <div class="stat azul"><div class="num" id="st-asignado">–</div><div class="lbl">Asignados</div></div>
-          <div class="stat rojo"><div class="num" id="st-en_proceso">–</div><div class="lbl">En Proceso</div></div>
-          <div class="stat verde"><div class="num" id="st-cerrado">–</div><div class="lbl">Cerrados</div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+          <h2 style="margin:0">📊 Panel de Control IMBIO</h2>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary" onclick="exportarExcel()" style="font-size:.8rem;padding:6px 12px">📥 Exportar Excel</button>
+            <button class="btn btn-primary" onclick="loadDashboard()" style="font-size:.8rem;padding:6px 12px">🔄 Actualizar</button>
+          </div>
         </div>
-        <div class="card">
-          <h3 style="margin-bottom:16px;font-size:1rem;color:var(--verde-oscuro)">⚡ Últimos Reportes</h3>
+
+        <!-- KPI Cards -->
+        <div id="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px">
+          <div class="stat verde"><div class="num" id="st-total">–</div><div class="lbl">Total Reportes</div></div>
+          <div class="stat naranja"><div class="num" id="st-pendientes">–</div><div class="lbl">Pendientes</div></div>
+          <div class="stat azul"><div class="num" id="st-en_proceso">–</div><div class="lbl">En Proceso</div></div>
+          <div class="stat rojo"><div class="num" id="st-vencidos">–</div><div class="lbl">Aperc. Vencidos</div></div>
+          <div class="stat" style="background:#5b21b6;color:#fff"><div class="num" id="st-cerrados">–</div><div class="lbl">Cerrados</div></div>
+          <div class="stat" style="background:#0369a1;color:#fff"><div class="num" id="st-tiempo">–</div><div class="lbl">Días prom. resolución</div></div>
+        </div>
+
+        <!-- KPIs Establecimientos -->
+        <div style="margin-bottom:16px">
+          <h4 style="font-size:.85rem;color:#1a3a5c;margin-bottom:8px">🏪 Verificación Ambiental a Establecimientos</h4>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">
+            <div class="stat" style="background:#1e3a5f;color:#fff"><div class="num" id="st-est-total">–</div><div class="lbl">Establecimientos</div></div>
+            <div class="stat verde"><div class="num" id="st-est-cumple">–</div><div class="lbl">✅ Cumplen</div></div>
+            <div class="stat naranja"><div class="num" id="st-est-parcial">–</div><div class="lbl">⚠️ Parcial</div></div>
+            <div class="stat rojo"><div class="num" id="st-est-nocumple">–</div><div class="lbl">❌ No Cumplen</div></div>
+            <div class="stat" style="background:#6b7280;color:#fff"><div class="num" id="st-est-sinver">–</div><div class="lbl">Sin Verificar</div></div>
+            <div class="stat azul"><div class="num" id="st-ver-pend">–</div><div class="lbl">Verif. Pendientes</div></div>
+          </div>
+        </div>
+
+        <!-- Charts Row 1 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+            <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">📅 Denuncias por mes (últimos 12 meses)</h4>
+            <canvas id="chart-meses" height="180"></canvas>
+          </div>
+          <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+            <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">🗂 Reportes por tipo</h4>
+            <canvas id="chart-tipos" height="180"></canvas>
+          </div>
+        </div>
+
+        <!-- Charts Row 2 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+            <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">🔄 Estado actual de reportes</h4>
+            <canvas id="chart-estados" height="180"></canvas>
+          </div>
+          <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+            <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">👷 Top inspectores por asignaciones</h4>
+            <canvas id="chart-inspectores" height="180"></canvas>
+          </div>
+        </div>
+
+        <!-- Charts Row 3 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+            <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">📍 Colonias con más denuncias</h4>
+            <canvas id="chart-colonias" height="180"></canvas>
+          </div>
+          <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+            <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">📋 Actas generadas por tipo</h4>
+            <canvas id="chart-actas" height="180"></canvas>
+          </div>
+        </div>
+
+        <!-- Recent reports -->
+        <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+          <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">🕒 Reportes Recientes</h4>
           <div id="dash-recent"></div>
         </div>
+
       </div>
 
       <!-- MAPA GENERAL -->
@@ -218,6 +290,10 @@
                 <option value="reportado">Reportado</option>
                 <option value="asignado">Asignado</option>
                 <option value="en_proceso">En Proceso</option>
+                <option value="en_inspeccion">En Inspección</option>
+                <option value="pendiente_medida">⚠️ Pendiente Medida</option>
+                <option value="apercibido">Apercibido</option>
+                <option value="sancionado">Sancionado</option>
                 <option value="cerrado">Cerrado</option>
               </select>
               <select id="mf-tipo" onchange="refreshMapMarkers()">
@@ -279,7 +355,7 @@
           </div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Folio</th><th>Tipo</th><th>Colonia</th><th>Estado</th><th>Fecha</th><th style="text-align:right">Acciones</th></tr></thead>
+              <thead><tr><th>Folio</th><th>Tipo</th><th>Colonia</th><th>Estado</th><th>Brigada / Inspector</th><th>Fecha</th><th style="text-align:right">Acciones</th></tr></thead>
               <tbody id="tabla-reportes"><tr><td colspan="6" class="loading">Cargando...</td></tr></tbody>
             </table>
           </div>
@@ -295,7 +371,7 @@
           <div class="form-grid">
             <div class="form-group">
               <label>Tipo de Reporte *</label>
-              <select id="nr-tipo">
+              <select id="nr-tipo" onchange="document.getElementById('nr-otro-wrap').style.display=this.value==='otro'?'block':'none'">
                 <option value="">– Seleccionar –</option>
                 <option value="denuncia_ambiental">🌱 Denuncia Ambiental</option>
                 <option value="areas_verdes">🌳 Áreas Verdes</option>
@@ -309,13 +385,22 @@
                 <option value="perro_agresivo">🐕 Perro Agresivo</option>
                 <option value="tiradero_escombro">🧱 Tiradero de Escombro</option>
                 <option value="tiradero_basura">🗑 Tiradero de Basura</option>
-                <option value="otro">📌 Otro</option>
+                <option value="otro">📌 Otro (especificar)</option>
               </select>
+            </div>
+            <div class="form-group full" id="nr-otro-wrap" style="display:none">
+              <label>Especificar tipo de incidencia *</label>
+              <input id="nr-otro-desc" placeholder="Describe el tipo de problema ambiental...">
             </div>
 
             <div class="form-group full">
               <label>Descripción *</label>
               <textarea id="nr-desc" placeholder="Describa la situación con detalle..."></textarea>
+              <button type="button"
+                onclick="llamarIA('reporte_ciudadano',{descripcion:document.getElementById('nr-desc').value||'sin descripcion'},'nr-desc',this)"
+                style="margin-top:6px;width:100%;padding:9px;background:linear-gradient(135deg,#6d28d9,#4f46e5);color:#fff;border:none;border-radius:9px;font-size:.82rem;font-weight:700;cursor:pointer">
+                🐭 Matlacho mejora la descripción
+              </button>
             </div>
             <div class="form-group">
               <label>Nombre del Reportante</label>
@@ -400,68 +485,109 @@
         </div>
       </div>
 
+
+<div id="page-catalogo-inspectores" class="page">
+        <h2>👤 Catálogo de Inspectores</h2>
+        <div id="cat-insp-alert"></div>
+        <div class="card" style="padding:20px;margin-bottom:16px">
+          <h3 style="margin-bottom:16px;color:var(--azul)">➕ Registrar Inspector</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+            <div>
+              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Nombre completo *</label>
+              <input id="ci-nombre" class="form-control" placeholder="Nombre y apellidos" style="margin-top:4px">
+            </div>
+            <div>
+              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Usuario *</label>
+              <input id="ci-usuario" class="form-control" placeholder="Ej: inspector02" style="margin-top:4px">
+            </div>
+            <div>
+              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Contraseña *</label>
+              <input id="ci-password" type="password" class="form-control" placeholder="Contraseña de acceso" style="margin-top:4px">
+            </div>
+            <div>
+              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Teléfono</label>
+              <input id="ci-telefono" class="form-control" placeholder="Teléfono de contacto" style="margin-top:4px">
+            </div>
+            <div>
+              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Brigada / Área</label>
+              <input id="ci-brigada" class="form-control" placeholder="Ej: Brigada Norte" style="margin-top:4px">
+            </div>
+            <div style="display:flex;align-items:flex-end">
+              <button class="btn btn-primary" onclick="registrarInspector()" style="width:100%;padding:10px">
+                💾 Registrar Inspector
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--borde)">
+            <h3 style="color:var(--azul)">👥 Inspectores Registrados</h3>
+            <button class="btn btn-secondary btn-sm" onclick="cargarInspectores()">🔄 Actualizar</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Usuario</th>
+                  <th>Brigada</th>
+                  <th>Teléfono</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-inspectores">
+                <tr><td colspan="6" style="text-align:center;color:#64748b;padding:20px">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE ACTAS -->
+      <div id="page-actas" class="page">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+          <h2>📋 Registro de Actas Circunstanciadas</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <select id="acta-filtro-tipo" onchange="cargarActas()" style="padding:6px 10px;border:1.5px solid var(--azul-borde);border-radius:6px;font-size:.82rem">
+              <option value="">Todos los tipos</option>
+              <option value="circunstanciada">Circunstanciada</option>
+              <option value="infraccion">Infracción</option>
+              <option value="clausura">Clausura</option>
+            </select>
+            <select id="acta-filtro-estado" onchange="cargarActas()" style="padding:6px 10px;border:1.5px solid var(--azul-borde);border-radius:6px;font-size:.82rem">
+              <option value="">Todos los estados</option>
+              <option value="emitida">Emitida</option>
+              <option value="notificada">Notificada</option>
+              <option value="cerrada">Cerrada</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="cargarActas()">🔄 Actualizar</button>
+          </div>
+        </div>
+        <div id="actas-alert"></div>
+        <div id="actas-tabla-wrap">
+          <p style="color:var(--muted);text-align:center;padding:40px">Cargando actas...</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ══ PÁGINA ALERTAS ══════════════════════════════════════════════ -->
+  <div class="page-wrapper" style="display:none" id="page-alertas-wrapper">
+    <main class="main-content">
+      <div id="page-alertas" class="page active">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <h2 style="margin:0">🔔 Alertas de Apercibimientos</h2>
+          <button class="btn btn-primary" onclick="cargarAlertas()" style="font-size:.8rem;padding:6px 14px">🔄 Actualizar</button>
+        </div>
+        <div id="alertas-summary" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"></div>
+        <div id="alertas-lista"><p style="color:#94a3b8;text-align:center">Cargando alertas...</p></div>
+      </div>
     </main>
   </div>
 </div>
 
-<!-- MODAL EDITAR REPORTE -->
-<div class="modal-bg" id="modal-editar">
-  <div class="modal">
-    <h3>&#9999;&#65039; Editar Reporte</h3>
-    <input type="hidden" id="edit-id">
-    <div class="form-grid">
-      <div class="form-group">
-        <label>Tipo de Reporte</label>
-        <select id="edit-tipo">
-          <option value="denuncia_ambiental">Denuncia Ambiental</option>
-          <option value="areas_verdes">Areas Verdes</option>
-          <option value="emergencia">Emergencia</option>
-          <option value="residuos_solidos">Residuos Solidos</option>
-          <option value="agua_contaminada">Agua Contaminada</option>
-          <option value="ruido">Ruido</option>
-          <option value="poda_arbol">Poda de Arbol</option>
-          <option value="derribo_arbol">Derribo de Arbol</option>
-          <option value="animal_calle">Animal en Calle</option>
-          <option value="perro_agresivo">Perro Agresivo</option>
-          <option value="tiradero_escombro">Tiradero de Escombro</option>
-          <option value="tiradero_basura">Tiradero de Basura</option>
-          <option value="otro">Otro</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Colonia</label>
-        <input id="edit-colonia" placeholder="Colonia">
-      </div>
-      <div class="form-group full">
-        <label>Descripcion</label>
-        <textarea id="edit-desc"></textarea>
-      </div>
-      <div class="form-group">
-        <label>Nombre Reportante</label>
-        <input id="edit-nombre">
-      </div>
-      <div class="form-group">
-        <label>Telefono</label>
-        <input id="edit-tel">
-      </div>
-      <div class="form-group full">
-        <label>Estado</label>
-        <div class="edit-estado-row" id="edit-estado-row">
-          <button type="button" onclick="selEstado('reportado')">Reportado</button>
-          <button type="button" onclick="selEstado('asignado')">Asignado</button>
-          <button type="button" onclick="selEstado('en_proceso')">En Proceso</button>
-          <button type="button" onclick="selEstado('cerrado')">Cerrado</button>
-        </div>
-        <input type="hidden" id="edit-estado">
-      </div>
-    </div>
-    <div id="edit-alert"></div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-editar')">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarEdicion()">Guardar Cambios</button>
-    </div>
-  </div>
-</div>
+
 
 <!-- MODAL DETALLE -->
 <div class="modal-bg" id="modal-detalle">
@@ -477,19 +603,23 @@
 <!-- MODAL ASIGNAR -->
 <div class="modal-bg" id="modal-asignar">
   <div class="modal">
-    <h3>👷 Asignar Brigada</h3>
+    <h3>👷 Asignar Inspector</h3>
     <input type="hidden" id="asig-report-id">
     <div class="form-grid">
-      <div class="form-group">
-        <label>Brigada *</label>
-        <input id="asig-brigada" placeholder="Ej: Brigada Verde A">
-      </div>
-      <div class="form-group">
+      <div class="form-group full">
         <label>Inspector Responsable *</label>
-        <input id="asig-inspector" placeholder="Nombre del inspector">
+        <select id="asig-inspector" style="width:100%;padding:10px;border:1.5px solid var(--azul-borde);border-radius:8px;font-size:.9rem">
+          <option value="">— Seleccionar inspector —</option>
+        </select>
       </div>
       <div class="form-group full">
-        <label>Notas</label>
+        <label>Brigada *</label>
+        <select id="asig-brigada" style="width:100%;padding:10px;border:1.5px solid var(--azul-borde);border-radius:8px;font-size:.9rem">
+          <option value="">— Seleccionar brigada —</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Notas adicionales</label>
         <textarea id="asig-notas" placeholder="Instrucciones adicionales..."></textarea>
       </div>
     </div>
@@ -631,93 +761,11 @@
 </div>
 
       <!-- CATÁLOGO INSPECTORES -->
-      <div id="page-catalogo-inspectores" class="page">
-        <h2>👤 Catálogo de Inspectores</h2>
-        <div id="cat-insp-alert"></div>
-        <div class="card" style="padding:20px;margin-bottom:16px">
-          <h3 style="margin-bottom:16px;color:var(--azul)">➕ Registrar Inspector</h3>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
-            <div>
-              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Nombre completo *</label>
-              <input id="ci-nombre" class="form-control" placeholder="Nombre y apellidos" style="margin-top:4px">
-            </div>
-            <div>
-              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Usuario *</label>
-              <input id="ci-usuario" class="form-control" placeholder="Ej: inspector02" style="margin-top:4px">
-            </div>
-            <div>
-              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Contraseña *</label>
-              <input id="ci-password" type="password" class="form-control" placeholder="Contraseña de acceso" style="margin-top:4px">
-            </div>
-            <div>
-              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Teléfono</label>
-              <input id="ci-telefono" class="form-control" placeholder="Teléfono de contacto" style="margin-top:4px">
-            </div>
-            <div>
-              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Brigada / Área</label>
-              <input id="ci-brigada" class="form-control" placeholder="Ej: Brigada Norte" style="margin-top:4px">
-            </div>
-            <div style="display:flex;align-items:flex-end">
-              <button class="btn btn-primary" onclick="registrarInspector()" style="width:100%;padding:10px">
-                💾 Registrar Inspector
-              </button>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--borde)">
-            <h3 style="color:var(--azul)">👥 Inspectores Registrados</h3>
-            <button class="btn btn-secondary btn-sm" onclick="cargarInspectores()">🔄 Actualizar</button>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Usuario</th>
-                  <th>Brigada</th>
-                  <th>Teléfono</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="tabla-inspectores">
-                <tr><td colspan="6" style="text-align:center;color:#64748b;padding:20px">Cargando...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- PAGE ACTAS -->
-      <div id="page-actas" class="page">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-          <h2>📋 Registro de Actas Circunstanciadas</h2>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <select id="acta-filtro-tipo" onchange="cargarActas()" style="padding:6px 10px;border:1.5px solid var(--azul-borde);border-radius:6px;font-size:.82rem">
-              <option value="">Todos los tipos</option>
-              <option value="circunstanciada">Circunstanciada</option>
-              <option value="infraccion">Infracción</option>
-              <option value="clausura">Clausura</option>
-            </select>
-            <select id="acta-filtro-estado" onchange="cargarActas()" style="padding:6px 10px;border:1.5px solid var(--azul-borde);border-radius:6px;font-size:.82rem">
-              <option value="">Todos los estados</option>
-              <option value="emitida">Emitida</option>
-              <option value="notificada">Notificada</option>
-              <option value="cerrada">Cerrada</option>
-            </select>
-            <button class="btn btn-primary btn-sm" onclick="cargarActas()">🔄 Actualizar</button>
-          </div>
-        </div>
-        <div id="actas-alert"></div>
-        <div id="actas-tabla-wrap">
-          <p style="color:var(--muted);text-align:center;padding:40px">Cargando actas...</p>
-        </div>
-      </div>
+      
 
       <!-- MODAL DETALLE ACTA -->
-      <div id="modal-acta-detalle" class="modal" style="display:none">
-        <div class="modal-box" style="max-width:780px;max-height:90vh;overflow-y:auto">
+      <div id="modal-acta-detalle" style="display:none">
+        <div style="background:#fff;border-radius:12px;width:100%;max-width:800px;margin:auto;box-shadow:0 20px 60px rgba(0,0,0,.4)">
           <div class="pop-header" style="display:flex;justify-content:space-between;align-items:center">
             <div class="pop-title" id="modal-acta-titulo">Detalle del Acta</div>
             <button class="btn btn-sm" onclick="cerrarModalActa()">✕ Cerrar</button>
@@ -762,6 +810,369 @@
           </div>
         </div>
       </div>
+
+      <!-- ══════════════════════════════════════════════════════════
+           PÁGINA: ESTABLECIMIENTOS
+      ══════════════════════════════════════════════════════════ -->
+      <div id="page-establecimientos" class="page">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+          <h2 style="margin:0">🏪 Padrón de Establecimientos</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-secondary" onclick="exportarEstablecimientos()" style="font-size:.8rem;padding:6px 12px">📥 Exportar</button>
+            <button class="btn btn-primary" onclick="abrirModalEstablecimiento()" style="font-size:.8rem;padding:6px 12px">➕ Nuevo Establecimiento</button>
+          </div>
+        </div>
+
+        <!-- Semáforo de cumplimiento -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px">
+          <div class="stat verde" style="cursor:pointer" onclick="filtrarEstabs('cumple')">
+            <div class="num" id="est-cnt-cumple">–</div><div class="lbl">✅ Cumplen</div>
+          </div>
+          <div class="stat naranja" style="cursor:pointer" onclick="filtrarEstabs('cumple_parcial')">
+            <div class="num" id="est-cnt-parcial">–</div><div class="lbl">⚠️ Cumple Parcial</div>
+          </div>
+          <div class="stat rojo" style="cursor:pointer" onclick="filtrarEstabs('no_cumple')">
+            <div class="num" id="est-cnt-nocumple">–</div><div class="lbl">❌ No Cumple</div>
+          </div>
+          <div class="stat" style="background:#6b7280;color:#fff;cursor:pointer" onclick="filtrarEstabs('sin_verificar')">
+            <div class="num" id="est-cnt-sinver">–</div><div class="lbl">🔘 Sin Verificar</div>
+          </div>
+          <div class="stat" style="background:#1e3a5f;color:#fff;cursor:pointer" onclick="filtrarEstabs('')">
+            <div class="num" id="est-cnt-total">–</div><div class="lbl">📊 Total</div>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="card" style="padding:12px;margin-bottom:12px">
+          <div class="filters" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input id="est-buscar" placeholder="🔍 Buscar nombre, domicilio..." style="padding:7px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem;min-width:200px" oninput="cargarEstablecimientos()">
+            <select id="est-filtro-giro" onchange="cargarEstablecimientos()" style="padding:7px 10px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+              <option value="">Todos los giros</option>
+              <option value="restaurante">🍽️ Restaurante</option>
+              <option value="cocina_economica">🥘 Cocina Económica</option>
+              <option value="taqueria">🌮 Taquería</option>
+              <option value="panaderia">🥖 Panadería</option>
+              <option value="carniceria">🥩 Carnicería</option>
+              <option value="taller_mecanico">🔧 Taller Mecánico</option>
+              <option value="taller_hojalateria">🚗 Hojalatería/Pintura</option>
+              <option value="taller_carpinteria">🪚 Carpintería</option>
+              <option value="taller_soldadura">⚡ Soldadura</option>
+              <option value="lavanderia">👕 Lavandería</option>
+              <option value="car_wash">🚿 Car Wash</option>
+              <option value="gasolinera">⛽ Gasolinera</option>
+              <option value="tlapaleria">🪣 Tlapalería</option>
+              <option value="ferreteria">🔩 Ferretería</option>
+              <option value="veterinaria">🐾 Veterinaria</option>
+              <option value="criadero_animales">🐕 Criadero</option>
+              <option value="bar">🍺 Bar/Cantina</option>
+              <option value="salon_eventos">🎉 Salón de Eventos</option>
+              <option value="hotel">🏨 Hotel/Motel</option>
+              <option value="fabrica">🏭 Fábrica/Almacén</option>
+              <option value="clinica">🏥 Clínica/Consultorio</option>
+              <option value="escuela">🏫 Escuela/Guardería</option>
+              <option value="otro">📌 Otro</option>
+            </select>
+            <select id="est-filtro-estado" onchange="cargarEstablecimientos()" style="padding:7px 10px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+              <option value="">Todos los estados</option>
+              <option value="sin_verificar">🔘 Sin verificar</option>
+              <option value="cumple">✅ Cumple</option>
+              <option value="cumple_parcial">⚠️ Cumple parcial</option>
+              <option value="no_cumple">❌ No cumple</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('est-buscar').value='';document.getElementById('est-filtro-giro').value='';document.getElementById('est-filtro-estado').value='';cargarEstablecimientos()">✕ Limpiar</button>
+          </div>
+        </div>
+
+        <!-- Tabla establecimientos -->
+        <div class="card" style="padding:0;overflow:hidden">
+          <div id="est-tabla-wrap" style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+              <thead>
+                <tr style="background:#f1f5f9">
+                  <th style="padding:10px 12px;text-align:left;font-weight:700;color:#1a3a5c">Folio</th>
+                  <th style="padding:10px 12px;text-align:left">Nombre / Razón Social</th>
+                  <th style="padding:10px 12px;text-align:left">Giro</th>
+                  <th style="padding:10px 12px;text-align:left">Domicilio</th>
+                  <th style="padding:10px 12px;text-align:left">Responsable</th>
+                  <th style="padding:10px 12px;text-align:center">Cumplimiento</th>
+                  <th style="padding:10px 12px;text-align:center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="est-tbody">
+                <tr><td colspan="7" style="text-align:center;padding:24px;color:#888">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════
+           PÁGINA: VERIFICACIONES
+      ══════════════════════════════════════════════════════════ -->
+      <div id="page-verificaciones" class="page">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+          <h2 style="margin:0">🔍 Verificaciones Ambientales</h2>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary" onclick="abrirModalVerificacion()" style="font-size:.8rem;padding:6px 12px">➕ Programar Verificación</button>
+          </div>
+        </div>
+
+        <!-- Filtros verificaciones -->
+        <div class="card" style="padding:12px;margin-bottom:12px">
+          <div class="filters" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <select id="ver-filtro-estado" onchange="cargarVerificaciones()" style="padding:7px 10px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+              <option value="">Todos los estados</option>
+              <option value="programada">📅 Programada</option>
+              <option value="en_proceso">🔄 En Proceso</option>
+              <option value="completada">✅ Completada</option>
+              <option value="cancelada">❌ Cancelada</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('ver-filtro-estado').value='';cargarVerificaciones()">✕ Limpiar</button>
+            <button class="btn btn-primary btn-sm" onclick="cargarVerificaciones()">🔄 Actualizar</button>
+          </div>
+        </div>
+
+        <!-- Tarjetas de verificaciones -->
+        <div id="ver-lista" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px">
+          <div style="text-align:center;padding:32px;color:#888;grid-column:1/-1">Cargando...</div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════
+           MODAL: NUEVO/EDITAR ESTABLECIMIENTO
+      ══════════════════════════════════════════════════════════ -->
+      <div id="modal-establecimiento" class="modal-bg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto">
+        <div style="background:#fff;border-radius:14px;padding:28px;width:100%;max-width:600px;margin:0 16px 40px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <h3 id="modal-est-titulo" style="margin:0;color:#1a3a5c">🏪 Nuevo Establecimiento</h3>
+            <button onclick="cerrarModalEst()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888">✕</button>
+          </div>
+          <input type="hidden" id="est-edit-id">
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="grid-column:1/-1" class="form-group">
+              <label>Nombre / Razón Social *</label>
+              <input id="est-nombre" placeholder="Ej: Taller Mecánico El Buen Motor">
+            </div>
+            <div class="form-group">
+              <label>Giro Comercial *</label>
+              <select id="est-giro">
+                <option value="">-- Seleccionar --</option>
+                <option value="restaurante">🍽️ Restaurante</option>
+                <option value="cocina_economica">🥘 Cocina Económica</option>
+                <option value="taqueria">🌮 Taquería</option>
+                <option value="panaderia">🥖 Panadería</option>
+                <option value="carniceria">🥩 Carnicería</option>
+                <option value="taller_mecanico">🔧 Taller Mecánico</option>
+                <option value="taller_hojalateria">🚗 Hojalatería/Pintura</option>
+                <option value="taller_carpinteria">🪚 Carpintería</option>
+                <option value="taller_soldadura">⚡ Soldadura</option>
+                <option value="lavanderia">👕 Lavandería</option>
+                <option value="car_wash">🚿 Car Wash</option>
+                <option value="gasolinera">⛽ Gasolinera</option>
+                <option value="tlapaleria">🪣 Tlapalería</option>
+                <option value="ferreteria">🔩 Ferretería</option>
+                <option value="veterinaria">🐾 Veterinaria</option>
+                <option value="criadero_animales">🐕 Criadero de Animales</option>
+                <option value="peluqueria_canina">✂️ Peluquería Canina</option>
+                <option value="salon_belleza">💅 Salón de Belleza/Spa</option>
+                <option value="gym">🏋️ Gimnasio</option>
+                <option value="tienda_abarrotes">🛒 Tienda/Abarrotes</option>
+                <option value="supermercado">🏪 Supermercado</option>
+                <option value="farmacia">💊 Farmacia</option>
+                <option value="fabrica">🏭 Fábrica</option>
+                <option value="almacen">📦 Almacén/Bodega</option>
+                <option value="bar">🍺 Bar/Cantina/Antro</option>
+                <option value="salon_eventos">🎉 Salón de Eventos</option>
+                <option value="hotel">🏨 Hotel/Motel/Hospedaje</option>
+                <option value="clinica">🏥 Clínica/Laboratorio</option>
+                <option value="escuela">🏫 Escuela/Guardería</option>
+                <option value="otro">📌 Otro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>RFC (opcional)</label>
+              <input id="est-rfc" placeholder="XAXX010101000" style="text-transform:uppercase">
+            </div>
+            <div style="grid-column:1/-1" class="form-group">
+              <label>Domicilio *</label>
+              <input id="est-domicilio" placeholder="Calle, número, colonia">
+            </div>
+            <div class="form-group">
+              <label>Colonia</label>
+              <input id="est-colonia" placeholder="Colonia">
+            </div>
+            <div class="form-group">
+              <label>Nombre del Responsable *</label>
+              <input id="est-responsable" placeholder="Nombre del propietario/encargado">
+            </div>
+            <div class="form-group">
+              <label>Teléfono de contacto</label>
+              <input id="est-telefono" type="tel" placeholder="449 000 0000">
+            </div>
+            <div class="form-group">
+              <label>Estado de cumplimiento</label>
+              <select id="est-estado-cump">
+                <option value="sin_verificar">🔘 Sin verificar</option>
+                <option value="cumple">✅ Cumple</option>
+                <option value="cumple_parcial">⚠️ Cumple parcial</option>
+                <option value="no_cumple">❌ No cumple</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Permisos -->
+          <div style="margin-top:16px">
+            <label style="display:block;font-weight:700;color:#1a3a5c;font-size:.85rem;margin-bottom:8px">📋 Permisos / Licencias</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="licencia_funcionamiento" class="perm-check"> Licencia de Funcionamiento</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="dictamen_ambiental" class="perm-check"> Dictamen Ambiental</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="manejo_residuos" class="perm-check"> Manejo de Residuos</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="descarga_aguas" class="perm-check"> Descarga de Aguas</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="emisiones_ruido" class="perm-check"> Emisiones/Ruido</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="uso_suelo" class="perm-check"> Uso de Suelo</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="proteccion_civil" class="perm-check"> Protección Civil</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="anuncio_publicidad" class="perm-check"> Anuncio/Publicidad</label>
+            </div>
+          </div>
+
+          <!-- Observaciones -->
+          <div style="margin-top:12px" class="form-group">
+            <label>Observaciones</label>
+            <textarea id="est-observaciones" rows="2" placeholder="Notas relevantes sobre el establecimiento..." style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem;resize:vertical"></textarea>
+          </div>
+
+          <div id="est-modal-alert" style="margin-top:10px"></div>
+          <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end">
+            <button onclick="cerrarModalEst()" class="btn btn-secondary">Cancelar</button>
+            <button onclick="guardarEstablecimiento()" class="btn btn-primary" id="btn-guardar-est">💾 Guardar Establecimiento</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════
+           MODAL: NUEVA VERIFICACIÓN
+      ══════════════════════════════════════════════════════════ -->
+      <div id="modal-verificacion" class="modal-bg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto">
+        <div style="background:#fff;border-radius:14px;padding:28px;width:100%;max-width:620px;margin:0 16px 40px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <h3 style="margin:0;color:#1a3a5c">🔍 Programar Verificación</h3>
+            <button onclick="cerrarModalVer()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888">✕</button>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="grid-column:1/-1" class="form-group">
+              <label>Establecimiento *</label>
+              <select id="ver-est-select" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+                <option value="">-- Seleccionar establecimiento --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Tipo de Verificación</label>
+              <select id="ver-tipo" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+                <option value="programada">📅 Programada (rutinaria)</option>
+                <option value="oficio">⚡ De Oficio (por denuncia)</option>
+                <option value="seguimiento">🔄 Seguimiento</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Fecha programada</label>
+              <input id="ver-fecha" type="date" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+            </div>
+            <div class="form-group">
+              <label>Asignar inspector</label>
+              <select id="ver-inspector" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+                <option value="">-- Sin asignar --</option>
+              </select>
+            </div>
+            <div style="grid-column:1/-1" class="form-group">
+              <label>Motivo / Instrucciones</label>
+              <textarea id="ver-motivo" rows="3" placeholder="Describe el motivo de la verificación, aspectos a revisar, antecedentes..." style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem;resize:vertical"></textarea>
+            </div>
+          </div>
+
+          <!-- Checklist por defecto -->
+          <div style="margin-top:12px">
+            <label style="display:block;font-weight:700;color:#1a3a5c;font-size:.85rem;margin-bottom:8px">✅ Checklist de Verificación (selecciona los puntos a revisar)</label>
+            <div id="ver-checklist-wrap" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;max-height:200px;overflow-y:auto;padding:8px;border:1px solid var(--borde);border-radius:6px;font-size:.8rem">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="licencia_vigente"> Licencia de funcionamiento vigente</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="dictamen_ambiental"> Dictamen ambiental municipal</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="contenedores_residuos"> Contenedores de residuos adecuados</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="separacion_residuos"> Separación de residuos orgánicos/inorgánicos</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="trampa_grasas"> Trampa de grasas (aplica a alimentos)</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="descarga_aguas"> Descarga de aguas residuales controlada</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="nivel_ruido"> Nivel de ruido dentro de norma</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="emisiones_aire"> Sin emisiones contaminantes al aire</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="almacen_productos"> Almacenamiento correcto de productos peligrosos</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="areas_verdes_predio"> Áreas verdes del predio en buen estado</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="fauna_control"> Control de fauna nociva (roedores, insectos)</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="senaletica"> Señalética ambiental visible</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="uso_suelo"> Uso de suelo conforme</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="proteccion_civil"> Protección Civil al corriente</label>
+            </div>
+          </div>
+
+          <div id="ver-modal-alert" style="margin-top:10px"></div>
+          <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end">
+            <button onclick="cerrarModalVer()" class="btn btn-secondary">Cancelar</button>
+            <button onclick="guardarVerificacion()" class="btn btn-primary">📅 Programar Verificación</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL: DETALLE / COMPLETAR VERIFICACIÓN -->
+      <div id="modal-ver-detalle" class="modal-bg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:flex-start;justify-content:center;padding-top:30px;overflow-y:auto">
+        <div style="background:#fff;border-radius:14px;padding:28px;width:100%;max-width:650px;margin:0 16px 40px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h3 id="ver-det-titulo" style="margin:0;color:#1a3a5c">🔍 Detalle de Verificación</h3>
+            <button onclick="cerrarModalVerDet()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888">✕</button>
+          </div>
+          <div id="ver-det-info" style="background:#f8fafc;border-radius:8px;padding:14px;margin-bottom:14px;font-size:.85rem;line-height:1.6"></div>
+
+          <!-- Checklist de resultados -->
+          <div style="margin-bottom:14px">
+            <label style="display:block;font-weight:700;color:#1a3a5c;font-size:.85rem;margin-bottom:8px">✅ Resultados del Checklist</label>
+            <div id="ver-det-checklist" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:8px;border:1px solid var(--borde);border-radius:6px;font-size:.8rem;max-height:180px;overflow-y:auto"></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div class="form-group">
+              <label style="font-weight:700;font-size:.82rem">Resultado General</label>
+              <select id="ver-det-resultado" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+                <option value="">-- Seleccionar --</option>
+                <option value="cumple">✅ Cumple con todos los requisitos</option>
+                <option value="cumple_con_observaciones">⚠️ Cumple con observaciones</option>
+                <option value="no_cumple">❌ No cumple</option>
+                <option value="no_aplica">➖ No aplica / No se pudo realizar</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label style="font-weight:700;font-size:.82rem">Acción requerida</label>
+              <select id="ver-det-accion" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+                <option value="ninguna">✅ Ninguna acción requerida</option>
+                <option value="apercibimiento">📋 Generar Apercibimiento</option>
+                <option value="sancion">⚖️ Iniciar Sanción</option>
+                <option value="seguimiento_30">🔄 Seguimiento en 30 días</option>
+                <option value="seguimiento_15">🔄 Seguimiento en 15 días</option>
+                <option value="clausura">🚫 Clausura temporal</option>
+              </select>
+            </div>
+            <div style="grid-column:1/-1" class="form-group">
+              <label style="font-weight:700;font-size:.82rem">Hallazgos / Observaciones del inspector</label>
+              <textarea id="ver-det-hallazgos" rows="4" placeholder="Describe detalladamente lo encontrado durante la verificación..." style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem;resize:vertical"></textarea>
+            </div>
+          </div>
+
+          <input type="hidden" id="ver-det-id">
+          <div id="ver-det-alert" style="margin-top:6px"></div>
+          <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;flex-wrap:wrap">
+            <button onclick="cerrarModalVerDet()" class="btn btn-secondary">Cerrar</button>
+            <button onclick="completarVerificacion()" class="btn btn-primary">✅ Guardar y Completar</button>
+          </div>
+        </div>
+      </div>
+
+
 
 
 
@@ -841,6 +1252,8 @@ async function refreshMapMarkers() {
   reps.forEach(rep => {
     const color  = MARKER_COLORS[rep.estado] || '#888';
     const marker = L.marker([rep.lat, rep.lon], { icon: makeIcon(color) });
+    const gmapsUrl = `https://www.google.com/maps?q=${rep.lat},${rep.lon}&z=18`;
+    const streetUrl = `https://www.google.com/maps?q=&layer=c&cbll=${rep.lat},${rep.lon}&cbp=12,0,,0,0`;
     const popHtml = `
       <div class="pop-title">${rep.folio}</div>
       <div class="pop-row">📍 ${rep.colonia}</div>
@@ -848,7 +1261,11 @@ async function refreshMapMarkers() {
       <div class="pop-row">👤 ${rep.nombre_reportante || 'Anónimo'}</div>
       <div class="pop-row">🕐 ${fmtDate(rep.fecha_creacion)}</div>
       <span class="pop-badge" style="background:${color}20;color:${color}">${rep.estado.replace('_',' ')}</span>
-      <button class="pop-btn" onclick="verDetalle(${rep.id});closePopups()">Ver detalle completo</button>`;
+      <button class="pop-btn" onclick="verDetalle(${rep.id});closePopups()">📋 Ver detalle completo</button>
+      <div style="display:flex;gap:4px;margin-top:4px">
+        <a href="${gmapsUrl}" target="_blank" style="flex:1;display:block;text-align:center;background:#4285F4;color:#fff;border-radius:6px;padding:5px 4px;font-size:.78rem;font-weight:600;text-decoration:none">🗺️ Google Maps</a>
+        <a href="${streetUrl}" target="_blank" style="flex:1;display:block;text-align:center;background:#34A853;color:#fff;border-radius:6px;padding:5px 4px;font-size:.78rem;font-weight:600;text-decoration:none">📸 Street View</a>
+      </div>`;
     marker.bindPopup(popHtml, { maxWidth: 240 });
     marker.addTo(mapReportes);
     mapMarkers.push(marker);
@@ -999,15 +1416,63 @@ function locateMe() {
   );
 }
 
+// ── Despertar servidor (Railway cold start) ─────────────────────
+function setLoginStatus(msg, isError) {
+  var el = document.getElementById('login-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+  el.style.background = isError ? '#fee2e2' : '#E8F1FB';
+  el.style.borderColor = isError ? '#fca5a5' : '#B3CFF0';
+}
+async function wakeUpServer() {
+  if (document.getElementById('app').style.display === 'block') return; // ya logueado
+  setLoginStatus('⏳ Conectando con el servidor… (si está en Railway, puede tardar hasta 1 minuto)', false);
+  try {
+    await fetch('/health', { method: 'GET', signal: AbortSignal.timeout(65000) });
+    setLoginStatus('✅ Conectado. Introduce usuario y contraseña e inicia sesión.', false);
+  } catch (e) {
+    setLoginStatus('❌ No hay conexión. Espera 1 minuto, recarga la página (F5) y vuelve a intentar.', true);
+  }
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wakeUpServer);
+else wakeUpServer();
+
 // ── AUTH ──────────────────────────────────────────────────────
 async function doLogin() {
-  const username = document.getElementById('l-user').value.trim();
-  const password = document.getElementById('l-pass').value.trim();
+  var usernameEl = document.getElementById('l-user');
+  var passwordEl = document.getElementById('l-pass');
+  if (!usernameEl || !passwordEl) return;
+  const username = usernameEl.value.trim();
+  const password = passwordEl.value.trim();
   const errEl    = document.getElementById('login-error');
-  errEl.innerHTML = '';
+  const btn      = document.getElementById('btn-login') || document.querySelector('#login-screen .btn-primary');
+  if (errEl) errEl.innerHTML = '';
+  if (!username || !password) {
+    errEl.innerHTML = alert_html('error', 'Ingresa usuario y contraseña.');
+    return;
+  }
+  var btnText = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Enviando…'; }
   try {
-    const r = await api('/api/auth/login','POST',{username,password},false);
-    if (!r.success) { errEl.innerHTML = alert_html('error', r.message); return; }
+    const base = window.location.origin || '';
+    const res = await fetch(base + '/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+      signal: AbortSignal.timeout(55000)
+    });
+    var r = null;
+    if (res.status === 502 || res.status === 503 || res.status === 504) {
+      r = { success: false, message: 'Error ' + res.status + ': el servidor no respondió a tiempo (Railway). Revisa en Railway → Deployments → View Logs si el proceso está activo o si hay errores al arrancar.' };
+    } else {
+      try { r = await res.json(); } catch (_) { r = { success: false, message: 'Respuesta inválida del servidor' }; }
+    }
+    if (!r || !r.success) {
+      errEl.innerHTML = alert_html('error', (r && r.message) || 'Credenciales incorrectas.');
+      if (btn) { btn.disabled = false; btn.innerHTML = btnText; }
+      return;
+    }
     TOKEN = r.data.token; USER = r.data.usuario;
     document.getElementById('nav-nombre').textContent = USER.nombre;
     document.getElementById('nav-rol').textContent    = USER.rol;
@@ -1017,7 +1482,13 @@ async function doLogin() {
     document.getElementById('app').style.display = 'block';
     showPage('dashboard'); loadDashboard();
     startMapAutoRefresh();
-  } catch(e) { errEl.innerHTML = alert_html('error','Error de conexión: '+e.message); }
+  } catch(e) {
+    const msg = (e.name === 'TimeoutError' || e.name === 'AbortError')
+      ? 'El servidor no respondió a tiempo. Si usas Railway (plan gratuito), la app puede estar “dormida”: espera 1 minuto, vuelve a hacer clic en Iniciar sesión y, si sigue fallando, revisa los logs del servicio en el panel de Railway.'
+      : ('Error de conexión: ' + (e.message || 'sin respuesta del servidor'));
+    errEl.innerHTML = alert_html('error', msg);
+  }
+  if (btn) { btn.disabled = false; btn.innerHTML = btnText; }
 }
 function doLogout() {
   TOKEN=null; USER=null;
@@ -1025,12 +1496,22 @@ function doLogout() {
   document.getElementById('app').style.display='none';
   mapReportes=null; mapPicker=null;
 }
-document.getElementById('l-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+var lpass = document.getElementById('l-pass');
+if (lpass) lpass.addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); doLogin(); } });
 
 // ── NAVEGACIÓN ────────────────────────────────────────────────
 function showPage(name) {
+  // Hide alertas wrapper if shown
+  var alertasWrapper = document.getElementById('page-alertas-wrapper');
+  if (alertasWrapper) alertasWrapper.style.display = 'none';
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('aside a').forEach(a=>a.classList.remove('active'));
+  if (name === 'alertas') {
+    if (alertasWrapper) alertasWrapper.style.display = 'block';
+    document.getElementById('nav-alertas') && document.getElementById('nav-alertas').classList.add('active');
+    cargarAlertas();
+    return;
+  }
   document.getElementById('page-'+name).classList.add('active');
   document.querySelectorAll('aside a').forEach(a=>{ if(a.getAttribute('onclick')?.includes("'"+name+"'")) a.classList.add('active'); });
   if (name==='reportes')      { currentPage=1; loadReportes(); }
@@ -1038,6 +1519,8 @@ function showPage(name) {
   if (name==='inspectores')   loadAsignaciones();
   if (name==='actas')         cargarActas();
   if (name==='nuevo-reporte') { initCanvas(); setTimeout(initMapPicker, 100); }
+  if (name==='establecimientos') { cargarEstablecimientos(); }
+  if (name==='verificaciones')   { cargarVerificaciones(); }
   if (name==='mapa') {
     setTimeout(initMapReportes, 100);
     startMapAutoRefresh();
@@ -1067,28 +1550,158 @@ async function api(path, method='GET', body=null, auth=true) {
 
 // ── DASHBOARD ─────────────────────────────────────────────────
 async function loadDashboard() {
-  const r = await api('/api/reports?limit=100');
-  if (!r.success) return;
-  const reps = r.data.reportes;
-  const counts = {reportado:0,asignado:0,en_proceso:0,cerrado:0};
-  reps.forEach(rep=>{ if(counts[rep.estado]!==undefined) counts[rep.estado]++; });
-  document.getElementById('st-total').textContent     = reps.length;
-  document.getElementById('st-reportado').textContent = counts.reportado;
-  document.getElementById('st-asignado').textContent  = counts.asignado;
-  document.getElementById('st-en_proceso').textContent= counts.en_proceso;
-  document.getElementById('st-cerrado').textContent   = counts.cerrado;
-  const recent = reps.slice(0,5);
-  const dashEl = document.getElementById('dash-recent');
-  if (!recent.length) { dashEl.innerHTML='<div class="empty">No hay reportes aún</div>'; return; }
-  dashEl.innerHTML = `<table style="width:100%;font-size:.88rem"><thead><tr>
-    <th style="padding:8px">Folio</th><th>Tipo</th><th>Colonia</th><th>Estado</th><th>Fecha</th>
-  </tr></thead><tbody>
-    ${recent.map(r=>`<tr>
-      <td><span class="folio-badge">${r.folio}</span></td>
-      <td>${tipoLabel(r.tipo)}</td><td>${r.colonia}</td>
-      <td>${badge(r.estado)}</td><td>${fmtDate(r.fecha_creacion)}</td>
-    </tr>`).join('')}
-  </tbody></table>`;
+  // Load stats from new /api/stats endpoint
+  api('/api/stats').then(function(r) {
+    if (!r.success) return;
+    const s = r.data;
+
+    // KPI cards
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('st-total',     s.totales.reportes);
+    set('st-pendientes',s.totales.pendientes);
+    set('st-en_proceso',s.totales.en_proceso);
+    set('st-cerrados',  s.totales.cerrados);
+    set('st-vencidos',  s.totales.apercibimientos_vencidos);
+    set('st-tiempo',    s.totales.tiempo_resolucion_dias || '–');
+    if (s.establecimientos) {
+      set('st-est-total',   s.establecimientos.total);
+      set('st-est-cumple',  s.establecimientos.cumple);
+      set('st-est-parcial', s.establecimientos.cumple_parcial);
+      set('st-est-nocumple',s.establecimientos.no_cumple);
+      set('st-est-sinver',  s.establecimientos.sin_verificar);
+      set('st-ver-pend',    s.establecimientos.verificaciones_pendientes);
+    }
+
+    // Update alertas badge
+    if (s.totales.apercibimientos_vencidos > 0) {
+      const badge = document.getElementById('alertas-badge');
+      if (badge) { badge.textContent = s.totales.apercibimientos_vencidos; badge.style.display = 'inline-block'; }
+    }
+
+    _renderCharts(s);
+  });
+
+  // Load recent reports
+  api('/api/reports?limit=5').then(function(r) {
+    if (!r.success) return;
+    const dashEl = document.getElementById('dash-recent');
+    if (!dashEl) return;
+    const reps = r.data.reportes;
+    if (!reps.length) { dashEl.innerHTML = '<div class="empty">No hay reportes recientes.</div>'; return; }
+    dashEl.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:.82rem">' +
+      '<thead><tr style="background:#f1f5f9"><th style="padding:6px 8px;text-align:left">Folio</th>' +
+      '<th style="padding:6px 8px;text-align:left">Tipo</th><th style="padding:6px 8px;text-align:left">Colonia</th>' +
+      '<th style="padding:6px 8px;text-align:left">Estado</th><th style="padding:6px 8px;text-align:left">Fecha</th></tr></thead><tbody>' +
+      reps.map((rep, i) => `<tr style="background:${i%2===0?'#fff':'#f8fafc'}">
+        <td style="padding:6px 8px;font-family:monospace;font-weight:700;color:#1a3a5c">${rep.folio}</td>
+        <td style="padding:6px 8px">${tipoLabel(rep.tipo)}</td>
+        <td style="padding:6px 8px">${rep.colonia}</td>
+        <td style="padding:6px 8px">${badge(rep.estado)}</td>
+        <td style="padding:6px 8px;color:#64748b">${fmtDate(rep.fecha_creacion)}</td>
+      </tr>`).join('') + '</tbody></table>';
+  });
+}
+
+// Charts instances (keep refs to destroy before re-rendering)
+var _charts = {};
+
+function _renderCharts(s) {
+  const COLORS = ['#1a3a5c','#2563eb','#16a34a','#dc2626','#d97706','#7c3aed','#0891b2','#be185d','#15803d','#92400e'];
+  const mkChart = (id, type, labels, data, opts) => {
+    if (_charts[id]) { _charts[id].destroy(); }
+    const ctx = document.getElementById(id);
+    if (!ctx) return;
+    _charts[id] = new Chart(ctx, {
+      type, data: { labels, datasets: [{ data,
+        backgroundColor: type==='line' ? 'rgba(26,58,92,.15)' : COLORS.slice(0,data.length),
+        borderColor: type==='line' ? '#1a3a5c' : COLORS.slice(0,data.length),
+        borderWidth: 2, fill: type==='line', tension: 0.4,
+        pointBackgroundColor: '#1a3a5c'
+      }]},
+      options: { responsive:true, plugins: { legend: { display: type!=='bar' && type!=='line', position:'right',
+        labels:{font:{size:10},boxWidth:12,padding:6} } },
+        scales: (type==='bar'||type==='line') ? {
+          y:{ beginAtZero:true, grid:{color:'rgba(0,0,0,.05)'},
+              ticks:{font:{size:9},precision:0} },
+          x:{ grid:{display:false}, ticks:{font:{size:9},maxRotation:45} }
+        } : {}, ...opts }
+    });
+  };
+
+  // 1. Por mes
+  if (s.por_mes && s.por_mes.length) {
+    const months = {
+      '01':'Ene','02':'Feb','03':'Mar','04':'Abr','05':'May','06':'Jun',
+      '07':'Jul','08':'Ago','09':'Sep','10':'Oct','11':'Nov','12':'Dic'
+    };
+    mkChart('chart-meses','line',
+      s.por_mes.map(m => { const p=m.mes.split('-'); return (months[p[1]]||p[1])+' '+p[0].slice(2); }),
+      s.por_mes.map(m=>m.total), {});
+  }
+
+  // 2. Por tipo (doughnut)
+  if (s.por_tipo) {
+    const TIPO_LABELS = {
+      denuncia_ambiental:'Denuncia Amb.',residuos_solidos:'Residuos',
+      agua_contaminada:'Agua Cont.',poda_arbol:'Poda',derribo_arbol:'Derribo',
+      perro_agresivo:'Perro Agres.',animal_calle:'Animal Calle',
+      tiradero_basura:'Tiradero',tiradero_escombro:'Escombro',
+      areas_verdes:'Áreas Verdes',ruido:'Ruido',otro:'Otro'
+    };
+    const entries = Object.entries(s.por_tipo).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    mkChart('chart-tipos','doughnut',
+      entries.map(([k])=>TIPO_LABELS[k]||k), entries.map(([,v])=>v), {});
+  }
+
+  // 3. Por estado (bar)
+  if (s.por_estado) {
+    const ESTADO_LABELS = {
+      reportado:'Reportado',asignado:'Asignado',en_inspeccion:'En Insp.',
+      en_proceso:'En Proceso',pendiente_medida:'Pend. Medida',
+      apercibido:'Apercibido',sancionado:'Sancionado',cerrado:'Cerrado'
+    };
+    const entries = Object.entries(s.por_estado).sort((a,b)=>b[1]-a[1]);
+    mkChart('chart-estados','bar',
+      entries.map(([k])=>ESTADO_LABELS[k]||k), entries.map(([,v])=>v), {});
+  }
+
+  // 4. Top inspectores (bar horizontal)
+  if (s.top_inspectores && s.top_inspectores.length) {
+    const canvas = document.getElementById('chart-inspectores');
+    if (canvas) {
+      if (_charts['chart-inspectores']) _charts['chart-inspectores'].destroy();
+      _charts['chart-inspectores'] = new Chart(canvas, {
+        type: 'bar',
+        data: {
+          labels: s.top_inspectores.map(i=>i.inspector.split(' ')[0]),
+          datasets:[{data:s.top_inspectores.map(i=>i.asignaciones),
+            backgroundColor:COLORS.slice(0,s.top_inspectores.length),
+            borderWidth:0}]
+        },
+        options:{ indexAxis:'y', responsive:true,
+          plugins:{legend:{display:false}},
+          scales:{x:{beginAtZero:true,ticks:{precision:0}},y:{grid:{display:false}}} }
+      });
+    }
+  }
+
+  // 5. Top colonias (bar)
+  if (s.por_colonia) {
+    const entries = Object.entries(s.por_colonia).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    mkChart('chart-colonias','bar',
+      entries.map(([k])=>k), entries.map(([,v])=>v), {});
+  }
+
+  // 6. Actas por tipo (doughnut)
+  if (s.por_tipo_acta) {
+    const ACTA_LABELS = {
+      inspeccion:'Inspección',circunstanciada:'Circunstanciada',
+      apercibimiento:'Apercibimiento',sancion:'Sanción'
+    };
+    const entries = Object.entries(s.por_tipo_acta);
+    mkChart('chart-actas','doughnut',
+      entries.map(([k])=>ACTA_LABELS[k]||k), entries.map(([,v])=>v), {});
+  }
 }
 
 // ── REPORTES ──────────────────────────────────────────────────
@@ -1109,7 +1722,9 @@ async function loadReportes() {
   tbody.innerHTML=reportes.map(rep=>`<tr>
     <td><span class="folio-badge">${rep.folio}</span></td>
     <td>${tipoLabel(rep.tipo)}</td><td>${rep.colonia}</td>
-    <td>${badge(rep.estado)}</td><td>${fmtDate(rep.fecha_creacion)}</td>
+    <td>${badge(rep.estado)}</td>
+    <td style="font-size:.78rem;line-height:1.3">${rep.brigada?`<b style="color:var(--verde-oscuro)">${rep.brigada}</b><br><span style="color:var(--muted)">${rep.inspector||''}</span>`:'<span style="color:#94a3b8;font-style:italic">Sin asignar</span>'}</td>
+    <td>${fmtDate(rep.fecha_creacion)}</td>
     <td style="text-align:right;white-space:nowrap">
       <button class="btn btn-secondary btn-sm" title="Ver" onclick="verDetalle(${rep.id})">👁</button>
       ${(USER.rol==='admin'||USER.rol==='operador')&&rep.estado==='reportado'?`<button class="btn btn-primary btn-sm" title="Asignar" onclick="abrirAsignar(${rep.id})">👷</button>`:''}
@@ -1172,7 +1787,28 @@ async function verDetalle(id) {
     ${rep.firmas?.length?`<div class="detail-section"><h4>Firmas</h4><ul class="timeline">
       ${rep.firmas.map(f=>`<li><b>${f.nombre_firmante}</b> <span class="badge badge-${f.rol_firmante}">${f.rol_firmante}</span>
         <br><small style="color:var(--muted)">${fmtDate(f.fecha_firma)}</small></li>`).join('')}
-    </ul></div>`:''}`;
+    </ul></div>`:''}
+
+    ${rep.historial && rep.historial.length ? `
+    <div class="detail-section" style="margin-top:16px">
+      <h4 style="color:#1a3a5c;margin-bottom:8px">📋 Historial de Estados</h4>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${rep.historial.map(h => `
+          <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:#f8fafc;border-radius:8px;border-left:3px solid ${
+            h.estado_nuevo==='cerrado'?'#166534':h.estado_nuevo==='sancionado'?'#991b1b':h.estado_nuevo==='apercibido'?'#92400e':h.estado_nuevo==='pendiente_medida'?'#d97706':'#2563eb'
+          }">
+            <div style="flex:1">
+              <div style="font-size:.8rem;font-weight:700;color:#1a3a5c">
+                ${h.estado_anterior?`${h.estado_anterior} → `:''}${h.estado_nuevo}
+              </div>
+              <div style="font-size:.72rem;color:#64748b;margin-top:2px">
+                👤 ${h.usuario} &nbsp;·&nbsp; 📅 ${new Date(h.fecha).toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+                ${h.nota?`&nbsp;·&nbsp; <i>${h.nota}</i>`:''}
+              </div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>` : ''}`;
   openModal('modal-detalle');
   // Mini mapa en detalle
   if (rep.lat && rep.lon) {
@@ -1266,191 +1902,6 @@ function selEstado(e) {
   });
 }
 
-async function abrirEditar(id) {
-  const r = await api(`/api/reports/${id}`);
-  if(!r.success){ alert(r.message); return; }
-  const rep = r.data;
-  document.getElementById('edit-id').value      = rep.id;
-  document.getElementById('edit-tipo').value    = rep.tipo;
-  document.getElementById('edit-colonia').value = rep.colonia;
-  document.getElementById('edit-desc').value    = rep.descripcion;
-  document.getElementById('edit-nombre').value  = rep.nombre_reportante || '';
-  document.getElementById('edit-tel').value     = rep.telefono || '';
-  document.getElementById('edit-alert').innerHTML = '';
-  selEstado(rep.estado);
-  openModal('modal-editar');
-}
-
-async function guardarEdicion() {
-  const id      = document.getElementById('edit-id').value;
-  const tipo    = document.getElementById('edit-tipo').value;
-  const colonia = document.getElementById('edit-colonia').value.trim();
-  const desc    = document.getElementById('edit-desc').value.trim();
-  const estado  = document.getElementById('edit-estado').value;
-  const nombre  = document.getElementById('edit-nombre').value.trim();
-  const tel     = document.getElementById('edit-tel').value.trim();
-  const alertEl = document.getElementById('edit-alert');
-  if(!colonia || desc.length < 5) {
-    alertEl.innerHTML = alert_html('error','Colonia y descripcion son requeridos.'); return;
-  }
-  const r = await api(`/api/reports/${id}`, 'PATCH', {
-    tipo, colonia, descripcion: desc, estado,
-    nombre_reportante: nombre || null, telefono: tel || null
-  });
-  if(r.success) {
-    closeModal('modal-editar');
-    loadReportes(); loadDashboard();
-    if(mapReportes) refreshMapMarkers();
-  } else alertEl.innerHTML = alert_html('error', r.message);
-}
-
-async function borrarReporte(id, folio) {
-  if(!confirm('Eliminar permanentemente el reporte ' + folio + '?\nEsta accion no se puede deshacer.')) return;
-  const r = await api(`/api/reports/${id}`, 'DELETE');
-  if(r.success) {
-    loadReportes(); loadDashboard();
-    if(mapReportes) refreshMapMarkers();
-  } else alert(r.message);
-}
-
-// ── DESCARGAR EXCEL ───────────────────────────────────────────
-async function descargarXLS() {
-  const estado  = document.getElementById('f-estado').value;
-  const tipo    = document.getElementById('f-tipo').value;
-  const colonia = document.getElementById('f-colonia').value;
-  let url = '/api/reports?limit=2000';
-  if(estado)  url += '&estado='  + estado;
-  if(tipo)    url += '&tipo='    + tipo;
-  if(colonia) url += '&colonia=' + encodeURIComponent(colonia);
-  const r = await api(url);
-  if(!r.success){ alert('Error al obtener reportes'); return; }
-  const reps = r.data.reportes;
-
-  function esc(s) {
-    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-  function cell(v, t) {
-    t = t || 'String';
-    return '<Cell><Data ss:Type="' + t + '">' + esc(v) + '</Data></Cell>';
-  }
-  function hcell(v) {
-    return '<Cell ss:StyleID="h"><Data ss:Type="String">' + esc(v) + '</Data></Cell>';
-  }
-
-  const cols = ['Folio','Tipo','Colonia','Estado','Descripcion','Reportante','Telefono','Latitud','Longitud','Fecha Creacion','Fecha Actualizacion','Brigada','Inspector'];
-  const headerRow = '<Row>' + cols.map(hcell).join('') + '</Row>';
-
-  const dataRows = reps.map(function(rep) {
-    return '<Row>' +
-      cell(rep.folio) +
-      cell((tipoLabel(rep.tipo)||'').replace(/[^\x00-\x7F]/g,'').trim()) +
-      cell(rep.colonia) +
-      cell((rep.estado||'').replace('_',' ')) +
-      cell(rep.descripcion) +
-      cell(rep.nombre_reportante||'') +
-      cell(rep.telefono||'') +
-      cell(rep.lat||'', rep.lat ? 'Number' : 'String') +
-      cell(rep.lon||'', rep.lon ? 'Number' : 'String') +
-      cell(fmtDate(rep.fecha_creacion)) +
-      cell(fmtDate(rep.fecha_actualizacion)) +
-      cell(rep.brigada||'') +
-      cell(rep.inspector||'') +
-    '</Row>';
-  }).join('');
-
-  const xml = '<?xml version="1.0" encoding="UTF-8"?>\n' +
-    '<?mso-application progid="Excel.Sheet"?>\n' +
-    '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n' +
-    '<Styles><Style ss:ID="h"><Font ss:Bold="1" ss:Color="#FFFFFF"/>' +
-    '<Interior ss:Color="#003B7A" ss:Pattern="Solid"/></Style></Styles>\n' +
-    '<Worksheet ss:Name="Reportes SGO-IMBIO"><Table>' +
-    headerRow + dataRows +
-    '</Table></Worksheet></Workbook>';
-
-  const blob = new Blob([xml], {type:'application/vnd.ms-excel;charset=utf-8'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  const fecha = new Date().toISOString().slice(0,10);
-  a.download = 'SGO-IMBIO_Reportes_' + fecha + '.xls';
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-// ── ASIGNACIONES ──────────────────────────────────────────────
-async function loadAsignaciones(){
-  const r=await api('/api/reports?estado=reportado&limit=100');
-  const tbody=document.getElementById('tabla-asig');
-  if(!r.success){tbody.innerHTML=`<tr><td colspan="7">${alert_html('error',r.message)}</td></tr>`;return;}
-  const reps=r.data.reportes;
-  if(!reps.length){tbody.innerHTML='<tr><td colspan="7" class="empty">No hay reportes pendientes</td></tr>';return;}
-  tbody.innerHTML=reps.map(rep=>`<tr>
-    <td><span class="folio-badge">${rep.folio}</span></td>
-    <td>${tipoLabel(rep.tipo)}</td><td>${rep.colonia}</td>
-    <td>${badge(rep.estado)}</td>
-    <td>${rep.brigada||'–'}</td><td>${rep.inspector||'–'}</td>
-    <td><button class="btn btn-primary btn-sm" onclick="abrirAsignar(${rep.id})">👷 Asignar</button></td>
-  </tr>`).join('');
-}
-function abrirAsignar(id){
-  document.getElementById('asig-report-id').value=id;
-  ['asig-brigada','asig-inspector','asig-notas'].forEach(i=>document.getElementById(i).value='');
-  document.getElementById('asig-modal-alert').innerHTML='';
-  openModal('modal-asignar');
-}
-async function submitAsignacion(){
-  const id      =document.getElementById('asig-report-id').value;
-  const brigada =document.getElementById('asig-brigada').value.trim();
-  const inspector=document.getElementById('asig-inspector').value.trim();
-  const notas   =document.getElementById('asig-notas').value.trim();
-  const alertEl =document.getElementById('asig-modal-alert');
-  if(!brigada||!inspector){alertEl.innerHTML=alert_html('error','Brigada e inspector son requeridos.');return;}
-  const r=await api(`/api/reports/${id}/assign`,'POST',{brigada,inspector,notas});
-  if(r.success){
-    closeModal('modal-asignar');
-    document.getElementById('asig-alert').innerHTML=alert_html('success',`✅ Reporte asignado a brigada "${brigada}"`);
-    loadAsignaciones(); loadDashboard();
-    if(mapReportes) refreshMapMarkers();
-    setTimeout(()=>document.getElementById('asig-alert').innerHTML='',4000);
-  } else alertEl.innerHTML=alert_html('error',r.message);
-}
-
-// ── EVIDENCIA ─────────────────────────────────────────────────
-function abrirEvidencia(id){
-  document.getElementById('ev-report-id').value=id;
-  ['ev-comentario','ev-lat','ev-lon'].forEach(i=>document.getElementById(i).value='');
-  document.getElementById('ev-estado').value='';
-  document.getElementById('ev-modal-alert').innerHTML='';
-  openModal('modal-evidencia');
-}
-async function submitEvidencia(){
-  const id        =document.getElementById('ev-report-id').value;
-  const comentario=document.getElementById('ev-comentario').value.trim();
-  const lat       =document.getElementById('ev-lat').value;
-  const lon       =document.getElementById('ev-lon').value;
-  const estado    =document.getElementById('ev-estado').value;
-  const alertEl   =document.getElementById('ev-modal-alert');
-  const filesInput=document.getElementById('ev-fotos');
-  if(filesInput.files.length===0){
-    const r=await api(`/api/reports/${id}/evidence`,'POST',{comentario,lat_captura:lat||null,lon_captura:lon||null,nuevo_estado:estado||null});
-    if(r.success){closeModal('modal-evidencia');loadReportes();loadDashboard();if(mapReportes)refreshMapMarkers();}
-    else alertEl.innerHTML=alert_html('error',r.message);
-    return;
-  }
-  const formData=new FormData();
-  if(comentario) formData.append('comentario',comentario);
-  if(lat) formData.append('lat_captura',lat);
-  if(lon) formData.append('lon_captura',lon);
-  if(estado) formData.append('nuevo_estado',estado);
-  for(const f of filesInput.files) formData.append('photos',f);
-  try{
-    const resp=await fetch(`/api/reports/${id}/evidence`,{method:'POST',headers:{'Authorization':'Bearer '+TOKEN},body:formData});
-    const r=await resp.json();
-    if(r.success){closeModal('modal-evidencia');loadReportes();loadDashboard();if(mapReportes)refreshMapMarkers();}
-    else alertEl.innerHTML=alert_html('error',r.message);
-  }catch(e){alertEl.innerHTML=alert_html('error',e.message);}
-}
-
-// ── EDITAR REPORTE ───────────────────────────────────────────
 async function abrirEditar(id) {
   const r = await api(`/api/reports/${id}`);
   if (!r.success) { alert(r.message); return; }
@@ -1627,7 +2078,14 @@ function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('click',e=>{if(e.target===bg)bg.classList.remove('open');}));
 
 // ── HELPERS ───────────────────────────────────────────────────
-function badge(e){ return `<span class="badge badge-${e}">${e.replace('_',' ')}</span>`; }
+function badge(e){
+  const labels={
+    reportado:'Reportado', asignado:'Asignado', en_proceso:'En Proceso',
+    en_inspeccion:'En Inspección', pendiente_medida:'⚠️ Pendiente Medida',
+    apercibido:'Apercibido', sancionado:'Sancionado', cerrado:'Cerrado'
+  };
+  return `<span class="badge badge-${e}">${labels[e]||e.replace(/_/g,' ')}</span>`;
+}
 function tipoLabel(t){
   const m={
     denuncia_ambiental:'🌱 Denuncia Ambiental', areas_verdes:'🌳 Áreas Verdes',
@@ -1749,23 +2207,27 @@ async function eliminarInspector(id, nombre) {
 // ════════════════════════════════════════════════════════
 
 async function cargarActas() {
-  const wrap  = document.getElementById('actas-tabla-wrap');
-  const alert = document.getElementById('actas-alert');
-  const tipo  = document.getElementById('acta-filtro-tipo')?.value  || '';
-  const est   = document.getElementById('acta-filtro-estado')?.value || '';
-  wrap.innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px">Cargando...</p>';
-  alert.innerHTML = '';
+  const wrap    = document.getElementById('actas-tabla-wrap');
+  const alertEl = document.getElementById('actas-alert');
+  const tipo    = document.getElementById('acta-filtro-tipo')?.value  || '';
+  const est     = document.getElementById('acta-filtro-estado')?.value || '';
+  if (wrap) wrap.innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px">Cargando...</p>';
+  if (alertEl) alertEl.innerHTML = '';
 
   try {
     let url = '/api/actas?limit=100';
     if (tipo) url += '&tipo_acta=' + encodeURIComponent(tipo);
     if (est)  url += '&estado='    + encodeURIComponent(est);
     const r = await api(url);
-    if (!r.success) { alert.innerHTML = alert_html('error', r.message || 'Error al cargar actas.'); return; }
+    if (!r || !r.success) {
+      if (alertEl) alertEl.innerHTML = alert_html('error', (r && r.message) || 'Error al cargar actas.');
+      return;
+    }
     const actas = r.data.actas || [];
     renderActasTabla(actas, r.data.paginacion);
   } catch(e) {
-    alert.innerHTML = alert_html('error', 'Error: ' + e.message);
+    if (alertEl) alertEl.innerHTML = alert_html('error', 'Error de conexión: ' + e.message);
+    console.error('[ACTAS]', e);
   }
 }
 
@@ -1798,6 +2260,7 @@ function renderActasTabla(actas, pag) {
       <td>
         <button class="btn btn-primary btn-sm" onclick="verDetalleActa(${a.id})">🔍 Ver</button>
         <button class="btn btn-success btn-sm" onclick="descargarActaPDF(${a.id})">📥 PDF</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarActa(${a.id},'${a.folio_acta||''}')">🗑️</button>
       </td>
     </tr>`).join('');
 
@@ -1816,17 +2279,11 @@ function renderActasTabla(actas, pag) {
 }
 
 async function verDetalleActa(id) {
-  const modal = document.getElementById('modal-acta-detalle');
-  const body  = document.getElementById('modal-acta-body');
+  const modal  = document.getElementById('modal-acta-detalle');
+  const body   = document.getElementById('modal-acta-body');
   const titulo = document.getElementById('modal-acta-titulo');
   body.innerHTML = '<p style="text-align:center;padding:20px;color:var(--muted)">Cargando...</p>';
-  modal.style.display = 'flex';
-  modal.style.alignItems = 'center';
-  modal.style.justifyContent = 'center';
-  modal.style.position = 'fixed';
-  modal.style.inset = '0';
-  modal.style.background = 'rgba(0,0,0,.5)';
-  modal.style.zIndex = '900';
+  modal.style.cssText = 'display:flex;align-items:flex-start;justify-content:center;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;overflow-y:auto;padding:20px';
 
   try {
     const r = await api('/api/actas/' + id);
@@ -1840,7 +2297,8 @@ async function verDetalleActa(id) {
 }
 
 function cerrarModalActa() {
-  document.getElementById('modal-acta-detalle').style.display = 'none';
+  const m = document.getElementById('modal-acta-detalle');
+  m.style.display = 'none';
 }
 
 function renderActaDetalle(a) {
@@ -1972,18 +2430,1378 @@ function renderActaDetalle(a) {
   return html;
 }
 
-async function descargarActaPDF(id) {
+async function eliminarActa(id, folio) {
+  if (!confirm('¿Eliminar permanentemente el acta ' + folio + '?\nEsta acción no se puede deshacer.')) return;
+  const r = await api('/api/actas/' + id, 'DELETE');
+  if (r && r.success) {
+    cargarActas();
+  } else {
+    window.alert('Error al eliminar: ' + (r && r.message || 'Error desconocido'));
+  }
+}
+
+const LOGO_AYUNTAMIENTO = 'data:image/jpeg;base64,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';
+
+function buildActaHTML(acta) {
+  if (!acta) return '<p>Sin datos del acta.</p>';
+  const hoy = new Date(acta.fecha || Date.now());
+  const fechaStr = hoy.toLocaleDateString('es-MX', {day:'2-digit',month:'long',year:'numeric'});
+  const horaStr  = hoy.toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit'});
+  const tipoLabels = {
+    circunstanciada: 'ACTA CIRCUNSTANCIADA',
+    apercibimiento:  'ACTA DE APERCIBIMIENTO',
+    sancion:         'ACTA DE SANCIÓN AMBIENTAL',
+    inspeccion:      'ACTA DE INSPECCIÓN Y VIGILANCIA'
+  };
+  const tituloActa = tipoLabels[acta.tipo_acta] || 'ACTA CIRCUNSTANCIADA';
+  const esInspeccion = (acta.tipo_acta === 'inspeccion');
+  const esCircunstanciada = (!acta.tipo_acta || acta.tipo_acta === 'circunstanciada');
+  const esSancion = (acta.tipo_acta === 'sancion');
+
+  // Construir filas de datos arbóreos si existen
+  // ── Sección dinámica según tipo de reporte ───────────────────────────
+  const tipoRepPDF = acta.tipo_reporte || '';
+  const esArbolPDF    = ['poda_arbol','derribo_arbol','corte_arbol','arbol_riesgo','areas_verdes'].includes(tipoRepPDF);
+  const esAnimalPDF   = ['perro_agresivo','animal_calle','animal_maltrato','fauna_silvestre','animal_abandonado'].includes(tipoRepPDF);
+  const esDenunciaPDF = ['denuncia_ambiental','residuos_solidos','tiradero_escombro','agua_contaminada','ruido','quema','contaminacion'].includes(tipoRepPDF);
+
+  let arbóreoHTML = '';
+  if ((esArbolPDF || !tipoRepPDF) && (acta.arb_especie || acta.arb_dap)) {
+    arbóreoHTML = `
+    <div class="section-title">2. CARACTERÍSTICAS DENDROMÉTRICAS (Art. 6 NTEA-AGS-ARBOLADO-2026)</div>
+    <table class="data-table">
+      <tr><td class="lbl">Especie</td><td>${acta.arb_especie||'—'}</td><td class="lbl">DAP (cm)</td><td>${acta.arb_dap||'—'}</td></tr>
+      <tr><td class="lbl">Altura (m)</td><td>${acta.arb_altura||'—'}</td><td class="lbl">Copa (m)</td><td>${acta.arb_copa||'—'}</td></tr>
+      <tr><td class="lbl">Vigor</td><td>${acta.arb_vigor||'—'}</td><td class="lbl">Estructura</td><td>${acta.arb_estructura||'—'}</td></tr>
+      <tr><td class="lbl">Método eval.</td><td colspan="3">${acta.arb_metodo||'Inspección Visual Nivel 1'}</td></tr>
+      ${acta.arb_copa ? `<tr><td class="lbl">Diámetro copa</td><td colspan="3">${acta.arb_copa} m</td></tr>` : ''}
+      ${(acta.fs_plagas||acta.fs_enfermedades||acta.fs_infra||acta.fs_raiz) ? `
+      <tr>
+        <td class="lbl">Fitosanitario</td>
+        <td colspan="3">
+          ${acta.fs_plagas ? '<b>Plagas:</b> ' + acta.fs_plagas + '&nbsp;&nbsp;' : ''}
+          ${acta.fs_enfermedades ? '<b>Enf:</b> ' + acta.fs_enfermedades + '&nbsp;&nbsp;' : ''}
+          ${acta.fs_infra ? '<b>Infra:</b> ' + acta.fs_infra + '&nbsp;&nbsp;' : ''}
+          ${acta.fs_raiz ? '<b>Raíz:</b> ' + acta.fs_raiz : ''}
+        </td>
+      </tr>` : ''}
+    </table>`;
+  }
+
+  let dictamenHTML = '';
+  if (acta.dictamen) {
+    dictamenHTML = `<p><b>Intervención autorizada:</b> ${acta.dictamen.split(',').join(', ')}</p>`;
+  }
+
+  let compensHTML = '';
+  if (acta.comp_categoria || acta.comp_arboles) {
+    compensHTML = `<p><b>Compensación ambiental:</b> ${acta.comp_arboles||'—'} árbol(es) de ${acta.comp_especie||'especie nativa'} (Categoría: ${acta.comp_categoria||'—'})</p>`;
+  }
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>${acta.folio_acta||'ACTA'}</title>
+<style>
+  @page { size: letter; margin: 15mm 12mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 10px; color: #1a1a1a; background: #fff; width: 100%; }
+  section, article, div { max-width: 100%; }
+  .header { display: flex; align-items: center; border-bottom: 3px solid #1a3a5c; padding-bottom: 10px; margin-bottom: 10px; }
+  .header-logo { width: 140px; margin-right: 12px; flex-shrink: 0; }
+  .header-logo img { width: 100%; }
+  .header-center { flex: 1; text-align: center; }
+  .inst-name { font-size: 9px; font-weight: bold; color: #1a3a5c; line-height: 1.3; margin-bottom: 4px; }
+  .acta-title { font-size: 13px; font-weight: bold; color: #1a3a5c; letter-spacing: .05em; margin-bottom: 2px; }
+  .folio { font-size: 11px; color: #dc2626; font-weight: bold; font-family: monospace; }
+  .header-right { width: 80px; text-align: right; font-size: 8px; color: #555; flex-shrink: 0; }
+  .escudo { width: 50px; }
+  .meta-bar { background: #f0f4fa; border: 1px solid #c8d8f0; border-radius: 4px; padding: 5px 10px; margin-bottom: 8px; display: flex; gap: 20px; font-size: 9px; }
+  .meta-bar b { color: #1a3a5c; }
+  .section-title { background: #1a3a5c; color: #fff; font-weight: bold; font-size: 9px; padding: 4px 8px; margin: 8px 0 5px; letter-spacing: .05em; text-transform: uppercase; }
+  .data-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; font-size: 9px; }
+  .data-table td { border: 1px solid #ccc; padding: 3px 6px; vertical-align: top; }
+  .data-table .lbl { background: #f0f4fa; font-weight: bold; color: #1a3a5c; width: 90px; }
+  .desc-box { display: block; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; padding: 8px; margin-bottom: 8px; font-size: 9.5px; line-height: 1.6; min-height: 60px; white-space: pre-wrap; word-break: break-word; overflow-wrap: break-word; }
+  .risk-badge { display: inline-block; padding: 2px 10px; border-radius: 3px; font-weight: bold; font-size: 10px; }
+  .risk-bajo { background: #dcfce7; color: #166534; }
+  .risk-moderado { background: #fef3c7; color: #92400e; }
+  .risk-alto { background: #fee2e2; color: #991b1b; }
+  .risk-extremo { background: #450a0a; color: #fca5a5; }
+  .firma-section { display: flex; gap: 20px; margin-top: 16px; }
+  .firma-box { flex: 1; border: 1px solid #ccc; border-radius: 4px; padding: 6px; text-align: center; }
+  .firma-box img { max-width: 180px; max-height: 60px; display: block; margin: 0 auto; }
+  .firma-line { border-top: 1px solid #555; margin: 40px 10px 4px; }
+  .firma-label { font-size: 8px; color: #555; }
+  .firma-name { font-size: 9px; font-weight: bold; color: #1a3a5c; }
+  .footer { margin-top: 14px; border-top: 1px solid #ccc; padding-top: 5px; font-size: 8px; color: #666; text-align: center; }
+  .legal-ref { font-size: 8px; color: #555; font-style: italic; margin-bottom: 6px; }
+  p { margin-bottom: 5px; font-size: 9.5px; line-height: 1.4; }
+  .badge-row { margin: 4px 0; }
+</style>
+</head>
+<body>
+
+<!-- ENCABEZADO OFICIAL -->
+<div class="header">
+  <div class="header-logo">
+    <img src="${LOGO_AYUNTAMIENTO}" alt="H. Ayuntamiento Pabellón de Arteaga">
+  </div>
+  <div class="header-center">
+    <div class="inst-name">H. AYUNTAMIENTO DE PABELLÓN DE ARTEAGA 2024-2027<br>
+    INSTITUTO MUNICIPAL DE BIODIVERSIDAD Y PROTECCIÓN AMBIENTAL (IMBIO)</div>
+    <div class="acta-title">${tituloActa}</div>
+    <div class="folio">${acta.folio_acta || 'SIN FOLIO'}</div>
+  </div>
+  <div class="header-right">
+    <div>Fecha:</div>
+    <div><b>${fechaStr}</b></div>
+    <div style="margin-top:3px">Hora:</div>
+    <div><b>${horaStr}</b></div>
+  </div>
+</div>
+
+<!-- BARRA DE METADATOS -->
+<div class="meta-bar">
+  <div><b>Folio Reporte:</b> ${acta.report_folio || '—'}</div>
+  <div><b>Inspector:</b> ${acta.inspector || '—'}</div>
+  <div><b>Domicilio:</b> ${acta.domicilio || '—'}</div>
+  ${acta.nivel_riesgo ? `<div><b>Nivel de Riesgo:</b> <span class="risk-badge risk-${acta.nivel_riesgo.toLowerCase()}">${acta.nivel_riesgo}</span></div>` : ''}
+</div>
+
+<!-- SECCIÓN 1: DATOS DE LA DILIGENCIA -->
+<div class="section-title">1. ${esInspeccion ? "Datos de la Visita de Inspección" : "Datos de la Diligencia"}</div>
+<table class="data-table">
+  <tr>
+    <td class="lbl">${esInspeccion ? "Responsable / Representante" : "Propietario / Visitado"}</td>
+    <td colspan="3">${acta.infractor || '—'}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Domicilio</td>
+    <td colspan="3">${acta.domicilio || '—'}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Inspector actuante</td>
+    <td>${acta.inspector || '—'}</td>
+    <td class="lbl">Fecha / Hora</td>
+    <td>${fechaStr} — ${horaStr}</td>
+  </tr>
+</table>
+
+${arbóreoHTML}
+
+<!-- SECCIÓN ANIMAL -->
+    ${esAnimalPDF ? `
+    <div class="section-title">2. Datos de la Víctima</div>
+    <table class="data-table">
+      <tr><td class="lbl">Nombre víctima</td><td colspan="3">${acta.vic_nombre||'—'}</td></tr>
+      <tr><td class="lbl">Edad</td><td>${acta.vic_edad||'—'}</td><td class="lbl">Teléfono</td><td>${acta.vic_telefono||'—'}</td></tr>
+      <tr><td class="lbl">Domicilio</td><td colspan="3">${acta.vic_domicilio||'—'}</td></tr>
+      <tr><td class="lbl">Atención médica</td><td>${acta.vic_atencion||'—'}</td><td class="lbl">Gravedad herida</td><td>${acta.vic_gravedad||'—'}</td></tr>
+      ${acta.mordida_zonas ? `<tr><td class="lbl" style="color:#991b1b;font-weight:bold">🩸 Zonas de mordida</td><td colspan="3" style="color:#991b1b;font-weight:bold">${acta.mordida_zonas}</td></tr>` : ''}
+      ${acta.mordida_gravedad ? `<tr><td class="lbl">Gravedad mordida</td><td colspan="3">${acta.mordida_gravedad}</td></tr>` : ''}
+    </table>
+
+    <div class="section-title">3. Descripción del Animal Agresor</div>
+    <table class="data-table">
+      <tr><td class="lbl">Especie</td><td>${acta.anim_especie||'—'}</td><td class="lbl">Cantidad</td><td>${acta.anim_cantidad||'1'}</td></tr>
+      ${acta.anim_raza ? `<tr><td class="lbl">Raza / descripción</td><td colspan="3">${acta.anim_raza}</td></tr>` : ''}
+      <tr><td class="lbl">Condición</td><td>${acta.anim_condicion||'—'}</td><td class="lbl">Situación</td><td>${acta.anim_situacion||'—'}</td></tr>
+      ${acta.anim_duenio ? `<tr><td class="lbl">Dueño / responsable</td><td colspan="3">${acta.anim_duenio}</td></tr>` : ''}
+      ${acta.anim_destino ? `<tr><td class="lbl">Destino animal</td><td colspan="3">${acta.anim_destino}</td></tr>` : ''}
+      ${acta.acciones_animal ? `<tr><td class="lbl">Acciones en campo</td><td colspan="3">${acta.acciones_animal}</td></tr>` : ''}
+    </table>` : ''}
+
+    <!-- SECCIÓN DENUNCIA AMBIENTAL -->
+    ${esDenunciaPDF && acta.da_tipo_infraccion ? `
+    <div class="section-title">2. Situación Ambiental Detectada</div>
+    <table class="data-table">
+      <tr><td class="lbl">Tipo de infracción</td><td colspan="3">${acta.da_tipo_infraccion||'—'}</td></tr>
+      <tr><td class="lbl">Severidad</td><td>${acta.da_severidad||'—'}</td><td class="lbl">Tiempo afectación</td><td>${acta.da_tiempo||'No determinado'}</td></tr>
+      <tr><td class="lbl">Superficie (m²)</td><td>${acta.da_superficie||'—'}</td><td class="lbl">Presunto responsable</td><td>${acta.da_responsable==='si'?'Sí — presente':acta.da_responsable==='ubicado'?'Identificado / ausente':'No identificado'}</td></tr>
+      ${acta.medidas_denuncia ? `<tr><td class="lbl" style="color:#003B7A;font-weight:bold">⚡ Medidas adoptadas</td><td colspan="3" style="font-weight:600">${acta.medidas_denuncia}</td></tr>` : ''}
+      ${acta.da_plazo ? `<tr><td class="lbl">Plazo para remediación</td><td colspan="3">${acta.da_plazo}</td></tr>` : ''}
+    </table>` : ''}
+
+    <!-- SECCIÓN DE DIAGNÓSTICO -->
+<div class="section-title">${arbóreoHTML ? '3.' : '2.'} ${esInspeccion ? 'Hallazgos de la Inspección' : 'Diagnóstico y Descripción de los Hechos'}</div>
+<div class="desc-box">${(acta.descripcion || '—').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+
+${acta.nivel_riesgo ? `<div class="badge-row"><b>Nivel de Riesgo Calculado:</b> <span class="risk-badge risk-${acta.nivel_riesgo.toLowerCase()}">${acta.nivel_riesgo}</span></div>` : ''}
+
+<!-- FUNDAMENTO LEGAL -->
+${acta.fundamento ? `
+<div class="section-title">Fundamento Legal</div>
+<div class="legal-ref">${acta.fundamento}</div>` : ''}
+
+<!-- DICTAMEN Y MEDIDAS -->
+<div class="section-title">${arbóreoHTML ? '5.' : '3.'} ${esInspeccion ? 'Conclusiones y Medidas Ordenadas' : esSancion ? 'Resolución y Sanción' : 'Dictamen y Medidas de Manejo'}</div>
+${dictamenHTML}
+${acta.medida ? `<p><b>Medida correctiva / Apercibimiento:</b> ${acta.medida}</p>` : ''}
+${acta.monto_sancion ? `<p><b>Monto de sanción:</b> ${acta.monto_sancion} UMA</p>` : ''}
+${acta.observaciones ? `<p><b>Observaciones:</b> ${acta.observaciones}</p>` : ''}
+${compensHTML}
+
+<!-- FIRMAS -->
+<div class="firma-section">
+  <div class="firma-box" style="flex:1">
+    <div style="font-size:8px;font-weight:bold;color:#1a3a5c;margin-bottom:4px">${esInspeccion ? "INSPECTOR DE VIGILANCIA" : "INSPECTOR ACTUANTE"}</div>
+    ${acta.firma_inspector_base64 ? `<img src="${acta.firma_inspector_base64}" alt="Firma inspector" style="max-width:220px;max-height:80px;display:block;margin:0 auto">` : '<div class="firma-line"></div>'}
+    <div class="firma-name">${acta.inspector || '________________________'}</div>
+    <div class="firma-label">Inspector IMBIO · Firma y Nombre</div>
+  </div>
+  ${acta.firma_visitado_base64 || acta.nombre_visitado ? `
+  <div class="firma-box" style="flex:1">
+    <div style="font-size:8px;font-weight:bold;color:#1a3a5c;margin-bottom:4px">${esInspeccion ? "RESPONSABLE / REPRESENTANTE" : "VISITADO / PROPIETARIO"}</div>
+    ${acta.firma_visitado_base64 ? `<img src="${acta.firma_visitado_base64}" alt="Firma visitado" style="max-width:220px;max-height:80px;display:block;margin:0 auto">` : '<div class="firma-line"></div>'}
+    <div class="firma-name">${acta.nombre_visitado || '________________________'}</div>
+    <div class="firma-label">Nombre y Firma del Visitado</div>
+  </div>` : `
+  <div class="firma-box" style="flex:1;background:#fef3c7;border-color:#f59e0b">
+    <div style="font-size:8px;font-weight:bold;color:#92400e;margin-bottom:4px">VISITADO / PROPIETARIO</div>
+    <div style="margin:20px 0;font-size:8px;color:#92400e;font-style:italic">No se presentó o se negó a firmar<br>(Art. 29 NTEA-AGS-ARBOLADO-2026)</div>
+    <div class="firma-label" style="color:#92400e">Constancia de ausencia de firma</div>
+  </div>`}
+</div>
+
+<!-- PIE DE PÁGINA -->
+<div class="footer">
+  <b>H. Ayuntamiento de Pabellón de Arteaga 2024-2027 · Instituto Municipal de Biodiversidad y Protección Ambiental (IMBIO)</b><br>
+  Marco legal: Código Municipal · Ley de Ingresos · LPAEA · LGEEPA${esArbolPDF ? ' · NTEA-AGS-ARBOLADO-2026' : ''}<br>
+  ${esInspeccion
+    ? 'Este documento hace constar la visita de inspección y vigilancia ambiental practicada por el IMBIO en el domicilio señalado. Tiene validez legal ante la Dirección del IMBIO.'
+    : esSancion
+    ? 'Este documento constituye resolución administrativa con efectos legales. Su incumplimiento genera responsabilidades ante la Dirección del IMBIO y las autoridades competentes.'
+    : 'Este documento tiene validez técnica y legal para trámites ambientales ante la Dirección del IMBIO.'
+  }<br>
+  Generado el ${new Date().toLocaleString('es-MX')}
+</div>
+
+</body></html>`;
+}
+
+function descargarActaPDF(id) {
+  // Find acta from last loaded list or fetch it
+  _abrirPDFActa(id);
+}
+
+async function _abrirPDFActa(id) {
   try {
     const r = await api('/api/actas/' + id);
-    if (!r.success) { alert('Error al obtener el acta: ' + r.message); return; }
-    // The inspector app has the PDF builder - open it referencing the acta
-    alert('Para generar el PDF, utiliza la App Inspector (inspector.html) donde se encuentra el generador de PDF completo.');
+    if (!r || !r.success) { window.alert('Error al obtener el acta.'); return; }
+    const htmlContent = buildActaHTML(r.data.acta);
+    const w = window.open('', '_blank');
+    if (w) {
+      w.document.write(htmlContent);
+      w.document.close();
+      w.onload = function() { w.focus(); w.print(); };
+      setTimeout(function() { try { w.focus(); w.print(); } catch(e){} }, 800);
+    } else {
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = (r.data.acta.folio_acta||'ACTA') + '.html';
+      a.click(); setTimeout(() => URL.revokeObjectURL(url), 3000);
+      window.alert('⚠️ Permite ventanas emergentes para localhost para generar el PDF directamente.');
+    }
   } catch(e) {
-    alert('Error: ' + e.message);
+    window.alert('Error: ' + e.message);
   }
 }
 
 
+// ── ASIGNACIONES ──────────────────────────────────────────────────────────
+async function loadAsignaciones() {
+  const tbody = document.getElementById('tabla-asig');
+  const alertEl = document.getElementById('asig-alert');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="7" class="loading">Cargando...</td></tr>';
+  const r = await api('/api/reports?limit=100');
+  if (!r.success) { tbody.innerHTML = '<tr><td colspan="7">Error al cargar.</td></tr>'; return; }
+  const reps = r.data.reportes.filter(rep => rep.estado !== 'reportado');
+  if (!reps.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">Sin asignaciones activas.</td></tr>'; return; }
+  tbody.innerHTML = reps.map(rep => `
+    <tr>
+      <td><span class="folio-badge">${rep.folio}</span></td>
+      <td>${tipoLabel(rep.tipo)}</td>
+      <td>${rep.colonia}</td>
+      <td>${badge(rep.estado)}</td>
+      <td>${rep.brigada||'—'}</td>
+      <td>${rep.inspector||'—'}</td>
+      <td>
+        ${rep.estado !== 'cerrado' ? `<button class="btn btn-primary btn-sm" onclick="abrirAsignar(${rep.id})">✏️ Reasignar</button>` : ''}
+      </td>
+    </tr>`).join('');
+}
+
+async function abrirAsignar(id) {
+  document.getElementById('asig-report-id').value = id;
+  document.getElementById('asig-notas').value     = '';
+  document.getElementById('asig-modal-alert').innerHTML = '';
+
+  // Load inspectors from server
+  const selInsp  = document.getElementById('asig-inspector');
+  const selBrig  = document.getElementById('asig-brigada');
+  selInsp.innerHTML = '<option value="">— Cargando... —</option>';
+  selBrig.innerHTML = '<option value="">— Cargando... —</option>';
+
+  try {
+    const r = await api('/api/inspectores');
+    if (r.success) {
+      const inspectores = r.data.inspectores.filter(i => i.activo !== false);
+      // Populate inspector select
+      selInsp.innerHTML = '<option value="">— Seleccionar inspector —</option>' +
+        inspectores.map(i => `<option value="${i.nombre||i.username}">${i.nombre||i.username}</option>`).join('');
+      // Collect unique brigadas from inspector records
+      const brigadas = [...new Set(inspectores.map(i => i.brigada).filter(Boolean))];
+      selBrig.innerHTML = '<option value="">— Seleccionar brigada —</option>' +
+        brigadas.map(b => `<option value="${b}">${b}</option>`).join('');
+      // Auto-select brigada when inspector is chosen
+      selInsp.onchange = function() {
+        const insp = inspectores.find(i => (i.nombre||i.username) === selInsp.value);
+        if (insp && insp.brigada) selBrig.value = insp.brigada;
+      };
+    }
+  } catch(e) {
+    selInsp.innerHTML = '<option value="">Error al cargar</option>';
+    selBrig.innerHTML = '<option value="">Error al cargar</option>';
+  }
+  openModal('modal-asignar');
+}
+
+async function submitAsignacion() {
+  const id       = document.getElementById('asig-report-id').value;
+  const brigada  = document.getElementById('asig-brigada').value.trim();
+  const inspector= document.getElementById('asig-inspector').value.trim();
+  const notas    = document.getElementById('asig-notas').value.trim();
+  const alertEl  = document.getElementById('asig-modal-alert');
+  if (!inspector) {
+    alertEl.innerHTML = alert_html('error', 'Selecciona un inspector.');
+    return;
+  }
+  if (!brigada) {
+    alertEl.innerHTML = alert_html('error', 'Selecciona una brigada.');
+    return;
+  }
+  const r = await api(`/api/reports/${id}/assign`, 'POST', { brigada, inspector, notas });
+  if (r.success) {
+    closeModal('modal-asignar');
+    loadReportes(); loadDashboard(); loadAsignaciones();
+  } else {
+    alertEl.innerHTML = alert_html('error', r.message || 'Error al asignar.');
+  }
+}
+
+// ── EVIDENCIA DE CAMPO ────────────────────────────────────────────────────
+function abrirEvidencia(id) {
+  document.getElementById('ev-report-id').value = id;
+  document.getElementById('ev-comentario').value = '';
+  document.getElementById('ev-lat').value = '';
+  document.getElementById('ev-lon').value = '';
+  document.getElementById('ev-estado').value = '';
+  document.getElementById('ev-modal-alert').innerHTML = '';
+  openModal('modal-evidencia');
+}
+
+async function submitEvidencia() {
+  const id        = document.getElementById('ev-report-id').value;
+  const comentario= document.getElementById('ev-comentario').value.trim();
+  const lat       = document.getElementById('ev-lat').value;
+  const lon       = document.getElementById('ev-lon').value;
+  const estado    = document.getElementById('ev-estado').value;
+  const alertEl   = document.getElementById('ev-modal-alert');
+  const fotosInput= document.getElementById('ev-fotos');
+  const formData  = new FormData();
+  if (comentario) formData.append('comentario', comentario);
+  if (lat) formData.append('lat', lat);
+  if (lon) formData.append('lon', lon);
+  if (estado) formData.append('estado', estado);
+  if (fotosInput && fotosInput.files.length) {
+    Array.from(fotosInput.files).forEach(f => formData.append('photos', f));
+  }
+  const r = await fetch(`/api/reports/${id}/evidence`, {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + TOKEN },
+    body: formData
+  }).then(res => res.json()).catch(() => ({ success: false, message: 'Error de red' }));
+  if (r.success) {
+    closeModal('modal-evidencia');
+    loadReportes(); loadDashboard();
+  } else {
+    alertEl.innerHTML = alert_html('error', r.message || 'Error al registrar evidencia.');
+  }
+}
+
+
+
+// ── Asistente IA ────────────────────────────────────────────────
+async function llamarIA(tipo, datos, campoDestino, btnEl) {
+  var original = btnEl.innerHTML;
+  btnEl.innerHTML = '&#9203; Generando...';
+  btnEl.disabled = true;
+  try {
+    var resp = await api('/api/ai/generar-texto', 'POST', { tipo: tipo, datos: datos });
+    if (resp.success && resp.data && resp.data.texto) {
+      var campo = document.getElementById(campoDestino);
+      if (campo) {
+        campo.value = resp.data.texto;
+        campo.style.borderColor = '#16a34a';
+        campo.style.background = '#f0fdf4';
+        setTimeout(function(){ campo.style.borderColor=''; campo.style.background=''; }, 3000);
+        campo.focus();
+      }
+    } else {
+      alert('No se pudo generar texto: ' + (resp.message || 'Error'));
+    }
+  } catch(e) {
+    alert('Error: ' + e.message);
+  } finally {
+    btnEl.innerHTML = original;
+    btnEl.disabled = false;
+  }
+}
+
+
+// ══ MATLACHO WIDGET ══
+if (typeof SERVER_URL === 'undefined') { var SERVER_URL = window.location.origin; }
+// ════════════════════════════════════════════════════════════════
+// MATLACHO — Asistente Ambiental Inteligente IMBIO
+// ════════════════════════════════════════════════════════════════
+
+var _matlachoVisible = false;
+var _matlachoChatHistory = [];
+
+function _matlachoInit() {
+  if (document.getElementById('matlacho-widget')) return;
+
+  var widget = document.createElement('div');
+  widget.id = 'matlacho-widget';
+  widget.innerHTML = `
+    <style>
+      #matlacho-fab {
+        position:fixed;bottom:22px;right:18px;z-index:8000;
+        width:58px;height:58px;border-radius:50%;
+        background:linear-gradient(135deg,#16a34a,#15803d);
+        box-shadow:0 4px 18px rgba(22,163,74,.45);
+        cursor:pointer;display:flex;align-items:center;justify-content:center;
+        font-size:1.7rem;border:none;transition:transform .2s;
+        animation:matlacho-bounce 3s ease-in-out infinite;
+      }
+      #matlacho-fab:hover { transform:scale(1.12); }
+      @keyframes matlacho-bounce {
+        0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)}
+      }
+      #matlacho-panel {
+        position:fixed;bottom:92px;right:18px;z-index:7999;
+        width:320px;max-height:520px;
+        background:#fff;border-radius:18px;
+        box-shadow:0 8px 40px rgba(0,0,0,.18);
+        display:none;flex-direction:column;overflow:hidden;
+        border:1.5px solid #e2e8f0;
+      }
+      #matlacho-panel.open { display:flex; }
+      .matlacho-header {
+        background:linear-gradient(135deg,#166534,#16a34a);
+        padding:14px 16px;display:flex;align-items:center;gap:10px;
+      }
+      .matlacho-avatar {
+        width:40px;height:40px;border-radius:50%;
+        background:#fff;display:flex;align-items:center;justify-content:center;
+        font-size:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.15);flex-shrink:0;
+      }
+      .matlacho-name { color:#fff;font-weight:800;font-size:.9rem; }
+      .matlacho-role { color:rgba(255,255,255,.75);font-size:.72rem; }
+      .matlacho-close {
+        margin-left:auto;background:none;border:none;color:#fff;
+        font-size:1.2rem;cursor:pointer;padding:2px 6px;opacity:.8;
+      }
+      .matlacho-body {
+        flex:1;overflow-y:auto;padding:12px;
+        display:flex;flex-direction:column;gap:8px;
+        max-height:320px;
+      }
+      .matlacho-bubble {
+        background:#f0fdf4;border-radius:12px 12px 12px 2px;
+        padding:10px 13px;font-size:.8rem;color:#1a3a5c;line-height:1.5;
+        border:1px solid #bbf7d0;max-width:92%;
+      }
+      .matlacho-bubble.user {
+        background:#eff6ff;border-color:#bfdbfe;
+        border-radius:12px 12px 2px 12px;align-self:flex-end;color:#1e3a5f;
+      }
+      .matlacho-bubble.loading {
+        background:#f8fafc;color:#94a3b8;font-style:italic;
+      }
+      .matlacho-actions {
+        padding:10px 12px;border-top:1px solid #f1f5f9;
+        display:flex;flex-direction:column;gap:6px;
+      }
+      .matlacho-btn {
+        padding:8px 12px;border:none;border-radius:9px;
+        font-size:.78rem;font-weight:700;cursor:pointer;
+        display:flex;align-items:center;gap:6px;text-align:left;
+        transition:opacity .15s;
+      }
+      .matlacho-btn:hover { opacity:.88; }
+      .matlacho-btn.verde { background:#dcfce7;color:#166534; }
+      .matlacho-btn.azul  { background:#dbeafe;color:#1e40af; }
+      .matlacho-btn.naranja{ background:#fef3c7;color:#92400e; }
+      .matlacho-btn.rojo  { background:#fee2e2;color:#991b1b; }
+      .matlacho-btn.morado{ background:#ede9fe;color:#5b21b6; }
+      .matlacho-input-row {
+        display:flex;gap:6px;padding:8px 12px;border-top:1px solid #f1f5f9;
+      }
+      .matlacho-input {
+        flex:1;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:9px;
+        font-size:.8rem;outline:none;
+      }
+      .matlacho-input:focus { border-color:#16a34a; }
+      .matlacho-send {
+        padding:7px 12px;background:#16a34a;color:#fff;border:none;
+        border-radius:9px;cursor:pointer;font-size:.85rem;
+      }
+      .matlacho-suggestion-banner {
+        background:linear-gradient(135deg,#166534,#16a34a);
+        color:#fff;border-radius:10px;padding:10px 13px;
+        font-size:.8rem;font-weight:700;margin-top:4px;
+      }
+    </style>
+
+    <!-- FAB botón flotante -->
+    <button id="matlacho-fab" onclick="_matlachoToggle()" title="Matlacho — Asistente IMBIO">
+      🐭
+    </button>
+
+    <!-- Panel del asistente -->
+    <div id="matlacho-panel">
+      <div class="matlacho-header">
+        <div class="matlacho-avatar">🐭</div>
+        <div>
+          <div class="matlacho-name">Matlacho</div>
+          <div class="matlacho-role">Asistente Ambiental IMBIO</div>
+        </div>
+        <button class="matlacho-close" onclick="_matlachoToggle()">✕</button>
+      </div>
+      <div class="matlacho-body" id="matlacho-chat">
+        <div class="matlacho-bubble">
+          ¡Hola! 👋 Soy <b>Matlacho</b>, el asistente ambiental de IMBIO Pabellón de Arteaga.<br>
+          ¿En qué te puedo ayudar hoy?
+        </div>
+      </div>
+      <div class="matlacho-actions" id="matlacho-quick-actions">
+      </div>
+      <div class="matlacho-input-row">
+        <input id="matlacho-msg" class="matlacho-input" placeholder="Escribe tu pregunta..." onkeydown="if(event.key==='Enter')_matlachoChat()">
+        <button class="matlacho-send" onclick="_matlachoChat()">↑</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(widget);
+  _matlachoSetContext();
+}
+
+function _matlachoToggle() {
+  var panel = document.getElementById('matlacho-panel');
+  if (!panel) return;
+  _matlachoVisible = !_matlachoVisible;
+  panel.classList.toggle('open', _matlachoVisible);
+  if (_matlachoVisible) _matlachoSetContext();
+}
+
+function _matlachoSetContext() {
+  // Detect current context and show relevant quick actions
+  var actions = document.getElementById('matlacho-quick-actions');
+  if (!actions) return;
+  var isInspector = typeof tipoActaSel !== 'undefined';
+  var isModal = document.getElementById('modal-nueva-acta') &&
+                document.getElementById('modal-nueva-acta').style.display === 'flex';
+  var tipo = (typeof tipoActaSel !== 'undefined') ? tipoActaSel : '';
+
+  var btns = [];
+
+  if (isModal || isInspector) {
+    // Inspector context
+    if (tipo === 'circunstanciada' || tipo === 'inspeccion' || tipo === '') {
+      btns.push({cls:'verde', icon:'📝', label:'Redactar descripción', fn:'_matlachoRedactarDesc()'});
+    }
+    if (tipo === 'apercibimiento') {
+      btns.push({cls:'naranja', icon:'⚠️', label:'Redactar apercibimiento', fn:'_matlachoRedactarAper()'});
+    }
+    if (tipo === 'sancion') {
+      btns.push({cls:'rojo', icon:'🚫', label:'Redactar motivación sanción', fn:'_matlachoRedactarSanc()'});
+    }
+    btns.push({cls:'morado', icon:'🔍', label:'Sugerir medida administrativa', fn:'_matlachoSugerirMedida()'});
+  } else {
+    // Ciudadano o panel context
+    btns.push({cls:'verde', icon:'✍️', label:'Mejorar mi descripción', fn:'_matlachoCiudadano()'});
+  }
+  btns.push({cls:'azul', icon:'❓', label:'¿Cómo uso la plataforma?', fn:"_matlachoChat('¿Cómo puedo usar la plataforma IMBIO?')"});
+
+  actions.innerHTML = btns.map(function(b){
+    return '<button class="matlacho-btn '+b.cls+'" onclick="'+b.fn+'">'+b.icon+' '+b.label+'</button>';
+  }).join('');
+}
+
+function _matlachoAddBubble(text, isUser, isLoading) {
+  var chat = document.getElementById('matlacho-chat');
+  if (!chat) return null;
+  var div = document.createElement('div');
+  div.className = 'matlacho-bubble' + (isUser?' user':'') + (isLoading?' loading':'');
+  div.innerHTML = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+async function _matlachoCallAPI(tipo, datos) {
+  var loading = _matlachoAddBubble('🐭 Matlacho está pensando...', false, true);
+  try {
+    var serverUrl = (typeof SERVER_URL !== 'undefined') ? SERVER_URL : window.location.origin;
+    var token = (typeof TOKEN !== 'undefined') ? TOKEN : (localStorage.getItem('imbio_token') || '');
+    var resp = await fetch(serverUrl + '/api/ai/matlacho', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ tipo: tipo, datos: datos }),
+      signal: AbortSignal.timeout(35000)
+    });
+    var d = await resp.json();
+    if (loading) loading.remove();
+    return d.success ? d.data : null;
+  } catch(e) {
+    if (loading) loading.remove();
+    _matlachoAddBubble('⚠️ No pude conectarme. Verifica tu conexión e intenta de nuevo.', false);
+    return null;
+  }
+}
+
+async function _matlachoChat(msgOverride) {
+  var input = document.getElementById('matlacho-msg');
+  var msg = msgOverride || (input ? input.value.trim() : '');
+  if (!msg) return;
+  if (input) input.value = '';
+  _matlachoAddBubble(msg, true);
+  var result = await _matlachoCallAPI('chat', { mensaje: msg });
+  if (result) _matlachoAddBubble(result.texto, false);
+}
+
+async function _matlachoCiudadano() {
+  var descEl = document.getElementById('nr-desc') || document.getElementById('acta-descripcion');
+  var desc = descEl ? descEl.value.trim() : '';
+  if (!desc) {
+    _matlachoAddBubble('📝 Primero escribe una descripción del problema y luego te ayudo a mejorarla.', false);
+    return;
+  }
+  _matlachoAddBubble('Mejora esta descripción: "' + desc.substring(0,80) + (desc.length>80?'...':'"'), true);
+  var result = await _matlachoCallAPI('reporte_ciudadano', { descripcion: desc });
+  if (result) {
+    _matlachoAddBubble('✅ Aquí tienes una versión mejorada:<br><br><i>' + result.texto + '</i><br><br>' +
+      '<button class="matlacho-btn verde" onclick="_matlachoAplicar(\'nr-desc\',\'' +
+      result.texto.replace(/'/g,'&#39;').replace(/\n/g,' ') + '\')" style="margin-top:6px">✅ Aplicar texto</button>', false);
+  }
+}
+
+async function _matlachoRedactarDesc() {
+  var gv = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+  var repCache = (typeof window._reportesCache!=='undefined' && window._reportesCache) ? window._reportesCache : [];
+  var repActual = repCache.find ? repCache.find(function(r){ return String(r.id)===String(typeof window.currentReporteId!=='undefined'?window.currentReporteId:''); }) || {} : {};
+  var datos = {
+    tipo_incidencia: typeof window._actaReporteTipo!=='undefined' ? window._actaReporteTipo : '',
+    fecha: gv('acta-fecha-insp') || new Date().toLocaleDateString('es-MX'),
+    hora:  gv('acta-hora-insp')  || new Date().toLocaleTimeString('es-MX'),
+    colonia: repActual.colonia || '',
+    inspector: gv('acta-firmante') || '',
+    descripcion: gv('acta-descripcion'),
+    tipo_residuo: gv('da-tipo-residuo')||gv('da-tipo-infraccion')||'',
+    volumen: gv('da-volumen')||'', superficie: gv('da-superficie')||'',
+    visitado: gv('acta-infractor')||''
+  };
+  _matlachoAddBubble('📋 Redactando descripción circunstanciada...', true);
+  var result = await _matlachoCallAPI('acta_circunstanciada', datos);
+  if (result) {
+    _matlachoAddBubble('✅ Descripción generada:<br><br><i style="font-size:.75rem">' +
+      result.texto.substring(0,200) + (result.texto.length>200?'...':'') + '</i><br><br>' +
+      '<button class="matlacho-btn verde" onclick="_matlachoAplicarTextarea(\'acta-descripcion\',\'' +
+      result.texto.replace(/'/g,'&#39;').replace(/\n/g,' ').replace(/"/g,'&quot;') + '\')" style="margin-top:4px">✅ Aplicar al campo</button>', false);
+  }
+}
+
+async function _matlachoRedactarAper() {
+  var gv = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+  var datos = {
+    irregularidad: gv('acta-descripcion'),
+    tipo_infraccion: gv('da-tipo-infraccion')||'',
+    medidas: gv('acta-medidas-correctivas')||gv('acta-medida')||'',
+    plazo: gv('acta-plazo')||''
+  };
+  _matlachoAddBubble('⚠️ Redactando apercibimiento...', true);
+  var result = await _matlachoCallAPI('acta_apercibimiento', datos);
+  if (result) {
+    _matlachoAddBubble('✅ Texto del apercibimiento:<br><br><i style="font-size:.75rem">' +
+      result.texto.substring(0,200) + (result.texto.length>200?'...':'') + '</i><br><br>' +
+      '<button class="matlacho-btn naranja" onclick="_matlachoAplicarTextarea(\'acta-medida\',\'' +
+      result.texto.replace(/'/g,'&#39;').replace(/\n/g,' ').replace(/"/g,'&quot;') + '\')" style="margin-top:4px">✅ Aplicar al campo</button>', false);
+  }
+}
+
+async function _matlachoRedactarSanc() {
+  var gv = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+  var datos = {
+    conducta: gv('acta-descripcion'),
+    tipo_infraccion: gv('da-tipo-infraccion')||'',
+    gravedad: gv('acta-gravedad-infraccion')||'',
+    reincidente: gv('acta-reincidente')||'no',
+    sancion: gv('acta-medida')||''
+  };
+  _matlachoAddBubble('🚫 Redactando motivación de sanción...', true);
+  var result = await _matlachoCallAPI('acta_sancion', datos);
+  if (result) {
+    _matlachoAddBubble('✅ Motivación de sanción:<br><br><i style="font-size:.75rem">' +
+      result.texto.substring(0,200) + (result.texto.length>200?'...':'') + '</i><br><br>' +
+      '<button class="matlacho-btn rojo" onclick="_matlachoAplicarTextarea(\'acta-medida\',\'' +
+      result.texto.replace(/'/g,'&#39;').replace(/\n/g,' ').replace(/"/g,'&quot;') + '\')" style="margin-top:4px">✅ Aplicar al campo</button>', false);
+  }
+}
+
+async function _matlachoSugerirMedida() {
+  var gv = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+  var datos = {
+    tipo_infraccion: gv('da-tipo-infraccion')||'',
+    tipo_residuo: gv('da-tipo-residuo')||'',
+    volumen: gv('da-volumen')||'',
+    superficie: gv('da-superficie')||'',
+    severidad: gv('da-severidad')||'',
+    tiempo: gv('da-tiempo')||'',
+    responsable: gv('da-responsable')||'',
+    reincidente: gv('acta-reincidente')||'no',
+    medidas_adoptadas: ['dm-apercibimiento','dm-acta-infraccion','dm-clausura','dm-remediacion','dm-sancion']
+      .filter(function(id){ var el=document.getElementById(id); return el&&el.checked; }).join(', ')
+  };
+  _matlachoAddBubble('🔍 Analizando los datos para sugerir la medida administrativa...', true);
+  var result = await _matlachoCallAPI('sugerencia_medida', datos);
+  if (result) {
+    var color = result.sugerencia_medida === 'sancion' ? 'rojo' : 'naranja';
+    var banner = result.sugerencia_medida
+      ? '<div class="matlacho-suggestion-banner" style="margin-top:8px;font-size:.78rem">' +
+        (result.sugerencia_medida === 'sancion' ? '🚫 Posible: Acta de Sanción' : '⚠️ Posible: Acta de Apercibimiento') +
+        '</div>' : '';
+    _matlachoAddBubble('<b>🐭 Matlacho sugiere:</b><br><br>' + result.texto + banner +
+      '<br><span style="font-size:.7rem;color:#94a3b8;display:block;margin-top:6px">Solo sugerencia — el inspector decide.</span>', false);
+  }
+}
+
+function _matlachoAplicar(campoId, texto) {
+  var campo = document.getElementById(campoId);
+  if (campo) {
+    campo.value = texto;
+    campo.style.borderColor = '#16a34a';
+    setTimeout(function(){ campo.style.borderColor=''; }, 2000);
+  }
+  _matlachoAddBubble('✅ Texto aplicado. Puedes editarlo antes de enviar.', false);
+}
+
+function _matlachoAplicarTextarea(campoId, texto) {
+  _matlachoAplicar(campoId, texto.replace(/&quot;/g,'"').replace(/&#39;/g,"'"));
+}
+
+// Auto-init when DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _matlachoInit);
+} else {
+  _matlachoInit();
+}
+
+// ══ END MATLACHO ══
+
+
+// ═══════════════════════════════════════════════════════════════
+// ALERTAS DE APERCIBIMIENTOS — Fase 3
+// ═══════════════════════════════════════════════════════════════
+
+async function cargarAlertas() {
+  const lista = document.getElementById('alertas-lista');
+  const summary = document.getElementById('alertas-summary');
+  if (!lista) return;
+  lista.innerHTML = '<p style="color:#94a3b8;text-align:center">Cargando...</p>';
+  const r = await api('/api/apercibimientos/alertas');
+  if (!r.success) { lista.innerHTML = `<p style="color:red">${r.message}</p>`; return; }
+  const { alertas, vencidos, por_vencer } = r.data;
+
+  // Update nav badge
+  const badge = document.getElementById('alertas-badge');
+  if (badge) {
+    badge.textContent = alertas.length;
+    badge.style.display = alertas.length > 0 ? 'inline-block' : 'none';
+  }
+
+  // Summary cards
+  if (summary) {
+    summary.innerHTML = `
+      <div style="background:#fee2e2;border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:2rem;font-weight:900;color:#991b1b">${vencidos}</div>
+        <div style="font-size:.8rem;font-weight:700;color:#991b1b;margin-top:4px">🚨 Vencidos</div>
+      </div>
+      <div style="background:#fef3c7;border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:2rem;font-weight:900;color:#92400e">${por_vencer}</div>
+        <div style="font-size:.8rem;font-weight:700;color:#92400e;margin-top:4px">⚠️ Por vencer (≤3 días)</div>
+      </div>`;
+  }
+
+  if (!alertas.length) {
+    lista.innerHTML = '<div style="text-align:center;padding:40px;color:#16a34a"><div style="font-size:2.5rem">✅</div><p style="margin-top:8px;font-weight:700">Sin alertas pendientes</p></div>';
+    return;
+  }
+
+  lista.innerHTML = alertas.map(a => {
+    const vencido = a.estado === 'vencido';
+    const color = vencido ? '#991b1b' : '#92400e';
+    const bg = vencido ? '#fee2e2' : '#fef3c7';
+    const icon = vencido ? '🚨' : '⚠️';
+    const diasText = vencido
+      ? `Venció hace ${Math.abs(a.dias_restantes)} día(s)`
+      : `Vence en ${a.dias_restantes} día(s)`;
+    const fechaVenc = a.fecha_vencimiento
+      ? new Date(a.fecha_vencimiento).toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})
+      : '–';
+    const verificado = a.verificacion
+      ? `<span style="background:${a.verificacion==='cumplió'?'#dcfce7':'#fee2e2'};color:${a.verificacion==='cumplió'?'#166534':'#991b1b'};padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">
+          ${a.verificacion==='cumplió'?'✅ Cumplió':'❌ Incumplió'}
+         </span>` : '';
+
+    return `<div style="border:2px solid ${color};border-radius:12px;margin-bottom:10px;overflow:hidden">
+      <div style="background:${bg};padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <span style="font-weight:800;color:${color};font-size:.9rem">${icon} ${diasText}</span>
+          ${verificado}
+        </div>
+        <span style="font-family:monospace;font-size:.75rem;color:${color}">${a.folio_acta}</span>
+      </div>
+      <div style="padding:10px 14px;display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:.8rem">
+        <div><b>Reporte:</b> ${a.folio_reporte}</div>
+        <div><b>Expediente:</b> ${a.expediente||'–'}</div>
+        <div><b>Infractor:</b> ${a.infractor||'–'}</div>
+        <div><b>Colonia:</b> ${a.colonia||'–'}</div>
+        <div><b>Plazo otorgado:</b> ${a.plazo||'–'}</div>
+        <div><b>Vencimiento:</b> ${fechaVenc}</div>
+        <div style="grid-column:1/-1"><b>Inspector:</b> ${a.inspector||'–'}</div>
+      </div>
+      <div style="padding:6px 14px 10px;display:flex;gap:8px">
+        <button class="btn" style="background:#1e3a8a;color:#fff;font-size:.75rem;padding:5px 10px"
+          onclick="verDetalle(${a.report_id})">👁 Ver reporte</button>
+        ${!a.verificacion ? `
+        <button class="btn" style="background:#16a34a;color:#fff;font-size:.75rem;padding:5px 10px"
+          onclick="registrarVerificacion(${a.acta_id},'cumplió')">✅ Cumplió</button>
+        <button class="btn" style="background:#991b1b;color:#fff;font-size:.75rem;padding:5px 10px"
+          onclick="registrarVerificacion(${a.acta_id},'incumplió')">❌ Incumplió</button>
+        ` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function registrarVerificacion(actaId, resultado) {
+  const notas = resultado === 'incumplió'
+    ? (prompt('Notas sobre el incumplimiento (opcional):') || '')
+    : '';
+  const confirmMsg = resultado === 'cumplió'
+    ? '¿Confirmar que el apercibimiento fue CUMPLIDO?'
+    : '¿Confirmar que el apercibimiento fue INCUMPLIDO? El reporte pasará a "Pendiente de Medida" para generar acta de sanción.';
+  if (!confirm(confirmMsg)) return;
+  const r = await api(`/api/actas/${actaId}/verificacion`, 'POST', { resultado, notas });
+  if (r.success) {
+    alert(`✅ Verificación registrada: ${resultado}${resultado==='incumplió'?' — Se puede generar acta de sanción.':''}`);
+    cargarAlertas();
+  } else {
+    alert('Error: ' + r.message);
+  }
+}
+
+// Cargar alertas al navegar a la página
+const _origShowPage = window.showPage;
+window.showPage = function(name) {
+  _origShowPage && _origShowPage(name);
+  if (name === 'alertas') cargarAlertas();
+};
+
+// Auto-verificar alertas al cargar el panel (solo si hay sesión)
+setTimeout(async function() {
+  if (!TOKEN) return;
+  const r = await api('/api/apercibimientos/alertas');
+  if (r.success && r.data && r.data.total > 0) {
+    const badge = document.getElementById('alertas-badge');
+    if (badge) { badge.textContent = r.data.total; badge.style.display = 'inline-block'; }
+  }
+}, 3000);
+
+
+// ═══════════════════════════════════════════════════════════════
+// EXPORTAR A EXCEL (CSV compatible) — Fase 5
+// ═══════════════════════════════════════════════════════════════
+
+async function exportarExcel() {
+  const btn = event.target;
+  const orig = btn.textContent;
+  btn.textContent = '⏳ Generando...'; btn.disabled = true;
+
+  try {
+    // Fetch all reports (high limit)
+    const r = await api('/api/reports?limit=9999');
+    if (!r.success) { alert('Error: ' + r.message); return; }
+    const reps = r.data.reportes;
+
+    // Fetch all actas
+    const ra = await api('/api/actas?limit=9999');
+    const actas = ra.success ? ra.data.actas : [];
+    const actasByReport = {};
+    actas.forEach(a => {
+      (actasByReport[a.report_id] = actasByReport[a.report_id]||[]).push(a);
+    });
+
+    // Build CSV
+    const TIPO_LABELS = {
+      denuncia_ambiental:'Denuncia Ambiental',residuos_solidos:'Residuos Sólidos',
+      agua_contaminada:'Agua Contaminada',poda_arbol:'Poda de Árbol',
+      derribo_arbol:'Derribo de Árbol',perro_agresivo:'Perro Agresivo',
+      animal_calle:'Animal en Calle',tiradero_basura:'Tiradero de Basura',
+      tiradero_escombro:'Tiradero de Escombro',areas_verdes:'Áreas Verdes',
+      ruido:'Ruido',otro:'Otro'
+    };
+    const ESTADO_LABELS = {
+      reportado:'Reportado',asignado:'Asignado',en_inspeccion:'En Inspección',
+      en_proceso:'En Proceso',pendiente_medida:'Pendiente Medida',
+      apercibido:'Apercibido',sancionado:'Sancionado',cerrado:'Cerrado'
+    };
+
+    const esc = (v) => '"' + String(v||'').replace(/"/g,'""') + '"';
+    const fmt = (d) => d ? new Date(d).toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+
+    const headers = [
+      'Folio','Expediente','Tipo de Reporte','Estado','Colonia',
+      'Descripción','Reportante','Teléfono','Lat','Lon',
+      'Inspector','Brigada','Fecha Creación','Fecha Actualización',
+      'Actas Generadas','Tipos de Actas','Tiene PDF'
+    ];
+
+    const rows = reps.map(rep => {
+      const repActas = actasByReport[rep.id] || [];
+      return [
+        esc(rep.folio), esc(rep.expediente||''),
+        esc(TIPO_LABELS[rep.tipo]||rep.tipo), esc(ESTADO_LABELS[rep.estado]||rep.estado),
+        esc(rep.colonia), esc(rep.descripcion),
+        esc(rep.nombre_reportante||'Anónimo'), esc(rep.telefono||''),
+        esc(rep.lat||''), esc(rep.lon||''),
+        esc(rep.inspector||''), esc(rep.brigada||''),
+        esc(fmt(rep.fecha_creacion)), esc(fmt(rep.fecha_actualizacion)),
+        esc(repActas.length),
+        esc(repActas.map(a=>a.tipo_acta).join(', ')),
+        esc(repActas.some(a=>a.pdf_url)?'Sí':'No'),
+      ].join(',');
+    });
+
+    const BOM = '\uFEFF'; // UTF-8 BOM for Excel
+    const csv = BOM + [headers.map(h=>'"'+h+'"').join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const now  = new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'-');
+    a.href = url; a.download = 'IMBIO-Reportes-' + now + '.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+
+    // Also export actas sheet
+    setTimeout(() => _exportarActasCSV(actas), 800);
+
+  } catch(e) {
+    alert('Error exportando: ' + e.message);
+  } finally {
+    btn.textContent = orig; btn.disabled = false;
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+//  MÓDULO: ESTABLECIMIENTOS Y VERIFICACIONES AMBIENTALES
+// ═══════════════════════════════════════════════════════════════
+
+const GIRO_LABELS = {
+  restaurante:'🍽️ Restaurante', cocina_economica:'🥘 Cocina Económica',
+  taqueria:'🌮 Taquería', panaderia:'🥖 Panadería', carniceria:'🥩 Carnicería',
+  taller_mecanico:'🔧 Taller Mecánico', taller_hojalateria:'🚗 Hojalatería/Pintura',
+  taller_carpinteria:'🪚 Carpintería', taller_soldadura:'⚡ Soldadura',
+  lavanderia:'👕 Lavandería', car_wash:'🚿 Car Wash', gasolinera:'⛽ Gasolinera',
+  tlapaleria:'🪣 Tlapalería', ferreteria:'🔩 Ferretería',
+  veterinaria:'🐾 Veterinaria', criadero_animales:'🐕 Criadero', peluqueria_canina:'✂️ Peluquería Canina',
+  salon_belleza:'💅 Salón de Belleza', gym:'🏋️ Gimnasio',
+  tienda_abarrotes:'🛒 Tienda/Abarrotes', supermercado:'🏪 Supermercado', farmacia:'💊 Farmacia',
+  fabrica:'🏭 Fábrica', almacen:'📦 Almacén/Bodega',
+  bar:'🍺 Bar/Cantina', salon_eventos:'🎉 Salón de Eventos',
+  hotel:'🏨 Hotel/Motel', clinica:'🏥 Clínica', escuela:'🏫 Escuela/Guardería', otro:'📌 Otro'
+};
+
+const CUMPL_BADGE = {
+  sin_verificar: '<span style="background:#e5e7eb;color:#374151;padding:2px 8px;border-radius:99px;font-size:.72rem;font-weight:700">🔘 Sin Verificar</span>',
+  cumple:        '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:99px;font-size:.72rem;font-weight:700">✅ Cumple</span>',
+  cumple_parcial:'<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:99px;font-size:.72rem;font-weight:700">⚠️ Parcial</span>',
+  no_cumple:     '<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:99px;font-size:.72rem;font-weight:700">❌ No Cumple</span>',
+};
+
+const PERMISOS_LABELS = {
+  licencia_funcionamiento:'Lic. Funcionamiento', dictamen_ambiental:'Dict. Ambiental',
+  manejo_residuos:'Manejo Residuos', descarga_aguas:'Descarga Aguas',
+  emisiones_ruido:'Emisiones/Ruido', uso_suelo:'Uso de Suelo',
+  proteccion_civil:'Protección Civil', anuncio_publicidad:'Anuncio/Publicidad'
+};
+
+let _estabsCache = [];
+
+// ── Cargar establecimientos ──────────────────────────────────
+async function cargarEstablecimientos() {
+  const q      = document.getElementById('est-buscar')?.value || '';
+  const giro   = document.getElementById('est-filtro-giro')?.value || '';
+  const estado = document.getElementById('est-filtro-estado')?.value || '';
+  let url = '/api/establecimientos?';
+  if (q)      url += '&q=' + encodeURIComponent(q);
+  if (giro)   url += '&giro=' + giro;
+  if (estado) url += '&estado=' + estado;
+  const r = await api(url);
+  if (!r.success) return;
+  _estabsCache = r.data.establecimientos;
+  // Actualizar contadores
+  const tots = { sin_verificar:0, cumple:0, cumple_parcial:0, no_cumple:0 };
+  _estabsCache.forEach(e => { const k = e.estado_cumplimiento || 'sin_verificar'; if (tots[k]!==undefined) tots[k]++; });
+  const setE = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setE('est-cnt-total', r.data.total);
+  setE('est-cnt-cumple', tots.cumple);
+  setE('est-cnt-parcial', tots.cumple_parcial);
+  setE('est-cnt-nocumple', tots.no_cumple);
+  setE('est-cnt-sinver', tots.sin_verificar);
+  // Renderizar tabla
+  const tbody = document.getElementById('est-tbody');
+  if (!tbody) return;
+  if (!_estabsCache.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:#888">No se encontraron establecimientos registrados.<br><small>Haz clic en "➕ Nuevo Establecimiento" para agregar el primero.</small></td></tr>';
+    return;
+  }
+  tbody.innerHTML = _estabsCache.map((e, i) => `
+    <tr style="background:${i%2===0?'#fff':'#f8fafc'};border-bottom:1px solid #f1f5f9">
+      <td style="padding:8px 12px;font-family:monospace;font-size:.78rem;font-weight:700;color:#1a3a5c">${e.folio || '–'}</td>
+      <td style="padding:8px 12px;font-weight:600">${e.nombre}<br><small style="color:#888;font-weight:400">${e.rfc||''}</small></td>
+      <td style="padding:8px 12px">${GIRO_LABELS[e.giro]||e.giro||'–'}</td>
+      <td style="padding:8px 12px;font-size:.8rem">${e.domicilio||'–'}<br><small style="color:#888">${e.colonia||''}</small></td>
+      <td style="padding:8px 12px;font-size:.82rem">${e.responsable||'–'}<br><small style="color:#888">${e.telefono||''}</small></td>
+      <td style="padding:8px 12px;text-align:center">${CUMPL_BADGE[e.estado_cumplimiento||'sin_verificar']||''}</td>
+      <td style="padding:8px 12px;text-align:center;white-space:nowrap">
+        <button onclick="editarEstablecimiento(${e.id})" class="btn btn-secondary btn-sm" style="font-size:.72rem;padding:4px 8px;margin:1px">✏️ Editar</button>
+        <button onclick="programarVerificacionDesde(${e.id})" class="btn btn-primary btn-sm" style="font-size:.72rem;padding:4px 8px;margin:1px">🔍 Verificar</button>
+      </td>
+    </tr>`).join('');
+}
+
+function filtrarEstabs(estado) {
+  const sel = document.getElementById('est-filtro-estado');
+  if (sel) sel.value = estado;
+  cargarEstablecimientos();
+}
+
+// ── Modal establecimiento ────────────────────────────────────
+function abrirModalEstablecimiento() {
+  document.getElementById('modal-est-titulo').textContent = '🏪 Nuevo Establecimiento';
+  document.getElementById('est-edit-id').value = '';
+  ['est-nombre','est-rfc','est-domicilio','est-colonia','est-responsable','est-telefono','est-observaciones']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('est-giro').value = '';
+  document.getElementById('est-estado-cump').value = 'sin_verificar';
+  document.querySelectorAll('.perm-check').forEach(c => c.checked = false);
+  document.getElementById('est-modal-alert').innerHTML = '';
+  document.getElementById('modal-establecimiento').style.display = 'flex';
+}
+
+function cerrarModalEst() {
+  document.getElementById('modal-establecimiento').style.display = 'none';
+}
+
+function editarEstablecimiento(id) {
+  const est = _estabsCache.find(e => e.id === id);
+  if (!est) return;
+  document.getElementById('modal-est-titulo').textContent = '✏️ Editar Establecimiento';
+  document.getElementById('est-edit-id').value = id;
+  document.getElementById('est-nombre').value = est.nombre || '';
+  document.getElementById('est-giro').value = est.giro || '';
+  document.getElementById('est-rfc').value = est.rfc || '';
+  document.getElementById('est-domicilio').value = est.domicilio || '';
+  document.getElementById('est-colonia').value = est.colonia || '';
+  document.getElementById('est-responsable').value = est.responsable || '';
+  document.getElementById('est-telefono').value = est.telefono || '';
+  document.getElementById('est-estado-cump').value = est.estado_cumplimiento || 'sin_verificar';
+  document.getElementById('est-observaciones').value = est.observaciones || '';
+  const perms = est.permisos || [];
+  document.querySelectorAll('.perm-check').forEach(c => { c.checked = perms.includes(c.value); });
+  document.getElementById('est-modal-alert').innerHTML = '';
+  document.getElementById('modal-establecimiento').style.display = 'flex';
+}
+
+async function guardarEstablecimiento() {
+  const nombre    = document.getElementById('est-nombre').value.trim();
+  const giro      = document.getElementById('est-giro').value;
+  const domicilio = document.getElementById('est-domicilio').value.trim();
+  const responsable = document.getElementById('est-responsable').value.trim();
+  const alertEl   = document.getElementById('est-modal-alert');
+  if (!nombre)    { alertEl.innerHTML = alert_html('error','El nombre es obligatorio.'); return; }
+  if (!giro)      { alertEl.innerHTML = alert_html('error','Selecciona el giro.'); return; }
+  if (!domicilio) { alertEl.innerHTML = alert_html('error','El domicilio es obligatorio.'); return; }
+  const permisos = Array.from(document.querySelectorAll('.perm-check:checked')).map(c => c.value);
+  const body = {
+    nombre, giro, domicilio, responsable,
+    rfc:      document.getElementById('est-rfc').value.trim().toUpperCase(),
+    colonia:  document.getElementById('est-colonia').value.trim(),
+    telefono: document.getElementById('est-telefono').value.trim(),
+    estado_cumplimiento: document.getElementById('est-estado-cump').value,
+    observaciones: document.getElementById('est-observaciones').value.trim(),
+    permisos
+  };
+  const editId = document.getElementById('est-edit-id').value;
+  const btn = document.getElementById('btn-guardar-est');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Guardando...'; }
+  const r = editId
+    ? await api(`/api/establecimientos/${editId}`, 'PATCH', body)
+    : await api('/api/establecimientos', 'POST', body);
+  if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar Establecimiento'; }
+  if (r.success) {
+    cerrarModalEst();
+    cargarEstablecimientos();
+    loadDashboard();
+  } else {
+    alertEl.innerHTML = alert_html('error', r.message || 'Error al guardar.');
+  }
+}
+
+function exportarEstablecimientos() {
+  if (!_estabsCache.length) { alert('No hay establecimientos para exportar.'); return; }
+  const esc = v => '"' + String(v||'').replace(/"/g,'""') + '"';
+  const headers = ['Folio','Nombre','Giro','Domicilio','Colonia','Responsable','Teléfono','RFC','Cumplimiento','Permisos','Observaciones','Fecha Registro'];
+  const rows = _estabsCache.map(e => [
+    esc(e.folio), esc(e.nombre), esc(GIRO_LABELS[e.giro]||e.giro),
+    esc(e.domicilio), esc(e.colonia), esc(e.responsable), esc(e.telefono),
+    esc(e.rfc), esc(e.estado_cumplimiento),
+    esc((e.permisos||[]).join(', ')), esc(e.observaciones),
+    esc(e.fecha_registro ? new Date(e.fecha_registro).toLocaleDateString('es-MX') : '')
+  ].join(','));
+  const csv = '\uFEFF' + [headers.map(h=>'"'+h+'"').join(','), ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'IMBIO-Establecimientos-' + new Date().toLocaleDateString('es-MX').replace(/\//g,'-') + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// ── Verificaciones ───────────────────────────────────────────
+let _versCache = [];
+
+async function cargarVerificaciones() {
+  const estado = document.getElementById('ver-filtro-estado')?.value || '';
+  let url = '/api/verificaciones?';
+  if (estado) url += '&estado=' + estado;
+  const r = await api(url);
+  if (!r.success) return;
+  _versCache = r.data.verificaciones;
+  const lista = document.getElementById('ver-lista');
+  if (!lista) return;
+  if (!_versCache.length) {
+    lista.innerHTML = '<div style="text-align:center;padding:40px;color:#888;grid-column:1/-1">No hay verificaciones.<br><small>Haz clic en "➕ Programar Verificación" para comenzar.</small></div>';
+    return;
+  }
+  const EST_COLORS = { programada:'#3b82f6', en_proceso:'#f59e0b', completada:'#22c55e', cancelada:'#9ca3af' };
+  const EST_LABELS = { programada:'📅 Programada', en_proceso:'🔄 En Proceso', completada:'✅ Completada', cancelada:'❌ Cancelada' };
+  const RES_LABELS = { cumple:'✅ Cumple', cumple_con_observaciones:'⚠️ Con Observaciones', no_cumple:'❌ No Cumple', no_aplica:'➖ No Aplica' };
+  lista.innerHTML = _versCache.map(v => `
+    <div style="background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden;border-left:4px solid ${EST_COLORS[v.estado]||'#888'}">
+      <div style="padding:12px 14px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-family:monospace;font-size:.78rem;font-weight:700;color:#1a3a5c">${v.folio}</div>
+          <div style="font-weight:700;font-size:.92rem;margin-top:2px">${v.establecimiento_nombre||'–'}</div>
+          <div style="font-size:.78rem;color:#888">${GIRO_LABELS[v.establecimiento_giro]||v.establecimiento_giro||''}</div>
+        </div>
+        <span style="background:${EST_COLORS[v.estado]||'#888'}20;color:${EST_COLORS[v.estado]||'#888'};padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:700;white-space:nowrap">${EST_LABELS[v.estado]||v.estado}</span>
+      </div>
+      <div style="padding:10px 14px;font-size:.82rem;line-height:1.5">
+        <div>📍 ${v.establecimiento_domicilio||'–'}</div>
+        ${v.fecha_programada?`<div>📅 Programada: <b>${new Date(v.fecha_programada+'T00:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'})}</b></div>`:''}
+        ${v.motivo?`<div style="color:#555;margin-top:4px">📝 ${v.motivo.substring(0,100)}${v.motivo.length>100?'...':''}</div>`:''}
+        ${v.resultado?`<div style="margin-top:4px">🎯 Resultado: <b>${RES_LABELS[v.resultado]||v.resultado}</b></div>`:''}
+      </div>
+      <div style="padding:8px 14px;background:#f8fafc;border-top:1px solid #f1f5f9;display:flex;gap:6px;flex-wrap:wrap">
+        ${v.estado !== 'completada' && v.estado !== 'cancelada' ? `<button onclick="abrirDetalleVerificacion(${v.id})" class="btn btn-primary btn-sm" style="font-size:.75rem;padding:4px 10px">📝 Registrar Hallazgos</button>` : ''}
+        ${v.estado === 'completada' ? `<button onclick="abrirDetalleVerificacion(${v.id})" class="btn btn-secondary btn-sm" style="font-size:.75rem;padding:4px 10px">👁️ Ver Detalle</button>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+async function abrirModalVerificacion() {
+  // Cargar establecimientos en el select
+  const r = await api('/api/establecimientos');
+  const sel = document.getElementById('ver-est-select');
+  if (sel && r.success) {
+    sel.innerHTML = '<option value="">-- Seleccionar establecimiento --</option>' +
+      r.data.establecimientos.map(e => `<option value="${e.id}">${e.nombre} — ${GIRO_LABELS[e.giro]||e.giro||''}</option>`).join('');
+  }
+  // Cargar inspectores
+  const ri = await api('/api/inspectores');
+  const seli = document.getElementById('ver-inspector');
+  if (seli && ri.success) {
+    seli.innerHTML = '<option value="">-- Sin asignar --</option>' +
+      ri.data.inspectores.map(i => `<option value="${i.id}">${i.nombre} — ${i.brigada||'Sin brigada'}</option>`).join('');
+  }
+  // Fecha por defecto = hoy
+  document.getElementById('ver-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('ver-motivo').value = '';
+  document.getElementById('ver-tipo').value = 'programada';
+  document.querySelectorAll('.chk-item').forEach(c => c.checked = false);
+  document.getElementById('ver-modal-alert').innerHTML = '';
+  document.getElementById('modal-verificacion').style.display = 'flex';
+}
+
+function cerrarModalVer() {
+  document.getElementById('modal-verificacion').style.display = 'none';
+}
+
+async function programarVerificacionDesde(estId) {
+  await abrirModalVerificacion();
+  const sel = document.getElementById('ver-est-select');
+  if (sel) sel.value = estId;
+}
+
+async function guardarVerificacion() {
+  const est_id = document.getElementById('ver-est-select').value;
+  const alertEl = document.getElementById('ver-modal-alert');
+  if (!est_id) { alertEl.innerHTML = alert_html('error','Selecciona un establecimiento.'); return; }
+  const checklist = Array.from(document.querySelectorAll('.chk-item:checked')).map(c => ({item: c.value, resultado: 'pendiente'}));
+  const body = {
+    establecimiento_id: parseInt(est_id),
+    tipo_verificacion: document.getElementById('ver-tipo').value,
+    fecha_programada:  document.getElementById('ver-fecha').value,
+    inspector_id:      document.getElementById('ver-inspector').value || null,
+    motivo:            document.getElementById('ver-motivo').value.trim(),
+    checklist
+  };
+  const r = await api('/api/verificaciones', 'POST', body);
+  if (r.success) {
+    cerrarModalVer();
+    cargarVerificaciones();
+    loadDashboard();
+  } else {
+    alertEl.innerHTML = alert_html('error', r.message || 'Error al programar.');
+  }
+}
+
+function abrirDetalleVerificacion(id) {
+  const ver = _versCache.find(v => v.id === id);
+  if (!ver) return;
+  document.getElementById('ver-det-id').value = id;
+  document.getElementById('ver-det-titulo').textContent = `🔍 ${ver.folio} — ${ver.establecimiento_nombre}`;
+  const EST_LABELS = { programada:'📅 Programada', en_proceso:'🔄 En Proceso', completada:'✅ Completada', cancelada:'❌ Cancelada' };
+  document.getElementById('ver-det-info').innerHTML = `
+    <b>🏪 Establecimiento:</b> ${ver.establecimiento_nombre}<br>
+    <b>📍 Domicilio:</b> ${ver.establecimiento_domicilio||'–'}<br>
+    <b>🏷️ Giro:</b> ${GIRO_LABELS[ver.establecimiento_giro]||ver.establecimiento_giro||'–'}<br>
+    <b>📅 Fecha programada:</b> ${ver.fecha_programada||'–'}<br>
+    <b>Estado:</b> ${EST_LABELS[ver.estado]||ver.estado}<br>
+    ${ver.motivo?`<b>📝 Motivo:</b> ${ver.motivo}<br>`:''}`;
+  // Checklist
+  const ckWrap = document.getElementById('ver-det-checklist');
+  const ITEM_LABELS = {
+    licencia_vigente:'Licencia de funcionamiento', dictamen_ambiental:'Dictamen ambiental',
+    contenedores_residuos:'Contenedores de residuos', separacion_residuos:'Separación de residuos',
+    trampa_grasas:'Trampa de grasas', descarga_aguas:'Descarga de aguas',
+    nivel_ruido:'Nivel de ruido', emisiones_aire:'Emisiones al aire',
+    almacen_productos:'Almacenamiento productos peligrosos', areas_verdes_predio:'Áreas verdes del predio',
+    fauna_control:'Control de fauna nociva', senaletica:'Señalética ambiental',
+    uso_suelo:'Uso de suelo', proteccion_civil:'Protección Civil'
+  };
+  if (ckWrap && ver.checklist && ver.checklist.length) {
+    ckWrap.innerHTML = ver.checklist.map(ck => `
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:3px">
+        <select data-item="${ck.item}" class="ck-result-sel" style="padding:2px 4px;border:1px solid var(--borde);border-radius:4px;font-size:.75rem">
+          <option value="pendiente" ${ck.resultado==='pendiente'?'selected':''}>⏳ Pendiente</option>
+          <option value="cumple"    ${ck.resultado==='cumple'?'selected':''}>✅ Cumple</option>
+          <option value="no_cumple" ${ck.resultado==='no_cumple'?'selected':''}>❌ No cumple</option>
+          <option value="no_aplica" ${ck.resultado==='no_aplica'?'selected':''}>➖ N/A</option>
+        </select>
+        <span>${ITEM_LABELS[ck.item]||ck.item}</span>
+      </label>`).join('');
+  } else {
+    ckWrap.innerHTML = '<div style="color:#888;padding:8px">Sin checklist definido.</div>';
+  }
+  document.getElementById('ver-det-resultado').value = ver.resultado || '';
+  document.getElementById('ver-det-accion').value    = ver.accion_requerida || 'ninguna';
+  document.getElementById('ver-det-hallazgos').value = ver.hallazgos || '';
+  document.getElementById('ver-det-alert').innerHTML = '';
+  document.getElementById('modal-ver-detalle').style.display = 'flex';
+}
+
+function cerrarModalVerDet() {
+  document.getElementById('modal-ver-detalle').style.display = 'none';
+}
+
+async function completarVerificacion() {
+  const vid = document.getElementById('ver-det-id').value;
+  const resultado = document.getElementById('ver-det-resultado').value;
+  const alertEl   = document.getElementById('ver-det-alert');
+  if (!resultado) { alertEl.innerHTML = alert_html('error','Selecciona el resultado general.'); return; }
+  // Recoger checklist actualizado
+  const checklist = Array.from(document.querySelectorAll('.ck-result-sel')).map(sel => ({
+    item: sel.dataset.item, resultado: sel.value
+  }));
+  const body = {
+    estado: 'completada',
+    resultado,
+    hallazgos:         document.getElementById('ver-det-hallazgos').value.trim(),
+    accion_requerida:  document.getElementById('ver-det-accion').value,
+    checklist,
+    fecha_realizacion: new Date().toISOString()
+  };
+  const r = await api(`/api/verificaciones/${vid}`, 'PATCH', body);
+  if (r.success) {
+    cerrarModalVerDet();
+    cargarVerificaciones();
+    cargarEstablecimientos();
+    loadDashboard();
+    alert('✅ Verificación completada. El estado del establecimiento ha sido actualizado.');
+  } else {
+    alertEl.innerHTML = alert_html('error', r.message || 'Error al guardar.');
+  }
+}
+
+
+async function _exportarActasCSV(actas) {
+  const esc = (v) => '"' + String(v||'').replace(/"/g,'""') + '"';
+  const fmt = (d) => d ? new Date(d).toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+  const ACTA_LABELS = {inspeccion:'Inspección',circunstanciada:'Circunstanciada',apercibimiento:'Apercibimiento',sancion:'Sanción'};
+
+  const headers = [
+    'Folio Acta','Tipo Acta','Expediente','Inspector','No. Identificación',
+    'Infractor','Domicilio','Descripción','Medida','Plazo',
+    'Monto Sanción','Fecha Vencimiento','Verificación','Fecha'
+  ];
+  const rows = actas.map(a => [
+    esc(a.folio_acta), esc(ACTA_LABELS[a.tipo_acta]||a.tipo_acta),
+    esc(a.expediente||''), esc(a.inspector||''), esc(a.num_inspector||''),
+    esc(a.infractor||''), esc(a.domicilio||''),
+    esc((a.descripcion||'').substring(0,200)),
+    esc((a.medida||'').substring(0,200)),
+    esc(a.plazo||''), esc(a.monto_sancion||''),
+    esc(fmt(a.fecha_vencimiento)),
+    esc(a.verificacion_resultado||''), esc(fmt(a.fecha)),
+  ].join(','));
+
+  const BOM = '\uFEFF';
+  const csv = BOM + [headers.map(h=>'"'+h+'"').join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const now  = new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'-');
+  a.href = url; a.download = 'IMBIO-Actas-' + now + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+}
 
 </script>
 </body>
