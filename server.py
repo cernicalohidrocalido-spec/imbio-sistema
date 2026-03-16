@@ -232,35 +232,34 @@ def read_db():
         conn = sqlite3.connect(str(DB_SQLITE), timeout=15)
         row = conn.execute("SELECT data FROM store WHERE id=1").fetchone()
         conn.close()
-        db = json.loads(row[0])
-        # Migración automática
-        changed = False
-        if 'actas' not in db:
-            db['actas'] = []; changed = True
-        if 'historial_estados' not in db:
-            db['historial_estados'] = []; changed = True
-        if 'expedientes' not in db:
-            # Crear expedientes para reportes existentes que no tienen uno
-            db['expedientes'] = []
-            for rep in db.get('reports', []):
-                if not rep.get('expediente'):
-                    exp_num = generate_expediente(db)
-                    rep['expediente'] = exp_num
-                    db['expedientes'].append({
-                        'id': len(db['expedientes']) + 1,
-                        'numero': exp_num,
-                        'report_id': rep['id'],
-                        'folio_reporte': rep.get('folio', ''),
-                        'fecha_apertura': rep.get('fecha_creacion', now_iso()),
-                        'estado': rep.get('estado', 'reportado'),
-                    })
-            changed = True
-        for idx_u, u in enumerate(db.get('users', [])):
-            if 'id' not in u:
-                u['id'] = idx_u + 1; changed = True
-        if changed:
-            write_db(db)
-        return db
+    db = json.loads(row[0])
+    # Migración automática (fuera del lock para no bloquear)
+    changed = False
+    if 'actas' not in db:
+        db['actas'] = []; changed = True
+    if 'historial_estados' not in db:
+        db['historial_estados'] = []; changed = True
+    if 'expedientes' not in db:
+        db['expedientes'] = []
+        for rep in db.get('reports', []):
+            if not rep.get('expediente'):
+                exp_num = generate_expediente(db)
+                rep['expediente'] = exp_num
+                db['expedientes'].append({
+                    'id': len(db['expedientes']) + 1,
+                    'numero': exp_num,
+                    'report_id': rep['id'],
+                    'folio_reporte': rep.get('folio', ''),
+                    'fecha_apertura': rep.get('fecha_creacion', now_iso()),
+                    'estado': rep.get('estado', 'reportado'),
+                })
+        changed = True
+    for idx_u, u in enumerate(db.get('users', [])):
+        if 'id' not in u:
+            u['id'] = idx_u + 1; changed = True
+    if changed:
+        write_db(db)
+    return db
 
 def write_db(db):
     with db_lock:
