@@ -808,7 +808,9 @@ const ITEM_LABELS_INSP = {
   fauna_control:'Control de fauna nociva',
   senaletica:'Señalética ambiental visible',
   uso_suelo:'Uso de suelo conforme',
-  proteccion_civil:'Protección Civil al corriente'
+  proteccion_civil:'Protección Civil al corriente',
+  pago_rsu:'Pago recolección y disposición de RSU',
+  contrato_rsu:'Contrato con empresa autorizada RSU'
 };
 
 let _verResultadoSel = '';
@@ -846,6 +848,23 @@ async function cargarVerificacionesInsp() {
       </div>
       ${v.estado !== 'completada' && v.estado !== 'cancelada' ? `
       <div style="padding:8px 14px;background:rgba(0,0,0,.2);border-top:1px solid rgba(255,255,255,.06)">
+        <!-- Botones de navegación al establecimiento -->
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <a href="https://www.google.com/maps/dir/?api=1&destination=${v.establecimiento_domicilio ? encodeURIComponent(v.establecimiento_domicilio + ', Pabellón de Arteaga, Ags.') : ''}"
+            target="_blank"
+            style="flex:1;padding:8px 4px;background:rgba(66,133,244,.2);color:#60a5fa;border:1px solid rgba(66,133,244,.3);border-radius:7px;font-size:.72rem;font-weight:700;text-align:center;text-decoration:none;display:block">
+            🗺️ Google Maps
+          </a>
+          <a href="https://waze.com/ul?q=${v.establecimiento_domicilio ? encodeURIComponent(v.establecimiento_domicilio + ', Pabellón de Arteaga') : ''}&navigate=yes"
+            target="_blank"
+            style="flex:1;padding:8px 4px;background:rgba(26,188,156,.15);color:#4ade80;border:1px solid rgba(26,188,156,.3);border-radius:7px;font-size:.72rem;font-weight:700;text-align:center;text-decoration:none;display:block">
+            🔵 Waze
+          </a>
+          <button onclick="abrirMapaVerificacion(${v.id}, '${(v.establecimiento_nombre||'').replace(/'/g,'')}')"
+            style="flex:1;padding:8px 4px;background:rgba(139,92,246,.15);color:#c4b5fd;border:1px solid rgba(139,92,246,.3);border-radius:7px;font-size:.72rem;font-weight:700;cursor:pointer">
+            📍 Ver mapa
+          </button>
+        </div>
         <button onclick="abrirRealizarVerificacion(${v.id})"
           style="width:100%;padding:10px;background:var(--acento);color:#0d1f35;border:none;border-radius:8px;font-size:.85rem;font-weight:800;cursor:pointer">
           🔍 Iniciar Verificación en Campo
@@ -871,6 +890,9 @@ async function abrirRealizarVerificacion(vid) {
     `<span style="color:rgba(255,255,255,.7)">🏷️ ${GIRO_LABELS_INSP[ver.establecimiento_giro]||ver.establecimiento_giro||'–'}</span><br>` +
     `<span style="color:rgba(255,255,255,.6)">📍 ${ver.establecimiento_domicilio||'–'}</span>` +
     (ver.motivo ? `<br><span style="color:rgba(255,255,255,.5);font-style:italic">📝 ${ver.motivo}</span>` : '');
+  // Guardar coords del establecimiento para el mapa
+  ver.establecimiento_lat = ver.lat || null;
+  ver.establecimiento_lon = ver.lon || null;
   // Checklist
   const ckDiv = document.getElementById('mver-checklist');
   _verResultadoSel = '';
@@ -1430,6 +1452,101 @@ function _renderChecklistDinamico(tipoReporte, containerId) {
     <div style="background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.3);border-radius:8px;padding:8px;font-size:.75rem;color:#f87171;margin-bottom:8px">
       🚫 Este tipo de caso requiere <b>doble confirmación</b> antes de emitir el acta.
     </div>` : ''}`;
+}
+
+
+// ── Receptor de animal trasladado ──────────────────────
+function toggleReceptorAnimal() {
+  const traslado = document.getElementById('aa-traslado')?.checked;
+  const destino  = document.getElementById('anim-destino')?.value || '';
+  const mostrar  = traslado || ['Albergue Municipal','Veterinaria de guardia'].includes(destino);
+  const panel    = document.getElementById('panel-receptor-animal');
+  if (panel) panel.style.display = mostrar ? 'block' : 'none';
+}
+
+
+// ── Mapa de ruta para verificación ─────────────────────
+function abrirMapaVerificacion(vid, nombreEst) {
+  const ver = _versCache ? _versCache.find(v => v.id === vid) : null;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'modal-mapa-ver';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:5000;display:flex;flex-direction:column;padding:0';
+
+  overlay.innerHTML = `
+    <div style="background:#0d1f35;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div>
+        <div style="color:var(--acento);font-size:.75rem;font-weight:700;text-transform:uppercase">📍 Ubicación del Establecimiento</div>
+        <div style="color:#fff;font-size:.88rem;font-weight:700;margin-top:2px">${nombreEst}</div>
+        ${ver ? `<div style="color:rgba(255,255,255,.5);font-size:.72rem">${ver.establecimiento_domicilio||''}</div>` : ''}
+      </div>
+      <button onclick="document.getElementById('modal-mapa-ver').remove()"
+        style="background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:.85rem">✕ Cerrar</button>
+    </div>
+    <div id="mapa-ver-container" style="flex:1;min-height:0"></div>
+    <div style="background:#0d1f35;padding:10px 12px;display:flex;gap:8px;flex-shrink:0">
+      ${ver && ver.establecimiento_domicilio ? `
+      <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent((ver.establecimiento_domicilio||'') + ', Pabellón de Arteaga, Ags.')}"
+        target="_blank"
+        style="flex:1;padding:11px 8px;background:#4285F4;color:#fff;border:none;border-radius:9px;font-size:.82rem;font-weight:800;text-align:center;text-decoration:none;display:block">
+        🗺️ Abrir en Google Maps
+      </a>
+      <a href="https://waze.com/ul?q=${encodeURIComponent((ver.establecimiento_domicilio||'') + ', Pabellón de Arteaga')}&navigate=yes"
+        target="_blank"
+        style="flex:1;padding:11px 8px;background:#00d4b4;color:#0d1f35;border:none;border-radius:9px;font-size:.82rem;font-weight:800;text-align:center;text-decoration:none;display:block">
+        🔵 Waze
+      </a>` : '<div style="color:rgba(255,255,255,.4);font-size:.8rem;padding:8px">Sin coordenadas disponibles para este establecimiento.</div>'}
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  // Inicializar mapa Leaflet
+  const est_lat = ver ? (ver.establecimiento_lat || null) : null;
+  const est_lon = ver ? (ver.establecimiento_lon || null) : null;
+  const defaultLat = 22.1508, defaultLon = -102.2913;
+
+  setTimeout(function() {
+    if (typeof L === 'undefined') return;
+    const mapVer = L.map('mapa-ver-container', { zoomControl: true }).setView(
+      [est_lat || defaultLat, est_lon || defaultLon], est_lat ? 16 : 14
+    );
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mapVer);
+
+    // Marcador del establecimiento
+    if (est_lat && est_lon) {
+      const iconEst = L.divIcon({
+        html: `<div style="background:#7c3aed;color:#fff;border-radius:8px;padding:4px 8px;font-size:.7rem;font-weight:800;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.4)">🏪 ${nombreEst.substring(0,15)}</div>`,
+        className: '', iconAnchor: [0, 0]
+      });
+      L.marker([est_lat, est_lon], { icon: iconEst })
+        .addTo(mapVer)
+        .bindPopup(`<b>${nombreEst}</b><br>${ver ? ver.establecimiento_domicilio||'' : ''}`);
+    }
+
+    // Ubicación actual del inspector
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        const inspLat = pos.coords.latitude;
+        const inspLon = pos.coords.longitude;
+        const iconInsp = L.divIcon({
+          html: '<div style="background:#22c55e;color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 2px 8px rgba(0,0,0,.4)">👷</div>',
+          className: '', iconSize: [28,28], iconAnchor: [14,14]
+        });
+        L.marker([inspLat, inspLon], { icon: iconInsp })
+          .addTo(mapVer)
+          .bindPopup('<b>Tu ubicación actual</b>');
+
+        // Ajustar vista para mostrar ambos puntos
+        if (est_lat && est_lon) {
+          mapVer.fitBounds([[inspLat, inspLon],[est_lat, est_lon]], { padding: [30, 30] });
+          // Línea de ruta aproximada
+          L.polyline([[inspLat, inspLon],[est_lat, est_lon]], {
+            color: '#fbbf24', weight: 3, dashArray: '8, 8', opacity: 0.8
+          }).addTo(mapVer);
+        }
+      }, function(){}, { enableHighAccuracy: true, timeout: 8000 });
+    }
+  }, 200);
 }
 
 
@@ -2542,6 +2659,22 @@ async function enviarActa() {
   if (!inspector)   { if(alertEl) alertEl.innerHTML = alert_html('err','Ingresa el nombre del inspector.'); return; }
   if (!descripcion || descripcion.length < 15) { if(alertEl) alertEl.innerHTML = alert_html('err','La descripción debe tener al menos 15 caracteres.'); return; }
 
+  // ── Validaciones mínimas por tipo (trazabilidad legal) ──
+  const tiposContam = ['contaminacion_comercial','agua_contaminada','denuncia_ambiental','residuos_solidos','tiradero_escombro','ruido_comercial','residuos_comerciales'];
+  const tiposAnim   = ['perro_agresivo','animal_calle','animal_maltrato'];
+  if (tiposContam.includes(tipoRepE) && (!lat || !lon)) {
+    if(alertEl) alertEl.innerHTML = alert_html('err','⚠️ Para denuncias ambientales/comerciales se requieren coordenadas GPS. Usa el botón "GPS Automático".');
+    return;
+  }
+  if (tiposAnim.includes(tipoRepE)) {
+    const huboMord = document.getElementById('a-hubo-mordida')?.checked || false;
+    const nomAfect = document.getElementById('a-afectado-nombre')?.value?.trim() || '';
+    if (huboMord && !nomAfect) {
+      if(alertEl) alertEl.innerHTML = alert_html('err','⚠️ Para mordidas de animal se requiere el nombre del afectado.');
+      return;
+    }
+  }
+
   const formData = new FormData();
   formData.append('tipo_acta',     tipo);
   formData.append('inspector',     inspector);
@@ -2644,6 +2777,11 @@ async function enviarActa() {
     formData.append('anim_duenio',    gvA('anim-duenio'));
     formData.append('anim_destino',   gvA('anim-destino'));
     var acAnim = [gcA('aa-rescate')?'Rescate':'',gcA('aa-traslado')?'Traslado a albergue':'',gcA('aa-apercibimiento')?'Apercibimiento':'',gcA('aa-acta')?'Acta al propietario':'',gcA('aa-canaliza')?'Canalización':''].filter(Boolean).join(', ');
+    var animReceptorNombre  = gv('anim-receptor-nombre');
+    var animReceptorInst    = gv('anim-receptor-inst');
+    var animReceptorTel     = gv('anim-receptor-tel');
+    var animReceptorDom     = gv('anim-receptor-domicilio');
+    var animReceptorObs     = gv('anim-receptor-obs');
     formData.append('acciones_animal', acAnim);
   }
   if (esDenunciaForm) {
@@ -3633,7 +3771,7 @@ function _buildActaForm() {
     <div class="section-title" style="margin-top:10px">⚡ 3. Acciones Tomadas en Campo</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
       <label class="chk-lbl"><input type="checkbox" id="aa-rescate"> Rescate del animal</label>
-      <label class="chk-lbl"><input type="checkbox" id="aa-traslado"> Traslado a albergue/veterinaria</label>
+      <label class="chk-lbl"><input type="checkbox" id="aa-traslado" onchange="toggleReceptorAnimal()"> Traslado a albergue/veterinaria</label>
       <label class="chk-lbl"><input type="checkbox" id="aa-apercibimiento"> Apercibimiento al propietario</label>
       <label class="chk-lbl"><input type="checkbox" id="aa-acta"> Levantamiento de acta al propietario</label>
       <label class="chk-lbl"><input type="checkbox" id="aa-canaliza"> Canalización a autoridad competente</label>
@@ -3641,13 +3779,44 @@ function _buildActaForm() {
     </div>
     <div class="fg" style="margin-bottom:10px">
       <label>Destino del animal</label>
-      <select id="anim-destino">
+      <select id="anim-destino" onchange="toggleReceptorAnimal()">
         <option value="">No aplica / no rescatado</option>
         <option>Albergue Municipal</option>
         <option>Veterinaria de guardia</option>
         <option>Entregado a propietario</option>
         <option>Liberado en hábitat natural</option>
       </select>
+    </div>
+    <!-- RECEPTOR DEL ANIMAL — se muestra al marcar traslado -->
+    <div id="panel-receptor-animal" style="display:none;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:10px;margin-bottom:10px">
+      <div style="font-size:.72rem;font-weight:800;color:#fbbf24;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">🏥 Cadena de Custodia — Datos del Receptor</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="fg">
+          <label>Nombre del receptor / responsable *</label>
+          <input id="anim-receptor-nombre" placeholder="Nombre completo del receptor (veterinario, encargado...)">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="fg">
+            <label>Institución / Organización</label>
+            <input id="anim-receptor-inst" placeholder="Albergue, Clínica, etc.">
+          </div>
+          <div class="fg">
+            <label>Teléfono de contacto</label>
+            <input id="anim-receptor-tel" type="tel" placeholder="449 000 0000">
+          </div>
+        </div>
+        <div class="fg">
+          <label>Domicilio del receptor</label>
+          <input id="anim-receptor-domicilio" placeholder="Calle, número, colonia">
+        </div>
+        <div class="fg">
+          <label>Observaciones del traslado</label>
+          <textarea id="anim-receptor-obs" rows="2" placeholder="Estado del animal al momento del traslado, condiciones de entrega..." style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none;resize:vertical"></textarea>
+        </div>
+        <div style="font-size:.72rem;color:rgba(255,255,255,.5);background:rgba(255,255,255,.05);padding:6px 10px;border-radius:6px">
+          ⚠️ El receptor deberá firmar el acta como constancia de recepción del animal.
+        </div>
+      </div>
     </div>` : '';
 
 
