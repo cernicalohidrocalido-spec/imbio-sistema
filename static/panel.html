@@ -1053,7 +1053,6 @@ else wakeUpServer();
 
 // ── AUTH ──────────────────────────────────────────────────────
 async function doLogin() {
-  console.log("[LOGIN] Iniciando doLogin...");
   var usernameEl = document.getElementById('l-user');
   var passwordEl = document.getElementById('l-pass');
   if (!usernameEl || !passwordEl) return;
@@ -1070,18 +1069,16 @@ async function doLogin() {
   if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Enviando…'; }
   try {
     const base = window.location.origin || '';
-    console.log("[LOGIN] Haciendo fetch a", base + "/api/auth/login");
     const res = await fetch(base + '/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
-      signal: AbortSignal.timeout(55000)
+      signal: AbortSignal.timeout(30000)
     });
     var r = null;
     if (res.status === 502 || res.status === 503 || res.status === 504) {
       r = { success: false, message: 'Error ' + res.status + ': el servidor no respondió a tiempo (Railway). Revisa en Railway → Deployments → View Logs si el proceso está activo o si hay errores al arrancar.' };
     } else {
-      console.log("[LOGIN] Status HTTP:", res.status);
       try { r = await res.json(); } catch (_) { r = { success: false, message: 'Respuesta inválida del servidor' }; }
     }
     if (!r || !r.success) {
@@ -1089,7 +1086,6 @@ async function doLogin() {
       if (btn) { btn.disabled = false; btn.innerHTML = btnText; }
       return;
     }
-    console.log("[LOGIN] ✅ Login exitoso, token:", r.data.token ? "OK" : "FALTA");
     TOKEN = r.data.token; USER = r.data.usuario;
     document.getElementById('nav-nombre').textContent = USER.nombre;
     document.getElementById('nav-rol').textContent    = USER.rol;
