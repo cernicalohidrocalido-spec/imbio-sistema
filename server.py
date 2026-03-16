@@ -458,9 +458,13 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             # Filtrar por estado activo (no cerrado)
             estado = qs.get('estado', [None])[0]
             if estado:
-                reps = [r for r in reps if r['estado'] == estado]
+                # Support comma-separated states: en_proceso,en_inspeccion,pendiente_medida
+                estados_lista = [e.strip() for e in estado.split(',') if e.strip()]
+                reps = [r for r in reps if r['estado'] in estados_lista]
             else:
-                reps = [r for r in reps if r['estado'] in ('asignado', 'en_proceso')]
+                reps = [r for r in reps if r['estado'] in (
+                    'asignado','en_proceso','en_inspeccion',
+                    'pendiente_medida','apercibido','sancionado')]
             # ── Filtrar por inspector si el usuario es inspector ──────────
             if user.get('rol') == 'inspector':
                 nombre_insp = (user.get('nombre') or user.get('username') or '').strip()
@@ -486,6 +490,197 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             return
 
         # ── Listar inspectores ───────────────────────────────────────────
+        # ── IA: Generar texto ────────────────────────────────────────
+        if path == '/api/ai/generar-texto':
+            user = self.require_auth()
+            if not user: return
+            body  = self.parse_json_body()
+            tipo  = body.get('tipo', '')
+            datos = body.get('datos', {})
+            prompts = {
+                'reporte_ciudadano': (
+                    "Eres un asistente para reportes municipales ambientales. "
+                    "Reescribe la descripcion ciudadana de forma mas clara y descriptiva, "
+                    "lenguaje sencillo, maximo 3 oraciones. Solo el texto mejorado.\n\n"
+                    "Texto original: " + datos.get('descripcion', '')
+                ),
+                'acta_circunstanciada': (
+                    "Eres redactor de actas administrativas municipales. Genera texto narrativo tecnico "
+                    "para 'Descripcion Circunstanciada de los Hechos' de acta de inspeccion ambiental. "
+                    "Lenguaje formal administrativo. Solo el texto del acta.\n\n"
+                    "Tipo de incidencia: " + datos.get('tipo_incidencia','') + "\n"
+                    "Fecha: " + datos.get('fecha','') + " Hora: " + datos.get('hora','') + "\n"
+                    "Colonia: " + datos.get('colonia','') + "\n"
+                    "Inspector: " + datos.get('inspector','') + "\n"
+                    "Hallazgo: " + datos.get('descripcion','') + "\n"
+                    "Tipo residuo/infraccion: " + datos.get('tipo_residuo','') + "\n"
+                    "Volumen/superficie: " + datos.get('volumen','') + " " + datos.get('superficie','') + "\n"
+                    "Visitado: " + datos.get('visitado','')
+                ),
+                'acta_apercibimiento': (
+                    "Eres redactor de actas administrativas municipales. Genera texto del apercibimiento formal "
+                    "en primera persona de la autoridad. Solo el texto del apercibimiento.\n\n"
+                    "Irregularidad: " + datos.get('irregularidad','') + "\n"
+                    "Tipo de infraccion: " + datos.get('tipo_infraccion','') + "\n"
+                    "Medidas correctivas: " + datos.get('medidas','') + "\n"
+                    "Plazo: " + datos.get('plazo','')
+                ),
+                'acta_sancion': (
+                    "Eres redactor de actas administrativas municipales. Genera texto de 'Motivacion de la Sancion' "
+                    "explicando conducta infractora, afectacion ambiental y justificacion. Solo el texto.\n\n"
+                    "Conducta infractora: " + datos.get('conducta','') + "\n"
+                    "Tipo de infraccion: " + datos.get('tipo_infraccion','') + "\n"
+                    "Gravedad: " + datos.get('gravedad','') + "\n"
+                    "Reincidente: " + datos.get('reincidente','no') + "\n"
+                    "Sancion propuesta: " + datos.get('sancion','')
+                ),
+            }
+            prompt = prompts.get(tipo)
+            if not prompt:
+                self.err('Tipo de formulario no valido: ' + tipo, 400); return
+            import urllib.request as _ur
+            api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+            if not api_key:
+                self.err('Asistente IA no configurado. Agrega ANTHROPIC_API_KEY en variables de entorno.', 503)
+                return
+            payload = json.dumps({
+                'model': 'claude-haiku-4-5-20251001',
+                'max_tokens': 600,
+                'messages': [{'role': 'user', 'content': prompt}]
+            }).encode('utf-8')
+            req = _ur.Request(
+                'https://api.anthropic.com/v1/messages',
+                data=payload,
+                headers={'Content-Type':'application/json','x-api-key':api_key,'anthropic-version':'2023-06-01'},
+                method='POST'
+            )
+            try:
+                with _ur.urlopen(req, timeout=30) as resp:
+                    result = json.loads(resp.read().decode('utf-8'))
+                texto = result.get('content',[{}])[0].get('text','').strip()
+                self.ok({'texto': texto}, 'Texto generado.')
+            except Exception as e:
+                self.err('Error al contactar la IA: ' + str(e), 502)
+            return
+
+        # ── IA: Matlacho — Asistente ambiental inteligente ──────────────
+        if path == '/api/ai/matlacho':
+            user = self.require_auth()
+            if not user: return
+            body  = self.parse_json_body()
+            tipo  = body.get('tipo', '')
+            datos = body.get('datos', {})
+
+            import urllib.request as _ur
+            api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+            if not api_key:
+                self.err('Matlacho no esta configurado. Agrega ANTHROPIC_API_KEY en variables de entorno.', 503)
+                return
+
+            # System prompt — personalidad de Matlacho
+            system = (
+                "Eres Matlacho, el asistente ambiental inteligente del Instituto Municipal de Biodiversidad (IMBIO) "
+                "del municipio de Pabellon de Arteaga, Aguascalientes. "
+                "Tu personalidad es amigable, educativa e institucional. "
+                "Ayudas a ciudadanos e inspectores a redactar reportes y actas administrativas ambientales. "
+                "Siempre eres claro y conciso. Cuando sugieres texto administrativo, usas lenguaje formal. "
+                "Cuando hablas con el ciudadano, usas lenguaje simple y amigable. "
+                "Siempre recuerdas que eres un asistente y que el usuario toma la decision final."
+            )
+
+            prompts = {
+                'reporte_ciudadano': (
+                    "El ciudadano escribio esta descripcion de un problema ambiental: \n"
+                    f"'{datos.get('descripcion', '')}' \n\n"
+                    "Reescribela de forma mas clara, descriptiva y completa en maximo 2 oraciones. "
+                    "Solo devuelve el texto mejorado, sin explicaciones ni prefijos."
+                ),
+                'acta_circunstanciada': (
+                    "Genera el texto narrativo tecnico para la seccion 'Descripcion Circunstanciada de los Hechos' "
+                    "de un acta de inspeccion ambiental municipal. Usa lenguaje formal administrativo. "
+                    "Solo el texto del acta, sin encabezados.\n\n"
+                    f"Tipo de incidencia: {datos.get('tipo_incidencia','')}\n"
+                    f"Fecha y hora: {datos.get('fecha','')} {datos.get('hora','')}\n"
+                    f"Colonia: {datos.get('colonia','')}\n"
+                    f"Inspector: {datos.get('inspector','')}\n"
+                    f"Hallazgo: {datos.get('descripcion','')}\n"
+                    f"Tipo residuo/infraccion: {datos.get('tipo_residuo','')}\n"
+                    f"Volumen/superficie: {datos.get('volumen','')} {datos.get('superficie','')}\n"
+                    f"Visitado: {datos.get('visitado','')}"
+                ),
+                'acta_apercibimiento': (
+                    "Genera el texto del apercibimiento formal en primera persona de la autoridad municipal. "
+                    "Usa lenguaje administrativo preciso. Solo el texto del apercibimiento.\n\n"
+                    f"Irregularidad: {datos.get('irregularidad','')}\n"
+                    f"Tipo infraccion: {datos.get('tipo_infraccion','')}\n"
+                    f"Medidas correctivas: {datos.get('medidas','')}\n"
+                    f"Plazo: {datos.get('plazo','')}"
+                ),
+                'acta_sancion': (
+                    "Genera el texto de la Motivacion de la Sancion que explica la conducta infractora, "
+                    "afectacion ambiental y justificacion de la sancion. Lenguaje administrativo formal. "
+                    "Solo el texto, sin encabezados.\n\n"
+                    f"Conducta infractora: {datos.get('conducta','')}\n"
+                    f"Tipo infraccion: {datos.get('tipo_infraccion','')}\n"
+                    f"Gravedad: {datos.get('gravedad','')}\n"
+                    f"Reincidente: {datos.get('reincidente','no')}\n"
+                    f"Sancion propuesta: {datos.get('sancion','')}"
+                ),
+                'sugerencia_medida': (
+                    "Analiza los datos de esta inspeccion ambiental y sugiere si procede emitir un "
+                    "Acta de Apercibimiento o un Acta de Sancion. Explica brevemente el razonamiento "
+                    "en 2-3 oraciones. Empieza con 'Matlacho sugiere:'\n\n"
+                    f"Tipo de infraccion: {datos.get('tipo_infraccion','')}\n"
+                    f"Tipo de residuo: {datos.get('tipo_residuo','')}\n"
+                    f"Volumen/cantidad: {datos.get('volumen','')}\n"
+                    f"Superficie afectada: {datos.get('superficie','')} m2\n"
+                    f"Severidad: {datos.get('severidad','')}\n"
+                    f"Tiempo de afectacion: {datos.get('tiempo','')}\n"
+                    f"Responsable identificado: {datos.get('responsable','no')}\n"
+                    f"Reincidente: {datos.get('reincidente','no')}\n"
+                    f"Medidas adoptadas: {datos.get('medidas_adoptadas','')}"
+                ),
+                'chat': (
+                    f"El usuario dice: {datos.get('mensaje','')}\n\n"
+                    "Responde de forma amigable y concisa como Matlacho. "
+                    "Si la pregunta es sobre procedimientos ambientales municipales, da orientacion. "
+                    "Si es sobre como usar la plataforma IMBIO, orienta al usuario. "
+                    "Maximo 3 oraciones."
+                ),
+            }
+
+            prompt = prompts.get(tipo)
+            if not prompt:
+                self.err('Tipo no valido: ' + tipo, 400); return
+
+            payload = json.dumps({
+                'model': 'claude-haiku-4-5-20251001',
+                'max_tokens': 600,
+                'system': system,
+                'messages': [{'role': 'user', 'content': prompt}]
+            }).encode('utf-8')
+            req = _ur.Request(
+                'https://api.anthropic.com/v1/messages',
+                data=payload,
+                headers={'Content-Type':'application/json','x-api-key':api_key,'anthropic-version':'2023-06-01'},
+                method='POST'
+            )
+            try:
+                with _ur.urlopen(req, timeout=30) as resp:
+                    result = json.loads(resp.read().decode('utf-8'))
+                texto = result.get('content',[{}])[0].get('text','').strip()
+                # Detect medida sugerida
+                sugerencia = None
+                t_lower = texto.lower()
+                if 'apercibimiento' in t_lower and 'sancion' not in t_lower:
+                    sugerencia = 'apercibimiento'
+                elif 'sancion' in t_lower or 'sanción' in t_lower:
+                    sugerencia = 'sancion'
+                self.ok({'texto': texto, 'sugerencia_medida': sugerencia}, 'Matlacho responde.')
+            except Exception as e:
+                self.err('Error al contactar a Matlacho: ' + str(e), 502)
+            return
+
         if path == '/api/inspectores':
             user = self.require_auth('admin', 'operador')
             if not user: return
@@ -859,7 +1054,21 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                 db['evidence'].append(ev)
                 inserted.append(ev)
 
-            if nuevo_estado in ('en_proceso', 'cerrado'):
+            ESTADOS_VALIDOS = ('en_proceso','cerrado','en_inspeccion',
+                                'pendiente_medida','apercibido','sancionado')
+            # Validar cierre — no permitir si solo tiene circunstanciada
+            if nuevo_estado == 'cerrado':
+                tipo_rep_ev = rep.get('tipo','')
+                es_especial_ev = tipo_rep_ev in ('poda_arbol','derribo_arbol','corte_arbol',
+                                                  'perro_agresivo','animal_calle','animal_maltrato',
+                                                  'fauna_silvestre','animal_abandonado')
+                if not es_especial_ev:
+                    actas_rep_ev = [a for a in db.get('actas',[]) if a['report_id']==rep['id']]
+                    tipos_ev = {a['tipo_acta'] for a in actas_rep_ev}
+                    if tipos_ev and 'circunstanciada' in tipos_ev and not (tipos_ev & {'apercibimiento','sancion'}):
+                        self.err('Debe generar un acta de apercibimiento o sanción antes de cerrar el caso.', 409)
+                        return
+            if nuevo_estado in ESTADOS_VALIDOS:
                 rep['estado'] = nuevo_estado
                 rep['fecha_actualizacion'] = now
                 print(f"[ESTADO] Folio: {rep['folio']} → {nuevo_estado.upper()}")
@@ -970,7 +1179,8 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                 'da_severidad':   fields.get('da_severidad', ''),
                 'da_responsable': fields.get('da_responsable', ''),
                 'da_plazo':       fields.get('da_plazo', ''),
-                'medidas_denuncia': fields.get('medidas_denuncia', ''),
+                'medidas_denuncia':    fields.get('medidas_denuncia', ''),
+                'medidas_correctivas': fields.get('medidas_correctivas', ''),
                 # Firmas
                 'firma_inspector_base64': fields.get('firma_inspector_base64', ''),
                 'firma_visitado_base64':  fields.get('firma_visitado_base64', ''),
@@ -987,11 +1197,55 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             }
             if not db.get('actas'): db['actas'] = []
             db['actas'].append(acta)
-            # Cambiar estado del reporte
+            # ── Estado automático según tipo de acta ────────────────────
+            now2 = now_iso()
+            tipo_rep = rep.get('tipo', '')
+            TIPOS_ARBOL_TEC = {'poda_arbol','derribo_arbol','corte_arbol','arbol_riesgo'}
+            TIPOS_AV        = {'areas_verdes'}
+            TIPOS_ANIMAL    = {'perro_agresivo','animal_calle','animal_maltrato','fauna_silvestre','animal_abandonado'}
+            es_arbol_tec = tipo_rep in TIPOS_ARBOL_TEC
+            es_av        = tipo_rep in TIPOS_AV
+            es_animal    = tipo_rep in TIPOS_ANIMAL
+            es_especial  = es_arbol_tec or es_av or es_animal
             nuevo_estado = fields.get('nuevo_estado', '')
-            if nuevo_estado in ('en_proceso', 'cerrado'):
-                rep['estado'] = nuevo_estado
-                rep['fecha_actualizacion'] = now
+            if es_arbol_tec or es_av:
+                # Árbol técnico / Áreas verdes: inspección → cerrado directamente
+                if nuevo_estado in ('en_inspeccion','en_proceso','cerrado'):
+                    rep['estado'] = nuevo_estado
+                    rep['fecha_actualizacion'] = now2
+            elif es_animal:
+                # Animal: inspección con acta, puede cerrar directamente
+                if nuevo_estado in ('en_inspeccion','en_proceso','cerrado',
+                                    'apercibido','sancionado'):
+                    rep['estado'] = nuevo_estado
+                    rep['fecha_actualizacion'] = now2
+            else:
+                # Flujo ambiental: estado según tipo de acta
+                if tipo_acta == 'inspeccion':
+                    rep['estado'] = 'en_inspeccion'
+                elif tipo_acta == 'circunstanciada':
+                    rep['estado'] = 'pendiente_medida'  # Bloquea cierre
+                elif tipo_acta == 'apercibimiento':
+                    rep['estado'] = 'apercibido'
+                elif tipo_acta == 'sancion':
+                    rep['estado'] = 'sancionado'
+                else:
+                    if nuevo_estado in ('en_proceso','cerrado','pendiente_medida',
+                                        'apercibido','sancionado'):
+                        rep['estado'] = nuevo_estado
+                rep['fecha_actualizacion'] = now2
+
+            # ── Validar cierre: bloquear si solo tiene circunstanciada ──
+            es_ambiental = not (es_arbol_tec or es_av or es_animal)
+            if nuevo_estado == 'cerrado' and es_ambiental:
+                actas_rep = [a for a in db.get('actas',[]) if a['report_id']==rep['id']]
+                tipos_acta = {a['tipo_acta'] for a in actas_rep}
+                tiene_circunstanciada = 'circunstanciada' in tipos_acta
+                tiene_medida = bool(tipos_acta & {'apercibimiento','sancion'})
+                if tiene_circunstanciada and not tiene_medida:
+                    self.err('Debe generar un acta de apercibimiento o sanción antes de cerrar el caso.', 409)
+                    return
+
             write_db(db)
             print(f"[ACTA] {acta['folio_acta']} | Reporte: {rep['folio']} | Tipo: {tipo_acta}")
             self.ok({'acta': acta, 'reporte': rep}, f"Acta {acta['folio_acta']} generada.", 201)
@@ -1040,6 +1294,21 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             for campo in campos_permitidos:
                 if campo in body:
                     rep[campo] = body[campo]
+
+            # ── Validar cierre ambiental ─────────────────────────────
+            if body.get('estado') == 'cerrado':
+                tipo_rep_p = rep.get('tipo','')
+                TIPOS_ARBOL_P = {'poda_arbol','derribo_arbol','corte_arbol','arbol_riesgo'}
+                TIPOS_AV_P    = {'areas_verdes'}
+                TIPOS_ANIM_P  = {'perro_agresivo','animal_calle','animal_maltrato','fauna_silvestre','animal_abandonado'}
+                es_ambiental_p = tipo_rep_p not in (TIPOS_ARBOL_P | TIPOS_AV_P | TIPOS_ANIM_P)
+                if es_ambiental_p:
+                    actas_p = [a for a in db.get('actas',[]) if a['report_id'] == rid]
+                    tipos_p = {a['tipo_acta'] for a in actas_p}
+                    if 'circunstanciada' in tipos_p and not (tipos_p & {'apercibimiento','sancion'}):
+                        self.err('Debe generar un acta de apercibimiento o sanción antes de cerrar.', 409)
+                        return
+
             rep['fecha_actualizacion'] = now_iso()
             write_db(db)
             print(f"[EDICION] Folio: {rep['folio']} → estado={rep.get('estado','')} por {user['username']}")
