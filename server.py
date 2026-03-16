@@ -357,9 +357,10 @@ class IMBIOHandler(BaseHTTPRequestHandler):
         print(f"[HTTP] {self.address_string()} {fmt % args}")
 
     # ── Parsers ────────────────────────────────────────────────
-    def parse_json_body(self):
+    def parse_json_body(self, max_size=512*1024):
         length = int(self.headers.get('Content-Length', 0))
-        if length == 0: return {}
+        if length <= 0: return {}
+        if length > max_size: return {}
         raw = self.rfile.read(length)
         try:    return json.loads(raw)
         except: return {}
@@ -1318,32 +1319,42 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             return
 
         if path == '/api/auth/login':
-            print("[AUTH] Login request received", flush=True)
-            client_ip = self.client_address[0]
-            if not _check_rate_limit(client_ip):
-                print(f"[AUTH] 🚫 Rate limit alcanzado para IP: {client_ip}")
-                self.err('Demasiados intentos fallidos. Espera 15 minutos antes de intentar de nuevo.', 429)
-                return
-            body = self.parse_json_body()
-            print("[AUTH] Body parsed", flush=True)
-            username = body.get('username', '').strip().lower()
-            password = body.get('password', '')
-            if not username or not password:
-                self.err('Usuario y contraseña son requeridos.', 400); return
-            db   = read_db()
-            print("[AUTH] DB read OK", flush=True)
-            user = next((u for u in db['users'] if u['username'] == username), None)
-            if not user or user['password'] != hash_pw(password):
-                _register_login_attempt(client_ip)
-                print(f"[AUTH] ⚠️  Login fallido: {username} (IP: {client_ip})")
-                self.err('Credenciales inválidas.', 401); return
-            if not user.get('activo', True):
-                self.err('Cuenta desactivada.', 403); return
-            _reset_login_attempts(client_ip)  # Limpiar intentos al login exitoso
-            payload = {'id': user['id'], 'username': user['username'], 'nombre': user['nombre'], 'rol': user['rol']}
-            token   = jwt_sign(payload)
-            print(f"[AUTH] ✅ Login: {username} | rol: {user['rol']} | IP: {client_ip}")
-            self.ok({'token': token, 'usuario': payload, 'expires_in': '8h'}, 'Sesión iniciada.')
+            try:
+                print("[AUTH] Login request received", flush=True)
+                client_ip = self.client_address[0]
+                if not _check_rate_limit(client_ip):
+                    print(f"[AUTH] 🚫 Rate limit alcanzado para IP: {client_ip}")
+                    self.err('Demasiados intentos fallidos. Espera 15 minutos antes de intentar de nuevo.', 429)
+                    return
+                body = self.parse_json_body(max_size=4096)
+                print("[AUTH] Body parsed", flush=True)
+                username = (body.get('username') or '').strip().lower()
+                password = body.get('password') or ''
+                if not username or not password:
+                    self.err('Usuario y contraseña son requeridos.', 400)
+                    return
+                db   = read_db()
+                print("[AUTH] DB read OK", flush=True)
+                user = next((u for u in db['users'] if u['username'] == username), None)
+                if not user or user['password'] != hash_pw(password):
+                    _register_login_attempt(client_ip)
+                    print(f"[AUTH] ⚠️  Login fallido: {username} (IP: {client_ip})")
+                    self.err('Credenciales inválidas.', 401)
+                    return
+                if not user.get('activo', True):
+                    self.err('Cuenta desactivada.', 403)
+                    return
+                _reset_login_attempts(client_ip)
+                payload = {'id': user['id'], 'username': user['username'], 'nombre': user['nombre'], 'rol': user['rol']}
+                token   = jwt_sign(payload)
+                print(f"[AUTH] ✅ Login: {username} | rol: {user['rol']} | IP: {client_ip}")
+                self.ok({'token': token, 'usuario': payload, 'expires_in': '8h'}, 'Sesión iniciada.')
+            except Exception as e:
+                print(f"[AUTH] ❌ Error en login: {e}", flush=True)
+                try:
+                    self.err('Error interno en el servidor. Intenta de nuevo.', 500)
+                except Exception:
+                    pass
             return
 
         # ── Create report ──────────────────────────────────────
