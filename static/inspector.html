@@ -8,6 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="IMBIO Inspector">
 <title>IMBIO Inspector</title>
 <link rel="stylesheet" href="/static/leaflet.css"/>
+<!-- PDF generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- QR Code -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root {
   --azul:       #003B7A;
@@ -3325,49 +3329,221 @@ function descargarPDFActa(acta) {
   }
 }
 
-function compartirPDFActa(acta) {
-  if (!acta) { alert('Sin datos del acta.'); return; }
-  const htmlContent = buildActaHTML(acta);
-  const folio = acta.folio_acta || 'ACTA-IMBIO';
+// ══════════════════════════════════════════════════════════════════
+// PDF REAL — jsPDF + QR + compartir WhatsApp
+// ══════════════════════════════════════════════════════════════════
 
-  // Paso 1: abrir ventana con el acta y diálogo de impresión → guardar como PDF
-  const w = window.open('', '_blank');
-  if (w) {
-    w.document.write(htmlContent);
-    w.document.close();
-    w.onload = function() { w.focus(); w.print(); };
-    setTimeout(function() { try { w.focus(); w.print(); } catch(e){} }, 800);
+function _buildQRDataURL(text) {
+  return new Promise(function(resolve) {
+    try {
+      var div = document.createElement('div');
+      div.style.cssText = 'position:absolute;left:-9999px;top:-9999px';
+      document.body.appendChild(div);
+      new QRCode(div, { text: text, width: 80, height: 80 });
+      setTimeout(function() {
+        var img = div.querySelector('img') || div.querySelector('canvas');
+        var src = img ? (img.src || img.toDataURL()) : null;
+        document.body.removeChild(div);
+        resolve(src);
+      }, 300);
+    } catch(e) { resolve(null); }
+  });
+}
+
+async function generarPDFActa(acta) {
+  if (typeof window.jspdf === 'undefined') return null;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+  const folio = acta.folio_acta || 'ACTA-IMBIO';
+  const fecha = new Date(acta.fecha || Date.now());
+  const fechaStr = fecha.toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
+  const horaStr  = fecha.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  const W = 215.9, H = 279.4, M = 15, CW = W - M*2;
+  let y = M;
+
+  const chk = (n=20) => { if (y+n > H-M) { doc.addPage(); y = M; } };
+  const hdr = (txt, num) => {
+    chk(12);
+    doc.setFillColor(26,58,92); doc.rect(M, y, CW, 7, 'F');
+    doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+    doc.text(num+'. '+txt.toUpperCase(), M+2, y+5); y += 10;
+  };
+  const fld = (lbl, val, x, yy, maxW) => {
+    doc.setFontSize(7.5); doc.setFont('helvetica','bold'); doc.setTextColor(100,100,100);
+    doc.text(lbl, x, yy);
+    doc.setFont('helvetica','normal'); doc.setTextColor(20,20,20); doc.setFontSize(9);
+    const lines = doc.splitTextToSize(String(val||'—'), maxW||CW);
+    doc.text(lines, x, yy+4);
+    return yy + 5 + lines.length*4.5;
+  };
+
+  // HEADER
+  doc.setFillColor(26,58,92); doc.rect(0,0,W,36,'F');
+  doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+  const TIPOS = {circunstanciada:'ACTA CIRCUNSTANCIADA',apercibimiento:'ACTA DE APERCIBIMIENTO',
+                 sancion:'ACTA DE SANCIÓN AMBIENTAL',inspeccion:'ACTA DE INSPECCIÓN Y VIGILANCIA'};
+  doc.text(TIPOS[acta.tipo_acta]||'ACTA ADMINISTRATIVA', W/2, 12, {align:'center'});
+  doc.setFontSize(7.5); doc.setFont('helvetica','normal');
+  doc.text('INSTITUTO MUNICIPAL DE BIODIVERSIDAD — PABELLÓN DE ARTEAGA, AGS.', W/2, 18, {align:'center'});
+  doc.setFontSize(9); doc.setFont('helvetica','bold');
+  doc.text('Folio: '+folio, M, 28);
+  if (acta.expediente) doc.text('Exp: '+acta.expediente, W-M, 28, {align:'right'});
+  y = 42;
+
+  // DATOS
+  hdr('Datos de la Diligencia', 1);
+  const c1=M, c2=M+CW/2+2, cw=CW/2-2;
+  let ny = fld('FECHA', fechaStr, c1, y, cw);
+  fld('HORA', horaStr, c2, y, cw);
+  y = ny;
+  ny = fld('INSPECTOR ACTUANTE', acta.inspector, c1, y, cw);
+  fld('NO. IDENTIFICACIÓN', acta.num_inspector, c2, y, cw);
+  y = ny;
+  ny = fld('VISITADO / INFRACTOR', acta.infractor, c1, y, cw);
+  fld('DOMICILIO', acta.domicilio, c2, y, cw);
+  y = ny + 2;
+  if (acta.lat_acta) { y = fld('GPS', acta.lat_acta+', '+acta.lon_acta, c1, y, CW) + 2; }
+  doc.setDrawColor(180,180,180); doc.setLineWidth(0.3); doc.line(M,y,W-M,y); y += 5;
+
+  // DESCRIPCIÓN
+  if (acta.descripcion) {
+    hdr('Descripción Circunstanciada de los Hechos', 2);
+    chk(15);
+    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(20,20,20);
+    const dl = doc.splitTextToSize(acta.descripcion, CW);
+    chk(dl.length*5+5); doc.text(dl, M, y); y += dl.length*5+5;
+    doc.line(M,y,W-M,y); y += 5;
   }
 
-  // Paso 2: ofrecer compartir por WhatsApp (con resumen de texto)
-  setTimeout(function() {
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const file = new File([blob], folio + '.html', { type: 'text/html' });
-    // Web Share API con archivo (Android Chrome soporta esto)
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      navigator.share({
-        title: folio + ' — IMBIO',
-        text: 'Acta ' + folio + ' emitida por IMBIO Pabellón de Arteaga.',
-        files: [file]
-      }).catch(function(e) {
-        if (e.name !== 'AbortError') fallbackShare(acta, folio);
-      });
-    } else {
-      fallbackShare(acta, folio);
+  // FUNDAMENTO LEGAL
+  if (acta.fundamento) {
+    hdr('Fundamento Legal', 3);
+    chk(10);
+    doc.setFontSize(8.5); doc.setFont('helvetica','italic'); doc.setTextColor(30,30,80);
+    const fl = doc.splitTextToSize(acta.fundamento, CW);
+    chk(fl.length*4.5+5); doc.text(fl, M, y); y += fl.length*4.5+5;
+    doc.line(M,y,W-M,y); y += 5;
+  }
+
+  // MEDIDA / APERCIBIMIENTO / SANCIÓN
+  if (acta.medida) {
+    const secLabel = {circunstanciada:'Manifestaciones del Visitado',apercibimiento:'Texto del Apercibimiento',
+                      sancion:'Motivación de la Sanción',inspeccion:'Observaciones'}[acta.tipo_acta]||'Resolución';
+    hdr(secLabel, 4);
+    chk(10);
+    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(20,20,20);
+    const ml = doc.splitTextToSize(acta.medida, CW);
+    chk(ml.length*5+5); doc.text(ml, M, y); y += ml.length*5+5;
+    if (acta.plazo) {
+      doc.setFont('helvetica','bold'); doc.setTextColor(146,64,14);
+      doc.text('Plazo otorgado: '+acta.plazo, M, y); y += 5;
     }
-  }, 1200);
+    if (acta.monto_sancion) {
+      doc.setFont('helvetica','bold'); doc.setTextColor(153,27,27);
+      doc.text('Monto de sanción: $'+acta.monto_sancion+' MXN', M, y); y += 5;
+    }
+    doc.setDrawColor(180,180,180); doc.line(M,y,W-M,y); y += 5;
+  }
+
+  // FIRMAS
+  chk(50); hdr('Firmas', 5); y += 2;
+  const sw = CW/2-5;
+  if (acta.firma_inspector_base64 && acta.firma_inspector_base64.length>100) {
+    try { doc.addImage(acta.firma_inspector_base64,'PNG',c1,y,sw,20,'','FAST'); } catch(e){}
+  }
+  doc.setDrawColor(100,100,100); doc.line(c1,y+20,c1+sw,y+20);
+  if (acta.firma_visitado_base64 && acta.firma_visitado_base64.length>100) {
+    try { doc.addImage(acta.firma_visitado_base64,'PNG',c2,y,sw,20,'','FAST'); } catch(e){}
+  }
+  doc.line(c2,y+20,c2+sw,y+20);
+  y += 22;
+  doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(60,60,60);
+  doc.text(String(acta.inspector||'Inspector'), c1, y, {maxWidth:sw});
+  doc.text(String(acta.infractor||'Visitado'), c2, y, {maxWidth:sw});
+  doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100); doc.setFontSize(7.5);
+  doc.text('Inspector Actuante', c1, y+4);
+  doc.text('Visitado / Responsable', c2, y+4);
+  y += 10;
+
+  // QR
+  try {
+    const qrSrc = await _buildQRDataURL(SERVER_URL+'/api/reports/'+(acta.report_id||'')+'/status');
+    if (qrSrc) { doc.addImage(qrSrc,'PNG',W-M-22,y-30,22,22); }
+  } catch(e){}
+
+  // FOOTER
+  const tp = doc.internal.getNumberOfPages();
+  for (let p=1;p<=tp;p++) {
+    doc.setPage(p);
+    doc.setDrawColor(180,180,180); doc.line(M,H-12,W-M,H-12);
+    doc.setFontSize(6.5); doc.setFont('helvetica','normal'); doc.setTextColor(120,120,120);
+    doc.text('IMBIO — Instituto Municipal de Biodiversidad — Pabellón de Arteaga, Ags.', W/2, H-8, {align:'center'});
+    doc.text('Pág. '+p+' de '+tp+'  ·  '+folio, W-M, H-8, {align:'right'});
+  }
+  return doc;
+}
+
+async function compartirPDFActa(acta) {
+  if (!acta) { alert('Sin datos del acta.'); return; }
+  const folio = acta.folio_acta || 'ACTA-IMBIO';
+  let pdfBlob = null;
+  try {
+    const doc = await generarPDFActa(acta);
+    if (doc) pdfBlob = doc.output('blob');
+  } catch(e) { console.warn('jsPDF error:', e); }
+
+  if (pdfBlob) {
+    _guardarPDFEnServidor(acta, pdfBlob, folio);
+    const pdfFile = new File([pdfBlob], folio+'.pdf', { type:'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+      navigator.share({ title: folio+' — IMBIO', files: [pdfFile] })
+        .catch(e => { if (e.name !== 'AbortError') { _downloadPDF(pdfBlob, folio); fallbackShare(acta, folio); } });
+    } else {
+      _downloadPDF(pdfBlob, folio);
+      setTimeout(() => fallbackShare(acta, folio), 400);
+    }
+  } else {
+    fallbackShare(acta, folio);
+  }
+}
+
+function _downloadPDF(blob, folio) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=folio+'.pdf';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+}
+
+async function _guardarPDFEnServidor(acta, blob, folio) {
+  try {
+    const ab = await blob.arrayBuffer();
+    const b64 = btoa(String.fromCharCode(...new Uint8Array(ab)));
+    await fetch(SERVER_URL+'/api/actas/'+(acta.id||0)+'/pdf', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},
+      body: JSON.stringify({pdf_base64:b64, folio}),
+      signal: AbortSignal.timeout(30000)
+    });
+  } catch(e) { console.warn('No se pudo guardar PDF en servidor:', e); }
 }
 
 function fallbackShare(acta, folio) {
-  var t = '\u{1F4CB} *' + folio + '*%0A' +
-    '\u{1F3DB} IMBIO - Pabellon de Arteaga%0A' +
-    'Inspector: ' + encodeURIComponent(acta.inspector||'-') + '%0A' +
-    'Visitado: '  + encodeURIComponent(acta.infractor||'-') + '%0A' +
-    'Domicilio: ' + encodeURIComponent(acta.domicilio||'-') + '%0A' +
-    'Fecha: ' + encodeURIComponent(new Date(acta.fecha||Date.now()).toLocaleDateString('es-MX')) +
-    (acta.nivel_riesgo ? '%0ARiesgo: '+encodeURIComponent(acta.nivel_riesgo) : '') +
-    '%0A%0ADocumento oficial IMBIO Pabellon de Arteaga';
-  window.open('https://wa.me/?text=' + t, '_blank');
+  const tipos = {inspeccion:'Inspección',circunstanciada:'Circunstanciada',apercibimiento:'Apercibimiento',sancion:'Sanción'};
+  const tl = tipos[acta.tipo_acta]||'Acta';
+  const fecha = new Date(acta.fecha||Date.now()).toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const desc = (acta.descripcion||'').substring(0,120);
+  const medida = acta.medida ? '%0A⚖️ '+encodeURIComponent(acta.medida.substring(0,80)) : '';
+  const plazo  = acta.plazo  ? '%0A⏱ Plazo: '+encodeURIComponent(acta.plazo) : '';
+  const monto  = acta.monto_sancion ? '%0A💰 $'+encodeURIComponent(acta.monto_sancion)+' MXN' : '';
+  var t = '📋 *'+folio+'*%0A🏛 IMBIO - Pabellón de Arteaga%0A📄 Tipo: *'+tl+'*%0A'+
+    '👮 Inspector: '+encodeURIComponent(acta.inspector||'-')+'%0A'+
+    '👤 Visitado: '+encodeURIComponent(acta.infractor||'-')+'%0A'+
+    '📍 Domicilio: '+encodeURIComponent(acta.domicilio||'-')+'%0A'+
+    '📅 Fecha: '+encodeURIComponent(fecha)+
+    (desc?'%0A%0A📝 '+encodeURIComponent(desc)+(acta.descripcion&&acta.descripcion.length>120?'...':''):'') +
+    medida+plazo+monto+'%0A%0A_Documento oficial IMBIO Pabellón de Arteaga_';
+  window.open('https://wa.me/?text='+t, '_blank');
 }
 
 
