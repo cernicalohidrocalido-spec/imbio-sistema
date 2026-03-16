@@ -30,8 +30,7 @@
   .login-card .logo .icon{font-size:3rem}
   .login-card .logo h1{font-size:1.4rem;color:var(--verde-oscuro);margin-top:8px}
   .login-card .logo p{color:var(--muted);font-size:.85rem}
-  .creds-hint{background:#E8F1FB;border:1px solid #B3CFF0;border-radius:8px;padding:12px;margin-bottom:20px;font-size:.8rem;color:#002A5C}
-  .creds-hint b{display:block;margin-bottom:4px}
+
   #app{display:none}
   .app-layout{display:flex;min-height:calc(100vh - 60px)}
   aside{width:220px;background:var(--verde-oscuro);padding:16px 0;flex-shrink:0}
@@ -151,10 +150,7 @@
       <h1 style="font-size:1rem;line-height:1.2">Plataforma de Monitoreo<br>Ambiental IMBIO-Pabellón</h1>
       <p>Instituto Municipal de Biodiversidad y Protección Ambiental de Pabellón de Arteaga</p>
     </div>
-    <div class="creds-hint">
-      <b>👤 Credenciales de acceso:</b>
-      admin / admin123 &nbsp;·&nbsp; operador / operador123 &nbsp;·&nbsp; inspector01 / inspector123
-    </div>
+
     <div id="login-status" style="display:none;margin-bottom:12px;padding:10px 14px;border-radius:8px;font-size:.85rem;background:#E8F1FB;border:1px solid #B3CFF0;color:#002A5C"></div>
     <div id="login-error"></div>
     <form id="login-form" onsubmit="doLogin(); return false;" action="javascript:void(0)">
@@ -164,7 +160,7 @@
       </div>
       <div class="form-group" style="margin-bottom:20px">
         <label for="l-pass">Contraseña</label>
-        <input id="l-pass" name="password" type="password" value="admin123" autocomplete="current-password">
+        <input id="l-pass" name="password" type="password" value="" autocomplete="current-password">
       </div>
       <button type="submit" id="btn-login" class="btn btn-primary" style="width:100%;justify-content:center">🔐 Iniciar Sesión</button>
     </form>
