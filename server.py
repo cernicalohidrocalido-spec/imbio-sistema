@@ -710,7 +710,7 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                 self.err('Asistente IA no configurado. Agrega ANTHROPIC_API_KEY en variables de entorno.', 503)
                 return
             payload = json.dumps({
-                'model': 'claude-haiku-4-5-20251001',
+                'model': 'claude-haiku-4-5',
                 'max_tokens': 600,
                 'messages': [{'role': 'user', 'content': prompt}]
             }).encode('utf-8')
@@ -824,7 +824,7 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                 self.err('Tipo no valido: ' + tipo, 400); return
 
             payload = json.dumps({
-                'model': 'claude-haiku-4-5-20251001',
+                'model': 'claude-haiku-4-5',
                 'max_tokens': 600,
                 'system': system,
                 'messages': [{'role': 'user', 'content': prompt}]
@@ -875,7 +875,7 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                 'chat': "Eres Matlacho, asistente ambiental de IMBIO Pabellon de Arteaga. Responde amigable y conciso: " + datos.get('mensaje',''),
             }
             prompt = prompts.get(tipo, prompts.get('chat', datos.get('descripcion','')))
-            payload = __import__('json').dumps({'model':'claude-haiku-4-5-20251001','max_tokens':500,'messages':[{'role':'user','content':prompt}]}).encode()
+            payload = __import__('json').dumps({'model':'claude-haiku-4-5','max_tokens':500,'messages':[{'role':'user','content':prompt}]}).encode()
             req = _ur.Request('https://api.anthropic.com/v1/messages', data=payload,
                 headers={'Content-Type':'application/json','x-api-key':api_key,'anthropic-version':'2023-06-01'}, method='POST')
             try:
@@ -1389,7 +1389,7 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             ak_ciu = os.environ.get('ANTHROPIC_API_KEY', '')
             if not ak_ciu:
                 self.err('IA no configurada.', 503); return
-            pl_ciu = __import__('json').dumps({'model':'claude-haiku-4-5-20251001','max_tokens':200,
+            pl_ciu = __import__('json').dumps({'model':'claude-haiku-4-5','max_tokens':200,
                 'messages':[{'role':'user','content':'Reescribe este reporte ambiental de forma mas clara, max 2 oraciones, solo el texto:\n'+desc_ciu}]}).encode()
             rq_ciu = _ur_c.Request('https://api.anthropic.com/v1/messages', data=pl_ciu,
                 headers={'Content-Type':'application/json','x-api-key':ak_ciu,'anthropic-version':'2023-06-01'}, method='POST')
