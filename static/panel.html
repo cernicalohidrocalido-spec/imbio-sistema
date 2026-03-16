@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Plataforma de Monitoreo Ambiental IMBIO-Pabellón</title>
 <link rel="stylesheet" href="/static/leaflet.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="/static/leaflet.js"></script>
 <style>
   :root{
@@ -192,22 +193,67 @@
 
       <!-- DASHBOARD -->
       <div id="page-dashboard" class="page active">
-        <h2>📊 Panel de Control</h2>
-        <div class="stats-grid">
-          <div class="stat verde"><div class="num" id="st-total">–</div><div class="lbl">Total Reportes</div></div>
-          <div class="stat naranja"><div class="num" id="st-reportado">–</div><div class="lbl">Reportados</div></div>
-          <div class="stat azul"><div class="num" id="st-asignado">–</div><div class="lbl">Asignados</div></div>
-          <div class="stat rojo"><div class="num" id="st-en_proceso">–</div><div class="lbl">En Proceso</div></div>
-          <div class="stat verde"><div class="num" id="st-cerrado">–</div><div class="lbl">Cerrados</div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+          <h2 style="margin:0">📊 Panel de Control IMBIO</h2>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary" onclick="exportarExcel()" style="font-size:.8rem;padding:6px 12px">📥 Exportar Excel</button>
+            <button class="btn btn-primary" onclick="loadDashboard()" style="font-size:.8rem;padding:6px 12px">🔄 Actualizar</button>
+          </div>
         </div>
-        <div class="card">
-          <h3 style="margin-bottom:16px;font-size:1rem;color:var(--verde-oscuro)">⚡ Últimos Reportes</h3>
+
+        <!-- KPI Cards -->
+        <div id="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px">
+          <div class="stat verde"><div class="num" id="st-total">–</div><div class="lbl">Total Reportes</div></div>
+          <div class="stat naranja"><div class="num" id="st-pendientes">–</div><div class="lbl">Pendientes</div></div>
+          <div class="stat azul"><div class="num" id="st-en_proceso">–</div><div class="lbl">En Proceso</div></div>
+          <div class="stat rojo"><div class="num" id="st-vencidos">–</div><div class="lbl">Aperc. Vencidos</div></div>
+          <div class="stat" style="background:#5b21b6;color:#fff"><div class="num" id="st-cerrados">–</div><div class="lbl">Cerrados</div></div>
+          <div class="stat" style="background:#0369a1;color:#fff"><div class="num" id="st-tiempo">–</div><div class="lbl">Días prom. resolución</div></div>
+        </div>
+
+        <!-- Charts Row 1 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+            <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">📅 Denuncias por mes (últimos 12 meses)</h4>
+            <canvas id="chart-meses" height="180"></canvas>
+          </div>
+          <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+            <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">🗂 Reportes por tipo</h4>
+            <canvas id="chart-tipos" height="180"></canvas>
+          </div>
+        </div>
+
+        <!-- Charts Row 2 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+            <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">🔄 Estado actual de reportes</h4>
+            <canvas id="chart-estados" height="180"></canvas>
+          </div>
+          <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+            <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">👷 Top inspectores por asignaciones</h4>
+            <canvas id="chart-inspectores" height="180"></canvas>
+          </div>
+        </div>
+
+        <!-- Charts Row 3 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+            <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">📍 Colonias con más denuncias</h4>
+            <canvas id="chart-colonias" height="180"></canvas>
+          </div>
+          <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+            <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">📋 Actas generadas por tipo</h4>
+            <canvas id="chart-actas" height="180"></canvas>
+          </div>
+        </div>
+
+        <!-- Recent reports -->
+        <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+          <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">🕒 Reportes Recientes</h4>
           <div id="dash-recent"></div>
         </div>
-      </div>
 
-      <!-- MAPA GENERAL -->
-      <div id="page-mapa" class="page">
+      id="page-mapa" class="page">
         <h2>🗺️ Mapa General de Reportes</h2>
         <div class="card" style="padding:16px">
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
@@ -1047,29 +1093,150 @@ async function api(path, method='GET', body=null, auth=true) {
 
 // ── DASHBOARD ─────────────────────────────────────────────────
 async function loadDashboard() {
-  const r = await api('/api/reports?limit=100');
-  if (!r.success) return;
-  const reps = r.data.reportes;
-  const counts = {reportado:0,asignado:0,en_proceso:0,cerrado:0};
-  reps.forEach(rep=>{ if(counts[rep.estado]!==undefined) counts[rep.estado]++; });
-  document.getElementById('st-total').textContent     = reps.length;
-  document.getElementById('st-reportado').textContent = counts.reportado;
-  document.getElementById('st-asignado').textContent  = counts.asignado;
-  document.getElementById('st-en_proceso').textContent= counts.en_proceso;
-  document.getElementById('st-cerrado').textContent   = counts.cerrado;
-  const recent = reps.slice(0,5);
-  const dashEl = document.getElementById('dash-recent');
-  if (!recent.length) { dashEl.innerHTML='<div class="empty">No hay reportes aún</div>'; return; }
-  dashEl.innerHTML = `<table style="width:100%;font-size:.88rem"><thead><tr>
-    <th style="padding:8px">Folio</th><th>Tipo</th><th>Colonia</th><th>Estado</th><th>Fecha</th>
-  </tr></thead><tbody>
-    ${recent.map(r=>`<tr>
-      <td><span class="folio-badge">${r.folio}</span>
-          ${r.expediente ? `<span style="font-size:.68rem;color:#166534;font-weight:700;margin-left:6px">${r.expediente}</span>` : ''}</td>
-      <td>${tipoLabel(r.tipo)}</td><td>${r.colonia}</td>
-      <td>${badge(r.estado)}</td><td>${fmtDate(r.fecha_creacion)}</td>
-    </tr>`).join('')}
-  </tbody></table>`;
+  // Load stats from new /api/stats endpoint
+  api('/api/stats').then(function(r) {
+    if (!r.success) return;
+    const s = r.data;
+
+    // KPI cards
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('st-total',     s.totales.reportes);
+    set('st-pendientes',s.totales.pendientes);
+    set('st-en_proceso',s.totales.en_proceso);
+    set('st-cerrados',  s.totales.cerrados);
+    set('st-vencidos',  s.totales.apercibimientos_vencidos);
+    set('st-tiempo',    s.totales.tiempo_resolucion_dias || '–');
+
+    // Update alertas badge
+    if (s.totales.apercibimientos_vencidos > 0) {
+      const badge = document.getElementById('alertas-badge');
+      if (badge) { badge.textContent = s.totales.apercibimientos_vencidos; badge.style.display = 'inline-block'; }
+    }
+
+    _renderCharts(s);
+  });
+
+  // Load recent reports
+  api('/api/reports?limit=5').then(function(r) {
+    if (!r.success) return;
+    const dashEl = document.getElementById('dash-recent');
+    if (!dashEl) return;
+    const reps = r.data.reportes;
+    if (!reps.length) { dashEl.innerHTML = '<div class="empty">No hay reportes recientes.</div>'; return; }
+    dashEl.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:.82rem">' +
+      '<thead><tr style="background:#f1f5f9"><th style="padding:6px 8px;text-align:left">Folio</th>' +
+      '<th style="padding:6px 8px;text-align:left">Tipo</th><th style="padding:6px 8px;text-align:left">Colonia</th>' +
+      '<th style="padding:6px 8px;text-align:left">Estado</th><th style="padding:6px 8px;text-align:left">Fecha</th></tr></thead><tbody>' +
+      reps.map((rep, i) => `<tr style="background:${i%2===0?'#fff':'#f8fafc'}">
+        <td style="padding:6px 8px;font-family:monospace;font-weight:700;color:#1a3a5c">${rep.folio}</td>
+        <td style="padding:6px 8px">${tipoLabel(rep.tipo)}</td>
+        <td style="padding:6px 8px">${rep.colonia}</td>
+        <td style="padding:6px 8px">${badge(rep.estado)}</td>
+        <td style="padding:6px 8px;color:#64748b">${fmtDate(rep.fecha_creacion)}</td>
+      </tr>`).join('') + '</tbody></table>';
+  });
+}
+
+// Charts instances (keep refs to destroy before re-rendering)
+var _charts = {};
+
+function _renderCharts(s) {
+  const COLORS = ['#1a3a5c','#2563eb','#16a34a','#dc2626','#d97706','#7c3aed','#0891b2','#be185d','#15803d','#92400e'];
+  const mkChart = (id, type, labels, data, opts) => {
+    if (_charts[id]) { _charts[id].destroy(); }
+    const ctx = document.getElementById(id);
+    if (!ctx) return;
+    _charts[id] = new Chart(ctx, {
+      type, data: { labels, datasets: [{ data,
+        backgroundColor: type==='line' ? 'rgba(26,58,92,.15)' : COLORS.slice(0,data.length),
+        borderColor: type==='line' ? '#1a3a5c' : COLORS.slice(0,data.length),
+        borderWidth: 2, fill: type==='line', tension: 0.4,
+        pointBackgroundColor: '#1a3a5c'
+      }]},
+      options: { responsive:true, plugins: { legend: { display: type!=='bar' && type!=='line', position:'right',
+        labels:{font:{size:10},boxWidth:12,padding:6} } },
+        scales: (type==='bar'||type==='line') ? {
+          y:{ beginAtZero:true, grid:{color:'rgba(0,0,0,.05)'},
+              ticks:{font:{size:9},precision:0} },
+          x:{ grid:{display:false}, ticks:{font:{size:9},maxRotation:45} }
+        } : {}, ...opts }
+    });
+  };
+
+  // 1. Por mes
+  if (s.por_mes && s.por_mes.length) {
+    const months = {
+      '01':'Ene','02':'Feb','03':'Mar','04':'Abr','05':'May','06':'Jun',
+      '07':'Jul','08':'Ago','09':'Sep','10':'Oct','11':'Nov','12':'Dic'
+    };
+    mkChart('chart-meses','line',
+      s.por_mes.map(m => { const p=m.mes.split('-'); return (months[p[1]]||p[1])+' '+p[0].slice(2); }),
+      s.por_mes.map(m=>m.total), {});
+  }
+
+  // 2. Por tipo (doughnut)
+  if (s.por_tipo) {
+    const TIPO_LABELS = {
+      denuncia_ambiental:'Denuncia Amb.',residuos_solidos:'Residuos',
+      agua_contaminada:'Agua Cont.',poda_arbol:'Poda',derribo_arbol:'Derribo',
+      perro_agresivo:'Perro Agres.',animal_calle:'Animal Calle',
+      tiradero_basura:'Tiradero',tiradero_escombro:'Escombro',
+      areas_verdes:'Áreas Verdes',ruido:'Ruido',otro:'Otro'
+    };
+    const entries = Object.entries(s.por_tipo).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    mkChart('chart-tipos','doughnut',
+      entries.map(([k])=>TIPO_LABELS[k]||k), entries.map(([,v])=>v), {});
+  }
+
+  // 3. Por estado (bar)
+  if (s.por_estado) {
+    const ESTADO_LABELS = {
+      reportado:'Reportado',asignado:'Asignado',en_inspeccion:'En Insp.',
+      en_proceso:'En Proceso',pendiente_medida:'Pend. Medida',
+      apercibido:'Apercibido',sancionado:'Sancionado',cerrado:'Cerrado'
+    };
+    const entries = Object.entries(s.por_estado).sort((a,b)=>b[1]-a[1]);
+    mkChart('chart-estados','bar',
+      entries.map(([k])=>ESTADO_LABELS[k]||k), entries.map(([,v])=>v), {});
+  }
+
+  // 4. Top inspectores (bar horizontal)
+  if (s.top_inspectores && s.top_inspectores.length) {
+    const canvas = document.getElementById('chart-inspectores');
+    if (canvas) {
+      if (_charts['chart-inspectores']) _charts['chart-inspectores'].destroy();
+      _charts['chart-inspectores'] = new Chart(canvas, {
+        type: 'bar',
+        data: {
+          labels: s.top_inspectores.map(i=>i.inspector.split(' ')[0]),
+          datasets:[{data:s.top_inspectores.map(i=>i.asignaciones),
+            backgroundColor:COLORS.slice(0,s.top_inspectores.length),
+            borderWidth:0}]
+        },
+        options:{ indexAxis:'y', responsive:true,
+          plugins:{legend:{display:false}},
+          scales:{x:{beginAtZero:true,ticks:{precision:0}},y:{grid:{display:false}}} }
+      });
+    }
+  }
+
+  // 5. Top colonias (bar)
+  if (s.por_colonia) {
+    const entries = Object.entries(s.por_colonia).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    mkChart('chart-colonias','bar',
+      entries.map(([k])=>k), entries.map(([,v])=>v), {});
+  }
+
+  // 6. Actas por tipo (doughnut)
+  if (s.por_tipo_acta) {
+    const ACTA_LABELS = {
+      inspeccion:'Inspección',circunstanciada:'Circunstanciada',
+      apercibimiento:'Apercibimiento',sancion:'Sanción'
+    };
+    const entries = Object.entries(s.por_tipo_acta);
+    mkChart('chart-actas','doughnut',
+      entries.map(([k])=>ACTA_LABELS[k]||k), entries.map(([,v])=>v), {});
+  }
 }
 
 // ── REPORTES ──────────────────────────────────────────────────
@@ -2699,6 +2866,123 @@ setTimeout(async function() {
     if (badge) { badge.textContent = r.data.total; badge.style.display = 'inline-block'; }
   }
 }, 3000);
+
+
+// ═══════════════════════════════════════════════════════════════
+// EXPORTAR A EXCEL (CSV compatible) — Fase 5
+// ═══════════════════════════════════════════════════════════════
+
+async function exportarExcel() {
+  const btn = event.target;
+  const orig = btn.textContent;
+  btn.textContent = '⏳ Generando...'; btn.disabled = true;
+
+  try {
+    // Fetch all reports (high limit)
+    const r = await api('/api/reports?limit=9999');
+    if (!r.success) { alert('Error: ' + r.message); return; }
+    const reps = r.data.reportes;
+
+    // Fetch all actas
+    const ra = await api('/api/actas?limit=9999');
+    const actas = ra.success ? ra.data.actas : [];
+    const actasByReport = {};
+    actas.forEach(a => {
+      (actasByReport[a.report_id] = actasByReport[a.report_id]||[]).push(a);
+    });
+
+    // Build CSV
+    const TIPO_LABELS = {
+      denuncia_ambiental:'Denuncia Ambiental',residuos_solidos:'Residuos Sólidos',
+      agua_contaminada:'Agua Contaminada',poda_arbol:'Poda de Árbol',
+      derribo_arbol:'Derribo de Árbol',perro_agresivo:'Perro Agresivo',
+      animal_calle:'Animal en Calle',tiradero_basura:'Tiradero de Basura',
+      tiradero_escombro:'Tiradero de Escombro',areas_verdes:'Áreas Verdes',
+      ruido:'Ruido',otro:'Otro'
+    };
+    const ESTADO_LABELS = {
+      reportado:'Reportado',asignado:'Asignado',en_inspeccion:'En Inspección',
+      en_proceso:'En Proceso',pendiente_medida:'Pendiente Medida',
+      apercibido:'Apercibido',sancionado:'Sancionado',cerrado:'Cerrado'
+    };
+
+    const esc = (v) => '"' + String(v||'').replace(/"/g,'""') + '"';
+    const fmt = (d) => d ? new Date(d).toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+
+    const headers = [
+      'Folio','Expediente','Tipo de Reporte','Estado','Colonia',
+      'Descripción','Reportante','Teléfono','Lat','Lon',
+      'Inspector','Brigada','Fecha Creación','Fecha Actualización',
+      'Actas Generadas','Tipos de Actas','Tiene PDF'
+    ];
+
+    const rows = reps.map(rep => {
+      const repActas = actasByReport[rep.id] || [];
+      return [
+        esc(rep.folio), esc(rep.expediente||''),
+        esc(TIPO_LABELS[rep.tipo]||rep.tipo), esc(ESTADO_LABELS[rep.estado]||rep.estado),
+        esc(rep.colonia), esc(rep.descripcion),
+        esc(rep.nombre_reportante||'Anónimo'), esc(rep.telefono||''),
+        esc(rep.lat||''), esc(rep.lon||''),
+        esc(rep.inspector||''), esc(rep.brigada||''),
+        esc(fmt(rep.fecha_creacion)), esc(fmt(rep.fecha_actualizacion)),
+        esc(repActas.length),
+        esc(repActas.map(a=>a.tipo_acta).join(', ')),
+        esc(repActas.some(a=>a.pdf_url)?'Sí':'No'),
+      ].join(',');
+    });
+
+    const BOM = '\uFEFF'; // UTF-8 BOM for Excel
+    const csv = BOM + [headers.map(h=>'"'+h+'"').join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const now  = new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'-');
+    a.href = url; a.download = 'IMBIO-Reportes-' + now + '.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+
+    // Also export actas sheet
+    setTimeout(() => _exportarActasCSV(actas), 800);
+
+  } catch(e) {
+    alert('Error exportando: ' + e.message);
+  } finally {
+    btn.textContent = orig; btn.disabled = false;
+  }
+}
+
+async function _exportarActasCSV(actas) {
+  const esc = (v) => '"' + String(v||'').replace(/"/g,'""') + '"';
+  const fmt = (d) => d ? new Date(d).toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+  const ACTA_LABELS = {inspeccion:'Inspección',circunstanciada:'Circunstanciada',apercibimiento:'Apercibimiento',sancion:'Sanción'};
+
+  const headers = [
+    'Folio Acta','Tipo Acta','Expediente','Inspector','No. Identificación',
+    'Infractor','Domicilio','Descripción','Medida','Plazo',
+    'Monto Sanción','Fecha Vencimiento','Verificación','Fecha'
+  ];
+  const rows = actas.map(a => [
+    esc(a.folio_acta), esc(ACTA_LABELS[a.tipo_acta]||a.tipo_acta),
+    esc(a.expediente||''), esc(a.inspector||''), esc(a.num_inspector||''),
+    esc(a.infractor||''), esc(a.domicilio||''),
+    esc((a.descripcion||'').substring(0,200)),
+    esc((a.medida||'').substring(0,200)),
+    esc(a.plazo||''), esc(a.monto_sancion||''),
+    esc(fmt(a.fecha_vencimiento)),
+    esc(a.verificacion_resultado||''), esc(fmt(a.fecha)),
+  ].join(','));
+
+  const BOM = '\uFEFF';
+  const csv = BOM + [headers.map(h=>'"'+h+'"').join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const now  = new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'-');
+  a.href = url; a.download = 'IMBIO-Actas-' + now + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+}
 
 </script>
 </body>
