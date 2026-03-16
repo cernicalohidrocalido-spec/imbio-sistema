@@ -157,7 +157,7 @@
     </div>
     <div id="login-status" style="display:none;margin-bottom:12px;padding:10px 14px;border-radius:8px;font-size:.85rem;background:#E8F1FB;border:1px solid #B3CFF0;color:#002A5C"></div>
     <div id="login-error"></div>
-    <form id="login-form" onsubmit="doLogin(); return false;" action="javascript:void(0)">
+    <form id="login-form" onsubmit="(typeof doLogin==='function'?doLogin():null); return false;" action="javascript:void(0)">
       <div class="form-group" style="margin-bottom:14px">
         <label for="l-user">Usuario</label>
         <input id="l-user" name="username" type="text" value="admin" autocomplete="username">
@@ -166,7 +166,7 @@
         <label for="l-pass">Contraseña</label>
         <input id="l-pass" name="password" type="password" value="admin123" autocomplete="current-password">
       </div>
-      <button type="submit" id="btn-login" class="btn btn-primary" style="width:100%;justify-content:center">🔐 Iniciar Sesión</button>
+      <button type="button" id="btn-login" class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()">🔐 Iniciar Sesión</button>
     </form>
   </div>
 </div>
@@ -3586,8 +3586,7 @@ function exportarEstablecimientos() {
     esc((e.permisos||[]).join(', ')), esc(e.observaciones),
     esc(e.fecha_registro ? new Date(e.fecha_registro).toLocaleDateString('es-MX') : '')
   ].join(','));
-  const csv = '﻿' + [headers.map(h=>'"'+h+'"').join(','), ...rows].join('
-');
+  const csv = '\uFEFF' + [headers.map(h=>'"'+h+'"').join(','), ...rows].join('\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = 'IMBIO-Establecimientos-' + new Date().toLocaleDateString('es-MX').replace(/\//g,'-') + '.csv';
