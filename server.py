@@ -12,6 +12,9 @@ from urllib.parse import urlparse, parse_qs
 # ── Config ─────────────────────────────────────────────────────────────────
 PORT       = int(os.environ.get("PORT", 8080))
 BASE_DIR   = pathlib.Path(__file__).parent
+
+# ── DENUE Seed path ─────────────────────────────────────────────────────────
+_DENUE_SEED_PATH = BASE_DIR / 'static' / 'denue_seed.json'
 DB_FILE    = BASE_DIR / "data" / "db.json"   # legacy (used for initial seed)
 DB_SQLITE  = pathlib.Path(os.environ.get("DB_PATH", str(BASE_DIR / "data" / "imbio.db")))
 UPLOAD_EV  = BASE_DIR / "uploads" / "evidence"
@@ -256,6 +259,34 @@ def _init_sqlite():
         conn.execute("INSERT INTO store(id,data) VALUES(1,?)", (seed,))
         conn.commit()
     conn.close()
+
+# ── DENUE Seed ──────────────────────────────────────────────────────────────
+def _load_denue_seed():
+    """Carga establecimientos del DENUE INEGI si el padrón está vacío."""
+    try:
+        if not _DENUE_SEED_PATH.exists():
+            print('[DENUE] Archivo seed no encontrado:', _DENUE_SEED_PATH)
+            return 0
+        db = read_db()
+        existing = db.get('establecimientos', [])
+        if len(existing) > 0:
+            print(f'[DENUE] Padrón ya tiene {len(existing)} registros, seed omitido.')
+            return 0
+        with open(_DENUE_SEED_PATH, 'r', encoding='utf-8') as f:
+            denue_data = json.load(f)
+        # Asegurarse de que cada registro tenga los campos mínimos
+        for i, e in enumerate(denue_data, 1):
+            e.setdefault('id', i)
+            e.setdefault('estado_cumplimiento', 'sin_verificar')
+            e.setdefault('permisos', [])
+            e.setdefault('fuente', 'DENUE_INEGI_2026')
+        db['establecimientos'] = denue_data
+        write_db(db)
+        print(f'[DENUE] ✅ Seed cargado: {len(denue_data)} establecimientos de Pabellón de Arteaga.')
+        return len(denue_data)
+    except Exception as e:
+        print(f'[DENUE] ❌ Error en seed: {e}')
+        return 0
 
 def read_db():
     with db_lock:
@@ -1295,6 +1326,48 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             return
 
         # ── Lista de expedientes (panel admin) ──────────────────────────
+        # ── DENUE Status ─────────────────────────────────────────────────
+        if path == '/api/denue/status':
+            user = self.require_auth('admin', 'operador')
+            if not user: return
+            db  = read_db()
+            est = db.get('establecimientos', [])
+            fuentes = {}
+            for e in est:
+                f = e.get('fuente', 'manual')
+                fuentes[f] = fuentes.get(f, 0) + 1
+            self.ok({
+                'total': len(est),
+                'fuentes': fuentes,
+                'seed_disponible': _DENUE_SEED_PATH.exists(),
+                'seed_size': _DENUE_SEED_PATH.stat().st_size if _DENUE_SEED_PATH.exists() else 0,
+            })
+            return
+
+        if path == '/api/denue/reimportar':
+            user = self.require_auth('admin')
+            if not user: return
+            db  = read_db()
+            if not _DENUE_SEED_PATH.exists():
+                self.err('Archivo denue_seed.json no encontrado en static/.', 404); return
+            with open(_DENUE_SEED_PATH, 'r', encoding='utf-8') as f:
+                denue_data = json.load(f)
+            # Conservar establecimientos manuales (los que no tienen fuente DENUE)
+            manuales = [e for e in db.get('establecimientos', [])
+                        if e.get('fuente', 'manual') not in ('DENUE_INEGI_2026', 'importacion_denue')]
+            # Re-indexar para evitar colisiones de ID
+            max_id = max((e.get('id', 0) for e in denue_data), default=0)
+            for i, e in enumerate(manuales, max_id + 1):
+                e['id'] = i
+            db['establecimientos'] = denue_data + manuales
+            write_db(db)
+            self.ok({
+                'importados': len(denue_data),
+                'manuales_conservados': len(manuales),
+                'total': len(db['establecimientos'])
+            }, f'DENUE reimportado: {len(denue_data)} registros + {len(manuales)} manuales.')
+            return
+
         # ── Establecimientos ────────────────────────────────────────────
         if path == '/api/establecimientos':
             user = self.require_auth('admin', 'operador')
@@ -1306,9 +1379,14 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             giro   = (qs_local.get('giro',[''])[0] or '').strip()
             estado = (qs_local.get('estado',[''])[0] or '').strip()
             q      = (qs_local.get('q',[''])[0] or '').strip().lower()
+            fuente = (qs_local.get('fuente',[''])[0] or '').strip()
             if giro:   estabs = [e for e in estabs if e.get('giro') == giro]
             if estado: estabs = [e for e in estabs if e.get('estado_cumplimiento') == estado]
-            if q:      estabs = [e for e in estabs if q in (e.get('nombre','') + e.get('domicilio','') + e.get('responsable','')).lower()]
+            if fuente == 'manual':
+                estabs = [e for e in estabs if e.get('fuente','manual') not in ('DENUE_INEGI_2026','importacion_denue')]
+            elif fuente:
+                estabs = [e for e in estabs if e.get('fuente') == fuente]
+            if q:      estabs = [e for e in estabs if q in (e.get('nombre','') + e.get('domicilio','') + e.get('responsable','') + e.get('scian_nombre','')).lower()]
             self.ok({'establecimientos': estabs, 'total': len(estabs)})
             return
 
@@ -1445,6 +1523,29 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             write_db(db)
             safe = {k:v for k,v in nuevo.items() if k != 'password'}
             self.ok({'inspector': safe}, f'Inspector {nombre} registrado.', 201)
+            return
+
+        # ── DENUE Reimportar (POST) ──────────────────────────────────────
+        if path == '/api/denue/reimportar':
+            user = self.require_auth('admin')
+            if not user: return
+            db = read_db()
+            if not _DENUE_SEED_PATH.exists():
+                self.err('Archivo denue_seed.json no encontrado.', 404); return
+            with open(_DENUE_SEED_PATH, 'r', encoding='utf-8') as f:
+                denue_data = json.load(f)
+            manuales = [e for e in db.get('establecimientos', [])
+                        if e.get('fuente', 'manual') not in ('DENUE_INEGI_2026', 'importacion_denue')]
+            max_id = max((e.get('id', 0) for e in denue_data), default=0)
+            for i, e in enumerate(manuales, max_id + 1):
+                e['id'] = i
+            db['establecimientos'] = denue_data + manuales
+            write_db(db)
+            self.ok({
+                'importados': len(denue_data),
+                'manuales_conservados': len(manuales),
+                'total': len(db['establecimientos'])
+            }, f'DENUE reimportado: {len(denue_data)} + {len(manuales)} manuales.', 201)
             return
 
         # ── Crear establecimiento ─────────────────────────────────────
@@ -2159,6 +2260,7 @@ if __name__ == '__main__':
     try:
         print("[START] Inicializando base de datos...", flush=True)
         _init_sqlite()
+        _load_denue_seed()
         print("[START] SQLite OK", flush=True)
     except Exception as e:
         print(f"[START] ERROR en _init_sqlite: {e}", flush=True)
