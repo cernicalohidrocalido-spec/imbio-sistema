@@ -196,7 +196,7 @@ def _reset_login_attempts(ip: str):
 def _init_sqlite():
     """Create SQLite DB and seed from JSON if first run."""
     DB_SQLITE.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(DB_SQLITE))
+    conn = sqlite3.connect(str(DB_SQLITE), timeout=15)
     conn.execute("""CREATE TABLE IF NOT EXISTS store (
         id   INTEGER PRIMARY KEY,
         data TEXT NOT NULL
@@ -221,7 +221,7 @@ def _init_sqlite():
 
 def read_db():
     with db_lock:
-        conn = sqlite3.connect(str(DB_SQLITE))
+        conn = sqlite3.connect(str(DB_SQLITE), timeout=15)
         row = conn.execute("SELECT data FROM store WHERE id=1").fetchone()
         conn.close()
         db = json.loads(row[0])
@@ -256,7 +256,7 @@ def read_db():
 
 def write_db(db):
     with db_lock:
-        conn = sqlite3.connect(str(DB_SQLITE))
+        conn = sqlite3.connect(str(DB_SQLITE), timeout=15)
         conn.execute("UPDATE store SET data=? WHERE id=1",
                      (json.dumps(db, ensure_ascii=False),))
         conn.commit()
@@ -1318,17 +1318,20 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             return
 
         if path == '/api/auth/login':
+            print("[AUTH] Login request received", flush=True)
             client_ip = self.client_address[0]
             if not _check_rate_limit(client_ip):
                 print(f"[AUTH] 🚫 Rate limit alcanzado para IP: {client_ip}")
                 self.err('Demasiados intentos fallidos. Espera 15 minutos antes de intentar de nuevo.', 429)
                 return
             body = self.parse_json_body()
+            print("[AUTH] Body parsed", flush=True)
             username = body.get('username', '').strip().lower()
             password = body.get('password', '')
             if not username or not password:
                 self.err('Usuario y contraseña son requeridos.', 400); return
             db   = read_db()
+            print("[AUTH] DB read OK", flush=True)
             user = next((u for u in db['users'] if u['username'] == username), None)
             if not user or user['password'] != hash_pw(password):
                 _register_login_attempt(client_ip)
