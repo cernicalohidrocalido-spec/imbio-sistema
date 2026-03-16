@@ -1428,6 +1428,8 @@ async function llamarIA(tipo, datos, campoDestino, btnEl) {
 
 
 // ══ MATLACHO WIDGET ══
+if (typeof TOKEN === 'undefined') { var TOKEN = ''; }
+if (typeof SERVER_URL === 'undefined') { var SERVER_URL = window.location.origin; }
 // ════════════════════════════════════════════════════════════════
 // MATLACHO — Asistente Ambiental Inteligente IMBIO
 // ════════════════════════════════════════════════════════════════
@@ -1621,7 +1623,7 @@ async function _matlachoCallAPI(tipo, datos) {
   var loading = _matlachoAddBubble('🐭 Matlacho está pensando...', false, true);
   try {
     var serverUrl = (typeof SERVER_URL !== 'undefined') ? SERVER_URL : window.location.origin;
-    var token = (typeof TOKEN !== 'undefined') ? TOKEN : (localStorage.getItem('imbio_token') || '');
+    var token = (typeof TOKEN !== 'undefined') ? TOKEN : (localStorage.getItem('imbio_token') || localStorage.getItem('imbio_citizen_token') || '');
     var resp = await fetch(serverUrl + '/api/ai/matlacho', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
