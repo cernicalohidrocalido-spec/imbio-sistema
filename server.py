@@ -195,8 +195,16 @@ def _reset_login_attempts(ip: str):
 
 def _init_sqlite():
     """Create SQLite DB and seed from JSON if first run."""
-    DB_SQLITE.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(DB_SQLITE), timeout=15)
+    global DB_SQLITE
+    try:
+        DB_SQLITE.parent.mkdir(parents=True, exist_ok=True)
+        conn = sqlite3.connect(str(DB_SQLITE), timeout=15)
+    except (OSError, PermissionError) as e:
+        # En entornos read-only (ej. Railway sin volumen) usar /tmp
+        fallback = pathlib.Path('/tmp/imbio.db')
+        print(f"[START] No se pudo usar {DB_SQLITE}: {e}. Usando {fallback}", flush=True)
+        DB_SQLITE = fallback
+        conn = sqlite3.connect(str(DB_SQLITE), timeout=15)
     conn.execute("""CREATE TABLE IF NOT EXISTS store (
         id   INTEGER PRIMARY KEY,
         data TEXT NOT NULL
@@ -1885,38 +1893,35 @@ class IMBIOHandler(BaseHTTPRequestHandler):
 
 # ── Arranque ────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
-    print('╔══════════════════════════════════════════════════════╗')
-    print('║       SGO-IMBIO – Sistema de Gestión Operativa       ║')
-    print('║  Instituto Municipal de Biodiversidad y Protección   ║')
-    print('║     Pabellón de Arteaga, Aguascalientes               ║')
-    print('╠══════════════════════════════════════════════════════╣')
-    print(f'║  🚀 SGO-IMBIO:    http://localhost:{PORT}                   ║')
-    print(f'║  📱 App Ciudadano:  http://localhost:{PORT}/app           ║')
-    print(f'║  👷 App Inspector:  http://localhost:{PORT}/inspector     ║')
-    print('║                                                      ║')
-    print('║  CREDENCIALES:                                       ║')
-    print('║    admin      / admin123     (Administrador)         ║')
-    print('║    operador   / operador123  (Operador)              ║')
-    print('║    inspector01/ inspector123 (Inspector)             ║')
-    print('╚══════════════════════════════════════════════════════╝')
+    import sys
+    print("[START] Iniciando SGO-IMBIO...", flush=True)
+    print(f"[START] PORT={PORT} (desde env)", flush=True)
     class QuietHandler(IMBIOHandler):
         def log_message(self, fmt, *args):
-            print(f'[HTTP] {self.address_string()} {fmt % args}')
+            print(f'[HTTP] {self.address_string()} {fmt % args}', flush=True)
         def handle_error(self, request, client_address):
-            import sys
             exc = sys.exc_info()[1]
             if isinstance(exc, (ConnectionAbortedError, ConnectionResetError, BrokenPipeError)):
                 return
             super().handle_error(request, client_address)
 
-    from http.server import ThreadingHTTPServer
-    _init_sqlite()
+    try:
+        print("[START] Inicializando base de datos...", flush=True)
+        _init_sqlite()
+        print("[START] SQLite OK", flush=True)
+    except Exception as e:
+        print(f"[START] ERROR en _init_sqlite: {e}", flush=True)
+        sys.exit(1)
+
     try:
         read_db()
-        print("[START] Base de datos lista (warmup OK)")
+        print("[START] Warmup DB OK", flush=True)
     except Exception as e:
-        print(f"[START] ⚠️  Warmup DB: {e}")
+        print(f"[START] Warmup DB: {e}", flush=True)
+
+    from http.server import ThreadingHTTPServer
     server = ThreadingHTTPServer(('0.0.0.0', PORT), QuietHandler)
     server.socket.setsockopt(__import__('socket').SOL_SOCKET, __import__('socket').SO_REUSEADDR, 1)
+    print(f"[START] Escuchando en 0.0.0.0:{PORT} — /health listo", flush=True)
     server.serve_forever()
 
