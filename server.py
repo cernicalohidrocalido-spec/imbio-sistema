@@ -16,7 +16,13 @@ DB_FILE    = BASE_DIR / "data" / "db.json"   # legacy (used for initial seed)
 DB_SQLITE  = pathlib.Path(os.environ.get("DB_PATH", str(BASE_DIR / "data" / "imbio.db")))
 UPLOAD_EV  = BASE_DIR / "uploads" / "evidence"
 UPLOAD_SIG = BASE_DIR / "uploads" / "signatures"
-JWT_SECRET = "sgo-imbio-secret-2026"
+# ── Seguridad: JWT Secret desde variable de entorno ─────────────────
+JWT_SECRET = os.environ.get("JWT_SECRET", "")
+if not JWT_SECRET:
+    import secrets as _sec
+    JWT_SECRET = _sec.token_hex(32)  # Aleatorio en memoria si no está configurado
+    print("[SEGURIDAD] ⚠️  JWT_SECRET no configurado en env. Usando clave aleatoria (sesiones no persisten entre reinicios).")
+    print("[SEGURIDAD]    Agrega JWT_SECRET=<clave-segura> en las variables de entorno de Railway.")
 
 # ── App Ciudadano (embebida) ─────────────────────────────────────────────────
 import pathlib as _pl
@@ -52,7 +58,10 @@ TIPOS_VALIDOS  = [
     "tiradero_escombro","tiradero_basura",
     "otro"
 ]
-ESTADOS_VALIDOS = ["reportado","asignado","en_proceso","cerrado"]
+ESTADOS_VALIDOS = [
+    "reportado", "asignado", "en_inspeccion", "en_proceso",
+    "pendiente_medida", "apercibido", "sancionado", "cerrado"
+]
 
 
 # ── Auto-crear directorios y DB si no existen ─────────────────────────────
@@ -141,6 +150,48 @@ print(f'[INIT] App: {len(_APP_BYTES_RAW)//1024}KB → gzip {len(_APP_BYTES)//102
 
 # ── Utilidades DB (JSON file como persistence) ─────────────────────────────
 db_lock = threading.Lock()
+
+# ── Rate limiting para login ─────────────────────────────────────────
+_login_attempts: dict = {}  # {ip: [timestamp, ...]}
+_login_lock = threading.Lock()
+_ia_calls: dict = {}  # {user_id_or_ip: [timestamp, ...]} para rate limit IA
+_ia_lock   = threading.Lock()
+IA_MAX_CALLS = 30   # llamadas por ventana
+IA_WINDOW    = 3600 # 1 hora
+
+def _check_ia_limit(key: str) -> bool:
+    import time
+    now = time.time()
+    with _ia_lock:
+        calls = [t for t in _ia_calls.get(key, []) if now - t < IA_WINDOW]
+        _ia_calls[key] = calls
+        if len(calls) >= IA_MAX_CALLS: return False
+        _ia_calls[key].append(now)
+        return True
+LOGIN_MAX_ATTEMPTS = 5
+LOGIN_WINDOW_SECS  = 900  # 15 minutos
+
+def _check_rate_limit(ip: str) -> bool:
+    """Retorna True si la IP puede intentar login, False si está bloqueada."""
+    import time
+    now = time.time()
+    with _login_lock:
+        attempts = _login_attempts.get(ip, [])
+        # Limpiar intentos fuera de la ventana
+        attempts = [t for t in attempts if now - t < LOGIN_WINDOW_SECS]
+        _login_attempts[ip] = attempts
+        return len(attempts) < LOGIN_MAX_ATTEMPTS
+
+def _register_login_attempt(ip: str):
+    """Registra un intento fallido de login."""
+    import time
+    with _login_lock:
+        _login_attempts.setdefault(ip, []).append(time.time())
+
+def _reset_login_attempts(ip: str):
+    """Limpia intentos tras login exitoso."""
+    with _login_lock:
+        _login_attempts.pop(ip, None)
 
 def _init_sqlite():
     """Create SQLite DB and seed from JSON if first run."""
@@ -268,6 +319,12 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             if 'filename=' in header_str:
                 m = re.search(r'filename="([^"]+)"', header_str)
                 fname = m.group(1) if m else f"file_{uuid.uuid4().hex[:8]}"
+                # Validar extensión y tamaño
+                ext_f = fname.rsplit('.', 1)[-1].lower() if '.' in fname else ''
+                if ext_f not in ('jpg', 'jpeg', 'png', 'gif', 'webp'):
+                    print(f'[UPLOAD] Tipo rechazado: {fname}'); continue
+                if len(body) > 10 * 1024 * 1024:
+                    print(f'[UPLOAD] Archivo grande: {fname} ({len(body)//1024}KB)'); continue
                 files.append({'filename': fname, 'data': body})
             else:
                 m = re.search(r'name="([^"]+)"', header_str)
@@ -490,6 +547,243 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             return
 
         # ── Listar inspectores ───────────────────────────────────────────
+        # ── IA: Generar texto ────────────────────────────────────────
+        if path == '/api/ai/generar-texto':
+            # Requiere autenticación para evitar abuso de la API key
+            user = self.require_auth()
+            if not user: return
+            ia_key = str(user.get('id', self.client_address[0]))
+            if not _check_ia_limit(ia_key):
+                self.err('Límite de uso de IA alcanzado. Intenta en una hora.', 429); return
+            body  = self.parse_json_body()
+            tipo  = body.get('tipo', '')
+            datos = body.get('datos', {})
+            prompts = {
+                'reporte_ciudadano': (
+                    "Eres un asistente para reportes municipales ambientales. "
+                    "Reescribe la descripcion ciudadana de forma mas clara y descriptiva, "
+                    "lenguaje sencillo, maximo 3 oraciones. Solo el texto mejorado.\n\n"
+                    "Texto original: " + datos.get('descripcion', '')
+                ),
+                'acta_circunstanciada': (
+                    "Eres redactor de actas administrativas municipales. Genera texto narrativo tecnico "
+                    "para 'Descripcion Circunstanciada de los Hechos' de acta de inspeccion ambiental. "
+                    "Lenguaje formal administrativo. Solo el texto del acta.\n\n"
+                    "Tipo de incidencia: " + datos.get('tipo_incidencia','') + "\n"
+                    "Fecha: " + datos.get('fecha','') + " Hora: " + datos.get('hora','') + "\n"
+                    "Colonia: " + datos.get('colonia','') + "\n"
+                    "Inspector: " + datos.get('inspector','') + "\n"
+                    "Hallazgo: " + datos.get('descripcion','') + "\n"
+                    "Tipo residuo/infraccion: " + datos.get('tipo_residuo','') + "\n"
+                    "Volumen/superficie: " + datos.get('volumen','') + " " + datos.get('superficie','') + "\n"
+                    "Visitado: " + datos.get('visitado','')
+                ),
+                'acta_apercibimiento': (
+                    "Eres redactor de actas administrativas municipales. Genera texto del apercibimiento formal "
+                    "en primera persona de la autoridad. Solo el texto del apercibimiento.\n\n"
+                    "Irregularidad: " + datos.get('irregularidad','') + "\n"
+                    "Tipo de infraccion: " + datos.get('tipo_infraccion','') + "\n"
+                    "Medidas correctivas: " + datos.get('medidas','') + "\n"
+                    "Plazo: " + datos.get('plazo','')
+                ),
+                'acta_sancion': (
+                    "Eres redactor de actas administrativas municipales. Genera texto de 'Motivacion de la Sancion' "
+                    "explicando conducta infractora, afectacion ambiental y justificacion. Solo el texto.\n\n"
+                    "Conducta infractora: " + datos.get('conducta','') + "\n"
+                    "Tipo de infraccion: " + datos.get('tipo_infraccion','') + "\n"
+                    "Gravedad: " + datos.get('gravedad','') + "\n"
+                    "Reincidente: " + datos.get('reincidente','no') + "\n"
+                    "Sancion propuesta: " + datos.get('sancion','')
+                ),
+            }
+            prompt = prompts.get(tipo)
+            if not prompt:
+                self.err('Tipo de formulario no valido: ' + tipo, 400); return
+            import urllib.request as _ur
+            api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+            if not api_key:
+                self.err('Asistente IA no configurado. Agrega ANTHROPIC_API_KEY en variables de entorno.', 503)
+                return
+            payload = json.dumps({
+                'model': 'claude-haiku-4-5-20251001',
+                'max_tokens': 600,
+                'messages': [{'role': 'user', 'content': prompt}]
+            }).encode('utf-8')
+            req = _ur.Request(
+                'https://api.anthropic.com/v1/messages',
+                data=payload,
+                headers={'Content-Type':'application/json','x-api-key':api_key,'anthropic-version':'2023-06-01'},
+                method='POST'
+            )
+            try:
+                with _ur.urlopen(req, timeout=30) as resp:
+                    result = json.loads(resp.read().decode('utf-8'))
+                texto = result.get('content',[{}])[0].get('text','').strip()
+                self.ok({'texto': texto}, 'Texto generado.')
+            except Exception as e:
+                self.err('Error al contactar la IA: ' + str(e), 502)
+            return
+
+        # ── IA: Matlacho — Asistente ambiental inteligente ──────────────
+        if path == '/api/ai/matlacho':
+            # Requiere autenticación para evitar abuso de la API key
+            user = self.require_auth()
+            if not user: return
+            ia_key2 = str(user.get('id', self.client_address[0]))
+            if not _check_ia_limit(ia_key2):
+                self.err('Límite de uso de Matlacho alcanzado. Intenta en una hora.', 429); return
+            body  = self.parse_json_body()
+            tipo  = body.get('tipo', '')
+            datos = body.get('datos', {})
+
+            import urllib.request as _ur
+            api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+            if not api_key:
+                self.err('Matlacho no esta configurado. Agrega ANTHROPIC_API_KEY en variables de entorno.', 503)
+                return
+
+            # System prompt — personalidad de Matlacho
+            system = (
+                "Eres Matlacho, el asistente ambiental inteligente del Instituto Municipal de Biodiversidad (IMBIO) "
+                "del municipio de Pabellon de Arteaga, Aguascalientes. "
+                "Tu personalidad es amigable, educativa e institucional. "
+                "Ayudas a ciudadanos e inspectores a redactar reportes y actas administrativas ambientales. "
+                "Siempre eres claro y conciso. Cuando sugieres texto administrativo, usas lenguaje formal. "
+                "Cuando hablas con el ciudadano, usas lenguaje simple y amigable. "
+                "Siempre recuerdas que eres un asistente y que el usuario toma la decision final."
+            )
+
+            prompts = {
+                'reporte_ciudadano': (
+                    "El ciudadano escribio esta descripcion de un problema ambiental: \n"
+                    f"'{datos.get('descripcion', '')}' \n\n"
+                    "Reescribela de forma mas clara, descriptiva y completa en maximo 2 oraciones. "
+                    "Solo devuelve el texto mejorado, sin explicaciones ni prefijos."
+                ),
+                'acta_circunstanciada': (
+                    "Genera el texto narrativo tecnico para la seccion 'Descripcion Circunstanciada de los Hechos' "
+                    "de un acta de inspeccion ambiental municipal. Usa lenguaje formal administrativo. "
+                    "Solo el texto del acta, sin encabezados.\n\n"
+                    f"Tipo de incidencia: {datos.get('tipo_incidencia','')}\n"
+                    f"Fecha y hora: {datos.get('fecha','')} {datos.get('hora','')}\n"
+                    f"Colonia: {datos.get('colonia','')}\n"
+                    f"Inspector: {datos.get('inspector','')}\n"
+                    f"Hallazgo: {datos.get('descripcion','')}\n"
+                    f"Tipo residuo/infraccion: {datos.get('tipo_residuo','')}\n"
+                    f"Volumen/superficie: {datos.get('volumen','')} {datos.get('superficie','')}\n"
+                    f"Visitado: {datos.get('visitado','')}"
+                ),
+                'acta_apercibimiento': (
+                    "Genera el texto del apercibimiento formal en primera persona de la autoridad municipal. "
+                    "Usa lenguaje administrativo preciso. Solo el texto del apercibimiento.\n\n"
+                    f"Irregularidad: {datos.get('irregularidad','')}\n"
+                    f"Tipo infraccion: {datos.get('tipo_infraccion','')}\n"
+                    f"Medidas correctivas: {datos.get('medidas','')}\n"
+                    f"Plazo: {datos.get('plazo','')}"
+                ),
+                'acta_sancion': (
+                    "Genera el texto de la Motivacion de la Sancion que explica la conducta infractora, "
+                    "afectacion ambiental y justificacion de la sancion. Lenguaje administrativo formal. "
+                    "Solo el texto, sin encabezados.\n\n"
+                    f"Conducta infractora: {datos.get('conducta','')}\n"
+                    f"Tipo infraccion: {datos.get('tipo_infraccion','')}\n"
+                    f"Gravedad: {datos.get('gravedad','')}\n"
+                    f"Reincidente: {datos.get('reincidente','no')}\n"
+                    f"Sancion propuesta: {datos.get('sancion','')}"
+                ),
+                'sugerencia_medida': (
+                    "Analiza los datos de esta inspeccion ambiental y sugiere si procede emitir un "
+                    "Acta de Apercibimiento o un Acta de Sancion. Explica brevemente el razonamiento "
+                    "en 2-3 oraciones. Empieza con 'Matlacho sugiere:'\n\n"
+                    f"Tipo de infraccion: {datos.get('tipo_infraccion','')}\n"
+                    f"Tipo de residuo: {datos.get('tipo_residuo','')}\n"
+                    f"Volumen/cantidad: {datos.get('volumen','')}\n"
+                    f"Superficie afectada: {datos.get('superficie','')} m2\n"
+                    f"Severidad: {datos.get('severidad','')}\n"
+                    f"Tiempo de afectacion: {datos.get('tiempo','')}\n"
+                    f"Responsable identificado: {datos.get('responsable','no')}\n"
+                    f"Reincidente: {datos.get('reincidente','no')}\n"
+                    f"Medidas adoptadas: {datos.get('medidas_adoptadas','')}"
+                ),
+                'chat': (
+                    f"El usuario dice: {datos.get('mensaje','')}\n\n"
+                    "Responde de forma amigable y concisa como Matlacho. "
+                    "Si la pregunta es sobre procedimientos ambientales municipales, da orientacion. "
+                    "Si es sobre como usar la plataforma IMBIO, orienta al usuario. "
+                    "Maximo 3 oraciones."
+                ),
+            }
+
+            prompt = prompts.get(tipo)
+            if not prompt:
+                self.err('Tipo no valido: ' + tipo, 400); return
+
+            payload = json.dumps({
+                'model': 'claude-haiku-4-5-20251001',
+                'max_tokens': 600,
+                'system': system,
+                'messages': [{'role': 'user', 'content': prompt}]
+            }).encode('utf-8')
+            req = _ur.Request(
+                'https://api.anthropic.com/v1/messages',
+                data=payload,
+                headers={'Content-Type':'application/json','x-api-key':api_key,'anthropic-version':'2023-06-01'},
+                method='POST'
+            )
+            try:
+                with _ur.urlopen(req, timeout=30) as resp:
+                    result = json.loads(resp.read().decode('utf-8'))
+                texto = result.get('content',[{}])[0].get('text','').strip()
+                # Detect medida sugerida
+                sugerencia = None
+                t_lower = texto.lower()
+                if 'apercibimiento' in t_lower and 'sancion' not in t_lower:
+                    sugerencia = 'apercibimiento'
+                elif 'sancion' in t_lower or 'sanción' in t_lower:
+                    sugerencia = 'sancion'
+                self.ok({'texto': texto, 'sugerencia_medida': sugerencia}, 'Matlacho responde.')
+            except Exception as e:
+                self.err('Error al contactar a Matlacho: ' + str(e), 502)
+            return
+
+        
+        # ── IA: Generar texto (Matlacho) ─────────────────────────────────
+        if path in ('/api/ai/generar-texto', '/api/ai/matlacho'):
+            user_c = self.require_auth()
+            if not user_c: return
+            ia_key3 = str(user_c.get('id', self.client_address[0]))
+            if not _check_ia_limit(ia_key3):
+                self.err('Límite de uso de IA alcanzado. Intenta en una hora.', 429); return
+            body  = self.parse_json_body()
+            tipo  = body.get('tipo', '')
+            datos = body.get('datos', {})
+            import urllib.request as _ur
+            api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+            if not api_key:
+                self.err('ANTHROPIC_API_KEY no configurada.', 503); return
+            prompts = {
+                'reporte_ciudadano': "Reescribe esta descripcion de reporte ambiental de forma mas clara y tecnica, maximo 2 oraciones, solo el texto:\n" + datos.get('descripcion',''),
+                'acta_circunstanciada': "Genera texto narrativo tecnico para acta de inspeccion ambiental. Solo el texto.\nTipo: " + datos.get('tipo_incidencia','') + "\nFecha: " + datos.get('fecha','') + " " + datos.get('hora','') + "\nColonia: " + datos.get('colonia','') + "\nInspector: " + datos.get('inspector','') + "\nHallazgo: " + datos.get('descripcion','') + "\nResiduo: " + datos.get('tipo_residuo','') + "\nVisitado: " + datos.get('visitado',''),
+                'acta_apercibimiento': "Genera texto de apercibimiento formal administrativo. Solo el texto.\nIrregularidad: " + datos.get('irregularidad','') + "\nMedidas: " + datos.get('medidas','') + "\nPlazo: " + datos.get('plazo',''),
+                'acta_sancion': "Genera motivacion de sancion administrativa ambiental. Solo el texto.\nConducta: " + datos.get('conducta','') + "\nGravedad: " + datos.get('gravedad','') + "\nReincidente: " + datos.get('reincidente','no'),
+                'sugerencia_medida': "Analiza esta inspeccion ambiental y sugiere si procede Apercibimiento o Sancion. Empieza con 'Matlacho sugiere:'. 2-3 oraciones.\nTipo infraccion: " + datos.get('tipo_infraccion','') + "\nSeveridad: " + datos.get('severidad','') + "\nReincidente: " + datos.get('reincidente','no'),
+                'chat': "Eres Matlacho, asistente ambiental de IMBIO Pabellon de Arteaga. Responde amigable y conciso: " + datos.get('mensaje',''),
+            }
+            prompt = prompts.get(tipo, prompts.get('chat', datos.get('descripcion','')))
+            payload = __import__('json').dumps({'model':'claude-haiku-4-5-20251001','max_tokens':500,'messages':[{'role':'user','content':prompt}]}).encode()
+            req = _ur.Request('https://api.anthropic.com/v1/messages', data=payload,
+                headers={'Content-Type':'application/json','x-api-key':api_key,'anthropic-version':'2023-06-01'}, method='POST')
+            try:
+                with _ur.urlopen(req, timeout=30) as resp:
+                    result = __import__('json').loads(resp.read().decode())
+                texto = result.get('content',[{}])[0].get('text','').strip()
+                t_low = texto.lower()
+                sug = 'apercibimiento' if 'apercibimiento' in t_low and 'sancion' not in t_low else ('sancion' if 'sancion' in t_low or 'sanción' in t_low else None)
+                self.ok({'texto': texto, 'sugerencia_medida': sug}, 'OK')
+            except Exception as e:
+                self.err('Error IA: ' + str(e), 502)
+            return
+
         if path == '/api/inspectores':
             user = self.require_auth('admin', 'operador')
             if not user: return
@@ -691,6 +985,31 @@ class IMBIOHandler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path.rstrip('/')
 
         # ── CORS preflight ─────────────────────────────────────
+        # ── IA ciudadano: público con rate limit por IP ─────────────────
+        if path == '/api/ai/ciudadano':
+            ip_ciu = self.client_address[0]
+            if not _check_ia_limit('ciu_' + ip_ciu):
+                self.err('Limite de uso de IA alcanzado. Intenta en una hora.', 429); return
+            body_ciu = self.parse_json_body()
+            desc_ciu = (body_ciu.get('descripcion', '') or '').strip()[:500]
+            if not desc_ciu:
+                self.err('Descripcion requerida.', 400); return
+            import urllib.request as _ur_c
+            ak_ciu = os.environ.get('ANTHROPIC_API_KEY', '')
+            if not ak_ciu:
+                self.err('IA no configurada.', 503); return
+            pl_ciu = __import__('json').dumps({'model':'claude-haiku-4-5-20251001','max_tokens':200,
+                'messages':[{'role':'user','content':'Reescribe este reporte ambiental de forma mas clara, max 2 oraciones, solo el texto:\n'+desc_ciu}]}).encode()
+            rq_ciu = _ur_c.Request('https://api.anthropic.com/v1/messages', data=pl_ciu,
+                headers={'Content-Type':'application/json','x-api-key':ak_ciu,'anthropic-version':'2023-06-01'}, method='POST')
+            try:
+                with _ur_c.urlopen(rq_ciu, timeout=30) as rs_ciu:
+                    texto_ciu = __import__('json').loads(rs_ciu.read().decode()).get('content',[{}])[0].get('text','').strip()
+                self.ok({'texto': texto_ciu}, 'OK')
+            except Exception as ec:
+                self.err('Error IA: ' + str(ec), 502)
+            return
+
         # ── Login ──────────────────────────────────────────────
         # ── Crear inspector ─────────────────────────────────────────────
         if path == '/api/inspectores':
@@ -717,6 +1036,11 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             return
 
         if path == '/api/auth/login':
+            client_ip = self.client_address[0]
+            if not _check_rate_limit(client_ip):
+                print(f"[AUTH] 🚫 Rate limit alcanzado para IP: {client_ip}")
+                self.err('Demasiados intentos fallidos. Espera 15 minutos antes de intentar de nuevo.', 429)
+                return
             body = self.parse_json_body()
             username = body.get('username', '').strip().lower()
             password = body.get('password', '')
@@ -725,207 +1049,16 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             db   = read_db()
             user = next((u for u in db['users'] if u['username'] == username), None)
             if not user or user['password'] != hash_pw(password):
-                print(f"[AUTH] ⚠️  Login fallido: {username}")
+                _register_login_attempt(client_ip)
+                print(f"[AUTH] ⚠️  Login fallido: {username} (IP: {client_ip})")
                 self.err('Credenciales inválidas.', 401); return
             if not user.get('activo', True):
                 self.err('Cuenta desactivada.', 403); return
+            _reset_login_attempts(client_ip)  # Limpiar intentos al login exitoso
             payload = {'id': user['id'], 'username': user['username'], 'nombre': user['nombre'], 'rol': user['rol']}
             token   = jwt_sign(payload)
-            print(f"[AUTH] ✅ Login: {username} | rol: {user['rol']}")
+            print(f"[AUTH] ✅ Login: {username} | rol: {user['rol']} | IP: {client_ip}")
             self.ok({'token': token, 'usuario': payload, 'expires_in': '8h'}, 'Sesión iniciada.')
-            return
-
-        # ── IA: Generar texto (botón "Matlacho mejora la descripción") ───
-        if path == '/api/ai/generar-texto':
-            body  = self.parse_json_body()
-            tipo  = body.get('tipo', '')
-            # App Ciudadano usa reporte_ciudadano sin login; el resto exige auth
-            if tipo != 'reporte_ciudadano':
-                user = self.require_auth()
-                if not user: return
-            datos = body.get('datos', {})
-            prompts = {
-                'reporte_ciudadano': (
-                    "Eres un asistente para reportes municipales ambientales. "
-                    "Reescribe la descripcion ciudadana de forma mas clara y descriptiva, "
-                    "lenguaje sencillo, maximo 3 oraciones. Solo el texto mejorado.\n\n"
-                    "Texto original: " + datos.get('descripcion', '')
-                ),
-                'acta_circunstanciada': (
-                    "Eres redactor de actas administrativas municipales. Genera texto narrativo tecnico "
-                    "para 'Descripcion Circunstanciada de los Hechos' de acta de inspeccion ambiental. "
-                    "Lenguaje formal administrativo. Solo el texto del acta.\n\n"
-                    "Tipo de incidencia: " + datos.get('tipo_incidencia','') + "\n"
-                    "Fecha: " + datos.get('fecha','') + " Hora: " + datos.get('hora','') + "\n"
-                    "Colonia: " + datos.get('colonia','') + "\n"
-                    "Inspector: " + datos.get('inspector','') + "\n"
-                    "Hallazgo: " + datos.get('descripcion','') + "\n"
-                    "Tipo residuo/infraccion: " + datos.get('tipo_residuo','') + "\n"
-                    "Volumen/superficie: " + datos.get('volumen','') + " " + datos.get('superficie','') + "\n"
-                    "Visitado: " + datos.get('visitado','')
-                ),
-                'acta_apercibimiento': (
-                    "Eres redactor de actas administrativas municipales. Genera texto del apercibimiento formal "
-                    "en primera persona de la autoridad. Solo el texto del apercibimiento.\n\n"
-                    "Irregularidad: " + datos.get('irregularidad','') + "\n"
-                    "Tipo de infraccion: " + datos.get('tipo_infraccion','') + "\n"
-                    "Medidas correctivas: " + datos.get('medidas','') + "\n"
-                    "Plazo: " + datos.get('plazo','')
-                ),
-                'acta_sancion': (
-                    "Eres redactor de actas administrativas municipales. Genera texto de 'Motivacion de la Sancion' "
-                    "explicando conducta infractora, afectacion ambiental y justificacion. Solo el texto.\n\n"
-                    "Conducta infractora: " + datos.get('conducta','') + "\n"
-                    "Tipo de infraccion: " + datos.get('tipo_infraccion','') + "\n"
-                    "Gravedad: " + datos.get('gravedad','') + "\n"
-                    "Reincidente: " + datos.get('reincidente','no') + "\n"
-                    "Sancion propuesta: " + datos.get('sancion','')
-                ),
-            }
-            prompt = prompts.get(tipo)
-            if not prompt:
-                self.err('Tipo de formulario no valido: ' + tipo, 400); return
-            import urllib.request as _ur
-            api_key = os.environ.get('ANTHROPIC_API_KEY', '')
-            if not api_key:
-                self.err('Asistente IA no configurado. Agrega ANTHROPIC_API_KEY en variables de entorno.', 503)
-                return
-            payload = json.dumps({
-                'model': 'claude-haiku-4-5-20251001',
-                'max_tokens': 600,
-                'messages': [{'role': 'user', 'content': prompt}]
-            }).encode('utf-8')
-            req = _ur.Request(
-                'https://api.anthropic.com/v1/messages',
-                data=payload,
-                headers={'Content-Type':'application/json','x-api-key':api_key,'anthropic-version':'2023-06-01'},
-                method='POST'
-            )
-            try:
-                with _ur.urlopen(req, timeout=30) as resp:
-                    result = json.loads(resp.read().decode('utf-8'))
-                texto = result.get('content',[{}])[0].get('text','').strip()
-                self.ok({'texto': texto}, 'Texto generado.')
-            except Exception as e:
-                self.err('Error al contactar la IA: ' + str(e), 502)
-            return
-
-        # ── IA: Matlacho — Asistente ambiental inteligente ──────────────
-        if path == '/api/ai/matlacho':
-            body  = self.parse_json_body()
-            tipo  = body.get('tipo', '')
-            datos = body.get('datos', {})
-            # App Ciudadano usa reporte_ciudadano y chat sin login; el resto exige auth
-            if tipo not in ('reporte_ciudadano', 'chat'):
-                user = self.require_auth()
-                if not user: return
-
-            import urllib.request as _ur
-            api_key = os.environ.get('ANTHROPIC_API_KEY', '')
-            if not api_key:
-                self.err('Matlacho no esta configurado. Agrega ANTHROPIC_API_KEY en variables de entorno.', 503)
-                return
-
-            system = (
-                "Eres Matlacho, el asistente ambiental inteligente del Instituto Municipal de Biodiversidad (IMBIO) "
-                "del municipio de Pabellon de Arteaga, Aguascalientes. "
-                "Tu personalidad es amigable, educativa e institucional. "
-                "Ayudas a ciudadanos e inspectores a redactar reportes y actas administrativas ambientales. "
-                "Siempre eres claro y conciso. Cuando sugieres texto administrativo, usas lenguaje formal. "
-                "Cuando hablas con el ciudadano, usas lenguaje simple y amigable. "
-                "Siempre recuerdas que eres un asistente y que el usuario toma la decision final."
-            )
-
-            prompts = {
-                'reporte_ciudadano': (
-                    "El ciudadano escribio esta descripcion de un problema ambiental: \n"
-                    f"'{datos.get('descripcion', '')}' \n\n"
-                    "Reescribela de forma mas clara, descriptiva y completa en maximo 2 oraciones. "
-                    "Solo devuelve el texto mejorado, sin explicaciones ni prefijos."
-                ),
-                'acta_circunstanciada': (
-                    "Genera el texto narrativo tecnico para la seccion 'Descripcion Circunstanciada de los Hechos' "
-                    "de un acta de inspeccion ambiental municipal. Usa lenguaje formal administrativo. "
-                    "Solo el texto del acta, sin encabezados.\n\n"
-                    f"Tipo de incidencia: {datos.get('tipo_incidencia','')}\n"
-                    f"Fecha y hora: {datos.get('fecha','')} {datos.get('hora','')}\n"
-                    f"Colonia: {datos.get('colonia','')}\n"
-                    f"Inspector: {datos.get('inspector','')}\n"
-                    f"Hallazgo: {datos.get('descripcion','')}\n"
-                    f"Tipo residuo/infraccion: {datos.get('tipo_residuo','')}\n"
-                    f"Volumen/superficie: {datos.get('volumen','')} {datos.get('superficie','')}\n"
-                    f"Visitado: {datos.get('visitado','')}"
-                ),
-                'acta_apercibimiento': (
-                    "Genera el texto del apercibimiento formal en primera persona de la autoridad municipal. "
-                    "Usa lenguaje administrativo preciso. Solo el texto del apercibimiento.\n\n"
-                    f"Irregularidad: {datos.get('irregularidad','')}\n"
-                    f"Tipo infraccion: {datos.get('tipo_infraccion','')}\n"
-                    f"Medidas correctivas: {datos.get('medidas','')}\n"
-                    f"Plazo: {datos.get('plazo','')}"
-                ),
-                'acta_sancion': (
-                    "Genera el texto de la Motivacion de la Sancion que explica la conducta infractora, "
-                    "afectacion ambiental y justificacion de la sancion. Lenguaje administrativo formal. "
-                    "Solo el texto, sin encabezados.\n\n"
-                    f"Conducta infractora: {datos.get('conducta','')}\n"
-                    f"Tipo infraccion: {datos.get('tipo_infraccion','')}\n"
-                    f"Gravedad: {datos.get('gravedad','')}\n"
-                    f"Reincidente: {datos.get('reincidente','no')}\n"
-                    f"Sancion propuesta: {datos.get('sancion','')}"
-                ),
-                'sugerencia_medida': (
-                    "Analiza los datos de esta inspeccion ambiental y sugiere si procede emitir un "
-                    "Acta de Apercibimiento o un Acta de Sancion. Explica brevemente el razonamiento "
-                    "en 2-3 oraciones. Empieza con 'Matlacho sugiere:'\n\n"
-                    f"Tipo de infraccion: {datos.get('tipo_infraccion','')}\n"
-                    f"Tipo de residuo: {datos.get('tipo_residuo','')}\n"
-                    f"Volumen/cantidad: {datos.get('volumen','')}\n"
-                    f"Superficie afectada: {datos.get('superficie','')} m2\n"
-                    f"Severidad: {datos.get('severidad','')}\n"
-                    f"Tiempo de afectacion: {datos.get('tiempo','')}\n"
-                    f"Responsable identificado: {datos.get('responsable','no')}\n"
-                    f"Reincidente: {datos.get('reincidente','no')}\n"
-                    f"Medidas adoptadas: {datos.get('medidas_adoptadas','')}"
-                ),
-                'chat': (
-                    f"El usuario dice: {datos.get('mensaje','')}\n\n"
-                    "Responde de forma amigable y concisa como Matlacho. "
-                    "Si la pregunta es sobre procedimientos ambientales municipales, da orientacion. "
-                    "Si es sobre como usar la plataforma IMBIO, orienta al usuario. "
-                    "Maximo 3 oraciones."
-                ),
-            }
-
-            prompt = prompts.get(tipo)
-            if not prompt:
-                self.err('Tipo no valido: ' + tipo, 400); return
-
-            payload = json.dumps({
-                'model': 'claude-haiku-4-5-20251001',
-                'max_tokens': 600,
-                'system': system,
-                'messages': [{'role': 'user', 'content': prompt}]
-            }).encode('utf-8')
-            req = _ur.Request(
-                'https://api.anthropic.com/v1/messages',
-                data=payload,
-                headers={'Content-Type':'application/json','x-api-key':api_key,'anthropic-version':'2023-06-01'},
-                method='POST'
-            )
-            try:
-                with _ur.urlopen(req, timeout=30) as resp:
-                    result = json.loads(resp.read().decode('utf-8'))
-                texto = result.get('content',[{}])[0].get('text','').strip()
-                sugerencia = None
-                t_lower = texto.lower()
-                if 'apercibimiento' in t_lower and 'sancion' not in t_lower:
-                    sugerencia = 'apercibimiento'
-                elif 'sancion' in t_lower or 'sanción' in t_lower:
-                    sugerencia = 'sancion'
-                self.ok({'texto': texto, 'sugerencia_medida': sugerencia}, 'Matlacho responde.')
-            except Exception as e:
-                self.err('Error al contactar a Matlacho: ' + str(e), 502)
             return
 
         # ── Create report ──────────────────────────────────────
