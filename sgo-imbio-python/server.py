@@ -679,7 +679,39 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                 self.err('Error al contactar a Matlacho: ' + str(e), 502)
             return
 
-        if path == '/api/inspectores':
+        
+        # ── IA: Generar texto (Matlacho) ─────────────────────────────────
+        if path in ('/api/ai/generar-texto', '/api/ai/matlacho'):
+            body  = self.parse_json_body()
+            tipo  = body.get('tipo', '')
+            datos = body.get('datos', {})
+            import urllib.request as _ur
+            api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+            if not api_key:
+                self.err('ANTHROPIC_API_KEY no configurada.', 503); return
+            prompts = {
+                'reporte_ciudadano': "Reescribe esta descripcion de reporte ambiental de forma mas clara y tecnica, maximo 2 oraciones, solo el texto:\n" + datos.get('descripcion',''),
+                'acta_circunstanciada': "Genera texto narrativo tecnico para acta de inspeccion ambiental. Solo el texto.\nTipo: " + datos.get('tipo_incidencia','') + "\nFecha: " + datos.get('fecha','') + " " + datos.get('hora','') + "\nColonia: " + datos.get('colonia','') + "\nInspector: " + datos.get('inspector','') + "\nHallazgo: " + datos.get('descripcion','') + "\nResiduo: " + datos.get('tipo_residuo','') + "\nVisitado: " + datos.get('visitado',''),
+                'acta_apercibimiento': "Genera texto de apercibimiento formal administrativo. Solo el texto.\nIrregularidad: " + datos.get('irregularidad','') + "\nMedidas: " + datos.get('medidas','') + "\nPlazo: " + datos.get('plazo',''),
+                'acta_sancion': "Genera motivacion de sancion administrativa ambiental. Solo el texto.\nConducta: " + datos.get('conducta','') + "\nGravedad: " + datos.get('gravedad','') + "\nReincidente: " + datos.get('reincidente','no'),
+                'sugerencia_medida': "Analiza esta inspeccion ambiental y sugiere si procede Apercibimiento o Sancion. Empieza con 'Matlacho sugiere:'. 2-3 oraciones.\nTipo infraccion: " + datos.get('tipo_infraccion','') + "\nSeveridad: " + datos.get('severidad','') + "\nReincidente: " + datos.get('reincidente','no'),
+                'chat': "Eres Matlacho, asistente ambiental de IMBIO Pabellon de Arteaga. Responde amigable y conciso: " + datos.get('mensaje',''),
+            }
+            prompt = prompts.get(tipo, prompts.get('chat', datos.get('descripcion','')))
+            payload = __import__('json').dumps({'model':'claude-haiku-4-5-20251001','max_tokens':500,'messages':[{'role':'user','content':prompt}]}).encode()
+            req = _ur.Request('https://api.anthropic.com/v1/messages', data=payload,
+                headers={'Content-Type':'application/json','x-api-key':api_key,'anthropic-version':'2023-06-01'}, method='POST')
+            try:
+                with _ur.urlopen(req, timeout=30) as resp:
+                    result = __import__('json').loads(resp.read().decode())
+                texto = result.get('content',[{}])[0].get('text','').strip()
+                t_low = texto.lower()
+                sug = 'apercibimiento' if 'apercibimiento' in t_low and 'sancion' not in t_low else ('sancion' if 'sancion' in t_low or 'sanción' in t_low else None)
+                self.ok({'texto': texto, 'sugerencia_medida': sug}, 'OK')
+            except Exception as e:
+                self.err('Error IA: ' + str(e), 502)
+            return
+if path == '/api/inspectores':
             user = self.require_auth('admin', 'operador')
             if not user: return
             db = read_db()
