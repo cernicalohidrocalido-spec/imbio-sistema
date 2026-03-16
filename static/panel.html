@@ -1076,7 +1076,11 @@ async function doLogin() {
       signal: AbortSignal.timeout(55000)
     });
     var r = null;
-    try { r = await res.json(); } catch (_) { r = { success: false, message: 'Respuesta inválida del servidor' }; }
+    if (res.status === 502 || res.status === 503 || res.status === 504) {
+      r = { success: false, message: 'Error ' + res.status + ': el servidor no respondió a tiempo (Railway). Revisa en Railway → Deployments → View Logs si el proceso está activo o si hay errores al arrancar.' };
+    } else {
+      try { r = await res.json(); } catch (_) { r = { success: false, message: 'Respuesta inválida del servidor' }; }
+    }
     if (!r || !r.success) {
       errEl.innerHTML = alert_html('error', (r && r.message) || 'Credenciales incorrectas.');
       if (btn) { btn.disabled = false; btn.innerHTML = btnText; }

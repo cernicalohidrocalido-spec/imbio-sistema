@@ -1911,6 +1911,11 @@ if __name__ == '__main__':
 
     from http.server import ThreadingHTTPServer
     _init_sqlite()
+    try:
+        read_db()
+        print("[START] Base de datos lista (warmup OK)")
+    except Exception as e:
+        print(f"[START] ⚠️  Warmup DB: {e}")
     server = ThreadingHTTPServer(('0.0.0.0', PORT), QuietHandler)
     server.socket.setsockopt(__import__('socket').SOL_SOCKET, __import__('socket').SO_REUSEADDR, 1)
     server.serve_forever()
