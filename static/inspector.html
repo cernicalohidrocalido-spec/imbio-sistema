@@ -336,6 +336,49 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
 .acerca-info label{display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 .acerca-info span{display:block;font-size:.85rem;color:var(--texto);font-weight:600;margin-top:2px;line-height:1.4}
 
+/* ── BREADCRUMB DE ESTADO ── */
+.estado-stepper{display:flex;align-items:center;gap:0;overflow-x:auto;padding:10px 0 6px;scrollbar-width:none;margin-bottom:12px}
+.estado-stepper::-webkit-scrollbar{display:none}
+.step{display:flex;align-items:center;gap:0;flex-shrink:0}
+.step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;border:2px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:rgba(255,255,255,.4);flex-shrink:0}
+.step-dot.done{background:rgba(74,222,128,.2);border-color:#4ade80;color:#4ade80}
+.step-dot.active{background:var(--acento);border-color:var(--acento);color:#0d1f35;box-shadow:0 0 0 3px rgba(250,204,21,.25)}
+.step-dot.warn{background:rgba(251,191,36,.2);border-color:#fbbf24;color:#fbbf24}
+.step-line{width:24px;height:2px;background:rgba(255,255,255,.1);flex-shrink:0}
+.step-line.done{background:rgba(74,222,128,.4)}
+.step-label{font-size:.6rem;color:rgba(255,255,255,.5);text-align:center;margin-top:3px;white-space:nowrap;max-width:52px}
+.step-label.active{color:var(--acento);font-weight:700}
+.step-label.done{color:#4ade80}
+.step-wrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.next-action-bar{background:linear-gradient(135deg,rgba(250,204,21,.12),rgba(250,204,21,.06));border:1px solid rgba(250,204,21,.25);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.next-action-bar .nab-icon{font-size:1.3rem;flex-shrink:0}
+.next-action-bar .nab-txt{flex:1}
+.next-action-bar .nab-title{font-size:.78rem;font-weight:700;color:var(--acento)}
+.next-action-bar .nab-sub{font-size:.72rem;color:rgba(255,255,255,.5);margin-top:1px}
+
+/* ── AUTOSAVE ── */
+.autosave-bar{position:fixed;bottom:56px;left:0;right:0;background:rgba(74,222,128,.15);border-top:1px solid rgba(74,222,128,.3);padding:5px 14px;display:flex;align-items:center;gap:8px;font-size:.72rem;color:#4ade80;z-index:500;transform:translateY(100%);transition:transform .3s}
+.autosave-bar.show{transform:translateY(0)}
+.autosave-bar.error{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3);color:#f87171}
+
+/* ── URGENCIA EN TARJETAS ── */
+.urgencia-alta{border-left-color:#dc2626 !important}
+.urgencia-media{border-left-color:#f59e0b !important}
+.urgencia-baja{border-left-color:#6b7280 !important}
+.urgencia-badge{display:inline-block;padding:1px 6px;border-radius:4px;font-size:.65rem;font-weight:800;text-transform:uppercase}
+.urg-alta{background:rgba(220,38,38,.2);color:#f87171}
+.urg-media{background:rgba(245,158,11,.2);color:#fbbf24}
+.urg-baja{background:rgba(107,114,128,.2);color:#9ca3af}
+
+/* ── MARCA AUTOGENERADO ── */
+.autogenerado-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.4);border-radius:4px;padding:3px 8px;font-size:.7rem;font-weight:700;color:#fbbf24;margin-bottom:8px}
+
+/* ── AUDIT LOG ── */
+.audit-entry{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:.78rem}
+.audit-time{color:rgba(255,255,255,.4);white-space:nowrap;font-size:.7rem}
+.audit-actor{color:var(--acento);font-weight:700}
+.audit-action{color:rgba(255,255,255,.7)}
+
 /* PDF y descarga */
 .btn-pdf{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;background:#dc2626;color:#fff;border:none;border-radius:9px;font-size:.82rem;font-weight:800;cursor:pointer;width:100%;margin-top:6px}
 .btn-pdf:active{transform:scale(.97)}
@@ -429,6 +472,12 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
       <span class="ic">ℹ️</span><span>Acerca</span>
     </div>
   </div>
+  <!-- AUTOSAVE BAR -->
+  <div id="autosave-bar" class="autosave-bar">
+    <span id="autosave-icon">💾</span>
+    <span id="autosave-msg">Borrador guardado</span>
+  </div>
+
   <div class="icontent">
 
     <!-- ASIGNADOS -->
@@ -701,11 +750,24 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
   <div style="flex:1;overflow-y:auto;padding:14px" id="acta-form-body">
 
     <input type="hidden" id="acta-report-id">
-    <div id="acta-form-dynamic"></div><div id="acta-alert"></div>
-    <button class="ibtn ibtn-acento" onclick="enviarActa()" style="margin-bottom:8px">
-      📄 Generar y Enviar Acta
-    </button>
-    <button class="ibtn ibtn-ghost" onclick="closeNuevaActa()">Cancelar</button>
+    <!-- Checklist dinámico por tipo de caso -->
+    <div id="checklist-dinamico-wrap"></div>
+    <div id="acta-form-dynamic"></div>
+    <div id="acta-alert"></div>
+
+    <!-- Acciones del acta -->
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+      <button onclick="_matlachoBorradorDesdeActa()" style="width:100%;padding:11px;background:rgba(250,204,21,.12);color:var(--acento);border:1px solid rgba(250,204,21,.3);border-radius:9px;font-weight:700;font-size:.82rem;cursor:pointer">
+        🐭 Generar borrador con Matlacho
+      </button>
+      <button onclick="verAuditLog(document.getElementById('acta-report-id')?.value)" style="width:100%;padding:9px;background:rgba(255,255,255,.05);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1);border-radius:9px;font-size:.78rem;cursor:pointer">
+        📋 Ver historial de actividad
+      </button>
+      <button class="ibtn ibtn-acento" onclick="enviarActa()" style="margin-bottom:2px;padding:14px;font-size:.95rem;font-weight:800">
+        📄 Generar y Enviar Acta
+      </button>
+      <button class="ibtn ibtn-ghost" onclick="closeNuevaActa()">Cancelar</button>
+    </div>
     <div style="height:20px"></div>
   </div>
 </div>
@@ -916,6 +978,461 @@ function verDetalleVerificacionInsp(vid) {
 }
 
 
+// ═══════════════════════════════════════════════════════════════
+//  P2 — AUTOSAVE DE BORRADOR CADA 10s
+// ═══════════════════════════════════════════════════════════════
+
+let _autoSaveActaId = null;  // ID del reporte cuyo borrador está abierto
+let _auditLog = JSON.parse(localStorage.getItem('imbio_audit_log') || '[]');
+
+function _setAutoSaveContext(reportId) {
+  _autoSaveActaId = reportId;
+}
+
+function _autoSaveDraft() {
+  if (!_autoSaveActaId) return;
+  try {
+    const draft = _captureDraftFields();
+    if (!draft) return;
+    const key = 'imbio_draft_' + _autoSaveActaId;
+    const entry = { ts: Date.now(), data: draft };
+    localStorage.setItem(key, JSON.stringify(entry));
+    _showAutosaveBar('💾 Borrador guardado — ' + new Date().toLocaleTimeString('es-MX'), false);
+    _auditEntry(_autoSaveActaId, 'autosave', 'Borrador guardado automáticamente');
+  } catch(e) {
+    _showAutosaveBar('⚠️ No se pudo guardar el borrador', true);
+  }
+}
+
+function _captureDraftFields() {
+  const fields = ['acta-descripcion','acta-observaciones','acta-motivo','acta-inspector',
+    'acta-firmante','acta-fundamento','acta-sancion-monto','acta-plazo'];
+  const draft = {};
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) draft[id] = el.value;
+  });
+  return Object.keys(draft).length ? draft : null;
+}
+
+function _restoreDraft(reportId) {
+  const key = 'imbio_draft_' + reportId;
+  try {
+    const saved = localStorage.getItem(key);
+    if (!saved) return false;
+    const entry = JSON.parse(saved);
+    const mins = Math.round((Date.now() - entry.ts) / 60000);
+    if (mins > 1440) return false; // Borrador mayor a 24h → ignorar
+    // Preguntar si restaurar
+    if (!confirm(`💾 Hay un borrador guardado hace ${mins < 1 ? 'menos de 1 minuto' : mins + ' minutos'}.
+¿Deseas restaurarlo?`)) return false;
+    Object.entries(entry.data).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    });
+    _showAutosaveBar('♻️ Borrador restaurado', false);
+    return true;
+  } catch(e) { return false; }
+}
+
+function _clearDraft(reportId) {
+  localStorage.removeItem('imbio_draft_' + reportId);
+}
+
+function _showAutosaveBar(msg, isError) {
+  const bar = document.getElementById('autosave-bar');
+  const msgEl = document.getElementById('autosave-msg');
+  if (!bar || !msgEl) return;
+  msgEl.textContent = msg;
+  bar.className = 'autosave-bar show' + (isError ? ' error' : '');
+  clearTimeout(bar._timer);
+  bar._timer = setTimeout(() => { bar.className = 'autosave-bar'; }, 2500);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  P6 — AUDIT LOG
+// ═══════════════════════════════════════════════════════════════
+
+function _auditEntry(caseId, action, detail) {
+  const entry = {
+    ts:      new Date().toISOString(),
+    case_id: caseId,
+    actor:   (typeof USER !== 'undefined' && USER) ? (USER.username || USER.nombre) : 'inspector',
+    action,
+    detail
+  };
+  _auditLog.unshift(entry);
+  if (_auditLog.length > 200) _auditLog = _auditLog.slice(0, 200);
+  localStorage.setItem('imbio_audit_log', JSON.stringify(_auditLog));
+}
+
+function verAuditLog(caseId) {
+  const entries = _auditLog.filter(e => !caseId || e.case_id == caseId);
+  if (!entries.length) { alert('Sin historial de actividad para este caso.'); return; }
+  const html = entries.slice(0, 30).map(e => {
+    const d = new Date(e.ts);
+    const timeStr = d.toLocaleDateString('es-MX') + ' ' + d.toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit'});
+    return `<div class="audit-entry">
+      <span class="audit-time">${timeStr}</span>
+      <span class="audit-actor">${e.actor}</span>
+      <span class="audit-action">${e.action}: ${e.detail||''}</span>
+    </div>`;
+  }).join('');
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:4000;overflow-y:auto;padding:20px 12px';
+  overlay.innerHTML = `<div style="background:#0d1f35;border-radius:14px;padding:20px;max-width:480px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="color:#fff;font-size:.95rem;margin:0">📋 Historial de Actividad</h3>
+      <button onclick="this.closest('div[style]').remove()" style="background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer">✕</button>
+    </div>
+    ${html}
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  P6 — HASH SHA-256 para integridad de actas
+// ═══════════════════════════════════════════════════════════════
+
+async function _hashSHA256(text) {
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  } catch(e) { return 'hash-no-disponible'; }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  P3 — MATLACHO BORRADOR ESTRUCTURADO
+// ═══════════════════════════════════════════════════════════════
+
+async function _matlachoBorradorCompleto(caseData) {
+  // Llamada estructurada que devuelve JSON completo según spec
+  const loading = _matlachoAddBubble('🐭 Generando borrador completo del acta...', false, true);
+  try {
+    const serverUrl = (typeof SERVER_URL !== 'undefined') ? SERVER_URL : window.location.origin;
+    const token = (typeof TOKEN !== 'undefined' && TOKEN) ? TOKEN : (localStorage.getItem('imbio_inspector_token') || '');
+    const resp = await fetch(serverUrl + '/api/ai/matlacho', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({
+        tipo: 'borrador_estructurado',
+        datos: {
+          case_id:      caseData.id,
+          case_type:    caseData.tipo,
+          folio:        caseData.folio,
+          location:     caseData.colonia + (caseData.domicilio ? ', ' + caseData.domicilio : ''),
+          descripcion:  caseData.descripcion,
+          inspector:    (typeof USER !== 'undefined' && USER) ? USER.nombre : '',
+          fecha:        new Date().toLocaleDateString('es-MX', {day:'2-digit',month:'long',year:'numeric'}),
+          evidencias:   (caseData.evidencias || []).length + ' evidencias adjuntas',
+          tipo_acta:    caseData._tipoActaSel || 'circunstanciada',
+          hallazgos:    caseData._hallazgosExtra || '',
+        }
+      }),
+      signal: AbortSignal.timeout(40000)
+    });
+    const d = await resp.json();
+    if (loading) loading.remove();
+    if (!d.success) throw new Error(d.message || 'Error del servidor');
+
+    const resultado = d.data;
+    const texto = resultado.texto || '';
+
+    // Intentar parsear como JSON estructurado
+    let estructurado = null;
+    try {
+      const jsonMatch = texto.match(/\{[\s\S]*\}/);
+      if (jsonMatch) estructurado = JSON.parse(jsonMatch[0]);
+    } catch(e) {}
+
+    if (estructurado && estructurado.acta_text) {
+      // Respuesta estructurada completa
+      _mostrarBorradorEstructurado(estructurado, caseData);
+    } else {
+      // Respuesta de texto libre — mostrar igual con marca AUTOGENERADO
+      _mostrarBorradorTexto(texto, caseData);
+    }
+
+    _auditEntry(caseData.id, 'matlacho_borrador', 'Borrador generado por Matlacho');
+    return resultado;
+  } catch(e) {
+    if (loading) loading.remove();
+    _matlachoAddBubble('⚠️ Error generando borrador: ' + e.message, false);
+    return null;
+  }
+}
+
+function _mostrarBorradorEstructurado(datos, caseData) {
+  const panel = document.getElementById('matlacho-chat');
+  if (!panel) return;
+
+  const div = document.createElement('div');
+  div.className = 'matlacho-bubble';
+  div.innerHTML = `
+    <div class="autogenerado-badge">🤖 AUTOGENERADO POR MATLACHO — Requiere revisión del inspector</div>
+
+    <div style="margin-bottom:10px">
+      <div style="font-size:.75rem;font-weight:700;color:var(--acento);margin-bottom:4px">📄 BORRADOR DE ACTA</div>
+      <div id="borrador-acta-content" style="background:rgba(255,255,255,.05);border-radius:6px;padding:8px;font-size:.78rem;line-height:1.6;color:rgba(255,255,255,.85);max-height:140px;overflow-y:auto"></div>
+/g,'<br>')}</div>
+    </div>
+
+    ${datos.bullet_findings && datos.bullet_findings.length ? `
+    <div style="margin-bottom:8px">
+      <div style="font-size:.72rem;font-weight:700;color:#f87171;margin-bottom:4px">⚠️ INCUMPLIMIENTOS DETECTADOS</div>
+      <ul style="list-style:none;padding:0;margin:0">${datos.bullet_findings.map(b=>`<li style="font-size:.75rem;color:rgba(255,255,255,.7);padding:2px 0">• ${b}</li>`).join('')}</ul>
+    </div>` : ''}
+
+    ${datos.recommendations && datos.recommendations.length ? `
+    <div style="margin-bottom:8px">
+      <div style="font-size:.72rem;font-weight:700;color:#fbbf24;margin-bottom:4px">📋 MEDIDAS RECOMENDADAS</div>
+      <ul style="list-style:none;padding:0;margin:0">${datos.recommendations.map(r=>`<li style="font-size:.75rem;color:rgba(255,255,255,.7);padding:2px 0">→ ${r}</li>`).join('')}</ul>
+    </div>` : ''}
+
+    ${datos.legal_refs ? `
+    <div style="margin-bottom:10px">
+      <div style="font-size:.72rem;font-weight:700;color:#60a5fa;margin-bottom:4px">⚖️ REFERENCIAS LEGALES</div>
+      <div style="font-size:.72rem;color:rgba(255,255,255,.55)">${datos.legal_refs}</div>
+    </div>` : ''}
+
+
+
+
+
+    `; // fin borrador
+  panel.appendChild(div);
+  // Poblar contenido ahora que el div ya está en el DOM
+  const actaTxt = document.getElementById('borrador-acta-content');
+  if (actaTxt) { var t = datos.acta_text||''; actaTxt.innerHTML = t.split('\n').join('<br>'); }
+  const findingsEl = document.getElementById('borrador-findings');
+  if (findingsEl && datos.bullet_findings && datos.bullet_findings.length) {
+    findingsEl.innerHTML = '<div style="margin-bottom:8px"><div style="font-size:.72rem;font-weight:700;color:#f87171;margin-bottom:4px">⚠️ INCUMPLIMIENTOS</div><ul style="list-style:none;padding:0;margin:0">' +
+      datos.bullet_findings.map(b => '<li style="font-size:.75rem;color:rgba(255,255,255,.7);padding:2px 0">• ' + b + '</li>').join('') + '</ul></div>';
+  }
+  const recsEl = document.getElementById('borrador-recs');
+  if (recsEl && datos.recommendations && datos.recommendations.length) {
+    recsEl.innerHTML = '<div style="margin-bottom:8px"><div style="font-size:.72rem;font-weight:700;color:#fbbf24;margin-bottom:4px">📋 MEDIDAS RECOMENDADAS</div><ul style="list-style:none;padding:0;margin:0">' +
+      datos.recommendations.map(r => '<li style="font-size:.75rem;color:rgba(255,255,255,.7);padding:2px 0">→ ' + r + '</li>').join('') + '</ul></div>';
+  }
+  const legalEl = document.getElementById('borrador-legal');
+  if (legalEl && datos.legal_refs) {
+    legalEl.innerHTML = '<div style="margin-bottom:10px"><div style="font-size:.72rem;font-weight:700;color:#60a5fa;margin-bottom:4px">⚖️ REFERENCIAS LEGALES</div><div style="font-size:.72rem;color:rgba(255,255,255,.55)">' + datos.legal_refs + '</div></div>';
+  }
+  const btnAplicar = document.getElementById('btn-aplicar-borrador');
+  if (btnAplicar) {
+    // Guardar el texto en una variable global temporal para aplicar
+    window._lastBorradorMatlacho = datos.acta_text || '';
+    btnAplicar.onclick = function() { _aplicarBorrador(window._lastBorradorMatlacho); };
+  }
+  panel.scrollTop = panel.scrollHeight;
+}
+
+function _aplicarBorradorDesdePanel() {
+  _aplicarBorrador(window._lastBorradorMatlacho || '');
+}
+
+function _mostrarBorradorTexto(texto, caseData) {
+  const div = _matlachoAddBubble('', false);
+  if (!div) return;
+  div.innerHTML = `
+    <div class="autogenerado-badge">🤖 AUTOGENERADO — Requiere revisión</div>
+    <div style="font-size:.78rem;line-height:1.6;color:rgba(255,255,255,.85)">${texto.replace(/\n/g,'<br>')}</div>
+    <button onclick="_aplicarBorrador(this)" data-texto="${texto.replace(/"/g,'&quot;').substring(0,800)}"
+
+      ✅ Aplicar al acta
+    `; // fin borrador
+}
+
+function _aplicarBorrador(textoOBtn) {
+  let texto = typeof textoOBtn === 'string' ? textoOBtn
+    : (textoOBtn.dataset && textoOBtn.dataset.texto) ? textoOBtn.dataset.texto : '';
+  texto = texto.replace(/&apos;/g,"'").replace(/&quot;/g,'"').replace(/<br>/g,' ');
+  const campos = ['acta-descripcion','acta-observaciones','acta-motivo'];
+  let aplicado = false;
+  for (const id of campos) {
+    const el = document.getElementById(id);
+    if (el && !el.value.trim()) {
+      el.value = texto;
+      aplicado = true;
+      _showAutosaveBar('✅ Borrador de Matlacho aplicado al campo: ' + id, false);
+      break;
+    }
+  }
+  if (!aplicado) {
+    // Todos los campos tienen contenido → preguntar
+    const target = prompt('¿En qué campo aplicar? (descripcion / observaciones / motivo)', 'descripcion');
+    const el = document.getElementById('acta-' + (target||'descripcion'));
+    if (el) { el.value = texto; _showAutosaveBar('✅ Borrador aplicado', false); }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  P5 — DOBLE CONFIRMACIÓN PARA CLAUSURA
+// ═══════════════════════════════════════════════════════════════
+
+function _confirmarClausura(reportId, folio, callback) {
+  // Primera confirmación
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:5000;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML = `
+    <div style="background:#1a0000;border:2px solid #dc2626;border-radius:14px;padding:24px;max-width:380px;width:100%">
+      <div style="text-align:center;font-size:2rem;margin-bottom:10px">🚫</div>
+      <h3 style="color:#f87171;text-align:center;margin:0 0 10px;font-size:1rem">ACCIÓN IRREVERSIBLE</h3>
+      <p style="color:rgba(255,255,255,.8);font-size:.85rem;text-align:center;margin-bottom:16px;line-height:1.5">
+        Estás a punto de emitir una <b style="color:#f87171">Clausura Temporal</b> para el caso <b>${folio}</b>.<br><br>
+        Esta acción requiere que hayas levantado acta previa y tengas al menos <b>1 fotografía</b> de evidencia.
+      </p>
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:.78rem;color:rgba(255,255,255,.6);margin-bottom:6px">Escribe CLAUSURA para confirmar:</label>
+        <input id="clausura-confirm-input" placeholder="Escribe CLAUSURA aquí"
+          style="width:100%;padding:10px 12px;background:rgba(255,255,255,.08);border:1px solid rgba(220,38,38,.4);border-radius:8px;color:#fff;font-size:.88rem;text-transform:uppercase">
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="this.closest('div[style]').remove()"
+          style="flex:1;padding:10px;background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer">
+          ← Cancelar
+        </button>
+        <button id="btn-clausura-confirmar"
+          style="flex:1;padding:10px;background:#dc2626;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;opacity:.4"
+          disabled onclick="_ejecutarClausura('${reportId}','${folio}',this)">
+          🚫 Confirmar Clausura
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  document.getElementById('clausura-confirm-input')?.addEventListener('input', function() {
+    const btn = document.getElementById('btn-clausura-confirmar');
+    if (!btn) return;
+    const ok = this.value.toUpperCase().trim() === 'CLAUSURA';
+    btn.disabled = !ok;
+    btn.style.opacity = ok ? '1' : '0.4';
+  });
+}
+
+async function _ejecutarClausura(reportId, folio, btn) {
+  btn.disabled = true; btn.textContent = '⏳ Procesando...';
+  _auditEntry(reportId, 'clausura_solicitada', 'Inspector solicitó clausura — ' + folio);
+  // Cambiar estado en el servidor
+  const r = await api('/api/reports/' + reportId, 'PATCH', { estado: 'sancionado', medida: 'clausura_temporal' });
+  btn.closest('div[style*="fixed"]')?.remove();
+  if (r && r.success) {
+    _auditEntry(reportId, 'clausura_ejecutada', 'Clausura temporal aplicada');
+    alert('Clausura temporal registrada para ' + folio + '. El expediente ha sido actualizado.');
+    loadReportes('en_proceso');
+  } else {
+    alert('Error al aplicar clausura: ' + (r?.message || 'Sin respuesta'));
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  P4 — FORMULARIOS DINÁMICOS por case_type
+// ═══════════════════════════════════════════════════════════════
+
+const CAMPOS_REQUERIDOS_POR_TIPO = {
+  verificacion_permisos: {
+    obligatorios: ['licencia_numero','vigencia_licencia','folio_predial','nombre_comercio','rfc_curp'],
+    checklist: ['licencia_vigente','uso_suelo','proteccion_civil','manejo_residuos','dictamen_ambiental'],
+    acta_recomendada: 'inspeccion',
+    label: '🏪 Verificación de Permisos'
+  },
+  denuncia_contaminacion: {
+    obligatorios: ['coordenadas','tipo_contaminacion','impacto_estimado','medidas_inmediatas'],
+    checklist: ['coordenadas_capturadas','fotos_tomadas','testigos_identificados','area_afectada_medida'],
+    acta_recomendada: 'circunstanciada',
+    label: '☠️ Denuncia de Contaminación'
+  },
+  clausura: {
+    obligatorios: ['fundamento_legal','codigo_infraccion','notificacion_responsable','plazo_correccion'],
+    checklist: ['acta_previa','fotos_clausura','notificacion_entregada','sello_colocado'],
+    acta_recomendada: 'sancion',
+    label: '🚫 Clausura / Sanción',
+    requiere_doble_confirmacion: true
+  },
+  apercibimiento: {
+    obligatorios: ['irregularidad','medidas_correctivas','plazo'],
+    checklist: ['fotos_evidencia','descripcion_detallada'],
+    acta_recomendada: 'apercibimiento',
+    label: '⚠️ Apercibimiento'
+  },
+  inspeccion_rutina: {
+    obligatorios: ['orden_inspeccion','motivo'],
+    checklist: ['coordenadas_capturadas','fotos_tomadas'],
+    acta_recomendada: 'inspeccion',
+    label: '🔍 Inspección de Rutina'
+  },
+};
+
+function getCamposTipo(tipoReporte) {
+  const mapa = {
+    contaminacion_comercial: 'denuncia_contaminacion',
+    agua_contaminada: 'denuncia_contaminacion',
+    denuncia_ambiental: 'denuncia_contaminacion',
+    residuos_solidos: 'denuncia_contaminacion',
+    tiradero_escombro: 'denuncia_contaminacion',
+    tiradero_basura: 'denuncia_contaminacion',
+  };
+  const caseType = mapa[tipoReporte] || 'inspeccion_rutina';
+  return CAMPOS_REQUERIDOS_POR_TIPO[caseType] || CAMPOS_REQUERIDOS_POR_TIPO.inspeccion_rutina;
+}
+
+function _matlachoBorradorDesdeActa() {
+  const repId = document.getElementById('acta-report-id')?.value;
+  const tipoActa = document.getElementById('acta-tipo-seleccionado')?.value
+    || (typeof _tipoActaFinal !== 'undefined' ? _tipoActaFinal : 'circunstanciada');
+  const desc = document.getElementById('acta-descripcion')?.value || '';
+  const motivo = document.getElementById('acta-motivo')?.value || '';
+  const inspector = document.getElementById('acta-inspector')?.value
+    || document.getElementById('acta-firmante')?.value || '';
+
+  // Abrir el widget de Matlacho si está cerrado
+  const panel = document.getElementById('matlacho-panel');
+  if (panel && !panel.classList.contains('open')) {
+    panel.classList.add('open');
+  }
+
+  // Construir datos del caso desde el formulario actual
+  const repCache = (typeof _reportesCache !== 'undefined') ? _reportesCache : [];
+  const repActual = repCache.find ? repCache.find(r => String(r.id) === String(repId)) : {};
+
+  const caseData = {
+    id:          repId,
+    folio:       (repActual && repActual.folio) || '',
+    tipo:        (repActual && repActual.tipo) || '',
+    descripcion: desc || motivo || (repActual && repActual.descripcion) || '',
+    colonia:     (repActual && repActual.colonia) || '',
+    domicilio:   (repActual && repActual.domicilio) || '',
+    evidencias:  (repActual && repActual.evidencias) || [],
+    _tipoActaSel: tipoActa,
+    _hallazgosExtra: document.getElementById('acta-observaciones')?.value || '',
+  };
+
+  _matlachoBorradorCompleto(caseData);
+}
+
+function _renderChecklistDinamico(tipoReporte, containerId) {
+  const cfg = getCamposTipo(tipoReporte);
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `
+    <div style="background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.2);border-radius:8px;padding:10px;margin-bottom:10px">
+      <div style="font-size:.72rem;font-weight:700;color:var(--acento);margin-bottom:8px">✅ CHECKLIST — ${cfg.label}</div>
+      ${cfg.checklist.map(item => `
+        <label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.8rem;color:rgba(255,255,255,.8);cursor:pointer">
+          <input type="checkbox" id="chk-${item}" style="width:16px;height:16px;accent-color:var(--acento)">
+          ${item.replace(/_/g,' ').replace(/\w/g, c => c.toUpperCase())}
+        </label>`).join('')}
+    </div>
+    ${cfg.requiere_doble_confirmacion ? `
+    <div style="background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.3);border-radius:8px;padding:8px;font-size:.75rem;color:#f87171;margin-bottom:8px">
+      🚫 Este tipo de caso requiere <b>doble confirmación</b> antes de emitir el acta.
+    </div>` : ''}`;
+}
+
+
 window.onerror = function(msg, src, line, col, err) {
   console.error("IMBIO Error:", msg, "linea:", line);
   // Mostrar error visible en pantalla (ayuda a depurar en celular)
@@ -1054,6 +1571,8 @@ function showApp() {
   setTab('asignados');
   checkConn();
   setInterval(checkConn, 20000);
+  // ── AUTOSAVE cada 10s ────────────────────────────────────────────
+  setInterval(_autoSaveDraft, 10000);
 }
 
 // ── TABS ─────────────────────────────────────────────────
@@ -1165,7 +1684,7 @@ function repCard(rep) {
       btnAccion = `<button class="ibtn ibtn-warning ibtn-sm" style="width:100%"
         onclick="event.stopPropagation();iniciarRegistro(${rep.id},'${nuevoEstado}')">
         ▶ Iniciar
-      </button>`;
+    `; // fin borrador
 
     // ── EN PROCESO / EN INSPECCIÓN: mostrar opciones de actas ───────
     } else if (['en_proceso','en_inspeccion'].includes(estado)) {
@@ -1176,7 +1695,7 @@ function repCard(rep) {
           <button class="ibtn ibtn-sm" style="background:#16a34a;color:#fff;width:100%"
             onclick="event.stopPropagation();abrirIntervencionAV(${rep.id},'${rep.folio}')">
             🌿 Registrar Intervención
-          </button>`;
+    `; // fin borrador
 
       } else if (esInspeccionSimple) {
         // Arbolado técnico / animales: solo Acta de Inspección
@@ -1184,7 +1703,7 @@ function repCard(rep) {
           <button class="ibtn ibtn-acento ibtn-sm" style="width:100%"
             onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','inspeccion')">
             🔍 Levantar Acta de Inspección
-          </button>`;
+    `; // fin borrador
 
       } else {
         // Denuncia / trámite general: tres opciones
@@ -1230,30 +1749,91 @@ function repCard(rep) {
       btnAccion = `<button class="ibtn ibtn-success ibtn-sm" style="width:100%"
         onclick="event.stopPropagation();confirmarCierre(${rep.id},'${rep.folio}')">
         ✅ Cerrar Caso
-      </button>`;
+    `; // fin borrador
     }
   }
 
+  // ── URGENCIA ──────────────────────────────────────────────────────
+  const diasTranscurridos = rep.fecha_creacion
+    ? Math.floor((Date.now() - new Date(rep.fecha_creacion).getTime()) / 86400000) : 0;
+  const tiposAlta = ['emergencia','agua_contaminada','perro_agresivo','clausura','contaminacion_comercial'];
+  const urgencia = tiposAlta.includes(t) || diasTranscurridos > 7 ? 'alta'
+    : diasTranscurridos > 3 ? 'media' : 'baja';
+  const urgLabels = { alta:'🔴 Urgente', media:'🟡 Normal', baja:'🔵 Rutina' };
+  const urgClasses = { alta:'urg-alta urgencia-alta', media:'urg-media urgencia-media', baja:'urg-baja urgencia-baja' };
+
+  // ── BREADCRUMB DE ESTADO ──────────────────────────────────────────
+  const PASOS = [
+    { key:'asignado',        icon:'📬', label:'Asignado' },
+    { key:'en_inspeccion',   icon:'🔍', label:'Inspección' },
+    { key:'en_proceso',      icon:'🔄', label:'En Proceso' },
+    { key:'pendiente_medida',icon:'⚠️', label:'Medida' },
+    { key:'apercibido',      icon:'📋', label:'Apercibido' },
+    { key:'sancionado',      icon:'🚫', label:'Sancionado' },
+    { key:'cerrado',         icon:'✅', label:'Cerrado' },
+  ];
+  const estadoIdx = PASOS.findIndex(p => p.key === estado);
+  // Para casos simples reducir pasos
+  const pasosVis = esAV || esInspeccionSimple
+    ? [PASOS[0], PASOS[2], PASOS[6]]  // Asignado → En Proceso → Cerrado
+    : PASOS;
+  const stepHTML = pasosVis.map((p, i) => {
+    const pIdx = PASOS.findIndex(pp => pp.key === p.key);
+    const done   = pIdx < estadoIdx;
+    const active = p.key === estado;
+    const dotCls = done ? 'done' : active ? 'active' : '';
+    const lblCls = done ? 'done' : active ? 'active' : '';
+    const lineHTML = i < pasosVis.length - 1
+      ? `<div class="step-line ${done?'done':''}"></div>` : '';
+    return `<div class="step"><div class="step-wrap">
+      <div class="step-dot ${dotCls}">${done?'✓':active?p.icon:''}</div>
+      <div class="step-label ${lblCls}">${p.label}</div>
+    </div>${lineHTML}</div>`;
+  }).join('');
+
+  // ── SIGUIENTE ACCIÓN SUGERIDA ──────────────────────────────────────
+  const NEXT_ACTION = {
+    asignado:         { icon:'▶', title:'Siguiente: Iniciar inspección', sub:'Toca "Iniciar" para ir a campo' },
+    en_inspeccion:    { icon:'📄', title:'Siguiente: Levantar acta', sub:'Registra los hallazgos y genera el acta' },
+    en_proceso:       { icon:'📋', title:'Siguiente: Emitir acta o medida', sub:'Selecciona el tipo de resolución' },
+    pendiente_medida: { icon:'⚠️', title:'Pendiente: Definir medida', sub:'Elige apercibimiento o sanción' },
+    apercibido:       { icon:'✅', title:'Siguiente: Cerrar caso', sub:'Confirma que el infractor fue notificado' },
+    sancionado:       { icon:'✅', title:'Siguiente: Cerrar caso', sub:'Verifica cumplimiento de la sanción' },
+    cerrado:          { icon:'🏁', title:'Caso cerrado', sub:'Sin acciones pendientes' },
+  };
+  const na = NEXT_ACTION[estado] || { icon:'❓', title:'Sin acción definida', sub:'' };
+
   // ── CARD HTML ─────────────────────────────────────────────────────
-  return `<div class="icard rep-card est-${estado}" onclick="verDetalle(${rep.id})">
+  return `<div class="icard rep-card est-${estado} urgencia-${urgencia}" onclick="verDetalle(${rep.id})">
     <div class="icard-head">
       <div>
-        <div class="rep-folio">${rep.folio}</div>
+        <div class="rep-folio">${rep.folio}
+          <span class="urgencia-badge ${urgClasses[urgencia]}" style="margin-left:5px">${urgLabels[urgencia]}</span>
+        </div>
         <div class="rep-tipo">${tipoLabel(t)}</div>
       </div>
       <span class="est-badge est-${estado}">${badgeLabel}</span>
     </div>
     <div class="icard-body">
+      <!-- Breadcrumb de estado -->
+      <div class="estado-stepper">${stepHTML}</div>
+      <!-- Siguiente acción -->
+      ${!cerrado ? `<div class="next-action-bar">
+        <div class="nab-icon">${na.icon}</div>
+        <div class="nab-txt">
+          <div class="nab-title">${na.title}</div>
+          <div class="nab-sub">${na.sub}</div>
+        </div>
+      </div>` : ''}
       <div class="rep-desc">${rep.descripcion || ''}</div>
       <div class="rep-meta">
         <span>📍 ${rep.colonia || ''}</span>
         ${asig ? `<span>👷 ${asig.inspector}</span>` : ''}
         <span>📅 ${fmtFecha(rep.fecha_creacion)}</span>
+        ${diasTranscurridos > 0 ? `<span style="color:${urgencia==='alta'?'#f87171':urgencia==='media'?'#fbbf24':'#9ca3af'}">⏱ ${diasTranscurridos}d</span>` : ''}
       </div>
     </div>
     <div class="icard-foot" style="flex-direction:column;align-items:stretch;gap:6px;padding:10px 12px">
-      <button class="ibtn ibtn-primary ibtn-sm" style="width:100%"
-        onclick="event.stopPropagation();verDetalle(${rep.id})">👁 Ver Detalle</button>
       ${btnAccion}
     </div>
   </div>`;
@@ -1731,6 +2311,15 @@ async function abrirNuevaActa(reportId, folio, tipoInicial) {
   });
   // Obtener GPS automáticamente al abrir
   obtenerGPSActa();
+  // Activar autosave para este caso
+  _setAutoSaveContext(reportId);
+  // Renderizar checklist dinámico según tipo
+  const _repActual = (typeof _reportesCache !== 'undefined') ? _reportesCache.find(r => r.id === reportId) : null;
+  if (_repActual) setTimeout(() => _renderChecklistDinamico(_repActual.tipo, 'checklist-dinamico-wrap'), 300);
+  // Intentar restaurar borrador previo
+  setTimeout(() => _restoreDraft(reportId), 600);
+  // Registrar en audit log
+  _auditEntry(reportId, 'acta_abierta', 'Inspector abrió formulario de acta tipo: ' + tipoInicial);
   // Actualizar contexto de Matlacho
   setTimeout(_matlachoSetContext, 300);
 }
@@ -3651,6 +4240,11 @@ function buildActaHTML(acta) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="SGO-IMBIO v2.0">
+<meta name="caso-id" content="${acta.report_id||''}">
+<meta name="folio" content="${acta.folio_acta||''}">
+<meta name="inspector" content="${acta.inspector||acta.nombre_firmante_inspector||''}">
+<meta name="fecha-generacion" content="${new Date().toISOString()}">
 <title>${acta.folio_acta||'ACTA'}</title>
 <style>
   @page { size: letter; margin: 15mm 12mm; }
@@ -3851,6 +4445,8 @@ ${compensHTML}
 <div class="footer">
   <b>H. Ayuntamiento de Pabellón de Arteaga 2024-2027 · Instituto Municipal de Biodiversidad y Protección Ambiental (IMBIO)</b><br>
   Marco legal: Código Municipal · Ley de Ingresos · LPAEA · LGEEPA${esArbolPDF ? ' · NTEA-AGS-ARBOLADO-2026' : ''}<br>
+  <span style="font-size:8px;color:#999">Documento generado el ${new Date().toLocaleString('es-MX')} · Sistema SGO-IMBIO · Pabellón de Arteaga, Ags.</span><br>
+  <span id="acta-hash-display" style="font-size:7px;color:#bbb;font-family:monospace">Verificando integridad...</span>
   ${esInspeccion
     ? 'Este documento hace constar la visita de inspección y vigilancia ambiental practicada por el IMBIO en el domicilio señalado. Tiene validez legal ante la Dirección del IMBIO.'
     : esSancion
@@ -3863,10 +4459,16 @@ ${compensHTML}
 </body></html>`;
 }
 
-function descargarPDFActa(acta) {
+async function descargarPDFActa(acta) {
   if (!acta) { alert('Sin datos del acta para generar PDF.'); return; }
   const folio = acta.folio_acta || 'ACTA-IMBIO';
-  const htmlContent = buildActaHTML(acta);
+  // Calcular hash SHA-256 del contenido del acta para integridad
+  const baseContent = JSON.stringify({ folio, inspector: acta.inspector, fecha: acta.fecha, descripcion: acta.descripcion });
+  const hash = await _hashSHA256(baseContent);
+  // Insertar hash en el acta
+  const actaConHash = { ...acta, _hash_integridad: hash };
+  const htmlContent = buildActaHTML(actaConHash).replace('Verificando integridad...', 'SHA-256: ' + hash.substring(0, 32) + '...');
+  _auditEntry(acta.report_id || 'desconocido', 'pdf_descargado', 'PDF generado — Hash: ' + hash.substring(0, 16));
 
   // Inyectar script de auto-impresión para generar PDF automáticamente
   const htmlConPrint = htmlContent.replace('</body>', `
