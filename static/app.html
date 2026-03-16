@@ -816,15 +816,14 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var
 </div><!-- /app -->
 
 <script>
-  if (typeof TOKEN === 'undefined') var TOKEN = '';
-  if (typeof SERVER_URL === 'undefined') var SERVER_URL = window.location.origin;
-// ════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════
 //  IMBIO CIUDADANO — App JavaScript
 // ════════════════════════════════════════════════════════
 
 // ── Config ────────────────────────────────────────────
 const DEFAULT_SERVER = window.location.origin; // mismo servidor
 let SERVER_URL = localStorage.getItem('imbio_server') || DEFAULT_SERVER;
+let TOKEN = localStorage.getItem('imbio_token') || '';
 let tipoSel = '';
 let mapApp = null, appMarker = null, appLayerActive = null;
 let sigAppCanvas, sigAppCtx, sigDrawing = false;
@@ -1403,7 +1402,7 @@ async function llamarIA(tipo, datos, campoDestino, btnEl) {
   try {
     var resp = await fetch(SERVER_URL + '/api/ai/generar-texto', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (typeof TOKEN !== 'undefined' ? TOKEN : '') },
       body: JSON.stringify({ tipo: tipo, datos: datos }),
       signal: AbortSignal.timeout(35000)
     });
@@ -1623,7 +1622,7 @@ async function _matlachoCallAPI(tipo, datos) {
   var loading = _matlachoAddBubble('🐭 Matlacho está pensando...', false, true);
   try {
     var serverUrl = (typeof SERVER_URL !== 'undefined') ? SERVER_URL : window.location.origin;
-    var token = (typeof TOKEN !== 'undefined') ? TOKEN : (localStorage.getItem('imbio_token') || localStorage.getItem('imbio_citizen_token') || '');
+    var token = (typeof TOKEN !== 'undefined' && TOKEN) ? TOKEN : (localStorage.getItem('imbio_token') || '');
     var resp = await fetch(serverUrl + '/api/ai/matlacho', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
