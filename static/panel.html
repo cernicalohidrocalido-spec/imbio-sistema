@@ -871,6 +871,8 @@ async function refreshMapMarkers() {
   reps.forEach(rep => {
     const color  = MARKER_COLORS[rep.estado] || '#888';
     const marker = L.marker([rep.lat, rep.lon], { icon: makeIcon(color) });
+    const gmapsUrl = `https://www.google.com/maps?q=${rep.lat},${rep.lon}&z=18`;
+    const streetUrl = `https://www.google.com/maps?q=&layer=c&cbll=${rep.lat},${rep.lon}&cbp=12,0,,0,0`;
     const popHtml = `
       <div class="pop-title">${rep.folio}</div>
       <div class="pop-row">📍 ${rep.colonia}</div>
@@ -878,7 +880,11 @@ async function refreshMapMarkers() {
       <div class="pop-row">👤 ${rep.nombre_reportante || 'Anónimo'}</div>
       <div class="pop-row">🕐 ${fmtDate(rep.fecha_creacion)}</div>
       <span class="pop-badge" style="background:${color}20;color:${color}">${rep.estado.replace('_',' ')}</span>
-      <button class="pop-btn" onclick="verDetalle(${rep.id});closePopups()">Ver detalle completo</button>`;
+      <button class="pop-btn" onclick="verDetalle(${rep.id});closePopups()">📋 Ver detalle completo</button>
+      <div style="display:flex;gap:4px;margin-top:4px">
+        <a href="${gmapsUrl}" target="_blank" style="flex:1;display:block;text-align:center;background:#4285F4;color:#fff;border-radius:6px;padding:5px 4px;font-size:.78rem;font-weight:600;text-decoration:none">🗺️ Google Maps</a>
+        <a href="${streetUrl}" target="_blank" style="flex:1;display:block;text-align:center;background:#34A853;color:#fff;border-radius:6px;padding:5px 4px;font-size:.78rem;font-weight:600;text-decoration:none">📸 Street View</a>
+      </div>`;
     marker.bindPopup(popHtml, { maxWidth: 240 });
     marker.addTo(mapReportes);
     mapMarkers.push(marker);
@@ -1073,7 +1079,7 @@ async function doLogin() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
-      signal: AbortSignal.timeout(30000)
+      signal: AbortSignal.timeout(55000)
     });
     var r = null;
     if (res.status === 502 || res.status === 503 || res.status === 504) {
