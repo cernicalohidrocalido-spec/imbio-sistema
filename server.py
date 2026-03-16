@@ -817,15 +817,36 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                     "Si es sobre como usar la plataforma IMBIO, orienta al usuario. "
                     "Maximo 3 oraciones."
                 ),
+                'borrador_estructurado': (
+                    "Eres Matlacho, asistente para redactar actas municipales del IMBIO de Pabellon de Arteaga.\n"
+                    "Genera un borrador de acta oficial. IMPORTANTE: Responde SOLO en JSON valido, sin texto adicional.\n"
+                    "Formato requerido:\n"
+                    "{\"acta_text\": \"borrador completo del acta en lenguaje administrativo formal, maximo 700 palabras\",\n"
+                    " \"bullet_findings\": [\"incumplimiento 1\", \"incumplimiento 2\", \"incumplimiento 3\"],\n"
+                    " \"recommendations\": [\"medida inmediata 1 con plazo\", \"medida 2\"],\n"
+                    " \"legal_refs\": \"referencias legales aplicables\"}\n\n"
+                    f"Datos del caso:\n"
+                    f"Folio: {datos.get('folio','')}\n"
+                    f"Tipo: {datos.get('case_type', datos.get('tipo',''))}\n"
+                    f"Tipo de acta: {datos.get('tipo_acta','')}\n"
+                    f"Inspector: {datos.get('inspector','')}\n"
+                    f"Fecha: {datos.get('fecha','')}\n"
+                    f"Ubicacion: {datos.get('location', datos.get('colonia',''))}\n"
+                    f"Descripcion: {datos.get('descripcion','')}\n"
+                    f"Evidencias: {datos.get('evidencias','')}\n"
+                    f"Hallazgos: {datos.get('hallazgos', datos.get('_hallazgosExtra',''))}\n\n"
+                    "ADVERTENCIA: El acta generada debe marcarse como AUTOGENERADO y requiere revision del inspector antes de emitirse."
+                ),
             }
 
             prompt = prompts.get(tipo)
             if not prompt:
                 self.err('Tipo no valido: ' + tipo, 400); return
 
+            max_tok = 1200 if tipo == 'borrador_estructurado' else 600
             payload = json.dumps({
                 'model': 'claude-haiku-4-5',
-                'max_tokens': 600,
+                'max_tokens': max_tok,
                 'system': system,
                 'messages': [{'role': 'user', 'content': prompt}]
             }).encode('utf-8')
