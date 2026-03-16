@@ -56,7 +56,37 @@ TIPOS_VALIDOS  = [
     "poda_arbol","derribo_arbol",
     "animal_calle","perro_agresivo",
     "tiradero_escombro","tiradero_basura",
+    "contaminacion_comercial","ruido_comercial","residuos_comerciales",
     "otro"
+]
+
+GIROS_VALIDOS = [
+    "restaurante","cocina_economica","taqueria","panaderia","carniceria",
+    "taller_mecanico","taller_hojalateria","taller_carpinteria","taller_soldadura",
+    "lavanderia","car_wash","gasolinera","tlapaleria","ferreteria",
+    "veterinaria","criadero_animales","peluqueria_canina",
+    "salon_belleza","spa","gym",
+    "tienda_abarrotes","supermercado","farmacia",
+    "fabrica","almacen","bodega",
+    "bar","cantina","antro","salon_eventos",
+    "hotel","motel","hospedaje",
+    "clinica","laboratorio","consultorio",
+    "escuela","guarderia",
+    "otro"
+]
+
+PERMISOS_TIPOS = [
+    "licencia_funcionamiento","dictamen_ambiental","manejo_residuos",
+    "descarga_aguas","emisiones_ruido","uso_suelo","proteccion_civil",
+    "anuncio_publicidad","otro"
+]
+
+VERIFICACION_ESTADOS = [
+    "programada","en_proceso","completada","cancelada"
+]
+
+VERIFICACION_RESULTADO = [
+    "cumple","cumple_con_observaciones","no_cumple","no_aplica"
 ]
 ESTADOS_VALIDOS = [
     "reportado", "asignado", "en_inspeccion", "en_proceso",
@@ -221,7 +251,7 @@ def _init_sqlite():
                     {"id":1,"username":"admin","password": hashlib.sha256(b"admin123").hexdigest(),"nombre":"Administrador IMBIO","rol":"admin","activo":True},
                     {"id":2,"username":"operador","password": hashlib.sha256(b"operador123").hexdigest(),"nombre":"Operador IMBIO","rol":"operador","activo":True},
                     {"id":3,"username":"inspector01","password": hashlib.sha256(b"inspector123").hexdigest(),"nombre":"Inspector Campo 01","rol":"inspector","brigada":"Brigada 1","activo":True}
-                ], "actas": []
+                ], "actas": [], "establecimientos": [], "verificaciones": []
             }, ensure_ascii=False)
         conn.execute("INSERT INTO store(id,data) VALUES(1,?)", (seed,))
         conn.commit()
@@ -237,6 +267,10 @@ def read_db():
     changed = False
     if 'actas' not in db:
         db['actas'] = []; changed = True
+    if 'establecimientos' not in db:
+        db['establecimientos'] = []; changed = True
+    if 'verificaciones' not in db:
+        db['verificaciones'] = []; changed = True
     if 'historial_estados' not in db:
         db['historial_estados'] = []; changed = True
     if 'expedientes' not in db:
@@ -1153,7 +1187,7 @@ class IMBIOHandler(BaseHTTPRequestHandler):
 
         # ── Estadísticas para dashboard ─────────────────────────────────
         if path == '/api/stats':
-            user = self.require_auth('admin', 'operador')
+            user = self.require_auth('admin', 'operador', 'inspector')
             if not user: return
             db   = read_db()
             reps = db.get('reports', [])
@@ -1208,7 +1242,9 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                             vencidos += 1
                     except: pass
 
-            self.ok({
+            estabs   = db.get('establecimientos', [])
+            vers_all = db.get('verificaciones', [])
+            stats_out = {
                 'totales': {
                     'reportes': len(reps),
                     'actas':    len(actas),
@@ -1224,10 +1260,75 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                 'por_tipo_acta': dict(tipos_acta),
                 'por_mes':       [{'mes': k, 'total': v} for k, v in meses_sorted],
                 'top_inspectores': [{'inspector': k, 'asignaciones': v} for k, v in top_inspectores],
-            }, 'Estadísticas generadas.')
+                'establecimientos': {
+                    'total': len(estabs),
+                    'sin_verificar':  sum(1 for e in estabs if e.get('estado_cumplimiento','sin_verificar') == 'sin_verificar'),
+                    'cumple':         sum(1 for e in estabs if e.get('estado_cumplimiento') == 'cumple'),
+                    'cumple_parcial': sum(1 for e in estabs if e.get('estado_cumplimiento') == 'cumple_parcial'),
+                    'no_cumple':      sum(1 for e in estabs if e.get('estado_cumplimiento') == 'no_cumple'),
+                    'verificaciones_pendientes':  sum(1 for v in vers_all if v.get('estado') == 'programada'),
+                    'verificaciones_completadas': sum(1 for v in vers_all if v.get('estado') == 'completada'),
+                },
+            }
+            self.ok(stats_out, 'Estadísticas generadas.')
             return
 
         # ── Lista de expedientes (panel admin) ──────────────────────────
+        # ── Establecimientos ────────────────────────────────────────────
+        if path == '/api/establecimientos':
+            user = self.require_auth('admin', 'operador')
+            if not user: return
+            qs_local = parse_qs(urlparse(self.path).query)
+            db = read_db()
+            estabs = db.get('establecimientos', [])
+            # Filtros
+            giro   = (qs_local.get('giro',[''])[0] or '').strip()
+            estado = (qs_local.get('estado',[''])[0] or '').strip()
+            q      = (qs_local.get('q',[''])[0] or '').strip().lower()
+            if giro:   estabs = [e for e in estabs if e.get('giro') == giro]
+            if estado: estabs = [e for e in estabs if e.get('estado_cumplimiento') == estado]
+            if q:      estabs = [e for e in estabs if q in (e.get('nombre','') + e.get('domicilio','') + e.get('responsable','')).lower()]
+            self.ok({'establecimientos': estabs, 'total': len(estabs)})
+            return
+
+        if re.match(r'^/api/establecimientos/\d+$', path):
+            user = self.require_auth('admin', 'operador', 'inspector')
+            if not user: return
+            eid = int(path.split('/')[-1])
+            db  = read_db()
+            est = next((e for e in db.get('establecimientos',[]) if e['id'] == eid), None)
+            if not est: self.err('Establecimiento no encontrado.', 404); return
+            # Adjuntar verificaciones del establecimiento
+            vers = [v for v in db.get('verificaciones',[]) if v.get('establecimiento_id') == eid]
+            self.ok({'establecimiento': est, 'verificaciones': vers})
+            return
+
+        # ── Verificaciones ────────────────────────────────────────────
+        if path == '/api/verificaciones':
+            user = self.require_auth('admin', 'operador', 'inspector')
+            if not user: return
+            qs_local = parse_qs(urlparse(self.path).query)
+            db = read_db()
+            vers = db.get('verificaciones', [])
+            estado_v = (qs_local.get('estado',[''])[0] or '').strip()
+            inspector_v = (qs_local.get('inspector_id',[''])[0] or '').strip()
+            if estado_v:     vers = [v for v in vers if v.get('estado') == estado_v]
+            if inspector_v:  vers = [v for v in vers if str(v.get('inspector_id','')) == inspector_v]
+            if user['rol'] == 'inspector':
+                vers = [v for v in vers if v.get('inspector_id') == user['id']]
+            self.ok({'verificaciones': vers, 'total': len(vers)})
+            return
+
+        if re.match(r'^/api/verificaciones/\d+$', path):
+            user = self.require_auth('admin', 'operador', 'inspector')
+            if not user: return
+            vid = int(path.split('/')[-1])
+            db  = read_db()
+            ver = next((v for v in db.get('verificaciones',[]) if v['id'] == vid), None)
+            if not ver: self.err('Verificación no encontrada.', 404); return
+            self.ok({'verificacion': ver})
+            return
+
         if path == '/api/expedientes':
             user = self.require_auth('admin', 'operador')
             if not user: return
@@ -1323,6 +1424,87 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             write_db(db)
             safe = {k:v for k,v in nuevo.items() if k != 'password'}
             self.ok({'inspector': safe}, f'Inspector {nombre} registrado.', 201)
+            return
+
+        # ── Crear establecimiento ─────────────────────────────────────
+        if path == '/api/establecimientos':
+            user = self.require_auth('admin', 'operador')
+            if not user: return
+            body = self.parse_json_body()
+            nombre     = body.get('nombre','').strip()
+            giro       = body.get('giro','').strip()
+            domicilio  = body.get('domicilio','').strip()
+            responsable= body.get('responsable','').strip()
+            telefono   = body.get('telefono','').strip()
+            lat        = body.get('lat')
+            lon        = body.get('lon')
+            colonia    = body.get('colonia','').strip()
+            rfc        = body.get('rfc','').strip().upper()
+            if not nombre:    self.err('El nombre es requerido.', 422); return
+            if not giro:      self.err('El giro es requerido.', 422); return
+            if not domicilio: self.err('El domicilio es requerido.', 422); return
+            db = read_db()
+            eid = (max((e.get('id',0) for e in db.get('establecimientos',[])), default=0)) + 1
+            folio_est = f"EST-IMBIO-{datetime.now(timezone.utc).year}-{eid:04d}"
+            nuevo_est = {
+                'id': eid, 'folio': folio_est,
+                'nombre': nombre, 'giro': giro,
+                'domicilio': domicilio, 'colonia': colonia,
+                'responsable': responsable, 'telefono': telefono,
+                'rfc': rfc, 'lat': lat, 'lon': lon,
+                'estado_cumplimiento': 'sin_verificar',
+                'permisos': body.get('permisos', []),
+                'observaciones': body.get('observaciones','').strip(),
+                'fecha_registro': now_iso(),
+                'fecha_actualizacion': now_iso(),
+                'registrado_por': user['username']
+            }
+            db.setdefault('establecimientos', []).append(nuevo_est)
+            write_db(db)
+            self.ok({'establecimiento': nuevo_est}, f'Establecimiento {nombre} registrado.', 201)
+            return
+
+        # ── Crear verificación ──────────────────────────────────────
+        if path == '/api/verificaciones':
+            user = self.require_auth('admin', 'operador', 'inspector')
+            if not user: return
+            body = self.parse_json_body()
+            est_id     = body.get('establecimiento_id')
+            tipo_ver   = body.get('tipo_verificacion','programada').strip()  # programada|oficio
+            fecha_prog = body.get('fecha_programada','').strip()
+            inspector_id = body.get('inspector_id') or user['id']
+            motivo     = body.get('motivo','').strip()
+            if not est_id: self.err('El establecimiento es requerido.', 422); return
+            db = read_db()
+            est = next((e for e in db.get('establecimientos',[]) if e['id'] == int(est_id)), None)
+            if not est: self.err('Establecimiento no encontrado.', 404); return
+            vid = (max((v.get('id',0) for v in db.get('verificaciones',[])), default=0)) + 1
+            folio_ver = f"VER-IMBIO-{datetime.now(timezone.utc).year}-{vid:04d}"
+            nueva_ver = {
+                'id': vid, 'folio': folio_ver,
+                'establecimiento_id': int(est_id),
+                'establecimiento_nombre': est['nombre'],
+                'establecimiento_giro': est.get('giro',''),
+                'establecimiento_domicilio': est.get('domicilio',''),
+                'tipo_verificacion': tipo_ver,
+                'motivo': motivo,
+                'fecha_programada': fecha_prog,
+                'inspector_id': int(inspector_id) if inspector_id else None,
+                'estado': 'programada',
+                'checklist': body.get('checklist', []),
+                'hallazgos': '',
+                'resultado': '',
+                'accion_requerida': '',
+                'acta_generada': None,
+                'firma_responsable': None,
+                'nombre_firmante': None,
+                'fecha_creacion': now_iso(),
+                'fecha_actualizacion': now_iso(),
+                'creado_por': user['username']
+            }
+            db.setdefault('verificaciones', []).append(nueva_ver)
+            write_db(db)
+            self.ok({'verificacion': nueva_ver}, f'Verificación {folio_ver} creada.', 201)
             return
 
         if path == '/api/auth/login':
@@ -1878,6 +2060,55 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             write_db(db)
             print(f"[ACTA_DEL] id={aid} eliminada por {user['username']}")
             self.ok({}, 'Acta eliminada.')
+            return
+
+        # ── PATCH establecimiento ────────────────────────────────────
+        if re.match(r'^/api/establecimientos/\d+$', path):
+            user = self.require_auth('admin', 'operador')
+            if not user: return
+            eid  = int(path.split('/')[-1])
+            body = self.parse_json_body()
+            db   = read_db()
+            est  = next((e for e in db.get('establecimientos',[]) if e['id'] == eid), None)
+            if not est: self.err('No encontrado.', 404); return
+            for k in ('nombre','giro','domicilio','colonia','responsable','telefono',
+                      'rfc','estado_cumplimiento','permisos','observaciones','lat','lon'):
+                if k in body: est[k] = body[k]
+            est['fecha_actualizacion'] = now_iso()
+            write_db(db)
+            self.ok({'establecimiento': est}, 'Establecimiento actualizado.')
+            return
+
+        # ── PATCH verificación (completar / actualizar hallazgos) ────
+        if re.match(r'^/api/verificaciones/\d+$', path):
+            user = self.require_auth('admin', 'operador', 'inspector')
+            if not user: return
+            vid  = int(path.split('/')[-1])
+            body = self.parse_json_body()
+            db   = read_db()
+            ver  = next((v for v in db.get('verificaciones',[]) if v['id'] == vid), None)
+            if not ver: self.err('No encontrada.', 404); return
+            if user['rol'] == 'inspector' and ver.get('inspector_id') != user['id']:
+                self.err('Sin permiso para esta verificación.', 403); return
+            for k in ('estado','hallazgos','resultado','accion_requerida',
+                      'checklist','firma_responsable','nombre_firmante',
+                      'fecha_realizacion','observaciones_inspector'):
+                if k in body: ver[k] = body[k]
+            ver['fecha_actualizacion'] = now_iso()
+            # Si se completa, actualizar estado_cumplimiento del establecimiento
+            if body.get('resultado') and body.get('estado') == 'completada':
+                resultado = body['resultado']
+                mapa_estado = {
+                    'cumple': 'cumple',
+                    'cumple_con_observaciones': 'cumple_parcial',
+                    'no_cumple': 'no_cumple'
+                }
+                est = next((e for e in db.get('establecimientos',[]) if e['id'] == ver.get('establecimiento_id')), None)
+                if est:
+                    est['estado_cumplimiento'] = mapa_estado.get(resultado, 'sin_verificar')
+                    est['ultima_verificacion'] = now_iso()
+            write_db(db)
+            self.ok({'verificacion': ver}, 'Verificación actualizada.')
             return
 
         self.err('Ruta no encontrada.', 404)
