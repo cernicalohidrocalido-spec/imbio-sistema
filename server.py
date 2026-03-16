@@ -1732,6 +1732,41 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             print(f"[ELIMINADO] Folio: {folio} por {user['username']}")
             self.ok(None, f'Reporte {folio} eliminado.')
             return
+        # ── Guardar PDF de acta en servidor ────────────────────────────
+        mp = re.match(r'^/api/actas/(\d+)/pdf$', path)
+        if mp:
+            user = self.require_auth('inspector', 'admin', 'operador')
+            if not user: return
+            aid  = int(mp.group(1))
+            body = self.parse_json_body()
+            pdf_b64 = body.get('pdf_base64', '')
+            folio   = body.get('folio', f'acta_{aid}')
+            if not pdf_b64:
+                self.err('pdf_base64 requerido.', 422); return
+            try:
+                import base64 as _b64
+                pdf_data = _b64.b64decode(pdf_b64)
+                # Limit: 10 MB
+                if len(pdf_data) > 10 * 1024 * 1024:
+                    self.err('PDF demasiado grande (máx 10 MB).', 413); return
+                fname = f"{folio.replace('-','_')}.pdf"
+                fpath = UPLOAD_EV / 'pdfs' / fname
+                fpath.parent.mkdir(parents=True, exist_ok=True)
+                fpath.write_bytes(pdf_data)
+                pdf_url = f'uploads/evidence/pdfs/{fname}'
+                # Register in acta record
+                db = read_db()
+                acta = next((a for a in db.get('actas', []) if a['id'] == aid), None)
+                if acta:
+                    acta['pdf_url']  = pdf_url
+                    acta['pdf_fecha'] = now_iso()
+                    write_db(db)
+                print(f'[PDF] Guardado: {fname} ({len(pdf_data)//1024}KB)')
+                self.ok({'pdf_url': pdf_url}, f'PDF {folio} guardado.', 201)
+            except Exception as e:
+                self.err(f'Error guardando PDF: {e}', 500)
+            return
+
         # ── Eliminar acta ──────────────────────────────────────────────
         ma = re.match(r'^/api/actas/(\d+)$', path)
         if ma:
