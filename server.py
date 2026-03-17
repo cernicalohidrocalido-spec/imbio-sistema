@@ -251,7 +251,7 @@ def _init_sqlite():
         else:
             seed = json.dumps({
                 "reports": [], "assignments": [], "users": [
-                    {"id":1,"username":"admin","password": hashlib.sha256(b"admin123").hexdigest(),"nombre":"Administrador IMBIO","rol":"admin","activo":True},
+                    {"id":1,"username":"IMBIO","password": hashlib.sha256(b"IMBIO2026").hexdigest(),"nombre":"Administrador IMBIO","rol":"admin","activo":True},
                     {"id":2,"username":"operador","password": hashlib.sha256(b"operador123").hexdigest(),"nombre":"Operador IMBIO","rol":"operador","activo":True},
                     {"id":3,"username":"inspector01","password": hashlib.sha256(b"inspector123").hexdigest(),"nombre":"Inspector Campo 01","rol":"inspector","brigada":"Brigada 1","activo":True}
                 ], "actas": [], "establecimientos": [], "verificaciones": []
