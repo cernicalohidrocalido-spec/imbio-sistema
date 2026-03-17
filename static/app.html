@@ -1249,24 +1249,33 @@ function _matlachoAddBubble(text, isUser, isLoading) {
   return div;
 }
 
-async function _matlachoCallAPI(tipo, datos) {
-  var loading = _matlachoAddBubble('🐭 Matlacho está pensando...', false, true);
-  try {
-    var serverUrl = (typeof SERVER_URL !== 'undefined') ? SERVER_URL : window.location.origin;
-    var resp = await fetch(serverUrl + '/api/ai/matlacho', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tipo: tipo, datos: datos }),
-      signal: AbortSignal.timeout(35000)
-    });
-    var d = await resp.json();
-    if (loading) loading.remove();
-    return d.success ? d.data : null;
-  } catch(e) {
-    if (loading) loading.remove();
-    _matlachoAddBubble('⚠️ No pude conectarme. Verifica tu conexión e intenta de nuevo.', false);
-    return null;
+// ── Respuestas locales de Matlacho para preguntas frecuentes ──
+var _matlachoFAQ = [
+  { k: ['formulario','llenar','datos','campos','necesito','capturar'],
+    r: '📋 Para tu reporte necesitas:<br><br>✅ <b>Tipo de incidencia</b> (elige el que más se acerque)<br>✅ <b>Descripción</b> (qué ocurre, desde cuándo, qué tan urgente)<br>✅ <b>Ubicación</b> (toca el mapa o usa GPS)<br>✅ <b>Colonia</b> (se autocompleta con el mapa)<br><br>Tu nombre y teléfono son opcionales.' },
+  { k: ['ubicacion','mapa','gps','donde','lugar','marcar'],
+    r: '📍 Hay dos formas de marcar la ubicación:<br><br>1️⃣ <b>GPS:</b> Toca "📡 Mi ubicación" y acepta el permiso de ubicación.<br>2️⃣ <b>Mapa manual:</b> Desplázate en el mapa y toca exactamente donde ocurre el problema.<br><br>La dirección se autocompleta automáticamente.' },
+  { k: ['plataforma','funciona','sirve','usar','imbio','sistema'],
+    r: '🌿 <b>IMBIO Ciudadano</b> es la app de reporte ambiental de Pabellón de Arteaga.<br><br>Con ella puedes:<br>• Reportar problemas ambientales (basura, animales, árboles, agua...)<br>• Seguir el estado de tus reportes en "Mis Reportes"<br>• Tus reportes llegan directamente al sistema municipal para que el equipo de IMBIO los atienda.' },
+  { k: ['tipo','incidencia','categoria','seleccionar','que reportar'],
+    r: '🏷️ Elige el tipo que mejor describa tu problema:<br><br>🚨 <b>Emergencia</b> — Situación de riesgo inmediato<br>🌱 <b>Denuncia Ambiental</b> — Daño al medio ambiente<br>🗑️ <b>Residuos / Tiradero</b> — Basura o escombro ilegal<br>💧 <b>Agua Contaminada</b> — Fuentes o drenaje<br>🌳 <b>Arbolado</b> — Poda, derribo, áreas verdes<br>🐾 <b>Animales</b> — En calle o agresivos<br>📌 <b>Otro</b> — Cualquier otra incidencia' },
+  { k: ['descripcion','describir','texto','redactar','escribir'],
+    r: '✍️ Una buena descripción ayuda a que el equipo de IMBIO atienda tu reporte más rápido. Incluye:<br><br>• <b>¿Qué está pasando?</b> (tipo de problema)<br>• <b>¿Desde cuándo?</b> (horas, días, semanas)<br>• <b>¿Qué tan urgente es?</b><br>• <b>Detalles adicionales</b> (cantidad, tamaño, características)<br><br>Luego puedo ayudarte a mejorarla con IA 🤖' },
+  { k: ['enviar','reporte','listo','terminar','mandar'],
+    r: '📨 Antes de enviar verifica:<br><br>✅ Tipo de incidencia seleccionado<br>✅ Descripción con al menos 10 caracteres<br>✅ Ubicación marcada en el mapa<br>✅ Colonia confirmada<br><br>Luego toca el botón <b>"📨 Enviar Reporte"</b>. Recibirás un número de folio para seguimiento.' },
+  { k: ['folio','seguimiento','estado','reporte enviado','mis reportes'],
+    r: '📋 Después de enviar tu reporte, puedes ver su estado en la pestaña <b>"Mis Reportes"</b>.<br><br>Los estados son:<br>🟡 <b>Reportado</b> — Recibido, pendiente de asignación<br>🔵 <b>Asignado</b> — Asignado a una brigada<br>🟢 <b>En proceso</b> — La brigada está atendiendo<br>✅ <b>Cerrado</b> — Problema atendido' },
+];
+
+function _matlachoRespuestaLocal(msg) {
+  var m = msg.toLowerCase();
+  for (var i = 0; i < _matlachoFAQ.length; i++) {
+    var faq = _matlachoFAQ[i];
+    for (var j = 0; j < faq.k.length; j++) {
+      if (m.indexOf(faq.k[j]) !== -1) return faq.r;
+    }
   }
+  return '🐭 Soy Matlacho, tu asistente ambiental de IMBIO.<br><br>Puedo ayudarte a:<br>• <b>Mejorar tu descripción</b> con IA<br>• Orientarte sobre <b>qué datos llenar</b><br>• Explicarte <b>cómo usar el mapa</b><br>• Aclarar <b>tipos de incidencia</b><br><br>¿En qué te puedo apoyar?';
 }
 
 async function _matlachoChat(msgOverride) {
@@ -1275,8 +1284,9 @@ async function _matlachoChat(msgOverride) {
   if (!msg) return;
   if (input) input.value = '';
   _matlachoAddBubble(msg, true);
-  var result = await _matlachoCallAPI('chat', { mensaje: msg });
-  if (result) _matlachoAddBubble(result.texto, false);
+  // Respuesta local inmediata — el chat no requiere autenticación
+  var respuesta = _matlachoRespuestaLocal(msg);
+  setTimeout(function() { _matlachoAddBubble(respuesta, false); }, 420);
 }
 
 async function _matlachoCiudadano() {
@@ -1286,15 +1296,30 @@ async function _matlachoCiudadano() {
     _matlachoAddBubble('📝 Primero escribe una descripción del problema en el campo de texto y luego te ayudo a mejorarla.', false);
     return;
   }
-  var tipoChip = document.querySelector('.tipo-chip.sel');
-  var tipo = tipoChip ? (tipoChip.dataset.tipo || '') : '';
-  var colonia = (document.getElementById('nr-colonia') || {}).value || '';
   _matlachoAddBubble('Mejora esta descripción: "' + desc.substring(0,80) + (desc.length>80?'...' :'"'), true);
-  var result = await _matlachoCallAPI('reporte_ciudadano', { descripcion: desc, tipo_incidencia: tipo, colonia: colonia });
-  if (result) {
-    _matlachoAddBubble('✅ Aquí tienes una versión mejorada:<br><br><i>' + result.texto + '</i><br><br>' +
-      '<button class="matlacho-btn verde" onclick="_matlachoAplicar(\'nr-desc\',\'' +
-      result.texto.replace(/'/g,'&#39;').replace(/\n/g,' ') + '\')" style="margin-top:6px">✅ Aplicar texto</button>', false);
+  var loading = _matlachoAddBubble('🐭 Matlacho está redactando...', false, true);
+  try {
+    // Usar el endpoint público /api/ai/ciudadano (no requiere token)
+    var serverUrl = (typeof SERVER_URL !== 'undefined') ? SERVER_URL : window.location.origin;
+    var resp = await fetch(serverUrl + '/api/ai/ciudadano', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ descripcion: desc }),
+      signal: AbortSignal.timeout(35000)
+    });
+    var d = await resp.json();
+    if (loading) loading.remove();
+    if (d.success && d.data && d.data.texto) {
+      var textoMejorado = d.data.texto;
+      _matlachoAddBubble('✅ Aquí tienes una versión mejorada:<br><br><i>' + textoMejorado + '</i><br><br>' +
+        '<button class="matlacho-btn verde" onclick="_matlachoAplicar(\'nr-desc\',\'' +
+        textoMejorado.replace(/'/g,'&#39;').replace(/\n/g,' ') + '\')" style="margin-top:6px">✅ Aplicar texto</button>', false);
+    } else {
+      _matlachoAddBubble('⚠️ ' + (d.message || 'No pude mejorar la descripción. Intenta de nuevo.'), false);
+    }
+  } catch(e) {
+    if (loading) loading.remove();
+    _matlachoAddBubble('⚠️ No pude conectarme al servidor. Verifica tu conexión e intenta de nuevo.', false);
   }
 }
 
