@@ -40,6 +40,8 @@
   aside a .ic{font-size:1.1rem;width:24px;text-align:center}
   main{flex:1;padding:28px;overflow-y:auto;max-height:calc(100vh - 60px)}
   .page{display:none}.page.active{display:block}
+  .alertas-main{flex:1;padding:28px;overflow-y:auto;max-height:calc(100vh - 60px);}
+  .page-wrapper{display:none}
   h2{font-size:1.3rem;color:var(--verde-oscuro);margin-bottom:20px;display:flex;align-items:center;gap:8px}
   .card{background:#fff;border-radius:12px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:20px}
   .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;margin-bottom:24px}
@@ -570,20 +572,6 @@
         </div>
       </div>
 
-      <!-- ══ PÁGINA ALERTAS ══════════════════════════════════════════════ -->
-  <div class="page-wrapper" style="display:none" id="page-alertas-wrapper">
-    <main class="main-content">
-      <div id="page-alertas" class="page active">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <h2 style="margin:0">🔔 Alertas de Apercibimientos</h2>
-          <button class="btn btn-primary" onclick="cargarAlertas()" style="font-size:.8rem;padding:6px 14px">🔄 Actualizar</button>
-        </div>
-        <div id="alertas-summary" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"></div>
-        <div id="alertas-lista"><p style="color:#94a3b8;text-align:center">Cargando alertas...</p></div>
-      </div>
-    </main>
-  </div>
-</div>
 
 
 
@@ -1172,6 +1160,18 @@
 
     </main>
   </div><!-- end app-layout -->
+
+  <!-- ══ PÁGINA ALERTAS (fuera del app-layout, con su propio panel) ════════ -->
+  <div class="page-wrapper" style="display:none;position:fixed;inset:0;top:60px;z-index:100;background:var(--gris);overflow-y:auto;padding:28px" id="page-alertas-wrapper">
+    <div id="page-alertas">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <h2 style="margin:0">🔔 Alertas de Apercibimientos</h2>
+        <button class="btn btn-primary" onclick="cargarAlertas()" style="font-size:.8rem;padding:6px 14px">🔄 Actualizar</button>
+      </div>
+      <div id="alertas-summary" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"></div>
+      <div id="alertas-lista"><p style="color:#94a3b8;text-align:center">Cargando alertas...</p></div>
+    </div>
+  </div>
 
 
 
