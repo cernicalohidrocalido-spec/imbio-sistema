@@ -1282,7 +1282,7 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             if estado_v:     vers = [v for v in vers if v.get('estado') == estado_v]
             if inspector_v:  vers = [v for v in vers if str(v.get('inspector_id','')) == inspector_v]
             if user['rol'] == 'inspector':
-                vers = [v for v in vers if v.get('inspector_id') == user['id']]
+                vers = [v for v in vers if str(v.get('inspector_id','')) == str(user['id'])]
             self.ok({'verificaciones': vers, 'total': len(vers)})
             return
 
