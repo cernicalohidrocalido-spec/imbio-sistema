@@ -189,6 +189,7 @@
       <a onclick="showPage('actas')" id="nav-actas"><span class="ic">📋</span> Actas</a>
       <a onclick="showPage('establecimientos')" id="nav-establecimientos"><span class="ic">🏪</span> Establecimientos</a>
       <a onclick="showPage('verificaciones')" id="nav-verificaciones"><span class="ic">🔍</span> Verificaciones</a>
+      <a onclick="showPage('acerca')" id="nav-acerca"><span class="ic">ℹ️</span> Acerca de</a>
     </aside>
     <main>
 
@@ -719,6 +720,104 @@
         </div>
 
       </div><!-- fin page-verificaciones -->
+
+      <!-- ══════════════════════════════════════════════════════════
+           ACERCA DE — Créditos SGO-IMBIO
+      ══════════════════════════════════════════════════════════ -->
+      <div id="page-acerca" class="page">
+        <h2 style="margin:0 0 20px">ℹ️ Acerca de la Plataforma</h2>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;max-width:900px">
+
+          <!-- Presentación -->
+          <div class="card" style="padding:28px;text-align:center">
+            <div style="font-size:3.8rem;margin-bottom:12px">🌿</div>
+            <h2 style="color:var(--verde-oscuro);margin:0 0 6px;font-size:1.45rem">SGO-IMBIO</h2>
+            <p style="color:#64748b;font-size:.88rem;line-height:1.5;margin:0 0 16px">
+              Sistema de Gestión Operativa del Instituto Municipal de Biodiversidad y Protección Ambiental de Pabellón de Arteaga, Aguascalientes.
+            </p>
+            <span style="display:inline-block;background:#e8f8f0;color:var(--verde-oscuro);padding:4px 16px;border-radius:99px;font-size:.78rem;font-weight:700;letter-spacing:.05em">VERSIÓN 2.0.0 · 2026</span>
+          </div>
+
+          <!-- Desarrollo -->
+          <div class="card" style="padding:24px">
+            <h3 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:0 0 16px">👨‍💻 Desarrollo</h3>
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;gap:12px;align-items:flex-start">
+                <div style="font-size:1.5rem;flex-shrink:0">🧬</div>
+                <div>
+                  <div style="font-weight:700;font-size:.92rem;color:#1a3a5c">Biol. Luis Felipe Lozano Román</div>
+                  <div style="font-size:.78rem;color:#64748b;margin-top:2px">Diseño, desarrollo e implementación del sistema</div>
+                  <div style="font-size:.78rem;color:#64748b">Director IMBIO · Pabellón de Arteaga</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:12px;align-items:flex-start">
+                <div style="font-size:1.5rem;flex-shrink:0">🐭</div>
+                <div>
+                  <div style="font-weight:700;font-size:.92rem;color:#1a3a5c">IA Matlacho — Asistente Ambiental</div>
+                  <div style="font-size:.78rem;color:#64748b;margin-top:2px">Asistente inteligente integrado con Claude (Anthropic)</div>
+                  <div style="font-size:.78rem;color:#64748b">Redacción de actas, análisis y apoyo operativo</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Institución -->
+          <div class="card" style="padding:24px">
+            <h3 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:0 0 16px">🏛️ Institución</h3>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;gap:10px;align-items:center">
+                <span style="font-size:1.1rem;width:24px;text-align:center">🏛️</span>
+                <div><div style="font-size:.7rem;font-weight:700;text-transform:uppercase;color:#94a3b8">Organismo</div><div style="font-size:.88rem;font-weight:600;color:#1a3a5c">Instituto Municipal de Biodiversidad y Protección Ambiental</div></div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:center">
+                <span style="font-size:1.1rem;width:24px;text-align:center">📍</span>
+                <div><div style="font-size:.7rem;font-weight:700;text-transform:uppercase;color:#94a3b8">Municipio</div><div style="font-size:.88rem;font-weight:600;color:#1a3a5c">Pabellón de Arteaga, Aguascalientes</div></div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:center">
+                <span style="font-size:1.1rem;width:24px;text-align:center">📧</span>
+                <div><div style="font-size:.7rem;font-weight:700;text-transform:uppercase;color:#94a3b8">Contacto</div><div style="font-size:.88rem;font-weight:600;color:#1a3a5c">imbio@pabellon.gob.mx</div></div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:center">
+                <span style="font-size:1.1rem;width:24px;text-align:center">📞</span>
+                <div><div style="font-size:.7rem;font-weight:700;text-transform:uppercase;color:#94a3b8">Emergencias</div><div style="font-size:.88rem;font-weight:600;color:#1a3a5c">911 / Protección Civil</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tecnología -->
+          <div class="card" style="padding:24px">
+            <h3 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:0 0 16px">⚙️ Tecnología</h3>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:8px">
+                <span style="font-size:.85rem;font-weight:600;color:#1a3a5c">🐍 Backend</span>
+                <span style="font-size:.78rem;color:#64748b">Python · HTTP Server</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:8px">
+                <span style="font-size:.85rem;font-weight:600;color:#1a3a5c">🗺️ Mapas</span>
+                <span style="font-size:.78rem;color:#64748b">Leaflet.js · OpenStreetMap</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:8px">
+                <span style="font-size:.85rem;font-weight:600;color:#1a3a5c">🤖 IA</span>
+                <span style="font-size:.78rem;color:#64748b">Claude Haiku · Anthropic</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:8px">
+                <span style="font-size:.85rem;font-weight:600;color:#1a3a5c">☁️ Hosting</span>
+                <span style="font-size:.78rem;color:#64748b">Railway.app</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:8px">
+                <span style="font-size:.85rem;font-weight:600;color:#1a3a5c">📄 Documentos</span>
+                <span style="font-size:.78rem;color:#64748b">HTML → PDF nativo</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="margin-top:20px;max-width:900px;padding:14px 16px;background:#f0f4fa;border-radius:10px;text-align:center;font-size:.78rem;color:#64748b;border:1px solid #e2e8f0">
+          © 2026 · Municipio de Pabellón de Arteaga · Instituto Municipal de Biodiversidad y Protección Ambiental (IMBIO) · Todos los derechos reservados · Sistema de uso exclusivo del personal autorizado.
+        </div>
+      </div><!-- fin page-acerca -->
 
       <!-- MODAL: DENUE INEGI STATUS -->
       <div id="modal-denue" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px">
