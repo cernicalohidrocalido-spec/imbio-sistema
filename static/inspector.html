@@ -419,6 +419,9 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
     <div class="itab" id="tab-proceso" onclick="setTab('proceso')">
       <span class="ic">🔄</span><span>En Proceso</span>
     </div>
+    <div class="itab" id="tab-verificaciones" onclick="setTab('verificaciones')">
+      <span class="ic">🏪</span><span>Verificaciones</span>
+    </div>
     <div class="itab" id="tab-actas" onclick="setTab('actas-list')">
       <span class="ic">📄</span><span>Mis Actas</span>
     </div>
@@ -510,6 +513,73 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
       </div>
     </div>
 
+
+    <!-- VERIFICACIONES DE COMERCIOS -->
+    <div id="screen-verificaciones" class="iscreen">
+      <div class="ipad">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+          <h2 style="font-size:1rem;font-weight:800;color:var(--verde-oscuro);margin:0">🏪 Mis Verificaciones</h2>
+          <button class="ibtn ibtn-secondary ibtn-sm" onclick="cargarVerificacionesInspector()">🔄 Actualizar</button>
+        </div>
+        <div id="alert-verif-insp"></div>
+        <div id="lista-verif-inspector">
+          <div style="text-align:center;padding:40px;color:var(--muted)">
+            <div style="font-size:2.5rem;margin-bottom:8px">🏪</div>
+            <p style="font-size:.85rem">Cargando verificaciones...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL DETALLE VERIFICACIÓN (inspector) -->
+    <div id="modal-verif-insp" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.5);align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
+      <div style="background:#fff;border-radius:16px;width:100%;max-width:520px;padding:24px;margin:auto">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 id="verif-insp-titulo" style="font-size:1rem;font-weight:800;color:#1a3a5c;margin:0">🔍 Verificación</h3>
+          <button onclick="document.getElementById('modal-verif-insp').style.display='none'" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888">✕</button>
+        </div>
+        <div id="verif-insp-info" style="font-size:.83rem;line-height:1.8;background:#f0f4ff;border-radius:10px;padding:12px 14px;margin-bottom:14px"></div>
+
+        <!-- Checklist -->
+        <div style="font-size:.78rem;font-weight:800;color:#1a3a5c;margin-bottom:8px">✅ Checklist de Verificación</div>
+        <div id="verif-insp-checklist" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;max-height:220px;overflow-y:auto;padding:2px"></div>
+
+        <!-- Hallazgos -->
+        <div style="font-size:.78rem;font-weight:800;color:#1a3a5c;margin-bottom:6px">📝 Hallazgos / Observaciones</div>
+        <textarea id="verif-insp-hallazgos" rows="4" placeholder="Describe detalladamente lo encontrado durante la verificación..."
+          style="width:100%;padding:10px 12px;border:1.5px solid var(--borde);border-radius:8px;font-size:.83rem;resize:vertical;outline:none;margin-bottom:12px"></textarea>
+
+        <!-- Resultado -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+          <div>
+            <div style="font-size:.78rem;font-weight:800;color:#1a3a5c;margin-bottom:6px">🎯 Resultado General</div>
+            <select id="verif-insp-resultado" style="width:100%;padding:9px 10px;border:1.5px solid var(--borde);border-radius:8px;font-size:.83rem">
+              <option value="">-- Seleccionar --</option>
+              <option value="cumple">✅ Cumple</option>
+              <option value="cumple_con_observaciones">⚠️ Cumple con observaciones</option>
+              <option value="no_cumple">❌ No cumple</option>
+              <option value="no_aplica">➖ No aplica</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:.78rem;font-weight:800;color:#1a3a5c;margin-bottom:6px">⚡ Acción requerida</div>
+            <select id="verif-insp-accion" style="width:100%;padding:9px 10px;border:1.5px solid var(--borde);border-radius:8px;font-size:.83rem">
+              <option value="ninguna">✅ Ninguna acción requerida</option>
+              <option value="orientacion">💬 Orientación al responsable</option>
+              <option value="acta_inspeccion">📋 Levantar acta de inspección</option>
+              <option value="reinspeccion">🔄 Programar reinspección</option>
+              <option value="apercibimiento">⚠️ Iniciar apercibimiento</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="verif-insp-alert" style="margin-bottom:10px"></div>
+        <div style="display:flex;gap:10px">
+          <button onclick="document.getElementById('modal-verif-insp').style.display='none'" class="ibtn ibtn-ghost" style="flex:1">Cerrar</button>
+          <button onclick="guardarVerificacionInspector()" class="ibtn ibtn-success" style="flex:2">✅ Guardar y Completar</button>
+        </div>
+      </div>
+    </div>
 
     <!-- ACERCA -->
     <div id="screen-acerca" class="iscreen">
@@ -776,15 +846,16 @@ function showApp() {
 // ── TABS ─────────────────────────────────────────────────
 function setTab(name) {
   if (name === 'actas-list') { window._actasFiltro = null; }
-  ['asignados','proceso','actas-list','acerca'].forEach(t => {
+  ['asignados','proceso','verificaciones','actas-list','acerca'].forEach(t => {
     document.getElementById('screen-' + t)?.classList.toggle('active', t === name);
     const tabId = t === 'actas-list' ? 'actas' : t;
     document.getElementById('tab-' + tabId)?.classList.toggle('active', t === name);
   });
-  if (name === 'asignados')  loadReportes('asignado');
-  if (name === 'proceso')    loadReportes('en_proceso');
-  if (name === 'actas-list') renderMisActas();
-  if (name === 'acerca')     initAcerca();
+  if (name === 'asignados')      loadReportes('asignado');
+  if (name === 'proceso')        loadReportes('en_proceso');
+  if (name === 'actas-list')     renderMisActas();
+  if (name === 'acerca')         initAcerca();
+  if (name === 'verificaciones') cargarVerificacionesInspector();
 }
 
 // ── CONEXIÓN ─────────────────────────────────────────────
@@ -1103,83 +1174,60 @@ function initMapaDetalle(lat, lon) {
 }
 
 // ── ANIMAL AGRESIVO ──────────────────────────────────────────────────────────
-let _bpSel = new Set();
-
-function toggleBP(id) {
-  const el = document.getElementById('bp-' + id);
-  if (!el) return;
-  if (_bpSel.has(id)) { _bpSel.delete(id); el.classList.remove('sel'); }
-  else                { _bpSel.add(id);    el.classList.add('sel'); }
-  document.getElementById('an-zonas-mordida').value = [..._bpSel].join(',');
-  const lbl = document.getElementById('an-zonas-label');
-  if (lbl) lbl.textContent = _bpSel.size
-    ? 'Zonas: ' + [..._bpSel].map(z => z.replace('-',' ')).join(', ')
-    : 'Ninguna zona seleccionada';
-}
-
-function selGravedad(g) {
-  document.getElementById('an-gravedad').value = g;
-  document.getElementById('grav-sup').className = 'gravedad-btn' + (g==='superficial'?' sel-sup':'');
-  document.getElementById('grav-pro').className = 'gravedad-btn' + (g==='profunda'?' sel-pro':'');
-}
-
-function selAtencion(v) {
-  document.getElementById('an-atencion-medica').value = v;
-  ['si','no','nd'].forEach(function(x) {
-    var b = document.getElementById('atmed-'+x);
-    if (b) b.style.background = x===v ? 'var(--azul-bg)' : '';
-    if (b) b.style.borderColor = x===v ? 'var(--azul-claro)' : '';
-  });
-}
-
-function selVacuna(v) {
-  document.getElementById('an-vacuna').value = v;
-  ['si','no','nd'].forEach(function(x) {
-    var b = document.getElementById('vac-'+x);
-    if (b) b.style.background = x===v ? (v==='si'?'#dcfce7':v==='no'?'#fee2e2':'var(--azul-bg)') : '';
-    if (b) b.style.borderColor = x===v ? (v==='si'?'#16a34a':v==='no'?'#dc2626':'var(--azul-claro)') : '';
-  });
-}
-
-function selDueño(v) {
-  document.getElementById('an-dueño-identificado').value = v;
-  ['si','no'].forEach(function(x) {
-    var b = document.getElementById('dueño-'+x);
-    if (b) b.style.background = x===v ? 'var(--azul-bg)' : '';
-    if (b) b.style.borderColor = x===v ? 'var(--azul-claro)' : '';
-  });
-  var wrap = document.getElementById('dueño-datos-wrap');
-  if (wrap) wrap.style.display = v==='si' ? 'block' : 'none';
-}
 
 function mostrarSeccionAnimal(tipoReporte) {
-  var sec = document.getElementById('seccion-animal-agresivo');
-  var secArb = document.getElementById('seccion-arbolado-wrap');
-  var esAnimal = (tipoReporte === 'perro_agresivo' || tipoReporte === 'animal_calle');
-  if (sec) sec.style.display = esAnimal ? 'block' : 'none';
-  if (secArb) secArb.style.display = esAnimal ? 'none' : 'block';
+  // The animal section is now built dynamically by _buildActaForm() based on esAnimal flag.
+  // This function handles the initial visibility of victim/figura sections after form build.
+  setTimeout(function() {
+    var tipoSelect = document.getElementById('anim-tipo-incidente');
+    var tipoActual = tipoSelect ? tipoSelect.value : 'mordida';
+    toggleVictimaSection(tipoActual);
+  }, 100);
 }
 
 function resetAnimalForm() {
-  _bpSel = new Set();
-  document.querySelectorAll('.body-part').forEach(function(el){ el.classList.remove('sel'); });
-  var zl = document.getElementById('an-zonas-label');
-  if (zl) zl.textContent = 'Ninguna zona seleccionada';
-  ['an-gravedad','an-atencion-medica','an-vacuna','an-dueño-identificado'].forEach(function(id){
-    var el = document.getElementById(id); if(el) el.value='';
+  // Reset figura de mordida
+  document.querySelectorAll('.iz.hit').forEach(function(el){ el.classList.remove('hit'); });
+  var zl = document.getElementById('mordida-zonas-lista');
+  if (zl) zl.innerHTML = '<em>Ninguna seleccionada</em>';
+  var zd = document.getElementById('mordida-zonas-data');
+  if (zd) zd.value = '';
+  var gd = document.getElementById('mordida-gravedad-data');
+  if (gd) gd.value = 'superficial';
+  var gsup = document.getElementById('grav-sup');
+  var gpro = document.getElementById('grav-pro');
+  if (gsup) { gsup.className = 'grav-btn-insp sel-sup'; }
+  if (gpro) { gpro.className = 'grav-btn-insp'; }
+  // Reset selects and inputs con nuevos IDs
+  ['anim-tipo-incidente','anim-especie','anim-condicion','anim-situacion','anim-duenio','anim-vacuna','anim-destino',
+   'vic-atencion','vic-gravedad'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.value = el.options ? el.options[0].value : '';
   });
-  ['grav-sup','grav-pro','atmed-si','atmed-no','atmed-nd','vac-si','vac-no','vac-nd','dueño-si','dueño-no'].forEach(function(id){
-    var b=document.getElementById(id); if(b){b.style.background='';b.style.borderColor='';}
+  ['anim-lugar-incidente','anim-raza','anim-recomendaciones',
+   'vic-nombre','vic-edad','vic-telefono','vic-domicilio'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.value = '';
   });
-  var wrap=document.getElementById('dueño-datos-wrap');
-  if(wrap) wrap.style.display='none';
-  ['an-acc-asegurado','an-acc-traslado','an-acc-cuarentena','an-acc-apercibimiento','an-acc-remision','an-acc-apoyo-medico'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.checked=false;
+  var cnt = document.getElementById('anim-cantidad');
+  if (cnt) cnt.value = '1';
+  // Reset checkboxes
+  ['aa-rescate','aa-traslado','aa-apercibimiento','aa-acta','aa-canaliza','aa-monitoreo'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.checked = false;
   });
-  ['an-victima-nombre','an-victima-tel','an-victima-email','an-victima-dom','an-victima-edad',
-   'an-incidente-desc','an-raza','an-color','an-señas','an-dueño-nombre','an-dueño-tel','an-dueño-dom'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.value='';
+  // Show/hide sections
+  toggleVictimaSection('mordida');
+  // Reset result panels
+  ['anim-riesgo-result','anim-recom-result','anim-auditoria-result'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.style.display = 'none';
   });
+}
+
+function toggleVictimaSection(tipo) {
+  var tiposConVictima = ['mordida','rasguño','amenaza'];
+  var tiposConFigura  = ['mordida','rasguño'];
+  var secVic   = document.getElementById('sec-victima-wrap');
+  var secFig   = document.getElementById('sec-figura-mordida');
+  if (secVic) secVic.style.display = tiposConVictima.includes(tipo) ? 'block' : 'none';
+  if (secFig) secFig.style.display = tiposConFigura.includes(tipo)  ? 'block' : 'none';
 }
 
 function calcDistKm(a, b, c, d) {
@@ -1759,27 +1807,40 @@ async function enviarActa() {
   if (compCat)   formData.append('comp_categoria', compCat);
   if (compArb)   formData.append('comp_arboles',   compArb);
   if (compEsp)   formData.append('comp_especie',   compEsp);
-  // Campos animal agresivo (si aplica)
-  var tipoRep = document.getElementById('acta-report-tipo')?.value || currentReporteTipo;
-  if (tipoRep === 'perro_agresivo' || tipoRep === 'animal_calle') {
+  // Campos animal agresivo (si aplica) — IDs actualizados
+  var tipoRepAnimal = window._actaReporteTipo || '';
+  var esAnimalActa = ['perro_agresivo','animal_calle','animal_maltrato','fauna_silvestre','animal_abandonado'].includes(tipoRepAnimal);
+  if (esAnimalActa) {
+    var gvAn = function(id){ var el=document.getElementById(id); return el?el.value.trim():''; };
+    var gcAn = function(id){ var el=document.getElementById(id); return el?el.checked:false; };
     var anFields = {
-      an_victima: document.getElementById('an-victima-nombre')?.value || '',
-      an_victima_tel: document.getElementById('an-victima-tel')?.value || '',
-      an_zonas: document.getElementById('an-zonas-mordida')?.value || '',
-      an_gravedad: document.getElementById('an-gravedad')?.value || '',
-      an_atencion_medica: document.getElementById('an-atencion-medica')?.value || '',
-      an_incidente: document.getElementById('an-incidente-desc')?.value || '',
-      an_especie: document.getElementById('an-especie')?.value || '',
-      an_raza: document.getElementById('an-raza')?.value || '',
-      an_color: document.getElementById('an-color')?.value || '',
-      an_tamaño: document.getElementById('an-tamaño')?.value || '',
-      an_señas: document.getElementById('an-señas')?.value || '',
-      an_vacuna: document.getElementById('an-vacuna')?.value || '',
-      an_dueño: document.getElementById('an-dueño-identificado')?.value || '',
-      an_dueño_nombre: document.getElementById('an-dueño-nombre')?.value || '',
-      an_dueño_tel: document.getElementById('an-dueño-tel')?.value || '',
-      an_acciones: ['asegurado','traslado','cuarentena','apercibimiento','remision','apoyo-medico']
-        .filter(function(a){ return document.getElementById('an-acc-'+a)?.checked; }).join(',')
+      // Víctima
+      vic_nombre:        gvAn('vic-nombre'),
+      vic_edad:          gvAn('vic-edad'),
+      vic_telefono:      gvAn('vic-telefono'),
+      vic_domicilio:     gvAn('vic-domicilio'),
+      vic_atencion:      gvAn('vic-atencion'),
+      vic_gravedad:      gvAn('vic-gravedad'),
+      // Lesión
+      mordida_zonas:     gvAn('mordida-zonas-data'),
+      mordida_gravedad:  gvAn('mordida-gravedad-data'),
+      // Animal
+      anim_tipo_incidente: gvAn('anim-tipo-incidente'),
+      anim_especie:      gvAn('anim-especie'),
+      anim_cantidad:     gvAn('anim-cantidad'),
+      anim_raza:         gvAn('anim-raza'),
+      anim_condicion:    gvAn('anim-condicion'),
+      anim_situacion:    gvAn('anim-situacion'),
+      anim_duenio:       gvAn('anim-duenio'),
+      anim_vacuna:       gvAn('anim-vacuna'),
+      anim_destino:      gvAn('anim-destino'),
+      anim_recomendaciones: gvAn('anim-recomendaciones'),
+      // Acciones
+      acciones_animal: ['aa-rescate','aa-traslado','aa-apercibimiento','aa-acta','aa-canaliza','aa-monitoreo']
+        .filter(function(id){ return gcAn(id); })
+        .map(function(id){ return ({'aa-rescate':'Rescate','aa-traslado':'Traslado a albergue',
+          'aa-apercibimiento':'Orientación al propietario','aa-acta':'Notificación al propietario',
+          'aa-canaliza':'Canalización a autoridad','aa-monitoreo':'Monitoreo'})[id]; }).join(', ')
     };
     Object.keys(anFields).forEach(function(k){ if(anFields[k]) formData.append(k, anFields[k]); });
   }
@@ -2129,6 +2190,131 @@ function renderMisActas() {
 }
 
 // ── HELPERS ───────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════
+// VERIFICACIONES DE COMERCIOS — INSPECTOR
+// ════════════════════════════════════════════════════════════════
+
+var _verifInspCache = [];
+var _verifInspActual = null;
+
+async function cargarVerificacionesInspector() {
+  var lista = document.getElementById('lista-verif-inspector');
+  if (!lista) return;
+  lista.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted)">⏳ Cargando...</div>';
+  try {
+    var r = await api('/api/verificaciones');
+    if (!r.success) {
+      lista.innerHTML = '<div style="text-align:center;padding:30px;color:#dc2626">Error al cargar verificaciones.</div>';
+      return;
+    }
+    _verifInspCache = r.data.verificaciones || [];
+    if (!_verifInspCache.length) {
+      lista.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--muted)"><div style="font-size:2.5rem;margin-bottom:10px">🏪</div><p style="font-size:.88rem;line-height:1.6">No tienes verificaciones asignadas.</p></div>';
+      return;
+    }
+    var EST_COLORS = { programada:'#3b82f6', en_proceso:'#f59e0b', completada:'#22c55e', cancelada:'#9ca3af' };
+    var EST_LABELS = { programada:'📅 Programada', en_proceso:'🔄 En Proceso', completada:'✅ Completada', cancelada:'❌ Cancelada' };
+    lista.innerHTML = _verifInspCache.map(function(v) {
+      return '<div style="background:#fff;border-radius:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);border-left:4px solid ' + (EST_COLORS[v.estado]||'#888') + ';overflow:hidden">' +
+        '<div style="padding:12px 14px">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">' +
+            '<div>' +
+              '<div style="font-family:monospace;font-size:.75rem;font-weight:700;color:#1a3a5c">' + v.folio + '</div>' +
+              '<div style="font-weight:800;font-size:.95rem;margin-top:2px">' + (v.establecimiento_nombre||'–') + '</div>' +
+              '<div style="font-size:.78rem;color:#888">' + (v.establecimiento_giro||'')' + '</div>' +
+            '</div>' +
+            '<span style="background:' + (EST_COLORS[v.estado]||'#888') + '20;color:' + (EST_COLORS[v.estado]||'#888') + ';padding:3px 9px;border-radius:99px;font-size:.72rem;font-weight:700">' + (EST_LABELS[v.estado]||v.estado) + '</span>' +
+          '</div>' +
+          '<div style="font-size:.80rem;color:#555;line-height:1.6">' +
+            '<div>📍 ' + (v.establecimiento_domicilio||'–') + '</div>' +
+            (v.fecha_programada ? '<div>📅 Fecha: <b>' + new Date(v.fecha_programada+'T00:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'}) + '</b></div>' : '') +
+            (v.motivo ? '<div>📝 ' + v.motivo.substring(0,80) + (v.motivo.length>80?'...':'') + '</div>' : '') +
+          '</div>' +
+        '</div>' +
+        (v.estado !== 'completada' && v.estado !== 'cancelada' ?
+          '<div style="padding:8px 14px;background:#f8fafc;border-top:1px solid #f1f5f9"><button onclick="abrirVerifInspector(' + v.id + ')" style="width:100%;padding:9px;background:linear-gradient(135deg,#1a3a5c,#1e40af);color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer">📝 Registrar Hallazgos</button></div>' :
+          '<div style="padding:8px 14px;background:#f0fdf4;border-top:1px solid #bbf7d0;font-size:.78rem;color:#15803d;font-weight:700;text-align:center">✅ Verificación completada</div>'
+        ) +
+        '</div>';
+    }).join('');
+  } catch(e) {
+    lista.innerHTML = '<div style="text-align:center;padding:30px;color:#dc2626">Error: ' + e.message + '</div>';
+  }
+}
+
+function abrirVerifInspector(vid) {
+  _verifInspActual = _verifInspCache.find(function(v){ return v.id === vid; });
+  if (!_verifInspActual) return;
+  var v = _verifInspActual;
+  document.getElementById('verif-insp-titulo').textContent = '🔍 ' + v.folio + ' — ' + v.establecimiento_nombre;
+  document.getElementById('verif-insp-info').innerHTML =
+    '<b>🏪 Establecimiento:</b> ' + v.establecimiento_nombre + '<br>' +
+    '<b>📍 Domicilio:</b> ' + (v.establecimiento_domicilio||'–') + '<br>' +
+    '<b>🏷️ Giro:</b> ' + (v.establecimiento_giro||'–') + '<br>' +
+    '<b>📅 Fecha programada:</b> ' + (v.fecha_programada||'–') + '<br>' +
+    (v.motivo ? '<b>📝 Motivo:</b> ' + v.motivo + '<br>' : '');
+  var ITEM_LABELS = {
+    licencia_vigente:'Licencia de funcionamiento', dictamen_ambiental:'Dictamen ambiental',
+    contenedores_residuos:'Contenedores de residuos', separacion_residuos:'Separación de residuos',
+    trampa_grasas:'Trampa de grasas', descarga_aguas:'Descarga de aguas',
+    nivel_ruido:'Nivel de ruido', emisiones_aire:'Emisiones al aire',
+    almacen_productos:'Almacenamiento peligrosos', areas_verdes_predio:'Áreas verdes',
+    fauna_control:'Control fauna nociva', senaletica:'Señalética',
+    uso_suelo:'Uso de suelo', proteccion_civil:'Protección Civil'
+  };
+  var ckWrap = document.getElementById('verif-insp-checklist');
+  if (v.checklist && v.checklist.length) {
+    ckWrap.innerHTML = v.checklist.map(function(ck, i) {
+      return '<div style="display:flex;align-items:center;gap:6px;background:#f8fafc;border:1px solid var(--borde);border-radius:7px;padding:7px 9px">' +
+        '<select id="ck-res-' + i + '" style="flex:none;width:90px;padding:4px 6px;border:1px solid var(--borde);border-radius:5px;font-size:.72rem">' +
+          '<option value="pendiente" ' + (ck.resultado==='pendiente'?'selected':'') + '>⏳ Pend.</option>' +
+          '<option value="cumple" ' + (ck.resultado==='cumple'?'selected':'') + '>✅ Cumple</option>' +
+          '<option value="no_cumple" ' + (ck.resultado==='no_cumple'?'selected':'') + '>❌ No</option>' +
+          '<option value="no_aplica" ' + (ck.resultado==='no_aplica'?'selected':'') + '>➖ N/A</option>' +
+        '</select>' +
+        '<span style="font-size:.75rem;color:#374151">' + (ITEM_LABELS[ck.item]||ck.item) + '</span>' +
+      '</div>';
+    }).join('');
+  } else {
+    ckWrap.innerHTML = '<div style="grid-column:1/-1;color:#94a3b8;font-size:.78rem;padding:8px">Sin checklist definido.</div>';
+  }
+  document.getElementById('verif-insp-hallazgos').value = v.hallazgos || '';
+  document.getElementById('verif-insp-resultado').value  = v.resultado || '';
+  document.getElementById('verif-insp-accion').value     = v.accion_requerida || 'ninguna';
+  document.getElementById('verif-insp-alert').innerHTML  = '';
+  document.getElementById('modal-verif-insp').style.display = 'flex';
+}
+
+async function guardarVerificacionInspector() {
+  if (!_verifInspActual) return;
+  var alertEl = document.getElementById('verif-insp-alert');
+  var resultado = document.getElementById('verif-insp-resultado').value;
+  if (!resultado) {
+    alertEl.innerHTML = '<div style="background:#fee2e2;color:#991b1b;padding:8px 12px;border-radius:7px;font-size:.78rem">Selecciona el resultado general antes de guardar.</div>';
+    return;
+  }
+  var hallazgos = document.getElementById('verif-insp-hallazgos').value.trim();
+  var accion    = document.getElementById('verif-insp-accion').value;
+  var checklistActualizado = (_verifInspActual.checklist||[]).map(function(ck, i) {
+    var sel = document.getElementById('ck-res-' + i);
+    return { item: ck.item, resultado: sel ? sel.value : ck.resultado };
+  });
+  alertEl.innerHTML = '<div style="color:#1a3a5c;font-size:.78rem">⏳ Guardando...</div>';
+  var r = await api('/api/verificaciones/' + _verifInspActual.id, 'PATCH', {
+    resultado: resultado,
+    hallazgos: hallazgos,
+    accion_requerida: accion,
+    checklist: checklistActualizado,
+    estado: 'completada'
+  });
+  if (r.success) {
+    document.getElementById('modal-verif-insp').style.display = 'none';
+    cargarVerificacionesInspector();
+  } else {
+    alertEl.innerHTML = '<div style="background:#fee2e2;color:#991b1b;padding:8px 12px;border-radius:7px;font-size:.78rem">Error: ' + (r.message||'No se pudo guardar.') + '</div>';
+  }
+}
+
 function initAcerca() {
   // Mostrar usuario en sesión
   const uEl = document.getElementById('acerca-usuario');
@@ -2564,22 +2750,22 @@ function _buildActaForm() {
   // ── SECCIÓN ANIMAL (denuncia animal) ────────────────────────────────────
   var seccionAnimal = esAnimal ? `
 
-    <!-- ══ ACTA DE INSPECCIÓN ANIMAL ══════════════════════════════════════ -->
-    <!-- Esta acta SOLO documenta el incidente. No sanciona ni ordena medidas administrativas. -->
+    <!-- ══ ACTA DE INSPECCIÓN ANIMAL ══ -->
 
-    <!-- BLQ 1: TIPO DE INCIDENTE ANIMAL -->
+    <!-- BLQ 1: TIPO Y CONTEXTO -->
     <div class="section-title" style="background:#1a3a5c">🐾 2. Tipo de Incidente y Contexto</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px">
       <div class="fg">
         <label>Tipo de incidente</label>
-        <select id="anim-tipo-incidente" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem"
-          onchange="matlachoAnimalContexto()">
+        <select id="anim-tipo-incidente"
+          style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem"
+          onchange="toggleVictimaSection(this.value)">
           <option value="mordida">🦷 Mordida / ataque a persona</option>
           <option value="rasguño">🐾 Rasguño / contacto agresivo</option>
           <option value="amenaza">⚠️ Comportamiento amenazante sin contacto</option>
           <option value="calle_suelto">🛣️ Animal en vía pública suelto</option>
-          <option value="calle_jauría">🐕‍🦺 Jauría callejera</option>
-          <option value="maltrato">😢 Maltrato o negligencia animal</option>
+          <option value="jauría">🐕‍🦺 Jauría callejera</option>
+          <option value="maltrato">😢 Maltrato o negligencia</option>
           <option value="abandono">🚫 Abandono de animal</option>
           <option value="fauna_silvestre">🦎 Fauna silvestre en zona urbana</option>
           <option value="otro">📌 Otro</option>
@@ -2587,7 +2773,7 @@ function _buildActaForm() {
       </div>
       <div class="fg">
         <label>Lugar exacto del incidente</label>
-        <input id="anim-lugar-incidente" placeholder="Calle, colonia, referencia exacta"
+        <input id="anim-lugar-incidente" placeholder="Calle, colonia, referencia"
           style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
       </div>
       <div class="fg">
@@ -2596,20 +2782,20 @@ function _buildActaForm() {
           style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
       </div>
       <div class="fg">
-        <label>Hora aproximada del incidente</label>
+        <label>Hora aproximada</label>
         <input id="anim-hora-incidente" type="time"
           style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
       </div>
     </div>
 
-    <!-- BLQ 2: VÍCTIMA / AFECTADO (si aplica) -->
+    <!-- BLQ 2: VÍCTIMA (solo cuando hay contacto físico) -->
     <div id="sec-victima-wrap">
-      <div style="background:#fff3e0;border:1.5px solid #f59e0b;border-radius:9px;padding:12px 14px;margin-bottom:12px">
+      <div style="background:#fff3e0;border:1.5px solid #f59e0b;border-radius:9px;padding:12px 14px;margin-bottom:10px">
         <div style="font-size:.75rem;font-weight:800;color:#92400e;margin-bottom:10px">👤 Datos del Afectado / Víctima</div>
         <div class="form-grid">
           <div class="fg fg2">
-            <label>Nombre completo de la víctima *</label>
-            <input id="vic-nombre" placeholder="Nombre y apellidos" style="border-color:#f59e0b">
+            <label>Nombre completo</label>
+            <input id="vic-nombre" placeholder="Nombre de la persona afectada">
           </div>
           <div class="fg">
             <label>Edad</label>
@@ -2617,17 +2803,17 @@ function _buildActaForm() {
           </div>
           <div class="fg">
             <label>Teléfono de contacto</label>
-            <input id="vic-telefono" type="tel" placeholder="Número de contacto">
+            <input id="vic-telefono" type="tel" placeholder="449 000 0000">
           </div>
           <div class="fg fg2">
-            <label>Domicilio de la víctima</label>
+            <label>Domicilio</label>
             <input id="vic-domicilio" placeholder="Calle, número, colonia">
           </div>
           <div class="fg">
-            <label>¿Recibió atención médica?</label>
+            <label>Atención médica</label>
             <select id="vic-atencion">
               <option value="no">No requerida</option>
-              <option value="urgencias">Sí — Urgencias hospitalarias</option>
+              <option value="urgencias">Sí — Urgencias</option>
               <option value="medico">Sí — Médico particular</option>
               <option value="pendiente">Pendiente de valoración</option>
             </select>
@@ -2636,95 +2822,95 @@ function _buildActaForm() {
             <label>Gravedad de las lesiones</label>
             <select id="vic-gravedad">
               <option value="">Seleccionar...</option>
-              <option value="superficial">Superficial — Raspón/eritema</option>
-              <option value="leve">Leve — Herida menor sin sutura</option>
+              <option value="superficial">Superficial — Raspón</option>
+              <option value="leve">Leve — Herida menor</option>
               <option value="moderada">Moderada — Requiere sutura</option>
-              <option value="grave">Grave — Herida profunda/múltiple</option>
+              <option value="grave">Grave — Herida profunda</option>
             </select>
           </div>
         </div>
       </div>
 
-      <!-- Figura humana interactiva para mordida -->
-      <div style="font-size:.75rem;font-weight:800;color:#1a3a5c;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">
-        🩹 Localización de la Mordida / Lesión (toca la zona afectada)
-      </div>
-      <p style="font-size:.72rem;color:#64748b;margin-bottom:10px;text-align:center">Puedes marcar más de una zona. Las zonas seleccionadas se resaltan en rojo.</p>
-      <div style="display:flex;gap:12px;align-items:flex-start;justify-content:center;flex-wrap:wrap;margin-bottom:12px">
-        <svg id="insp-body-svg" viewBox="0 0 180 400" xmlns="http://www.w3.org/2000/svg"
-          style="width:180px;flex-shrink:0;filter:drop-shadow(0 2px 6px rgba(0,0,0,.12))">
-          <defs>
-            <style>
-              .iz { fill:#e8f4fd; stroke:#1a3a5c; stroke-width:1.8; cursor:pointer; transition:all .18s; }
-              .iz:hover { fill:#b3d6f5; }
-              .iz.hit { fill:#dc2626; stroke:#991b1b; }
-              .iz-t { font-size:7.5px; fill:#1a3a5c; text-anchor:middle; pointer-events:none; font-family:Arial,sans-serif; font-weight:700; }
-            </style>
-          </defs>
-          <ellipse class="iz" id="iz-cabeza" cx="90" cy="30" rx="26" ry="28" onclick="inspecHit('cabeza')"/>
-          <text class="iz-t" x="90" y="33">Cabeza</text>
-          <rect class="iz" id="iz-cuello" x="79" y="56" width="22" height="16" rx="5" onclick="inspecHit('cuello')"/>
-          <text class="iz-t" x="90" y="67">Cuello</text>
-          <ellipse class="iz" id="iz-hombro-izq" cx="55" cy="80" rx="17" ry="12" onclick="inspecHit('hombro_izquierdo')"/>
-          <text class="iz-t" x="55" y="83">Hombro I</text>
-          <ellipse class="iz" id="iz-hombro-der" cx="125" cy="80" rx="17" ry="12" onclick="inspecHit('hombro_derecho')"/>
-          <text class="iz-t" x="125" y="83">Hombro D</text>
-          <rect class="iz" id="iz-pecho" x="64" y="70" width="52" height="38" rx="6" onclick="inspecHit('pecho')"/>
-          <text class="iz-t" x="90" y="92">Pecho</text>
-          <rect class="iz" id="iz-brazo-izq-sup" x="36" y="72" width="18" height="36" rx="6" onclick="inspecHit('brazo_izquierdo_superior')"/>
-          <text class="iz-t" x="45" y="93">Brazo I</text>
-          <rect class="iz" id="iz-brazo-der-sup" x="126" y="72" width="18" height="36" rx="6" onclick="inspecHit('brazo_derecho_superior')"/>
-          <text class="iz-t" x="135" y="93">Brazo D</text>
-          <rect class="iz" id="iz-antebrazo-izq" x="30" y="110" width="16" height="34" rx="5" onclick="inspecHit('antebrazo_izquierdo')"/>
-          <text class="iz-t" x="38" y="130">A.Bra I</text>
-          <rect class="iz" id="iz-antebrazo-der" x="134" y="110" width="16" height="34" rx="5" onclick="inspecHit('antebrazo_derecho')"/>
-          <text class="iz-t" x="142" y="130">A.Bra D</text>
-          <ellipse class="iz" id="iz-mano-izq" cx="37" cy="158" rx="11" ry="14" onclick="inspecHit('mano_izquierda')"/>
-          <text class="iz-t" x="37" y="161">Mano I</text>
-          <ellipse class="iz" id="iz-mano-der" cx="143" cy="158" rx="11" ry="14" onclick="inspecHit('mano_derecha')"/>
-          <text class="iz-t" x="143" y="161">Mano D</text>
-          <rect class="iz" id="iz-abdomen" x="64" y="108" width="52" height="36" rx="6" onclick="inspecHit('abdomen')"/>
-          <text class="iz-t" x="90" y="129">Abdomen</text>
-          <rect class="iz" id="iz-cadera" x="64" y="144" width="52" height="24" rx="5" onclick="inspecHit('cadera')"/>
-          <text class="iz-t" x="90" y="159">Cadera</text>
-          <rect class="iz" id="iz-muslo-izq" x="62" y="168" width="24" height="44" rx="6" onclick="inspecHit('muslo_izquierdo')"/>
-          <text class="iz-t" x="74" y="193">Muslo I</text>
-          <rect class="iz" id="iz-muslo-der" x="94" y="168" width="24" height="44" rx="6" onclick="inspecHit('muslo_derecho')"/>
-          <text class="iz-t" x="106" y="193">Muslo D</text>
-          <ellipse class="iz" id="iz-rodilla-izq" cx="74" cy="222" rx="12" ry="10" onclick="inspecHit('rodilla_izquierda')"/>
-          <text class="iz-t" x="74" y="225">Rod. I</text>
-          <ellipse class="iz" id="iz-rodilla-der" cx="106" cy="222" rx="12" ry="10" onclick="inspecHit('rodilla_derecha')"/>
-          <text class="iz-t" x="106" y="225">Rod. D</text>
-          <rect class="iz" id="iz-pierna-izq" x="62" y="232" width="24" height="44" rx="6" onclick="inspecHit('pierna_izquierda')"/>
-          <text class="iz-t" x="74" y="256">Pierna I</text>
-          <rect class="iz" id="iz-pierna-der" x="94" y="232" width="24" height="44" rx="6" onclick="inspecHit('pierna_derecha')"/>
-          <text class="iz-t" x="106" y="256">Pierna D</text>
-          <rect class="iz" id="iz-tobillo-izq" x="64" y="276" width="20" height="16" rx="4" onclick="inspecHit('tobillo_izquierdo')"/>
-          <text class="iz-t" x="74" y="287">Tobillo I</text>
-          <rect class="iz" id="iz-tobillo-der" x="96" y="276" width="20" height="16" rx="4" onclick="inspecHit('tobillo_derecho')"/>
-          <text class="iz-t" x="106" y="287">Tobillo D</text>
-          <ellipse class="iz" id="iz-pie-izq" cx="72" cy="305" rx="16" ry="10" onclick="inspecHit('pie_izquierdo')"/>
-          <text class="iz-t" x="72" y="308">Pie I</text>
-          <ellipse class="iz" id="iz-pie-der" cx="108" cy="305" rx="16" ry="10" onclick="inspecHit('pie_derecho')"/>
-          <text class="iz-t" x="108" y="308">Pie D</text>
-          <text x="90" y="330" text-anchor="middle" font-size="7" fill="#94a3b8" font-family="Arial,sans-serif">(Toca para seleccionar zona)</text>
-        </svg>
-        <div style="flex:1;min-width:130px">
-          <div style="background:#fff;border:1.5px solid var(--borde);border-radius:10px;padding:12px;min-height:120px">
-            <div style="font-size:.72rem;font-weight:800;color:#1a3a5c;margin-bottom:8px;text-transform:uppercase">🩸 Zonas marcadas:</div>
-            <div id="mordida-zonas-lista" style="font-size:.8rem;color:#64748b;line-height:1.6"><em>Ninguna seleccionada</em></div>
-          </div>
-          <div style="margin-top:10px">
-            <label style="font-size:.75rem;font-weight:700;color:#1a3a5c;display:block;margin-bottom:4px">Gravedad de la mordida</label>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-              <button id="grav-sup" class="grav-btn-insp sel-sup" onclick="selGravMordida('superficial')">✓ Superficial</button>
-              <button id="grav-pro" class="grav-btn-insp" onclick="selGravMordida('profunda')">⚠️ Profunda</button>
+      <!-- Figura de mordida (solo mordida/rasguño) -->
+      <div id="sec-figura-mordida">
+        <div style="font-size:.75rem;font-weight:800;color:#1a3a5c;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">
+          🩹 Localización de la Lesión (toca la zona afectada)
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;justify-content:center;flex-wrap:wrap;margin-bottom:12px">
+          <svg id="insp-body-svg" viewBox="0 0 180 400" xmlns="http://www.w3.org/2000/svg"
+            style="width:180px;flex-shrink:0;filter:drop-shadow(0 2px 6px rgba(0,0,0,.12))">
+            <defs>
+              <style>
+                .iz { fill:#e8f4fd; stroke:#1a3a5c; stroke-width:1.8; cursor:pointer; transition:all .18s; }
+                .iz:hover { fill:#b3d6f5; }
+                .iz.hit { fill:#dc2626; stroke:#991b1b; }
+                .iz-t { font-size:7.5px; fill:#1a3a5c; text-anchor:middle; pointer-events:none; font-family:Arial,sans-serif; font-weight:700; }
+              </style>
+            </defs>
+            <ellipse class="iz" id="iz-cabeza" cx="90" cy="30" rx="26" ry="28" onclick="inspecHit('cabeza')"/>
+            <text class="iz-t" x="90" y="33">Cabeza</text>
+            <rect class="iz" id="iz-cuello" x="79" y="56" width="22" height="16" rx="5" onclick="inspecHit('cuello')"/>
+            <text class="iz-t" x="90" y="67">Cuello</text>
+            <ellipse class="iz" id="iz-hombro-izq" cx="55" cy="80" rx="17" ry="12" onclick="inspecHit('hombro_izquierdo')"/>
+            <text class="iz-t" x="55" y="83">Hombro I</text>
+            <ellipse class="iz" id="iz-hombro-der" cx="125" cy="80" rx="17" ry="12" onclick="inspecHit('hombro_derecho')"/>
+            <text class="iz-t" x="125" y="83">Hombro D</text>
+            <rect class="iz" id="iz-pecho" x="64" y="70" width="52" height="38" rx="6" onclick="inspecHit('pecho')"/>
+            <text class="iz-t" x="90" y="92">Pecho</text>
+            <rect class="iz" id="iz-brazo-izq-sup" x="36" y="72" width="18" height="36" rx="6" onclick="inspecHit('brazo_izquierdo_superior')"/>
+            <text class="iz-t" x="45" y="93">Brazo I</text>
+            <rect class="iz" id="iz-brazo-der-sup" x="126" y="72" width="18" height="36" rx="6" onclick="inspecHit('brazo_derecho_superior')"/>
+            <text class="iz-t" x="135" y="93">Brazo D</text>
+            <rect class="iz" id="iz-antebrazo-izq" x="30" y="110" width="16" height="34" rx="5" onclick="inspecHit('antebrazo_izquierdo')"/>
+            <text class="iz-t" x="38" y="130">A.Bra I</text>
+            <rect class="iz" id="iz-antebrazo-der" x="134" y="110" width="16" height="34" rx="5" onclick="inspecHit('antebrazo_derecho')"/>
+            <text class="iz-t" x="142" y="130">A.Bra D</text>
+            <ellipse class="iz" id="iz-mano-izq" cx="37" cy="158" rx="11" ry="14" onclick="inspecHit('mano_izquierda')"/>
+            <text class="iz-t" x="37" y="161">Mano I</text>
+            <ellipse class="iz" id="iz-mano-der" cx="143" cy="158" rx="11" ry="14" onclick="inspecHit('mano_derecha')"/>
+            <text class="iz-t" x="143" y="161">Mano D</text>
+            <rect class="iz" id="iz-abdomen" x="64" y="108" width="52" height="36" rx="6" onclick="inspecHit('abdomen')"/>
+            <text class="iz-t" x="90" y="129">Abdomen</text>
+            <rect class="iz" id="iz-cadera" x="64" y="144" width="52" height="24" rx="5" onclick="inspecHit('cadera')"/>
+            <text class="iz-t" x="90" y="159">Cadera</text>
+            <rect class="iz" id="iz-muslo-izq" x="62" y="168" width="24" height="44" rx="6" onclick="inspecHit('muslo_izquierdo')"/>
+            <text class="iz-t" x="74" y="193">Muslo I</text>
+            <rect class="iz" id="iz-muslo-der" x="94" y="168" width="24" height="44" rx="6" onclick="inspecHit('muslo_derecho')"/>
+            <text class="iz-t" x="106" y="193">Muslo D</text>
+            <ellipse class="iz" id="iz-rodilla-izq" cx="74" cy="222" rx="12" ry="10" onclick="inspecHit('rodilla_izquierda')"/>
+            <text class="iz-t" x="74" y="225">Rod. I</text>
+            <ellipse class="iz" id="iz-rodilla-der" cx="106" cy="222" rx="12" ry="10" onclick="inspecHit('rodilla_derecha')"/>
+            <text class="iz-t" x="106" y="225">Rod. D</text>
+            <rect class="iz" id="iz-pierna-izq" x="62" y="232" width="24" height="44" rx="6" onclick="inspecHit('pierna_izquierda')"/>
+            <text class="iz-t" x="74" y="256">Pierna I</text>
+            <rect class="iz" id="iz-pierna-der" x="94" y="232" width="24" height="44" rx="6" onclick="inspecHit('pierna_derecha')"/>
+            <text class="iz-t" x="106" y="256">Pierna D</text>
+            <rect class="iz" id="iz-tobillo-izq" x="64" y="276" width="20" height="16" rx="4" onclick="inspecHit('tobillo_izquierdo')"/>
+            <text class="iz-t" x="74" y="287">Tobillo I</text>
+            <rect class="iz" id="iz-tobillo-der" x="96" y="276" width="20" height="16" rx="4" onclick="inspecHit('tobillo_derecho')"/>
+            <text class="iz-t" x="106" y="287">Tobillo D</text>
+            <ellipse class="iz" id="iz-pie-izq" cx="72" cy="305" rx="16" ry="10" onclick="inspecHit('pie_izquierdo')"/>
+            <text class="iz-t" x="72" y="308">Pie I</text>
+            <ellipse class="iz" id="iz-pie-der" cx="108" cy="305" rx="16" ry="10" onclick="inspecHit('pie_derecho')"/>
+            <text class="iz-t" x="108" y="308">Pie D</text>
+          </svg>
+          <div style="flex:1;min-width:130px">
+            <div style="background:#fff;border:1.5px solid var(--borde);border-radius:10px;padding:12px;min-height:100px">
+              <div style="font-size:.72rem;font-weight:800;color:#1a3a5c;margin-bottom:8px">🩸 Zonas marcadas:</div>
+              <div id="mordida-zonas-lista" style="font-size:.8rem;color:#64748b;line-height:1.6"><em>Ninguna seleccionada</em></div>
             </div>
-          </div>
-          <input type="hidden" id="mordida-zonas-data" value="">
-          <input type="hidden" id="mordida-gravedad-data" value="superficial">
-          <div style="margin-top:8px">
-            <button class="ibtn ibtn-ghost ibtn-sm" onclick="limpiarMordida()" style="width:100%;font-size:.72rem">🗑 Limpiar zonas</button>
+            <div style="margin-top:10px">
+              <label style="font-size:.75rem;font-weight:700;color:#1a3a5c;display:block;margin-bottom:4px">Gravedad de la lesión</label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                <button id="grav-sup" class="grav-btn-insp sel-sup" onclick="selGravMordida('superficial')">✓ Superficial</button>
+                <button id="grav-pro" class="grav-btn-insp" onclick="selGravMordida('profunda')">⚠️ Profunda</button>
+              </div>
+            </div>
+            <input type="hidden" id="mordida-zonas-data" value="">
+            <input type="hidden" id="mordida-gravedad-data" value="superficial">
+            <div style="margin-top:8px">
+              <button class="ibtn ibtn-ghost ibtn-sm" onclick="limpiarMordida()" style="width:100%;font-size:.72rem">🗑 Limpiar zonas</button>
+            </div>
           </div>
         </div>
       </div>
@@ -2744,35 +2930,34 @@ function _buildActaForm() {
       </div>
       <div class="fg">
         <label>Cantidad de animales</label>
-        <input id="anim-cantidad" type="number" min="1" value="1" placeholder="Cantidad"
+        <input id="anim-cantidad" type="number" min="1" value="1"
           style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
       </div>
       <div class="fg">
         <label>Descripción física (raza, color, tamaño)</label>
-        <input id="anim-raza" placeholder="Ej: Perro mediano, pelaje café oscuro, sin collar"
+        <input id="anim-raza" placeholder="Ej: Perro mediano, pelaje café, sin collar"
           style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
       </div>
       <div class="fg">
         <label>Condición del animal</label>
         <select id="anim-condicion" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
           <option value="">Seleccionar...</option>
-          <option>Buen estado general</option>
-          <option>Delgadez moderada</option>
-          <option>Desnutrición severa</option>
-          <option>Herido / enfermo</option>
-          <option>Agresivo / sin control</option>
+          <option value="buen_estado">Buen estado general</option>
+          <option value="delgado">Delgadez moderada</option>
+          <option value="desnutrido">Desnutrición severa</option>
+          <option value="herido">Herido / enfermo</option>
+          <option value="agresivo">Agresivo / sin control</option>
         </select>
       </div>
       <div class="fg">
-        <label>Situación del animal al llegar</label>
+        <label>Situación al llegar</label>
         <select id="anim-situacion" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
           <option value="">Seleccionar...</option>
-          <option>En la vía pública / suelto</option>
-          <option>Animal agresivo activo</option>
-          <option>Controlado / encerrado</option>
-          <option>Fugó del lugar</option>
-          <option>Atado / amarrado</option>
-          <option>Jauría callejera</option>
+          <option value="en_via_publica">En la vía pública / suelto</option>
+          <option value="agresivo_activo">Animal agresivo activo</option>
+          <option value="controlado">Controlado / encerrado</option>
+          <option value="fugo">Fugó del lugar</option>
+          <option value="jauría">Jauría callejera</option>
         </select>
       </div>
       <div class="fg">
@@ -2794,262 +2979,73 @@ function _buildActaForm() {
       </div>
     </div>
 
-    <!-- BLQ 4: NARRATIVA DEL INCIDENTE CON MATLACHO -->
+    <!-- BLQ 4: NARRATIVA + MATLACHO -->
     <div class="section-title" style="background:#1e3a5f">📋 4. Narrativa del Incidente</div>
     <div style="background:#fafafa;border:1.5px solid #e2e8f0;border-radius:9px;padding:12px 14px;margin-bottom:10px">
       <div style="font-size:.72rem;color:#64748b;margin-bottom:8px;background:#fef9c3;padding:6px 10px;border-radius:6px">
-        <b>⚠️ Instrucción:</b> Describir objetivamente lo observado. No juzgar. Solo hechos verificables.
+        <b>⚠️ Instrucción:</b> Solo hechos objetivos y observables. No juzgar.
       </div>
       <div class="fg" style="margin-bottom:8px">
         <label>Descripción cronológica del incidente</label>
         <textarea id="acta-descripcion" rows="5"
-          placeholder="Describir: ¿Cómo se encontró al animal? ¿Cuál era su comportamiento? ¿Qué acciones se tomaron? ¿Quién estaba presente?"
+          placeholder="¿Cómo se encontró al animal? ¿Cuál era su comportamiento? ¿Qué acciones se tomaron? ¿Quién estaba presente?"
           style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;resize:vertical"></textarea>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:5px">
           <button type="button" onclick="matlachoAnimalNarrativa(this)"
             style="padding:8px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;border-radius:8px;font-size:.74rem;font-weight:700;cursor:pointer">
-            ✨ Matlacho — Redactar narrativa del incidente
+            ✨ Matlacho — Redactar narrativa
           </button>
           <button type="button" onclick="matlachoAnimalRiesgo(this)"
             style="padding:8px;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;border:none;border-radius:8px;font-size:.74rem;font-weight:700;cursor:pointer">
-            ⚠️ Matlacho — Evaluar nivel de riesgo animal
+            ⚠️ Matlacho — Evaluar riesgo
           </button>
         </div>
         <div id="anim-riesgo-result" style="display:none;margin-top:6px;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:8px;padding:10px 12px;font-size:.76rem;color:#991b1b;line-height:1.7"></div>
       </div>
     </div>
 
-    <!-- BLQ 5: ACCIONES TOMADAS EN CAMPO -->
+    <!-- BLQ 5: ACCIONES EN CAMPO -->
     <div class="section-title" style="background:#1a3a5c">⚡ 5. Acciones Tomadas en Campo</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
       <label class="chk-lbl"><input type="checkbox" id="aa-rescate"> 🐾 Rescate del animal</label>
       <label class="chk-lbl"><input type="checkbox" id="aa-traslado"> 🏥 Traslado a albergue/veterinaria</label>
       <label class="chk-lbl"><input type="checkbox" id="aa-apercibimiento"> 📋 Orientación al propietario</label>
       <label class="chk-lbl"><input type="checkbox" id="aa-acta"> 📄 Notificación al propietario</label>
-      <label class="chk-lbl"><input type="checkbox" id="aa-canaliza"> 🔄 Canalización a autoridad competente</label>
+      <label class="chk-lbl"><input type="checkbox" id="aa-canaliza"> 🔄 Canalización a autoridad</label>
       <label class="chk-lbl"><input type="checkbox" id="aa-monitoreo"> 👁 Monitoreo de seguimiento</label>
     </div>
     <div class="fg" style="margin-bottom:10px">
       <label>Destino del animal</label>
       <select id="anim-destino" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
         <option value="">No aplica / no rescatado</option>
-        <option>Albergue Municipal</option>
-        <option>Veterinaria de guardia</option>
-        <option>Entregado a propietario</option>
-        <option>Liberado en hábitat natural</option>
-        <option>En resguardo temporal</option>
+        <option value="albergue">Albergue Municipal</option>
+        <option value="veterinaria">Veterinaria de guardia</option>
+        <option value="propietario">Entregado a propietario</option>
+        <option value="habitat">Liberado en hábitat natural</option>
+        <option value="resguardo">En resguardo temporal</option>
       </select>
     </div>
     <div class="fg" style="margin-bottom:6px">
       <label>Recomendaciones al afectado / comunidad</label>
       <textarea id="anim-recomendaciones" rows="2"
-        placeholder="Ej: Se recomienda al afectado asistir a urgencias para valoración antirrábica. Se orienta al propietario sobre obligaciones de tenencia responsable..."
+        placeholder="Ej: Se recomienda al afectado valoración antirrábica. Se orienta al propietario sobre tenencia responsable..."
         style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;resize:vertical"></textarea>
       <button type="button" onclick="matlachoAnimalRecomendaciones(this)"
         style="margin-top:5px;width:100%;padding:7px;background:linear-gradient(135deg,#0f766e,#0d9488);color:#fff;border:none;border-radius:8px;font-size:.74rem;font-weight:700;cursor:pointer">
-        🐭 Matlacho — Generar recomendaciones según el tipo de incidente
+        🐭 Matlacho — Generar recomendaciones
       </button>
       <div id="anim-recom-result" style="display:none;margin-top:6px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;padding:10px 12px;font-size:.76rem;color:#15803d;line-height:1.7"></div>
     </div>
 
-    <!-- BLQ 6: AUDITORÍA MATLACHO -->
+    <!-- BLQ 6: AUDITORÍA -->
     <div style="background:linear-gradient(135deg,#1a3a5c,#1e3a8a);border-radius:10px;padding:12px 14px;margin:10px 0">
-      <div style="color:#fff;font-weight:800;font-size:.85rem;margin-bottom:4px">🛑 Auditoría del Acta Animal — Matlacho</div>
-      <div style="color:rgba(255,255,255,.75);font-size:.72rem;margin-bottom:8px">Verifica que el acta esté completa antes de firmar.</div>
+      <div style="color:#fff;font-weight:800;font-size:.85rem;margin-bottom:4px">🛑 Auditoría del Acta — Matlacho</div>
       <button type="button" onclick="matlachoAuditoriaAnimal(this)"
         style="width:100%;padding:9px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:9px;font-size:.80rem;font-weight:800;cursor:pointer">
-        🛑 Ejecutar auditoría del acta animal
+        🛑 Verificar que el acta esté completa
       </button>
       <div id="anim-auditoria-result" style="display:none;margin-top:8px;background:rgba(255,255,255,.95);border-radius:8px;padding:10px 12px;font-size:.76rem;color:#1a3a5c;line-height:1.8"></div>
     </div>` : ''
-
-
-
-  // ── SECCIÓN DENUNCIA AMBIENTAL ──────────────────────────────────────────
-  var _denSubtipo = tipoRep; // 'residuos_solidos','tiradero_escombro','tiradero_basura','agua_contaminada','ruido','denuncia_ambiental',...
-  var _denLabel = {
-    residuos_solidos:  '🗑️ Residuos Sólidos',
-    tiradero_escombro: '🧱 Tiradero de Escombro',
-    tiradero_basura:   '🗑 Tiradero de Basura',
-    agua_contaminada:  '💧 Agua Contaminada',
-    ruido:             '🔊 Ruido / Contaminación Sonora',
-    denuncia_ambiental:'🌿 Denuncia Ambiental General',
-  }[_denSubtipo] || '🌿 Infracción Ambiental';
-
-  var _denFundo = {
-    residuos_solidos:  'Código Municipal · Ley de Ingresos · LGPGIR Art. 95-98 · NOM-083-SEMARNAT-2003 · LPAEA',
-    tiradero_escombro: 'Código Municipal · LGPGIR · NOM-161-SEMARNAT-2011 · Reglamento de Construcción · LPAEA',
-    tiradero_basura:   'Código Municipal · LGPGIR Art. 95 · Bando de Policía y Buen Gobierno · LPAEA',
-    agua_contaminada:  'Código Municipal · LAN Art. 86 · NOM-001-SEMARNAT-2021 · LGEEPA Art. 117-121 · LPAEA',
-    ruido:             'Código Municipal · NOM-081-SEMARNAT-1994 · Bando de Policía y Buen Gobierno',
-  }[_denSubtipo] || 'Código Municipal · LGEEPA Art. 134-141 · LPAEA · Bando de Policía y Buen Gobierno';
-
-  // Campos específicos por subtipo de denuncia
-  var _denEspecifico = '';
-  if (_denSubtipo === 'residuos_solidos' || _denSubtipo === 'tiradero_basura') {
-    _denEspecifico = `
-      <div class="fg">
-        <label>Tipo de residuos</label>
-        <select id="da-tipo-residuo" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
-          <option value="">Seleccionar...</option>
-          <option>Residuos domésticos mezclados</option>
-          <option>Residuos orgánicos</option>
-          <option>Residuos inorgánicos (plástico, vidrio, metal)</option>
-          <option>Residuos de manejo especial</option>
-          <option>Residuos peligrosos / tóxicos</option>
-          <option>Mezcla de varios tipos</option>
-        </select>
-      </div>
-      <div class="fg">
-        <label>Volumen estimado</label>
-        <select id="da-volumen" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
-          <option value="">Seleccionar...</option>
-          <option>Pequeño (menos de 1 m³)</option>
-          <option>Mediano (1–5 m³)</option>
-          <option>Grande (5–20 m³)</option>
-          <option>Masivo (más de 20 m³)</option>
-        </select>
-      </div>`;
-  } else if (_denSubtipo === 'tiradero_escombro') {
-    _denEspecifico = `
-      <div class="fg">
-        <label>Tipo de escombro</label>
-        <select id="da-tipo-residuo" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
-          <option value="">Seleccionar...</option>
-          <option>Concreto / block / tabique</option>
-          <option>Tierra y materiales de excavación</option>
-          <option>Madera y carpintería</option>
-          <option>Mezcla de escombro y residuos</option>
-          <option>Materiales con asbesto (peligroso)</option>
-        </select>
-      </div>
-      <div class="fg">
-        <label>Volumen estimado (m³)</label>
-        <input id="da-volumen" type="number" min="0" placeholder="m³ aproximados" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
-      </div>`;
-  } else if (_denSubtipo === 'agua_contaminada') {
-    _denEspecifico = `
-      <div class="fg">
-        <label>Tipo de cuerpo de agua afectado</label>
-        <select id="da-cuerpo-agua" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
-          <option value="">Seleccionar...</option>
-          <option>Canal / acequia de riego</option>
-          <option>Arroyo o barranca</option>
-          <option>Laguna / estanque</option>
-          <option>Pozo / noria</option>
-          <option>Red de drenaje municipal</option>
-          <option>Suelo / subsuelo (escorrentía)</option>
-        </select>
-      </div>
-      <div class="fg">
-        <label>Tipo de contaminante</label>
-        <select id="da-tipo-contaminante" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
-          <option value="">Seleccionar...</option>
-          <option>Aguas residuales domésticas</option>
-          <option>Aguas residuales industriales</option>
-          <option>Agroquímicos / pesticidas</option>
-          <option>Aceites o hidrocarburos</option>
-          <option>Residuos sólidos arrastrados</option>
-          <option>Colorantes o sustancias químicas</option>
-        </select>
-      </div>`;
-  } else if (_denSubtipo === 'ruido') {
-    _denEspecifico = `
-      <div class="fg">
-        <label>Fuente del ruido</label>
-        <select id="da-fuente-ruido" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
-          <option value="">Seleccionar...</option>
-          <option>Establecimiento comercial / bar / antro</option>
-          <option>Industria / taller / maquinaria</option>
-          <option>Evento social / fiesta</option>
-          <option>Bocinas / equipo de sonido</option>
-          <option>Construcción fuera de horario</option>
-          <option>Animales (ladridos, etc.)</option>
-          <option>Vehículo / escapes modificados</option>
-        </select>
-      </div>
-      <div class="fg">
-        <label>Horario del problema</label>
-        <select id="da-horario-ruido" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
-          <option value="">Seleccionar...</option>
-          <option>Diurno (6:00–22:00 hrs)</option>
-          <option>Nocturno (22:00–6:00 hrs)</option>
-          <option>Ambos / recurrente</option>
-        </select>
-      </div>`;
-  }
-
-  var seccionDenuncia = esDenuncia ? `
-    <div class="section-title">🌿 2. Datos de la ${_denLabel}</div>
-    <div class="form-note" style="background:#fce4ec;padding:8px 12px;border-radius:7px;font-size:.78rem;color:#b71c1c;margin-bottom:10px">
-      Registrar la situación encontrada durante la inspección en campo.
-      <b>Fundamento:</b> ${_denFundo}
-    </div>
-    <div class="form-grid">
-      ${_denEspecifico}
-      <div class="fg fg2">
-        <label>Infracción específica detectada</label>
-        <select id="da-tipo-infraccion">
-          <option value="">Seleccionar...</option>
-          <option>Depósito o abandono ilegal de residuos</option>
-          <option>Quema de residuos a cielo abierto</option>
-          <option>Descarga de aguas residuales sin tratamiento</option>
-          <option>Contaminación de suelo o subsuelo</option>
-          <option>Contaminación de cuerpo de agua</option>
-          <option>Emisión de ruido fuera de norma</option>
-          <option>Emisiones de humo o vapores</option>
-          <option>Tala o poda ilegal de vegetación</option>
-          <option>Otra infracción ambiental</option>
-        </select>
-      </div>
-      <div class="fg">
-        <label>Superficie afectada (m²)</label>
-        <input id="da-superficie" type="number" min="0" placeholder="m²">
-      </div>
-      <div class="fg">
-        <label>Tiempo de afectación</label>
-        <select id="da-tiempo">
-          <option value="">No determinado</option>
-          <option>Reciente (menos de 24 horas)</option>
-          <option>Días (2–7 días)</option>
-          <option>Semanas (1–4 semanas)</option>
-          <option>Meses (más de 1 mes)</option>
-          <option>Crónico / recurrente</option>
-        </select>
-      </div>
-      <div class="fg">
-        <label>Severidad del impacto</label>
-        <select id="da-severidad">
-          <option value="">Seleccionar...</option>
-          <option value="leve">🟡 Leve — Impacto mínimo</option>
-          <option value="moderado">🟠 Moderado — Requiere atención</option>
-          <option value="grave">🔴 Grave — Daño significativo</option>
-          <option value="critico">⛔ Crítico — Riesgo a la salud/ecosistema</option>
-        </select>
-      </div>
-      <div class="fg fg2">
-        <label>¿Se identificó al presunto responsable?</label>
-        <select id="da-responsable">
-          <option value="no">No identificado</option>
-          <option value="si">Sí — presente en el momento</option>
-          <option value="ubicado">Sí — identificado pero ausente</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="section-title">⚡ 3. Medidas Adoptadas en Campo</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-      <label class="chk-lbl"><input type="checkbox" id="dm-apercibimiento"> Apercibimiento verbal</label>
-      <label class="chk-lbl"><input type="checkbox" id="dm-acta-infraccion"> Acta de infracción</label>
-      <label class="chk-lbl"><input type="checkbox" id="dm-clausura"> Clausura temporal</label>
-      <label class="chk-lbl"><input type="checkbox" id="dm-remediacion"> Orden de remediación</label>
-      <label class="chk-lbl"><input type="checkbox" id="dm-sancion"> Sanción económica</label>
-      <label class="chk-lbl"><input type="checkbox" id="dm-denuncia-penal"> Denuncia penal (LGEEPA)</label>
-    </div>
-    <div class="fg fg2" style="margin-bottom:10px">
-      <label>Plazo otorgado para remediación</label>
-      <input id="da-plazo" placeholder="Ej: 72 horas, 15 días naturales...">
-    </div>` : '';
 
   // ── DESCRIPCIÓN GENERAL (siempre aparece) ───────────────────────────────
   var numSeccion = esArbol ? '6' : esDenuncia ? '4' : esAnimal ? '4' : '2';

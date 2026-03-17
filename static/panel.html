@@ -3606,6 +3606,7 @@ async function cargarVerificaciones() {
       <div style="padding:10px 14px;font-size:.82rem;line-height:1.5">
         <div>📍 ${v.establecimiento_domicilio||'–'}</div>
         ${v.fecha_programada?`<div>📅 Programada: <b>${new Date(v.fecha_programada+'T00:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'})}</b></div>`:''}
+        <div>👷 Inspector: <b>${v.inspector_nombre||'— Sin asignar —'}</b></div>
         ${v.motivo?`<div style="color:#555;margin-top:4px">📝 ${v.motivo.substring(0,100)}${v.motivo.length>100?'...':''}</div>`:''}
         ${v.resultado?`<div style="margin-top:4px">🎯 Resultado: <b>${RES_LABELS[v.resultado]||v.resultado}</b></div>`:''}
       </div>
