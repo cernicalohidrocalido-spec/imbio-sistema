@@ -109,7 +109,7 @@ def _init_storage():
     def n(): return __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()
     db = {
         "users": [
-            {"id":1,"nombre":"Administrador IMBIO","username":"IMBIO",      "password":hp("IMBIO2026"),     "rol":"admin",    "activo":True},
+            {"id":1,"nombre":"Administrador IMBIO","username":"admin",      "password":hp("admin123"),     "rol":"admin",    "activo":True},
             {"id":2,"nombre":"Operador Central",   "username":"operador",   "password":hp("operador123"),  "rol":"operador", "activo":True},
             {"id":3,"nombre":"Inspector Campo 01", "username":"inspector01","password":hp("inspector123"), "rol":"inspector","activo":True},
         ],
@@ -251,7 +251,7 @@ def _init_sqlite():
         else:
             seed = json.dumps({
                 "reports": [], "assignments": [], "users": [
-                    {"id":1,"username":"IMBIO","password": hashlib.sha256(b"IMBIO2026").hexdigest(),"nombre":"Administrador IMBIO","rol":"admin","activo":True},
+                    {"id":1,"username":"admin","password": hashlib.sha256(b"admin123").hexdigest(),"nombre":"Administrador IMBIO","rol":"admin","activo":True},
                     {"id":2,"username":"operador","password": hashlib.sha256(b"operador123").hexdigest(),"nombre":"Operador IMBIO","rol":"operador","activo":True},
                     {"id":3,"username":"inspector01","password": hashlib.sha256(b"inspector123").hexdigest(),"nombre":"Inspector Campo 01","rol":"inspector","brigada":"Brigada 1","activo":True}
                 ], "actas": [], "establecimientos": [], "verificaciones": []
@@ -2247,6 +2247,40 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"[START] ERROR en _init_sqlite: {e}", flush=True)
         sys.exit(1)
+
+    # ── Aplicar credenciales desde variables de entorno ──────────────────
+    # Define estas variables en Railway > Settings > Variables:
+    #   ADMIN_USER      → nuevo username del admin    (ej: IMBIO)
+    #   ADMIN_PASSWORD  → nueva contraseña del admin  (ej: IMBIO2026)
+    #   ADMIN_NOMBRE    → nombre visible (opcional)   (ej: Director IMBIO)
+    try:
+        env_user = os.environ.get('ADMIN_USER', '').strip()
+        env_pass = os.environ.get('ADMIN_PASSWORD', '').strip()
+        env_nombre = os.environ.get('ADMIN_NOMBRE', '').strip()
+        if env_user and env_pass:
+            db = read_db()
+            changed = False
+            for u in db.get('users', []):
+                if u.get('rol') == 'admin':
+                    old_user = u.get('username', '')
+                    u['username'] = env_user.lower()
+                    u['password'] = hash_pw(env_pass)
+                    if env_nombre:
+                        u['nombre'] = env_nombre
+                    u['activo'] = True
+                    changed = True
+                    print(f"[CREDS] ✅ Admin actualizado: '{old_user}' → '{env_user.lower()}'", flush=True)
+                    break
+            if changed:
+                write_db(db)
+                print("[CREDS] ✅ Credenciales guardadas en la base de datos.", flush=True)
+            else:
+                print("[CREDS] ⚠️  No se encontró usuario admin para actualizar.", flush=True)
+        else:
+            print("[CREDS] (Sin ADMIN_USER/ADMIN_PASSWORD definidos — usando credenciales existentes)", flush=True)
+    except Exception as e:
+        print(f"[CREDS] Error aplicando credenciales: {e}", flush=True)
+    # ─────────────────────────────────────────────────────────────────────
 
     try:
         read_db()
