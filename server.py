@@ -109,7 +109,7 @@ def _init_storage():
     def n(): return __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()
     db = {
         "users": [
-            {"id":1,"nombre":"Administrador IMBIO","username":"admin",      "password":hp("admin123"),     "rol":"admin",    "activo":True},
+            {"id":1,"nombre":"Administrador IMBIO","username":"IMBIO",      "password":hp("IMBIO2026"),     "rol":"admin",    "activo":True},
             {"id":2,"nombre":"Operador Central",   "username":"operador",   "password":hp("operador123"),  "rol":"operador", "activo":True},
             {"id":3,"nombre":"Inspector Campo 01", "username":"inspector01","password":hp("inspector123"), "rol":"inspector","activo":True},
         ],
