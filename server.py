@@ -1283,7 +1283,14 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             if inspector_v:  vers = [v for v in vers if str(v.get('inspector_id','')) == inspector_v]
             if user['rol'] == 'inspector':
                 vers = [v for v in vers if str(v.get('inspector_id','')) == str(user['id'])]
-            self.ok({'verificaciones': vers, 'total': len(vers)})
+            # Enrich with inspector name
+            users_idx = {str(u['id']): u.get('nombre', u.get('username','')) for u in db.get('users',[])}
+            vers_enriched = []
+            for v in vers:
+                ve = dict(v)
+                ve['inspector_nombre'] = users_idx.get(str(v.get('inspector_id','')), '— Sin asignar —')
+                vers_enriched.append(ve)
+            self.ok({'verificaciones': vers_enriched, 'total': len(vers_enriched)})
             return
 
         if re.match(r'^/api/verificaciones/\d+$', path):
