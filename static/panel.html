@@ -283,7 +283,6 @@
               <button id="btn-layer-sat" onclick="setLayer('sat')">🛰️ Satelital</button>
               <button id="btn-layer-hybrid" onclick="setLayer('hybrid')">🛰️ Híbrido</button>
               <button id="btn-layer-topo" onclick="setLayer('topo')">🏔️ Topográfico</button>
-              <button id="btn-layer-estabs" onclick="toggleEstabsLayer()" title="Mostrar u ocultar establecimientos en el mapa" style="border-color:#7c3aed;color:#7c3aed">🏪 Establecimientos</button>
             </div>
             <div class="map-filters">
               <select id="mf-estado" onchange="refreshMapMarkers()">
@@ -318,7 +317,6 @@
             <span><i style="background:#3182ce"></i> Asignado</span>
             <span><i style="background:#d53f8c"></i> En Proceso</span>
             <span><i style="background:#38a169"></i> Cerrado</span>
-            <span id="legend-estabs" style="display:none"><i style="background:#7c3aed;border-radius:3px"></i> Establecimientos</span>
           </div>
         </div>
       </div>
@@ -571,10 +569,8 @@
           <p style="color:var(--muted);text-align:center;padding:40px">Cargando actas...</p>
         </div>
       </div>
-    </main>
-  </div>
 
-  <!-- ══ PÁGINA ALERTAS ══════════════════════════════════════════════ -->
+      <!-- ══ PÁGINA ALERTAS ══════════════════════════════════════════════ -->
   <div class="page-wrapper" style="display:none" id="page-alertas-wrapper">
     <main class="main-content">
       <div id="page-alertas" class="page active">
@@ -1174,6 +1170,8 @@
         </div>
       </div>
 
+    </main>
+  </div><!-- end app-layout -->
 
 
 
@@ -1297,85 +1295,6 @@ function startMapAutoRefresh() {
 
 function closePopups() {
   mapMarkers.forEach(m => m.closePopup());
-}
-
-// ── Capa de Establecimientos (toggle) ────────────────────────
-let estabsLayerVisible = false;
-let estabsMarkers = [];
-
-const CUMPLIMIENTO_COLOR = {
-  cumple:          '#16a34a',
-  cumple_parcial:  '#d97706',
-  no_cumple:       '#dc2626',
-  sin_verificar:   '#7c3aed',
-};
-
-function makeEstabIcon(color) {
-  // Ícono cuadrado/tienda para diferenciar visualmente de los reportes (círculo)
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 26" width="22" height="22">
-    <rect x="1" y="1" width="24" height="24" rx="5" fill="${color}" stroke="white" stroke-width="1.8"/>
-    <text x="13" y="17" text-anchor="middle" font-size="13" fill="white">🏪</text>
-  </svg>`;
-  return L.divIcon({ html: svg, className:'', iconSize:[22,22], iconAnchor:[11,11], popupAnchor:[0,-14] });
-}
-
-async function toggleEstabsLayer() {
-  if (!mapReportes) return;
-  const btn = document.getElementById('btn-layer-estabs');
-  const legend = document.getElementById('legend-estabs');
-
-  if (estabsLayerVisible) {
-    // — Ocultar capa —
-    estabsMarkers.forEach(m => mapReportes.removeLayer(m));
-    estabsMarkers = [];
-    estabsLayerVisible = false;
-    if (btn) { btn.style.background=''; btn.style.color='#7c3aed'; btn.style.borderColor='#7c3aed'; btn.textContent='🏪 Establecimientos'; }
-    if (legend) legend.style.display = 'none';
-    return;
-  }
-
-  // — Mostrar capa —
-  if (btn) { btn.textContent = '⏳ Cargando...'; btn.style.opacity = '0.7'; }
-
-  try {
-    const r = await api('/api/establecimientos?limit=2000');
-    if (!r.success) { if (btn) { btn.textContent = '🏪 Establecimientos'; btn.style.opacity=''; } return; }
-
-    const estabs = (r.data.establecimientos || []).filter(e => e.lat != null && e.lon != null);
-    const GIRO_LABELS = {
-      taller_mecanico:'Taller Mecánico', restaurante:'Restaurante', tienda_abarrotes:'Abarrotes',
-      lavanderia:'Lavandería', carpinteria:'Carpintería', panaderia:'Panadería',
-      gasolinera:'Gasolinera', hotel:'Hotel', farmacia:'Farmacia', otro:'Otro'
-    };
-    const CUMPL_LABELS = { cumple:'✅ Cumple', cumple_parcial:'⚠️ Cumplimiento Parcial', no_cumple:'❌ No Cumple', sin_verificar:'🔵 Sin Verificar' };
-
-    estabs.forEach(e => {
-      const color  = CUMPLIMIENTO_COLOR[e.estado_cumplimiento] || CUMPLIMIENTO_COLOR.sin_verificar;
-      const marker = L.marker([e.lat, e.lon], { icon: makeEstabIcon(color) });
-      const popHtml = `
-        <div class="pop-title" style="color:#7c3aed">🏪 ${e.nombre || 'Establecimiento'}</div>
-        <div class="pop-row">📍 ${e.domicilio || e.colonia || '–'}</div>
-        <div class="pop-row">🏷️ ${GIRO_LABELS[e.giro] || e.giro || '–'}</div>
-        ${e.responsable ? `<div class="pop-row">👤 ${e.responsable}</div>` : ''}
-        ${e.telefono    ? `<div class="pop-row">📞 ${e.telefono}</div>` : ''}
-        <span class="pop-badge" style="background:${color}20;color:${color}">${CUMPL_LABELS[e.estado_cumplimiento] || 'Sin Verificar'}</span>`;
-      marker.bindPopup(popHtml, { maxWidth: 230 });
-      marker.addTo(mapReportes);
-      estabsMarkers.push(marker);
-    });
-
-    estabsLayerVisible = true;
-    if (btn) {
-      btn.textContent = `🏪 Establecimientos (${estabs.length})`;
-      btn.style.background = '#7c3aed'; btn.style.color = '#fff';
-      btn.style.borderColor = '#7c3aed'; btn.style.opacity = '';
-    }
-    if (legend) legend.style.display = 'flex';
-
-  } catch(err) {
-    console.error('[MAPA] Error cargando establecimientos:', err);
-    if (btn) { btn.textContent = '🏪 Establecimientos'; btn.style.opacity = ''; }
-  }
 }
 
 // ── Mapa Picker (Nuevo Reporte) ───────────────────────────────
