@@ -3047,6 +3047,193 @@ function _buildActaForm() {
       <div id="anim-auditoria-result" style="display:none;margin-top:8px;background:rgba(255,255,255,.95);border-radius:8px;padding:10px 12px;font-size:.76rem;color:#1a3a5c;line-height:1.8"></div>
     </div>` : ''
 
+  // ── SECCIÓN DENUNCIA AMBIENTAL ──────────────────────────────────────────
+  var _denSubtipo = tipoRep; // 'residuos_solidos','tiradero_escombro','tiradero_basura','agua_contaminada','ruido','denuncia_ambiental',...
+  var _denLabel = {
+    residuos_solidos:  '🗑️ Residuos Sólidos',
+    tiradero_escombro: '🧱 Tiradero de Escombro',
+    tiradero_basura:   '🗑 Tiradero de Basura',
+    agua_contaminada:  '💧 Agua Contaminada',
+    ruido:             '🔊 Ruido / Contaminación Sonora',
+    denuncia_ambiental:'🌿 Denuncia Ambiental General',
+  }[_denSubtipo] || '🌿 Infracción Ambiental';
+
+  var _denFundo = {
+    residuos_solidos:  'Código Municipal · Ley de Ingresos · LGPGIR Art. 95-98 · NOM-083-SEMARNAT-2003 · LPAEA',
+    tiradero_escombro: 'Código Municipal · LGPGIR · NOM-161-SEMARNAT-2011 · Reglamento de Construcción · LPAEA',
+    tiradero_basura:   'Código Municipal · LGPGIR Art. 95 · Bando de Policía y Buen Gobierno · LPAEA',
+    agua_contaminada:  'Código Municipal · LAN Art. 86 · NOM-001-SEMARNAT-2021 · LGEEPA Art. 117-121 · LPAEA',
+    ruido:             'Código Municipal · NOM-081-SEMARNAT-1994 · Bando de Policía y Buen Gobierno',
+  }[_denSubtipo] || 'Código Municipal · LGEEPA Art. 134-141 · LPAEA · Bando de Policía y Buen Gobierno';
+
+  // Campos específicos por subtipo de denuncia
+  var _denEspecifico = '';
+  if (_denSubtipo === 'residuos_solidos' || _denSubtipo === 'tiradero_basura') {
+    _denEspecifico = `
+      <div class="fg">
+        <label>Tipo de residuos</label>
+        <select id="da-tipo-residuo" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="">Seleccionar...</option>
+          <option>Residuos domésticos mezclados</option>
+          <option>Residuos orgánicos</option>
+          <option>Residuos inorgánicos (plástico, vidrio, metal)</option>
+          <option>Residuos de manejo especial</option>
+          <option>Residuos peligrosos / tóxicos</option>
+          <option>Mezcla de varios tipos</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Volumen estimado</label>
+        <select id="da-volumen" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="">Seleccionar...</option>
+          <option>Pequeño (menos de 1 m³)</option>
+          <option>Mediano (1–5 m³)</option>
+          <option>Grande (5–20 m³)</option>
+          <option>Masivo (más de 20 m³)</option>
+        </select>
+      </div>`;
+  } else if (_denSubtipo === 'tiradero_escombro') {
+    _denEspecifico = `
+      <div class="fg">
+        <label>Tipo de escombro</label>
+        <select id="da-tipo-residuo" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="">Seleccionar...</option>
+          <option>Concreto / block / tabique</option>
+          <option>Tierra y materiales de excavación</option>
+          <option>Madera y carpintería</option>
+          <option>Mezcla de escombro y residuos</option>
+          <option>Materiales con asbesto (peligroso)</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Volumen estimado (m³)</label>
+        <input id="da-volumen" type="number" min="0" placeholder="m³ aproximados" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+      </div>`;
+  } else if (_denSubtipo === 'agua_contaminada') {
+    _denEspecifico = `
+      <div class="fg">
+        <label>Tipo de cuerpo de agua afectado</label>
+        <select id="da-cuerpo-agua" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="">Seleccionar...</option>
+          <option>Canal / acequia de riego</option>
+          <option>Arroyo o barranca</option>
+          <option>Laguna / estanque</option>
+          <option>Pozo / noria</option>
+          <option>Red de drenaje municipal</option>
+          <option>Suelo / subsuelo (escorrentía)</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Tipo de contaminante</label>
+        <select id="da-tipo-contaminante" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="">Seleccionar...</option>
+          <option>Aguas residuales domésticas</option>
+          <option>Aguas residuales industriales</option>
+          <option>Agroquímicos / pesticidas</option>
+          <option>Aceites o hidrocarburos</option>
+          <option>Residuos sólidos arrastrados</option>
+          <option>Colorantes o sustancias químicas</option>
+        </select>
+      </div>`;
+  } else if (_denSubtipo === 'ruido') {
+    _denEspecifico = `
+      <div class="fg">
+        <label>Fuente del ruido</label>
+        <select id="da-fuente-ruido" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="">Seleccionar...</option>
+          <option>Establecimiento comercial / bar / antro</option>
+          <option>Industria / taller / maquinaria</option>
+          <option>Evento social / fiesta</option>
+          <option>Bocinas / equipo de sonido</option>
+          <option>Construcción fuera de horario</option>
+          <option>Animales (ladridos, etc.)</option>
+          <option>Vehículo / escapes modificados</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Horario del problema</label>
+        <select id="da-horario-ruido" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          <option value="">Seleccionar...</option>
+          <option>Diurno (6:00–22:00 hrs)</option>
+          <option>Nocturno (22:00–6:00 hrs)</option>
+          <option>Ambos / recurrente</option>
+        </select>
+      </div>`;
+  }
+
+  var seccionDenuncia = esDenuncia ? `
+    <div class="section-title">🌿 2. Datos de la ${_denLabel}</div>
+    <div class="form-note" style="background:#fce4ec;padding:8px 12px;border-radius:7px;font-size:.78rem;color:#b71c1c;margin-bottom:10px">
+      Registrar la situación encontrada durante la inspección en campo.
+      <b>Fundamento:</b> ${_denFundo}
+    </div>
+    <div class="form-grid">
+      ${_denEspecifico}
+      <div class="fg fg2">
+        <label>Infracción específica detectada</label>
+        <select id="da-tipo-infraccion">
+          <option value="">Seleccionar...</option>
+          <option>Depósito o abandono ilegal de residuos</option>
+          <option>Quema de residuos a cielo abierto</option>
+          <option>Descarga de aguas residuales sin tratamiento</option>
+          <option>Contaminación de suelo o subsuelo</option>
+          <option>Contaminación de cuerpo de agua</option>
+          <option>Emisión de ruido fuera de norma</option>
+          <option>Emisiones de humo o vapores</option>
+          <option>Tala o poda ilegal de vegetación</option>
+          <option>Otra infracción ambiental</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Superficie afectada (m²)</label>
+        <input id="da-superficie" type="number" min="0" placeholder="m²">
+      </div>
+      <div class="fg">
+        <label>Tiempo de afectación</label>
+        <select id="da-tiempo">
+          <option value="">No determinado</option>
+          <option>Reciente (menos de 24 horas)</option>
+          <option>Días (2–7 días)</option>
+          <option>Semanas (1–4 semanas)</option>
+          <option>Meses (más de 1 mes)</option>
+          <option>Crónico / recurrente</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Severidad del impacto</label>
+        <select id="da-severidad">
+          <option value="">Seleccionar...</option>
+          <option value="leve">🟡 Leve — Impacto mínimo</option>
+          <option value="moderado">🟠 Moderado — Requiere atención</option>
+          <option value="grave">🔴 Grave — Daño significativo</option>
+          <option value="critico">⛔ Crítico — Riesgo a la salud/ecosistema</option>
+        </select>
+      </div>
+      <div class="fg fg2">
+        <label>¿Se identificó al presunto responsable?</label>
+        <select id="da-responsable">
+          <option value="no">No identificado</option>
+          <option value="si">Sí — presente en el momento</option>
+          <option value="ubicado">Sí — identificado pero ausente</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-title">⚡ 3. Medidas Adoptadas en Campo</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <label class="chk-lbl"><input type="checkbox" id="dm-apercibimiento"> Apercibimiento verbal</label>
+      <label class="chk-lbl"><input type="checkbox" id="dm-acta-infraccion"> Acta de infracción</label>
+      <label class="chk-lbl"><input type="checkbox" id="dm-clausura"> Clausura temporal</label>
+      <label class="chk-lbl"><input type="checkbox" id="dm-remediacion"> Orden de remediación</label>
+      <label class="chk-lbl"><input type="checkbox" id="dm-sancion"> Sanción económica</label>
+      <label class="chk-lbl"><input type="checkbox" id="dm-denuncia-penal"> Denuncia penal (LGEEPA)</label>
+    </div>
+    <div class="fg fg2" style="margin-bottom:10px">
+      <label>Plazo otorgado para remediación</label>
+      <input id="da-plazo" placeholder="Ej: 72 horas, 15 días naturales...">
+    </div>` : '';
+
+  // ── DESCRIPCIÓN GENERAL (siempre aparece) ───────────────────────────────
   // ── DESCRIPCIÓN GENERAL (siempre aparece) ───────────────────────────────
   var numSeccion = esArbol ? '6' : esDenuncia ? '4' : esAnimal ? '4' : '2';
   // ── SECCIÓN ADAPTATIVA SEGÚN TIPO DE ACTA ──────────────────────
