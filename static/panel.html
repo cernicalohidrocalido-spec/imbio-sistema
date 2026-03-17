@@ -30,7 +30,8 @@
   .login-card .logo .icon{font-size:3rem}
   .login-card .logo h1{font-size:1.4rem;color:var(--verde-oscuro);margin-top:8px}
   .login-card .logo p{color:var(--muted);font-size:.85rem}
-
+  .creds-hint{background:#E8F1FB;border:1px solid #B3CFF0;border-radius:8px;padding:12px;margin-bottom:20px;font-size:.8rem;color:#002A5C}
+  .creds-hint b{display:block;margin-bottom:4px}
   #app{display:none}
   .app-layout{display:flex;min-height:calc(100vh - 60px)}
   aside{width:220px;background:var(--verde-oscuro);padding:16px 0;flex-shrink:0}
@@ -150,7 +151,10 @@
       <h1 style="font-size:1rem;line-height:1.2">Plataforma de Monitoreo<br>Ambiental IMBIO-Pabellón</h1>
       <p>Instituto Municipal de Biodiversidad y Protección Ambiental de Pabellón de Arteaga</p>
     </div>
-
+    <div class="creds-hint">
+      <b>👤 Credenciales de acceso:</b>
+      admin / admin123 &nbsp;·&nbsp; operador / operador123 &nbsp;·&nbsp; inspector01 / inspector123
+    </div>
     <div id="login-status" style="display:none;margin-bottom:12px;padding:10px 14px;border-radius:8px;font-size:.85rem;background:#E8F1FB;border:1px solid #B3CFF0;color:#002A5C"></div>
     <div id="login-error"></div>
     <form id="login-form" onsubmit="doLogin(); return false;" action="javascript:void(0)">
@@ -160,7 +164,7 @@
       </div>
       <div class="form-group" style="margin-bottom:20px">
         <label for="l-pass">Contraseña</label>
-        <input id="l-pass" name="password" type="password" value="" autocomplete="current-password">
+        <input id="l-pass" name="password" type="password" value="admin123" autocomplete="current-password">
       </div>
       <button type="submit" id="btn-login" class="btn btn-primary" style="width:100%;justify-content:center">🔐 Iniciar Sesión</button>
     </form>
@@ -189,6 +193,7 @@
       <a onclick="showPage('actas')" id="nav-actas"><span class="ic">📋</span> Actas</a>
       <a onclick="showPage('establecimientos')" id="nav-establecimientos"><span class="ic">🏪</span> Establecimientos</a>
       <a onclick="showPage('verificaciones')" id="nav-verificaciones"><span class="ic">🔍</span> Verificaciones</a>
+      <a onclick="showPage('acerca')" id="nav-acerca"><span class="ic">ℹ️</span> Acerca de</a>
     </aside>
     <main>
 
@@ -212,34 +217,16 @@
           <div class="stat" style="background:#0369a1;color:#fff"><div class="num" id="st-tiempo">–</div><div class="lbl">Días prom. resolución</div></div>
         </div>
 
-        <!-- KPIs Establecimientos integrados -->
-        <div style="margin-bottom:16px;background:linear-gradient(135deg,#1e3a5f,#1a3a5c);border-radius:12px;padding:12px 14px">
-          <div style="font-size:.78rem;font-weight:700;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">🏪 Verificación Ambiental a Establecimientos</div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px">
-            <div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px;text-align:center">
-              <div style="font-size:1.6rem;font-weight:800;color:#fff" id="st-est-total">–</div>
-              <div style="font-size:.72rem;color:rgba(255,255,255,.6);margin-top:2px">📊 Total</div>
-            </div>
-            <div style="background:rgba(34,197,94,.15);border-radius:8px;padding:10px;text-align:center;border:1px solid rgba(34,197,94,.3)">
-              <div style="font-size:1.6rem;font-weight:800;color:#4ade80" id="st-est-cumple">–</div>
-              <div style="font-size:.72rem;color:rgba(255,255,255,.6);margin-top:2px">✅ Cumplen</div>
-            </div>
-            <div style="background:rgba(245,158,11,.12);border-radius:8px;padding:10px;text-align:center;border:1px solid rgba(245,158,11,.3)">
-              <div style="font-size:1.6rem;font-weight:800;color:#fbbf24" id="st-est-parcial">–</div>
-              <div style="font-size:.72rem;color:rgba(255,255,255,.6);margin-top:2px">⚠️ Parcial</div>
-            </div>
-            <div style="background:rgba(239,68,68,.12);border-radius:8px;padding:10px;text-align:center;border:1px solid rgba(239,68,68,.3)">
-              <div style="font-size:1.6rem;font-weight:800;color:#f87171" id="st-est-nocumple">–</div>
-              <div style="font-size:.72rem;color:rgba(255,255,255,.6);margin-top:2px">❌ No Cumple</div>
-            </div>
-            <div style="background:rgba(107,114,128,.15);border-radius:8px;padding:10px;text-align:center">
-              <div style="font-size:1.6rem;font-weight:800;color:#d1d5db" id="st-est-sinver">–</div>
-              <div style="font-size:.72rem;color:rgba(255,255,255,.6);margin-top:2px">🔘 Sin Verificar</div>
-            </div>
-            <div style="background:rgba(96,165,250,.15);border-radius:8px;padding:10px;text-align:center;border:1px solid rgba(96,165,250,.3)">
-              <div style="font-size:1.6rem;font-weight:800;color:#60a5fa" id="st-ver-pend">–</div>
-              <div style="font-size:.72rem;color:rgba(255,255,255,.6);margin-top:2px">📅 Verif. Pendientes</div>
-            </div>
+        <!-- KPIs Establecimientos -->
+        <div style="margin-bottom:16px">
+          <h4 style="font-size:.85rem;color:#1a3a5c;margin-bottom:8px">🏪 Verificación Ambiental a Establecimientos</h4>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">
+            <div class="stat" style="background:#1e3a5f;color:#fff"><div class="num" id="st-est-total">–</div><div class="lbl">Establecimientos</div></div>
+            <div class="stat verde"><div class="num" id="st-est-cumple">–</div><div class="lbl">✅ Cumplen</div></div>
+            <div class="stat naranja"><div class="num" id="st-est-parcial">–</div><div class="lbl">⚠️ Parcial</div></div>
+            <div class="stat rojo"><div class="num" id="st-est-nocumple">–</div><div class="lbl">❌ No Cumplen</div></div>
+            <div class="stat" style="background:#6b7280;color:#fff"><div class="num" id="st-est-sinver">–</div><div class="lbl">Sin Verificar</div></div>
+            <div class="stat azul"><div class="num" id="st-ver-pend">–</div><div class="lbl">Verif. Pendientes</div></div>
           </div>
         </div>
 
@@ -503,9 +490,6 @@
 <div id="page-catalogo-inspectores" class="page">
         <h2>👤 Catálogo de Inspectores</h2>
         <div id="cat-insp-alert"></div>
-        <div id="cat-insp-usuarios-hint" style="display:none;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:.82rem;color:#0369a1">
-          👤 Usuarios ya registrados: <span id="cat-insp-usuarios-list" style="font-family:monospace;font-weight:700"></span>
-        </div>
         <div class="card" style="padding:20px;margin-bottom:16px">
           <h3 style="margin-bottom:16px;color:var(--azul)">➕ Registrar Inspector</h3>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
@@ -514,8 +498,8 @@
               <input id="ci-nombre" class="form-control" placeholder="Nombre y apellidos" style="margin-top:4px">
             </div>
             <div>
-              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Usuario * <small style="font-weight:400;text-transform:none;color:#94a3b8">(único, sin espacios)</small></label>
-              <input id="ci-usuario" class="form-control" placeholder="Ej: inspector02" style="margin-top:4px" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'')">
+              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Usuario *</label>
+              <input id="ci-usuario" class="form-control" placeholder="Ej: inspector02" style="margin-top:4px">
             </div>
             <div>
               <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Contraseña *</label>
@@ -586,417 +570,6 @@
           <p style="color:var(--muted);text-align:center;padding:40px">Cargando actas...</p>
         </div>
       </div>
-      <!-- ══════════════════════════════════════════════════════════
-           PÁGINA: ESTABLECIMIENTOS
-      ══════════════════════════════════════════════════════════ -->
-      <div id="page-establecimientos" class="page">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-          <h2 style="margin:0">🏪 Padrón de Establecimientos</h2>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-secondary" onclick="exportarEstablecimientos()" style="font-size:.8rem;padding:6px 12px">📥 Exportar CSV</button>
-            <button onclick="mostrarStatusDenue()" style="background:#0369a1;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:.8rem;font-weight:700;cursor:pointer">🏛️ DENUE INEGI</button>
-            <button class="btn btn-primary" onclick="abrirModalEstablecimiento()" style="font-size:.8rem;padding:6px 12px">➕ Nuevo Establecimiento</button>
-          </div>
-        </div>
-
-        <!-- Semáforo de cumplimiento -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px">
-          <div class="stat verde" style="cursor:pointer" onclick="filtrarEstabs('cumple')">
-            <div class="num" id="est-cnt-cumple">–</div><div class="lbl">✅ Cumplen</div>
-          </div>
-          <div class="stat naranja" style="cursor:pointer" onclick="filtrarEstabs('cumple_parcial')">
-            <div class="num" id="est-cnt-parcial">–</div><div class="lbl">⚠️ Cumple Parcial</div>
-          </div>
-          <div class="stat rojo" style="cursor:pointer" onclick="filtrarEstabs('no_cumple')">
-            <div class="num" id="est-cnt-nocumple">–</div><div class="lbl">❌ No Cumple</div>
-          </div>
-          <div class="stat" style="background:#6b7280;color:#fff;cursor:pointer" onclick="filtrarEstabs('sin_verificar')">
-            <div class="num" id="est-cnt-sinver">–</div><div class="lbl">🔘 Sin Verificar</div>
-          </div>
-          <div class="stat" style="background:#1e3a5f;color:#fff;cursor:pointer" onclick="filtrarEstabs('')">
-            <div class="num" id="est-cnt-total">–</div><div class="lbl">📊 Total</div>
-          </div>
-        </div>
-
-        <!-- Filtros -->
-        <div class="card" style="padding:12px;margin-bottom:12px">
-          <div class="filters" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <input id="est-buscar" placeholder="🔍 Buscar nombre, domicilio..." style="padding:7px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem;min-width:200px" oninput="cargarEstablecimientos()">
-            <select id="est-filtro-giro" onchange="cargarEstablecimientos()" style="padding:7px 10px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
-              <option value="">Todos los giros</option>
-              <option value="restaurante">🍽️ Restaurante</option>
-              <option value="cocina_economica">🥘 Cocina Económica</option>
-              <option value="taqueria">🌮 Taquería</option>
-              <option value="panaderia">🥖 Panadería</option>
-              <option value="carniceria">🥩 Carnicería</option>
-              <option value="taller_mecanico">🔧 Taller Mecánico</option>
-              <option value="taller_hojalateria">🚗 Hojalatería/Pintura</option>
-              <option value="taller_carpinteria">🪚 Carpintería</option>
-              <option value="taller_soldadura">⚡ Soldadura</option>
-              <option value="lavanderia">👕 Lavandería</option>
-              <option value="car_wash">🚿 Car Wash</option>
-              <option value="gasolinera">⛽ Gasolinera</option>
-              <option value="tlapaleria">🪣 Tlapalería</option>
-              <option value="ferreteria">🔩 Ferretería</option>
-              <option value="veterinaria">🐾 Veterinaria</option>
-              <option value="criadero_animales">🐕 Criadero</option>
-              <option value="bar">🍺 Bar/Cantina</option>
-              <option value="salon_eventos">🎉 Salón de Eventos</option>
-              <option value="hotel">🏨 Hotel/Motel</option>
-              <option value="fabrica">🏭 Fábrica/Almacén</option>
-              <option value="clinica">🏥 Clínica/Consultorio</option>
-              <option value="escuela">🏫 Escuela/Guardería</option>
-              <option value="otro">📌 Otro</option>
-            </select>
-            <select id="est-filtro-estado" onchange="cargarEstablecimientos()" style="padding:7px 10px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
-              <option value="">Todos los estados</option>
-              <option value="sin_verificar">🔘 Sin verificar</option>
-              <option value="cumple">✅ Cumple</option>
-              <option value="cumple_parcial">⚠️ Cumple parcial</option>
-              <option value="no_cumple">❌ No cumple</option>
-            </select>
-            <select id="est-filtro-fuente" onchange="cargarEstablecimientos()" style="padding:7px 10px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
-              <option value="">Todas las fuentes</option>
-              <option value="DENUE_INEGI_2026">🏛️ DENUE INEGI</option>
-              <option value="manual">✏️ Manual</option>
-            </select>
-            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('est-buscar').value='';document.getElementById('est-filtro-giro').value='';document.getElementById('est-filtro-estado').value='';document.getElementById('est-filtro-fuente').value='';cargarEstablecimientos()">✕ Limpiar</button>
-          </div>
-        </div>
-
-        <!-- Tabla establecimientos -->
-        <div class="card" style="padding:0;overflow:hidden">
-          <div id="est-tabla-wrap" style="overflow-x:auto">
-            <table style="width:100%;border-collapse:collapse;font-size:.82rem">
-              <thead>
-                <tr style="background:#f1f5f9">
-                  <th style="padding:10px 12px;text-align:left;font-weight:700;color:#1a3a5c">Folio</th>
-                  <th style="padding:10px 12px;text-align:left">Nombre / Razón Social</th>
-                  <th style="padding:10px 12px;text-align:left">Giro</th>
-                  <th style="padding:10px 12px;text-align:left">Domicilio</th>
-                  <th style="padding:10px 12px;text-align:left">Responsable</th>
-                  <th style="padding:10px 12px;text-align:left">Personal</th><th style="padding:10px 12px;text-align:center">Cumplimiento</th>
-                  <th style="padding:10px 12px;text-align:center">Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="est-tbody">
-                <tr><td colspan="7" style="text-align:center;padding:24px;color:#888">Cargando...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ══════════════════════════════════════════════════════════
-           PÁGINA: VERIFICACIONES
-      ══════════════════════════════════════════════════════════ -->
-      <div id="page-verificaciones" class="page">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-          <h2 style="margin:0">🔍 Verificaciones Ambientales</h2>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-primary" onclick="abrirModalVerificacion()" style="font-size:.8rem;padding:6px 12px">➕ Programar Verificación</button>
-          </div>
-        </div>
-
-        <!-- Filtros verificaciones -->
-        <div class="card" style="padding:12px;margin-bottom:12px">
-          <div class="filters" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <select id="ver-filtro-estado" onchange="cargarVerificaciones()" style="padding:7px 10px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
-              <option value="">Todos los estados</option>
-              <option value="programada">📅 Programada</option>
-              <option value="en_proceso">🔄 En Proceso</option>
-              <option value="completada">✅ Completada</option>
-              <option value="cancelada">❌ Cancelada</option>
-            </select>
-            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('ver-filtro-estado').value='';cargarVerificaciones()">✕ Limpiar</button>
-            <button class="btn btn-primary btn-sm" onclick="cargarVerificaciones()">🔄 Actualizar</button>
-          </div>
-        </div>
-
-        <!-- Tarjetas de verificaciones -->
-        <div id="ver-lista" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px">
-          <div style="text-align:center;padding:32px;color:#888;grid-column:1/-1">Cargando...</div>
-        </div>
-
-      </div><!-- fin page-verificaciones -->
-
-      <!-- MODAL: DENUE INEGI STATUS -->
-      <div id="modal-denue" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px">
-        <div style="background:#fff;border-radius:14px;padding:28px;width:100%;max-width:520px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-            <h3 style="margin:0;color:#1a3a5c">🏛️ DENUE INEGI — Directorio de Establecimientos</h3>
-            <button onclick="document.getElementById('modal-denue').style.display='none'" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888">✕</button>
-          </div>
-
-          <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:14px;margin-bottom:16px">
-            <div style="font-size:.82rem;color:#0369a1;font-weight:700;margin-bottom:6px">ℹ️ ¿Qué es el DENUE?</div>
-            <div style="font-size:.8rem;color:#1e40af;line-height:1.5">El Directorio Estadístico Nacional de Unidades Económicas del INEGI contiene todos los establecimientos registrados en Pabellón de Arteaga con nombre, giro, domicilio y coordenadas GPS.</div>
-          </div>
-
-          <div id="denue-status-content" style="margin-bottom:16px">
-            <div style="text-align:center;padding:20px;color:#888">Cargando información...</div>
-          </div>
-
-          <div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:12px;margin-bottom:16px;font-size:.8rem;color:#92400e">
-            ⚠️ <b>Nota:</b> Al reimportar se reemplazarán los registros DENUE existentes. Los establecimientos creados manualmente se conservan.
-          </div>
-
-          <div style="display:flex;gap:10px;justify-content:flex-end">
-            <button onclick="document.getElementById('modal-denue').style.display='none'" class="btn btn-secondary">Cerrar</button>
-            <button onclick="reimportarDenue()" id="btn-reimportar-denue" class="btn btn-primary" style="background:#0369a1">🔄 Reimportar DENUE</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ══════════════════════════════════════════════════════════
-           MODAL: NUEVO/EDITAR ESTABLECIMIENTO
-      ══════════════════════════════════════════════════════════ -->
-      <div id="modal-establecimiento" class="modal-bg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto">
-        <div style="background:#fff;border-radius:14px;padding:28px;width:100%;max-width:600px;margin:0 16px 40px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-            <h3 id="modal-est-titulo" style="margin:0;color:#1a3a5c">🏪 Nuevo Establecimiento</h3>
-            <button onclick="cerrarModalEst()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888">✕</button>
-          </div>
-          <input type="hidden" id="est-edit-id">
-
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <div style="grid-column:1/-1" class="form-group">
-              <label>Nombre / Razón Social *</label>
-              <input id="est-nombre" placeholder="Ej: Taller Mecánico El Buen Motor">
-            </div>
-            <div class="form-group">
-              <label>Giro Comercial *</label>
-              <select id="est-giro">
-                <option value="">-- Seleccionar --</option>
-                <option value="restaurante">🍽️ Restaurante</option>
-                <option value="cocina_economica">🥘 Cocina Económica</option>
-                <option value="taqueria">🌮 Taquería</option>
-                <option value="panaderia">🥖 Panadería</option>
-                <option value="carniceria">🥩 Carnicería</option>
-                <option value="taller_mecanico">🔧 Taller Mecánico</option>
-                <option value="taller_hojalateria">🚗 Hojalatería/Pintura</option>
-                <option value="taller_carpinteria">🪚 Carpintería</option>
-                <option value="taller_soldadura">⚡ Soldadura</option>
-                <option value="lavanderia">👕 Lavandería</option>
-                <option value="car_wash">🚿 Car Wash</option>
-                <option value="gasolinera">⛽ Gasolinera</option>
-                <option value="tlapaleria">🪣 Tlapalería</option>
-                <option value="ferreteria">🔩 Ferretería</option>
-                <option value="veterinaria">🐾 Veterinaria</option>
-                <option value="criadero_animales">🐕 Criadero de Animales</option>
-                <option value="peluqueria_canina">✂️ Peluquería Canina</option>
-                <option value="salon_belleza">💅 Salón de Belleza/Spa</option>
-                <option value="gym">🏋️ Gimnasio</option>
-                <option value="tienda_abarrotes">🛒 Tienda/Abarrotes</option>
-                <option value="supermercado">🏪 Supermercado</option>
-                <option value="farmacia">💊 Farmacia</option>
-                <option value="fabrica">🏭 Fábrica</option>
-                <option value="almacen">📦 Almacén/Bodega</option>
-                <option value="bar">🍺 Bar/Cantina/Antro</option>
-                <option value="salon_eventos">🎉 Salón de Eventos</option>
-                <option value="hotel">🏨 Hotel/Motel/Hospedaje</option>
-                <option value="clinica">🏥 Clínica/Laboratorio</option>
-                <option value="escuela">🏫 Escuela/Guardería</option>
-                <option value="otro">📌 Otro</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>RFC (opcional)</label>
-              <input id="est-rfc" placeholder="XAXX010101000" style="text-transform:uppercase">
-            </div>
-            <div style="grid-column:1/-1" class="form-group">
-              <label>Domicilio *</label>
-              <input id="est-domicilio" placeholder="Calle, número, colonia">
-            </div>
-            <div class="form-group">
-              <label>Colonia</label>
-              <input id="est-colonia" placeholder="Colonia">
-            </div>
-            <div style="grid-column:1/-1" class="form-group">
-              <label style="font-weight:700;color:#1a3a5c;font-size:.85rem">📍 Ubicación en el Mapa</label>
-              <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">
-                <button type="button" onclick="usarGPSEst()" style="padding:6px 12px;background:#1a3a5c;color:#fff;border:none;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer">📡 Usar GPS</button>
-                <button type="button" onclick="setLayerEst('sat')" style="padding:6px 10px;background:#374151;color:#fff;border:none;border-radius:6px;font-size:.78rem;cursor:pointer">🛰️ Satelital</button>
-                <button type="button" onclick="setLayerEst('osm')" style="padding:6px 10px;background:#374151;color:#fff;border:none;border-radius:6px;font-size:.78rem;cursor:pointer">🗺️ Calles</button>
-                <span id="est-coords-txt" style="font-size:.75rem;color:#6b7280;align-self:center">Sin ubicación</span>
-              </div>
-              <div id="map-est" style="height:220px;border-radius:8px;border:1px solid var(--borde);background:#e5e7eb"></div>
-              <input type="hidden" id="est-lat">
-              <input type="hidden" id="est-lon">
-            </div>
-            <div class="form-group">
-              <label>Nombre del Responsable *</label>
-              <input id="est-responsable" placeholder="Nombre del propietario/encargado">
-            </div>
-            <div class="form-group">
-              <label>Teléfono de contacto</label>
-              <input id="est-telefono" type="tel" placeholder="449 000 0000">
-            </div>
-            <div class="form-group">
-              <label>Estado de cumplimiento</label>
-              <select id="est-estado-cump">
-                <option value="sin_verificar">🔘 Sin verificar</option>
-                <option value="cumple">✅ Cumple</option>
-                <option value="cumple_parcial">⚠️ Cumple parcial</option>
-                <option value="no_cumple">❌ No cumple</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Permisos -->
-          <div style="margin-top:16px">
-            <label style="display:block;font-weight:700;color:#1a3a5c;font-size:.85rem;margin-bottom:8px">📋 Permisos / Licencias</label>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="licencia_funcionamiento" class="perm-check"> Licencia de Funcionamiento</label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="dictamen_ambiental" class="perm-check"> Dictamen Ambiental</label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="manejo_residuos" class="perm-check"> Manejo de Residuos</label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="descarga_aguas" class="perm-check"> Descarga de Aguas</label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="emisiones_ruido" class="perm-check"> Emisiones/Ruido</label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="uso_suelo" class="perm-check"> Uso de Suelo</label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="proteccion_civil" class="perm-check"> Protección Civil</label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="anuncio_publicidad" class="perm-check"> Anuncio/Publicidad</label>
-            </div>
-          </div>
-
-          <!-- Observaciones -->
-          <div style="margin-top:12px" class="form-group">
-            <label>Observaciones</label>
-            <textarea id="est-observaciones" rows="2" placeholder="Notas relevantes sobre el establecimiento..." style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem;resize:vertical"></textarea>
-          </div>
-
-          <div id="est-modal-alert" style="margin-top:10px"></div>
-          <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end">
-            <button onclick="cerrarModalEst()" class="btn btn-secondary">Cancelar</button>
-            <button onclick="guardarEstablecimiento()" class="btn btn-primary" id="btn-guardar-est">💾 Guardar Establecimiento</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ══════════════════════════════════════════════════════════
-           MODAL: NUEVA VERIFICACIÓN
-      ══════════════════════════════════════════════════════════ -->
-      <div id="modal-verificacion" class="modal-bg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto">
-        <div style="background:#fff;border-radius:14px;padding:28px;width:100%;max-width:620px;margin:0 16px 40px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-            <h3 style="margin:0;color:#1a3a5c">🔍 Programar Verificación</h3>
-            <button onclick="cerrarModalVer()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888">✕</button>
-          </div>
-
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <div style="grid-column:1/-1" class="form-group">
-              <label>Establecimiento *</label>
-              <select id="ver-est-select" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
-                <option value="">-- Seleccionar establecimiento --</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Tipo de Verificación</label>
-              <select id="ver-tipo" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
-                <option value="programada">📅 Programada (rutinaria)</option>
-                <option value="oficio">⚡ De Oficio (por denuncia)</option>
-                <option value="seguimiento">🔄 Seguimiento</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Fecha programada</label>
-              <input id="ver-fecha" type="date" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
-            </div>
-            <div class="form-group">
-              <label>Asignar inspector</label>
-              <select id="ver-inspector" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
-                <option value="">-- Sin asignar --</option>
-              </select>
-            </div>
-            <div style="grid-column:1/-1" class="form-group">
-              <label>Motivo / Instrucciones</label>
-              <textarea id="ver-motivo" rows="3" placeholder="Describe el motivo de la verificación, aspectos a revisar, antecedentes..." style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem;resize:vertical"></textarea>
-            </div>
-          </div>
-
-          <!-- Checklist por defecto -->
-          <div style="margin-top:12px">
-            <label style="display:block;font-weight:700;color:#1a3a5c;font-size:.85rem;margin-bottom:8px">✅ Checklist de Verificación (selecciona los puntos a revisar)</label>
-            <div id="ver-checklist-wrap" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;max-height:200px;overflow-y:auto;padding:8px;border:1px solid var(--borde);border-radius:6px;font-size:.8rem">
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="licencia_vigente"> Licencia de funcionamiento vigente</label>
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="dictamen_ambiental"> Dictamen ambiental municipal</label>
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="contenedores_residuos"> Contenedores de residuos adecuados</label>
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="separacion_residuos"> Separación de residuos orgánicos/inorgánicos</label>
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="trampa_grasas"> Trampa de grasas (aplica a alimentos)</label>
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="descarga_aguas"> Descarga de aguas residuales controlada</label>
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="nivel_ruido"> Nivel de ruido dentro de norma</label>
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="emisiones_aire"> Sin emisiones contaminantes al aire</label>
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="almacen_productos"> Almacenamiento correcto de productos peligrosos</label>
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="areas_verdes_predio"> Áreas verdes del predio en buen estado</label>
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="fauna_control"> Control de fauna nociva (roedores, insectos)</label>
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="senaletica"> Señalética ambiental visible</label>
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="uso_suelo"> Uso de suelo conforme</label>
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="proteccion_civil"> Protección Civil al corriente</label>
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="pago_rsu"> Pago por recolección y disposición de RSU al corriente</label>
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="contrato_rsu"> Contrato con empresa autorizada para disposición de RSU</label>
-            </div>
-          </div>
-
-          <div id="ver-modal-alert" style="margin-top:10px"></div>
-          <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end">
-            <button onclick="cerrarModalVer()" class="btn btn-secondary">Cancelar</button>
-            <button onclick="guardarVerificacion()" class="btn btn-primary">📅 Programar Verificación</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- MODAL: DETALLE / COMPLETAR VERIFICACIÓN -->
-      <div id="modal-ver-detalle" class="modal-bg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:flex-start;justify-content:center;padding-top:30px;overflow-y:auto">
-        <div style="background:#fff;border-radius:14px;padding:28px;width:100%;max-width:650px;margin:0 16px 40px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-            <h3 id="ver-det-titulo" style="margin:0;color:#1a3a5c">🔍 Detalle de Verificación</h3>
-            <button onclick="cerrarModalVerDet()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888">✕</button>
-          </div>
-          <div id="ver-det-info" style="background:#f8fafc;border-radius:8px;padding:14px;margin-bottom:14px;font-size:.85rem;line-height:1.6"></div>
-
-          <!-- Checklist de resultados -->
-          <div style="margin-bottom:14px">
-            <label style="display:block;font-weight:700;color:#1a3a5c;font-size:.85rem;margin-bottom:8px">✅ Resultados del Checklist</label>
-            <div id="ver-det-checklist" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:8px;border:1px solid var(--borde);border-radius:6px;font-size:.8rem;max-height:180px;overflow-y:auto"></div>
-          </div>
-
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-            <div class="form-group">
-              <label style="font-weight:700;font-size:.82rem">Resultado General</label>
-              <select id="ver-det-resultado" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
-                <option value="">-- Seleccionar --</option>
-                <option value="cumple">✅ Cumple con todos los requisitos</option>
-                <option value="cumple_con_observaciones">⚠️ Cumple con observaciones</option>
-                <option value="no_cumple">❌ No cumple</option>
-                <option value="no_aplica">➖ No aplica / No se pudo realizar</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label style="font-weight:700;font-size:.82rem">Acción requerida</label>
-              <select id="ver-det-accion" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
-                <option value="ninguna">✅ Ninguna acción requerida</option>
-                <option value="apercibimiento">📋 Generar Apercibimiento</option>
-                <option value="sancion">⚖️ Iniciar Sanción</option>
-                <option value="seguimiento_30">🔄 Seguimiento en 30 días</option>
-                <option value="seguimiento_15">🔄 Seguimiento en 15 días</option>
-                <option value="clausura">🚫 Clausura temporal</option>
-              </select>
-            </div>
-            <div style="grid-column:1/-1" class="form-group">
-              <label style="font-weight:700;font-size:.82rem">Hallazgos / Observaciones del inspector</label>
-              <textarea id="ver-det-hallazgos" rows="4" placeholder="Describe detalladamente lo encontrado durante la verificación..." style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem;resize:vertical"></textarea>
-            </div>
-          </div>
-
-          <input type="hidden" id="ver-det-id">
-          <div id="ver-det-alert" style="margin-top:6px"></div>
-          <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;flex-wrap:wrap">
-            <button onclick="cerrarModalVerDet()" class="btn btn-secondary">Cerrar</button>
-            <button onclick="completarVerificacion()" class="btn btn-primary">✅ Guardar y Completar</button>
-          </div>
-        </div>
-      </div>
-
-
     </main>
   </div>
 
@@ -1239,6 +812,482 @@
         </div>
       </div>
 
+      <!-- ══════════════════════════════════════════════════════════
+           PÁGINA: ESTABLECIMIENTOS
+      ══════════════════════════════════════════════════════════ -->
+      <div id="page-establecimientos" class="page">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+          <h2 style="margin:0">🏪 Padrón de Establecimientos</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-secondary" onclick="exportarEstablecimientos()" style="font-size:.8rem;padding:6px 12px">📥 Exportar</button>
+            <button class="btn btn-primary" onclick="abrirModalEstablecimiento()" style="font-size:.8rem;padding:6px 12px">➕ Nuevo Establecimiento</button>
+          </div>
+        </div>
+
+        <!-- Semáforo de cumplimiento -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px">
+          <div class="stat verde" style="cursor:pointer" onclick="filtrarEstabs('cumple')">
+            <div class="num" id="est-cnt-cumple">–</div><div class="lbl">✅ Cumplen</div>
+          </div>
+          <div class="stat naranja" style="cursor:pointer" onclick="filtrarEstabs('cumple_parcial')">
+            <div class="num" id="est-cnt-parcial">–</div><div class="lbl">⚠️ Cumple Parcial</div>
+          </div>
+          <div class="stat rojo" style="cursor:pointer" onclick="filtrarEstabs('no_cumple')">
+            <div class="num" id="est-cnt-nocumple">–</div><div class="lbl">❌ No Cumple</div>
+          </div>
+          <div class="stat" style="background:#6b7280;color:#fff;cursor:pointer" onclick="filtrarEstabs('sin_verificar')">
+            <div class="num" id="est-cnt-sinver">–</div><div class="lbl">🔘 Sin Verificar</div>
+          </div>
+          <div class="stat" style="background:#1e3a5f;color:#fff;cursor:pointer" onclick="filtrarEstabs('')">
+            <div class="num" id="est-cnt-total">–</div><div class="lbl">📊 Total</div>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="card" style="padding:12px;margin-bottom:12px">
+          <div class="filters" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input id="est-buscar" placeholder="🔍 Buscar nombre, domicilio..." style="padding:7px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem;min-width:200px" oninput="cargarEstablecimientos()">
+            <select id="est-filtro-giro" onchange="cargarEstablecimientos()" style="padding:7px 10px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+              <option value="">Todos los giros</option>
+              <option value="restaurante">🍽️ Restaurante</option>
+              <option value="cocina_economica">🥘 Cocina Económica</option>
+              <option value="taqueria">🌮 Taquería</option>
+              <option value="panaderia">🥖 Panadería</option>
+              <option value="carniceria">🥩 Carnicería</option>
+              <option value="taller_mecanico">🔧 Taller Mecánico</option>
+              <option value="taller_hojalateria">🚗 Hojalatería/Pintura</option>
+              <option value="taller_carpinteria">🪚 Carpintería</option>
+              <option value="taller_soldadura">⚡ Soldadura</option>
+              <option value="lavanderia">👕 Lavandería</option>
+              <option value="car_wash">🚿 Car Wash</option>
+              <option value="gasolinera">⛽ Gasolinera</option>
+              <option value="tlapaleria">🪣 Tlapalería</option>
+              <option value="ferreteria">🔩 Ferretería</option>
+              <option value="veterinaria">🐾 Veterinaria</option>
+              <option value="criadero_animales">🐕 Criadero</option>
+              <option value="bar">🍺 Bar/Cantina</option>
+              <option value="salon_eventos">🎉 Salón de Eventos</option>
+              <option value="hotel">🏨 Hotel/Motel</option>
+              <option value="fabrica">🏭 Fábrica/Almacén</option>
+              <option value="clinica">🏥 Clínica/Consultorio</option>
+              <option value="escuela">🏫 Escuela/Guardería</option>
+              <option value="otro">📌 Otro</option>
+            </select>
+            <select id="est-filtro-estado" onchange="cargarEstablecimientos()" style="padding:7px 10px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+              <option value="">Todos los estados</option>
+              <option value="sin_verificar">🔘 Sin verificar</option>
+              <option value="cumple">✅ Cumple</option>
+              <option value="cumple_parcial">⚠️ Cumple parcial</option>
+              <option value="no_cumple">❌ No cumple</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('est-buscar').value='';document.getElementById('est-filtro-giro').value='';document.getElementById('est-filtro-estado').value='';cargarEstablecimientos()">✕ Limpiar</button>
+          </div>
+        </div>
+
+        <!-- Tabla establecimientos -->
+        <div class="card" style="padding:0;overflow:hidden">
+          <div id="est-tabla-wrap" style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+              <thead>
+                <tr style="background:#f1f5f9">
+                  <th style="padding:10px 12px;text-align:left;font-weight:700;color:#1a3a5c">Folio</th>
+                  <th style="padding:10px 12px;text-align:left">Nombre / Razón Social</th>
+                  <th style="padding:10px 12px;text-align:left">Giro</th>
+                  <th style="padding:10px 12px;text-align:left">Domicilio</th>
+                  <th style="padding:10px 12px;text-align:left">Responsable</th>
+                  <th style="padding:10px 12px;text-align:center">Cumplimiento</th>
+                  <th style="padding:10px 12px;text-align:center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="est-tbody">
+                <tr><td colspan="7" style="text-align:center;padding:24px;color:#888">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════
+           PÁGINA: VERIFICACIONES
+      ══════════════════════════════════════════════════════════ -->
+      <div id="page-verificaciones" class="page">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+          <h2 style="margin:0">🔍 Verificaciones Ambientales</h2>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary" onclick="abrirModalVerificacion()" style="font-size:.8rem;padding:6px 12px">➕ Programar Verificación</button>
+          </div>
+        </div>
+
+        <!-- Filtros verificaciones -->
+        <div class="card" style="padding:12px;margin-bottom:12px">
+          <div class="filters" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <select id="ver-filtro-estado" onchange="cargarVerificaciones()" style="padding:7px 10px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+              <option value="">Todos los estados</option>
+              <option value="programada">📅 Programada</option>
+              <option value="en_proceso">🔄 En Proceso</option>
+              <option value="completada">✅ Completada</option>
+              <option value="cancelada">❌ Cancelada</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('ver-filtro-estado').value='';cargarVerificaciones()">✕ Limpiar</button>
+            <button class="btn btn-primary btn-sm" onclick="cargarVerificaciones()">🔄 Actualizar</button>
+          </div>
+        </div>
+
+        <!-- Tarjetas de verificaciones -->
+        <div id="ver-lista" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px">
+          <div style="text-align:center;padding:32px;color:#888;grid-column:1/-1">Cargando...</div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════
+           ACERCA DE — Créditos de la plataforma
+      ══════════════════════════════════════════════════════════ -->
+      <div id="page-acerca" class="page">
+        <h2 style="margin:0 0 20px">ℹ️ Acerca de la Plataforma</h2>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;max-width:900px">
+
+          <!-- Tarjeta principal -->
+          <div class="card" style="padding:28px;text-align:center">
+            <div style="font-size:4rem;margin-bottom:12px">🌿</div>
+            <h2 style="color:var(--verde-oscuro);margin:0 0 6px;font-size:1.5rem">SGO-IMBIO</h2>
+            <p style="color:#64748b;font-size:.88rem;line-height:1.5;margin:0 0 16px">
+              Sistema de Gestión Operativa del Instituto Municipal de Biodiversidad y Protección Ambiental de Pabellón de Arteaga, Aguascalientes.
+            </p>
+            <div style="display:inline-block;background:var(--verde-bg,#e8f8f0);color:var(--verde-oscuro);padding:4px 16px;border-radius:99px;font-size:.78rem;font-weight:700;letter-spacing:.05em">
+              VERSIÓN 2.0.0 · 2026
+            </div>
+          </div>
+
+          <!-- Créditos de desarrollo -->
+          <div class="card" style="padding:24px">
+            <h3 style="font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:0 0 16px;display:flex;align-items:center;gap:8px"><span>👨‍💻</span> Desarrollo</h3>
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;gap:12px;align-items:flex-start">
+                <div style="font-size:1.5rem;flex-shrink:0">🧬</div>
+                <div>
+                  <div style="font-weight:700;font-size:.92rem;color:#1a3a5c">Biol. Luis Felipe Lozano Román</div>
+                  <div style="font-size:.78rem;color:#64748b;margin-top:2px">Diseño, desarrollo e implementación del sistema</div>
+                  <div style="font-size:.78rem;color:#64748b">Director IMBIO · Pabellón de Arteaga</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:12px;align-items:flex-start">
+                <div style="font-size:1.5rem;flex-shrink:0">🤖</div>
+                <div>
+                  <div style="font-weight:700;font-size:.92rem;color:#1a3a5c">IA Matlacho — Asistente Ambiental</div>
+                  <div style="font-size:.78rem;color:#64748b;margin-top:2px">Asistente inteligente integrado con Claude (Anthropic)</div>
+                  <div style="font-size:.78rem;color:#64748b">Redacción de actas, análisis y apoyo operativo</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Institución y contacto -->
+          <div class="card" style="padding:24px">
+            <h3 style="font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:0 0 16px;display:flex;align-items:center;gap:8px"><span>🏛️</span> Institución</h3>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;gap:10px;align-items:center">
+                <span style="font-size:1.1rem;width:24px;text-align:center">🏛️</span>
+                <div>
+                  <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;color:#94a3b8">Organismo</div>
+                  <div style="font-size:.88rem;font-weight:600;color:#1a3a5c">Instituto Municipal de Biodiversidad y Protección Ambiental</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:center">
+                <span style="font-size:1.1rem;width:24px;text-align:center">📍</span>
+                <div>
+                  <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;color:#94a3b8">Municipio</div>
+                  <div style="font-size:.88rem;font-weight:600;color:#1a3a5c">Pabellón de Arteaga, Aguascalientes</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:center">
+                <span style="font-size:1.1rem;width:24px;text-align:center">📧</span>
+                <div>
+                  <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;color:#94a3b8">Contacto</div>
+                  <div style="font-size:.88rem;font-weight:600;color:#1a3a5c">imbio@pabellon.gob.mx</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:center">
+                <span style="font-size:1.1rem;width:24px;text-align:center">📞</span>
+                <div>
+                  <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;color:#94a3b8">Emergencias</div>
+                  <div style="font-size:.88rem;font-weight:600;color:#1a3a5c">911 / Protección Civil</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Componentes tecnológicos -->
+          <div class="card" style="padding:24px">
+            <h3 style="font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:0 0 16px;display:flex;align-items:center;gap:8px"><span>⚙️</span> Tecnología</h3>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:8px">
+                <span style="font-size:.85rem;font-weight:600;color:#1a3a5c">🐍 Backend</span>
+                <span style="font-size:.78rem;color:#64748b">Python · HTTP Server</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:8px">
+                <span style="font-size:.85rem;font-weight:600;color:#1a3a5c">🗺️ Mapas</span>
+                <span style="font-size:.78rem;color:#64748b">Leaflet.js · OpenStreetMap</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:8px">
+                <span style="font-size:.85rem;font-weight:600;color:#1a3a5c">🤖 IA</span>
+                <span style="font-size:.78rem;color:#64748b">Claude Haiku · Anthropic</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:8px">
+                <span style="font-size:.85rem;font-weight:600;color:#1a3a5c">☁️ Hosting</span>
+                <span style="font-size:.78rem;color:#64748b">Railway.app</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:8px">
+                <span style="font-size:.85rem;font-weight:600;color:#1a3a5c">📄 Documentos</span>
+                <span style="font-size:.78rem;color:#64748b">HTML → PDF nativo</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Pie de créditos -->
+        <div style="margin-top:20px;max-width:900px;padding:16px;background:#f0f4fa;border-radius:10px;text-align:center;font-size:.78rem;color:#64748b;border:1px solid #e2e8f0">
+          © 2026 · Municipio de Pabellón de Arteaga · Instituto Municipal de Biodiversidad y Protección Ambiental (IMBIO) ·
+          Todos los derechos reservados · Sistema de uso exclusivo del personal autorizado del IMBIO.
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════
+           MODAL: NUEVO/EDITAR ESTABLECIMIENTO
+      ══════════════════════════════════════════════════════════ -->
+      <div id="modal-establecimiento" class="modal-bg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto">
+        <div style="background:#fff;border-radius:14px;padding:28px;width:100%;max-width:600px;margin:0 16px 40px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <h3 id="modal-est-titulo" style="margin:0;color:#1a3a5c">🏪 Nuevo Establecimiento</h3>
+            <button onclick="cerrarModalEst()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888">✕</button>
+          </div>
+          <input type="hidden" id="est-edit-id">
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="grid-column:1/-1" class="form-group">
+              <label>Nombre / Razón Social *</label>
+              <input id="est-nombre" placeholder="Ej: Taller Mecánico El Buen Motor">
+            </div>
+            <div class="form-group">
+              <label>Giro Comercial *</label>
+              <select id="est-giro">
+                <option value="">-- Seleccionar --</option>
+                <option value="restaurante">🍽️ Restaurante</option>
+                <option value="cocina_economica">🥘 Cocina Económica</option>
+                <option value="taqueria">🌮 Taquería</option>
+                <option value="panaderia">🥖 Panadería</option>
+                <option value="carniceria">🥩 Carnicería</option>
+                <option value="taller_mecanico">🔧 Taller Mecánico</option>
+                <option value="taller_hojalateria">🚗 Hojalatería/Pintura</option>
+                <option value="taller_carpinteria">🪚 Carpintería</option>
+                <option value="taller_soldadura">⚡ Soldadura</option>
+                <option value="lavanderia">👕 Lavandería</option>
+                <option value="car_wash">🚿 Car Wash</option>
+                <option value="gasolinera">⛽ Gasolinera</option>
+                <option value="tlapaleria">🪣 Tlapalería</option>
+                <option value="ferreteria">🔩 Ferretería</option>
+                <option value="veterinaria">🐾 Veterinaria</option>
+                <option value="criadero_animales">🐕 Criadero de Animales</option>
+                <option value="peluqueria_canina">✂️ Peluquería Canina</option>
+                <option value="salon_belleza">💅 Salón de Belleza/Spa</option>
+                <option value="gym">🏋️ Gimnasio</option>
+                <option value="tienda_abarrotes">🛒 Tienda/Abarrotes</option>
+                <option value="supermercado">🏪 Supermercado</option>
+                <option value="farmacia">💊 Farmacia</option>
+                <option value="fabrica">🏭 Fábrica</option>
+                <option value="almacen">📦 Almacén/Bodega</option>
+                <option value="bar">🍺 Bar/Cantina/Antro</option>
+                <option value="salon_eventos">🎉 Salón de Eventos</option>
+                <option value="hotel">🏨 Hotel/Motel/Hospedaje</option>
+                <option value="clinica">🏥 Clínica/Laboratorio</option>
+                <option value="escuela">🏫 Escuela/Guardería</option>
+                <option value="otro">📌 Otro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>RFC (opcional)</label>
+              <input id="est-rfc" placeholder="XAXX010101000" style="text-transform:uppercase">
+            </div>
+            <div style="grid-column:1/-1" class="form-group">
+              <label>Domicilio *</label>
+              <input id="est-domicilio" placeholder="Calle, número, colonia">
+            </div>
+            <div class="form-group">
+              <label>Colonia</label>
+              <input id="est-colonia" placeholder="Colonia">
+            </div>
+            <div class="form-group">
+              <label>Nombre del Responsable *</label>
+              <input id="est-responsable" placeholder="Nombre del propietario/encargado">
+            </div>
+            <div class="form-group">
+              <label>Teléfono de contacto</label>
+              <input id="est-telefono" type="tel" placeholder="449 000 0000">
+            </div>
+            <div class="form-group">
+              <label>Estado de cumplimiento</label>
+              <select id="est-estado-cump">
+                <option value="sin_verificar">🔘 Sin verificar</option>
+                <option value="cumple">✅ Cumple</option>
+                <option value="cumple_parcial">⚠️ Cumple parcial</option>
+                <option value="no_cumple">❌ No cumple</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Permisos -->
+          <div style="margin-top:16px">
+            <label style="display:block;font-weight:700;color:#1a3a5c;font-size:.85rem;margin-bottom:8px">📋 Permisos / Licencias</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="licencia_funcionamiento" class="perm-check"> Licencia de Funcionamiento</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="dictamen_ambiental" class="perm-check"> Dictamen Ambiental</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="manejo_residuos" class="perm-check"> Manejo de Residuos</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="descarga_aguas" class="perm-check"> Descarga de Aguas</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="emisiones_ruido" class="perm-check"> Emisiones/Ruido</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="uso_suelo" class="perm-check"> Uso de Suelo</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="proteccion_civil" class="perm-check"> Protección Civil</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="anuncio_publicidad" class="perm-check"> Anuncio/Publicidad</label>
+            </div>
+          </div>
+
+          <!-- Observaciones -->
+          <div style="margin-top:12px" class="form-group">
+            <label>Observaciones</label>
+            <textarea id="est-observaciones" rows="2" placeholder="Notas relevantes sobre el establecimiento..." style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem;resize:vertical"></textarea>
+          </div>
+
+          <div id="est-modal-alert" style="margin-top:10px"></div>
+          <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end">
+            <button onclick="cerrarModalEst()" class="btn btn-secondary">Cancelar</button>
+            <button onclick="guardarEstablecimiento()" class="btn btn-primary" id="btn-guardar-est">💾 Guardar Establecimiento</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════
+           MODAL: NUEVA VERIFICACIÓN
+      ══════════════════════════════════════════════════════════ -->
+      <div id="modal-verificacion" class="modal-bg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto">
+        <div style="background:#fff;border-radius:14px;padding:28px;width:100%;max-width:620px;margin:0 16px 40px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <h3 style="margin:0;color:#1a3a5c">🔍 Programar Verificación</h3>
+            <button onclick="cerrarModalVer()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888">✕</button>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="grid-column:1/-1" class="form-group">
+              <label>Establecimiento *</label>
+              <select id="ver-est-select" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+                <option value="">-- Seleccionar establecimiento --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Tipo de Verificación</label>
+              <select id="ver-tipo" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+                <option value="programada">📅 Programada (rutinaria)</option>
+                <option value="oficio">⚡ De Oficio (por denuncia)</option>
+                <option value="seguimiento">🔄 Seguimiento</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Fecha programada</label>
+              <input id="ver-fecha" type="date" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+            </div>
+            <div class="form-group">
+              <label>Asignar inspector</label>
+              <select id="ver-inspector" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+                <option value="">-- Sin asignar --</option>
+              </select>
+            </div>
+            <div style="grid-column:1/-1" class="form-group">
+              <label>Motivo / Instrucciones</label>
+              <textarea id="ver-motivo" rows="3" placeholder="Describe el motivo de la verificación, aspectos a revisar, antecedentes..." style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem;resize:vertical"></textarea>
+            </div>
+          </div>
+
+          <!-- Checklist por defecto -->
+          <div style="margin-top:12px">
+            <label style="display:block;font-weight:700;color:#1a3a5c;font-size:.85rem;margin-bottom:8px">✅ Checklist de Verificación (selecciona los puntos a revisar)</label>
+            <div id="ver-checklist-wrap" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;max-height:200px;overflow-y:auto;padding:8px;border:1px solid var(--borde);border-radius:6px;font-size:.8rem">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="licencia_vigente"> Licencia de funcionamiento vigente</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="dictamen_ambiental"> Dictamen ambiental municipal</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="contenedores_residuos"> Contenedores de residuos adecuados</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="separacion_residuos"> Separación de residuos orgánicos/inorgánicos</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="trampa_grasas"> Trampa de grasas (aplica a alimentos)</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="descarga_aguas"> Descarga de aguas residuales controlada</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="nivel_ruido"> Nivel de ruido dentro de norma</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="emisiones_aire"> Sin emisiones contaminantes al aire</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="almacen_productos"> Almacenamiento correcto de productos peligrosos</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="areas_verdes_predio"> Áreas verdes del predio en buen estado</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="fauna_control"> Control de fauna nociva (roedores, insectos)</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="senaletica"> Señalética ambiental visible</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="uso_suelo"> Uso de suelo conforme</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="proteccion_civil"> Protección Civil al corriente</label>
+            </div>
+          </div>
+
+          <div id="ver-modal-alert" style="margin-top:10px"></div>
+          <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end">
+            <button onclick="cerrarModalVer()" class="btn btn-secondary">Cancelar</button>
+            <button onclick="guardarVerificacion()" class="btn btn-primary">📅 Programar Verificación</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL: DETALLE / COMPLETAR VERIFICACIÓN -->
+      <div id="modal-ver-detalle" class="modal-bg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:flex-start;justify-content:center;padding-top:30px;overflow-y:auto">
+        <div style="background:#fff;border-radius:14px;padding:28px;width:100%;max-width:650px;margin:0 16px 40px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h3 id="ver-det-titulo" style="margin:0;color:#1a3a5c">🔍 Detalle de Verificación</h3>
+            <button onclick="cerrarModalVerDet()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888">✕</button>
+          </div>
+          <div id="ver-det-info" style="background:#f8fafc;border-radius:8px;padding:14px;margin-bottom:14px;font-size:.85rem;line-height:1.6"></div>
+
+          <!-- Checklist de resultados -->
+          <div style="margin-bottom:14px">
+            <label style="display:block;font-weight:700;color:#1a3a5c;font-size:.85rem;margin-bottom:8px">✅ Resultados del Checklist</label>
+            <div id="ver-det-checklist" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:8px;border:1px solid var(--borde);border-radius:6px;font-size:.8rem;max-height:180px;overflow-y:auto"></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div class="form-group">
+              <label style="font-weight:700;font-size:.82rem">Resultado General</label>
+              <select id="ver-det-resultado" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+                <option value="">-- Seleccionar --</option>
+                <option value="cumple">✅ Cumple con todos los requisitos</option>
+                <option value="cumple_con_observaciones">⚠️ Cumple con observaciones</option>
+                <option value="no_cumple">❌ No cumple</option>
+                <option value="no_aplica">➖ No aplica / No se pudo realizar</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label style="font-weight:700;font-size:.82rem">Acción requerida</label>
+              <select id="ver-det-accion" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+                <option value="ninguna">✅ Ninguna acción requerida</option>
+                <option value="apercibimiento">📋 Generar Apercibimiento</option>
+                <option value="sancion">⚖️ Iniciar Sanción</option>
+                <option value="seguimiento_30">🔄 Seguimiento en 30 días</option>
+                <option value="seguimiento_15">🔄 Seguimiento en 15 días</option>
+                <option value="clausura">🚫 Clausura temporal</option>
+              </select>
+            </div>
+            <div style="grid-column:1/-1" class="form-group">
+              <label style="font-weight:700;font-size:.82rem">Hallazgos / Observaciones del inspector</label>
+              <textarea id="ver-det-hallazgos" rows="4" placeholder="Describe detalladamente lo encontrado durante la verificación..." style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem;resize:vertical"></textarea>
+            </div>
+          </div>
+
+          <input type="hidden" id="ver-det-id">
+          <div id="ver-det-alert" style="margin-top:6px"></div>
+          <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;flex-wrap:wrap">
+            <button onclick="cerrarModalVerDet()" class="btn btn-secondary">Cerrar</button>
+            <button onclick="completarVerificacion()" class="btn btn-primary">✅ Guardar y Completar</button>
+          </div>
+        </div>
+      </div>
+
+
 
 
 
@@ -1340,23 +1389,6 @@ async function refreshMapMarkers() {
     const group = L.featureGroup(mapMarkers);
     mapReportes.fitBounds(group.getBounds().pad(0.15));
   }
-  // Mostrar establecimientos en el mapa también
-  try {
-    const re = await api('/api/establecimientos');
-    if (re.success) {
-      re.data.establecimientos.filter(e => e.lat && e.lon).forEach(e => {
-        const colorEst = {cumple:'#16a34a',cumple_parcial:'#d97706',no_cumple:'#dc2626',sin_verificar:'#6b7280'}[e.estado_cumplimiento||'sin_verificar']||'#6b7280';
-        const iconEst = L.divIcon({
-          html: `<div style="background:${colorEst};color:#fff;border-radius:4px;padding:2px 5px;font-size:.65rem;font-weight:700;white-space:nowrap;border:1px solid rgba(0,0,0,.2);box-shadow:0 1px 4px rgba(0,0,0,.3)">🏪 ${e.nombre.substring(0,12)}</div>`,
-          className:'', iconAnchor:[0,0]
-        });
-        const m = L.marker([e.lat, e.lon], { icon: iconEst });
-        m.bindPopup(`<b>🏪 ${e.nombre}</b><br>${e.giro||''}<br>${e.domicilio||''}<br><span style="font-size:.75rem">${{cumple:'✅ Cumple',cumple_parcial:'⚠️ Parcial',no_cumple:'❌ No Cumple',sin_verificar:'🔘 Sin Verificar'}[e.estado_cumplimiento||'sin_verificar']||''}</span>`);
-        m.addTo(mapReportes);
-        mapMarkers.push(m);
-      });
-    }
-  } catch(e) {}
   // Mostrar hora de última actualización
   const el = document.getElementById('map-last-update');
   if (el) el.textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-MX');
@@ -1557,8 +1589,6 @@ async function doLogin() {
       return;
     }
     TOKEN = r.data.token; USER = r.data.usuario;
-    localStorage.setItem('imbio_token', TOKEN);
-    localStorage.setItem('imbio_user', JSON.stringify(USER));
     document.getElementById('nav-nombre').textContent = USER.nombre;
     document.getElementById('nav-rol').textContent    = USER.rol;
     document.getElementById('nav-rol').className      = `badge badge-${USER.rol}`;
@@ -1577,8 +1607,6 @@ async function doLogin() {
 }
 function doLogout() {
   TOKEN=null; USER=null;
-  localStorage.removeItem('imbio_token');
-  localStorage.removeItem('imbio_user');
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('app').style.display='none';
   mapReportes=null; mapPicker=null;
@@ -2199,17 +2227,6 @@ async function cargarInspectores() {
     const r = await api('/api/inspectores');
     if (!r.success) { tbody.innerHTML = '<tr><td colspan="6" style="color:red;padding:16px">' + r.message + '</td></tr>'; return; }
     const inspectores = r.data.inspectores;
-    // Mostrar hint de usernames usados
-    const hintEl = document.getElementById('cat-insp-usuarios-hint');
-    const listEl = document.getElementById('cat-insp-usuarios-list');
-    if (hintEl && listEl) {
-      if (inspectores.length) {
-        listEl.textContent = inspectores.map(i => i.username).join(', ');
-        hintEl.style.display = 'block';
-      } else {
-        hintEl.style.display = 'none';
-      }
-    }
     if (!inspectores.length) {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#64748b">No hay inspectores registrados.</td></tr>';
       return;
@@ -2246,14 +2263,11 @@ async function registrarInspector() {
   try {
     const r = await api('/api/inspectores', 'POST', { nombre, username: usuario, password, telefono, brigada });
     if (r.success) {
-      alertEl.innerHTML = '<div class="alert alert-success">✅ Inspector <b>' + nombre + '</b> registrado correctamente.</div>';
+      alertEl.innerHTML = '<div class="alert alert-success">Inspector ' + nombre + ' registrado.</div>';
       ['ci-nombre','ci-usuario','ci-password','ci-telefono','ci-brigada'].forEach(id => document.getElementById(id).value = '');
       cargarInspectores();
-      setTimeout(() => { alertEl.innerHTML = ''; }, 5000);
     } else {
-      const msg = r.message || 'Error al registrar';
-      const extra = msg.includes('ya existe') ? '<br><small>Elige un nombre de usuario diferente, por ejemplo: <b>inspector02</b>, <b>inspector03</b>, etc.</small>' : '';
-      alertEl.innerHTML = '<div class="alert alert-danger">❌ ' + msg + extra + '</div>';
+      alertEl.innerHTML = '<div class="alert alert-danger">' + r.message + '</div>';
     }
   } catch(e) {
     alertEl.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
@@ -3520,131 +3534,6 @@ async function exportarExcel() {
 }
 
 
-
-// ── DENUE INEGI — funciones de importación ───────────────────
-async function mostrarStatusDenue() {
-  document.getElementById('modal-denue').style.display = 'flex';
-  const el = document.getElementById('denue-status-content');
-  el.innerHTML = '<div style="text-align:center;padding:20px;color:#888">⏳ Cargando...</div>';
-  const r = await api('/api/denue/status');
-  if (!r.success) {
-    el.innerHTML = '<div style="color:#dc2626;padding:10px">Error al consultar estado DENUE</div>';
-    return;
-  }
-  const d = r.data;
-  const fuentes = d.fuentes || {};
-  const inegi = fuentes['DENUE_INEGI_2026'] || fuentes['importacion_denue'] || 0;
-  const manual = fuentes['manual'] || (d.total - inegi);
-  const seedKB = d.seed_size ? (d.seed_size / 1024).toFixed(0) : '–';
-  el.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
-      <div style="background:#f0f9ff;border-radius:8px;padding:12px;text-align:center">
-        <div style="font-size:1.6rem;font-weight:800;color:#0369a1">${d.total.toLocaleString()}</div>
-        <div style="font-size:.75rem;color:#555;margin-top:2px">Total en padrón</div>
-      </div>
-      <div style="background:#f0fdf4;border-radius:8px;padding:12px;text-align:center">
-        <div style="font-size:1.6rem;font-weight:800;color:#16a34a">${inegi.toLocaleString()}</div>
-        <div style="font-size:.75rem;color:#555;margin-top:2px">🏛️ Del INEGI</div>
-      </div>
-      <div style="background:#fafafa;border-radius:8px;padding:12px;text-align:center">
-        <div style="font-size:1.6rem;font-weight:800;color:#6b7280">${manual.toLocaleString()}</div>
-        <div style="font-size:.75rem;color:#555;margin-top:2px">✏️ Manuales</div>
-      </div>
-    </div>
-    <div style="font-size:.82rem;color:#555;background:#f8fafc;border-radius:6px;padding:10px">
-      📁 Archivo seed: <b>${d.seed_disponible ? '✅ Disponible' : '❌ No encontrado'}</b>
-      ${d.seed_disponible ? `<span style="color:#888"> (${seedKB} KB)</span>` : ''}
-      <br>📅 Fuente: DENUE INEGI — Pabellón de Arteaga, Ags. — Marzo 2026
-      <br>🏢 Unidades económicas con coordenadas GPS y actividad SCIAN
-    </div>`;
-}
-
-async function reimportarDenue() {
-  if (!confirm('¿Reimportar el DENUE INEGI? Se reemplazarán los registros del INEGI y se conservarán los manuales.')) return;
-  const btn = document.getElementById('btn-reimportar-denue');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Importando...'; }
-  const r = await api('/api/denue/reimportar', 'POST', {});
-  if (btn) { btn.disabled = false; btn.textContent = '🔄 Reimportar DENUE'; }
-  if (r.success) {
-    document.getElementById('modal-denue').style.display = 'none';
-    cargarEstablecimientos();
-    loadDashboard();
-    alert(`✅ DENUE reimportado correctamente.
-📊 ${r.data.importados.toLocaleString()} del INEGI + ${r.data.manuales_conservados} manuales
-Total en padrón: ${r.data.total.toLocaleString()}`);
-  } else {
-    alert('❌ Error al reimportar: ' + (r.message || 'Sin respuesta del servidor'));
-  }
-}
-
-// ── Mapa del modal de establecimiento ────────────────────────
-let _mapEst = null, _markerEst = null, _layerEst = null;
-
-function _initMapEst() {
-  if (_mapEst) { setTimeout(() => _mapEst.invalidateSize(), 100); return; }
-  _mapEst = L.map('map-est', { zoomControl: true }).setView([22.1508, -102.2913], 15);
-  _layerEst = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    { attribution:'© OSM', maxZoom:19 }).addTo(_mapEst);
-  _mapEst.on('click', function(e) { _geocodeEst(e.latlng.lat, e.latlng.lng); });
-}
-
-function setLayerEst(name) {
-  if (!_mapEst) return;
-  if (_layerEst) _mapEst.removeLayer(_layerEst);
-  const urls = {
-    osm: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    sat: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-  };
-  _layerEst = L.tileLayer(urls[name]||urls.osm, { maxZoom:19 }).addTo(_mapEst);
-}
-
-function usarGPSEst() {
-  if (!navigator.geolocation) { alert('GPS no disponible.'); return; }
-  document.getElementById('est-coords-txt').textContent = '📡 Obteniendo ubicación...';
-  navigator.geolocation.getCurrentPosition(function(pos) {
-    _mapEst.setView([pos.coords.latitude, pos.coords.longitude], 17);
-    _geocodeEst(pos.coords.latitude, pos.coords.longitude);
-  }, function() {
-    document.getElementById('est-coords-txt').textContent = '⚠️ No se pudo obtener GPS';
-  }, { enableHighAccuracy: true, timeout: 10000 });
-}
-
-async function _geocodeEst(lat, lng) {
-  document.getElementById('est-lat').value = lat.toFixed(7);
-  document.getElementById('est-lon').value = lng.toFixed(7);
-  document.getElementById('est-coords-txt').textContent = '🔍 Buscando dirección...';
-  if (_markerEst) _mapEst.removeLayer(_markerEst);
-  const icon = L.divIcon({
-    html: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="24" height="36"><path d="M12 0C5.37 0 0 5.37 0 12c0 9 12 24 12 24s12-15 12-24C24 5.37 18.63 0 12 0z" fill="#1a3a5c" stroke="white" stroke-width="1.5"/><circle cx="12" cy="12" r="5" fill="white" opacity="0.9"/></svg>',
-    className:'', iconSize:[24,36], iconAnchor:[12,36]
-  });
-  _markerEst = L.marker([lat, lng], { icon }).addTo(_mapEst);
-  try {
-    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&accept-language=es`);
-    const geo = await r.json();
-    const a = geo.address || {};
-    const calle   = a.road || a.pedestrian || '';
-    const numero  = a.house_number || '';
-    const colonia = a.neighbourhood || a.suburb || a.quarter || '';
-    const cp      = a.postcode || '';
-    // Autocompletar domicilio si está vacío
-    const domEl = document.getElementById('est-domicilio');
-    if (domEl && !domEl.value.trim()) {
-      const partes = [calle, numero ? '#'+numero : '', colonia, cp].filter(Boolean);
-      domEl.value = partes.join(', ');
-    }
-    if (!document.getElementById('est-colonia').value.trim() && colonia) {
-      document.getElementById('est-colonia').value = colonia;
-    }
-    const coordTxt = `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}${calle?' — '+calle+(numero?' #'+numero:''):''}`;
-    document.getElementById('est-coords-txt').textContent = coordTxt;
-    _markerEst.bindPopup(`<b>${calle} ${numero}</b><br><small>${colonia}</small>`).openPopup();
-  } catch(e) {
-    document.getElementById('est-coords-txt').textContent = `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-  }
-}
-
-
 // ═══════════════════════════════════════════════════════════════
 //  MÓDULO: ESTABLECIMIENTOS Y VERIFICACIONES AMBIENTALES
 // ═══════════════════════════════════════════════════════════════
@@ -3685,12 +3574,10 @@ async function cargarEstablecimientos() {
   const q      = document.getElementById('est-buscar')?.value || '';
   const giro   = document.getElementById('est-filtro-giro')?.value || '';
   const estado = document.getElementById('est-filtro-estado')?.value || '';
-  const fuente = document.getElementById('est-filtro-fuente')?.value || '';
   let url = '/api/establecimientos?';
   if (q)      url += '&q=' + encodeURIComponent(q);
   if (giro)   url += '&giro=' + giro;
   if (estado) url += '&estado=' + estado;
-  if (fuente) url += '&fuente=' + fuente;
   const r = await api(url);
   if (!r.success) return;
   _estabsCache = r.data.establecimientos;
@@ -3712,20 +3599,15 @@ async function cargarEstablecimientos() {
   }
   tbody.innerHTML = _estabsCache.map((e, i) => `
     <tr style="background:${i%2===0?'#fff':'#f8fafc'};border-bottom:1px solid #f1f5f9">
-      <td style="padding:8px 12px;font-family:monospace;font-size:.78rem;font-weight:700;color:#1a3a5c">
-        ${e.folio || '–'}
-        ${e.fuente === 'DENUE_INEGI_2026' ? '<div style="display:inline-block;background:#dbeafe;color:#1d4ed8;font-size:.6rem;padding:1px 4px;border-radius:3px;font-family:sans-serif;margin-left:3px">INEGI</div>' : ''}
-      </td>
-      <td style="padding:8px 12px;font-weight:600">${e.nombre}<br><small style="color:#888;font-weight:400">${e.razon_social||e.rfc||''}</small></td>
+      <td style="padding:8px 12px;font-family:monospace;font-size:.78rem;font-weight:700;color:#1a3a5c">${e.folio || '–'}</td>
+      <td style="padding:8px 12px;font-weight:600">${e.nombre}<br><small style="color:#888;font-weight:400">${e.rfc||''}</small></td>
       <td style="padding:8px 12px">${GIRO_LABELS[e.giro]||e.giro||'–'}</td>
       <td style="padding:8px 12px;font-size:.8rem">${e.domicilio||'–'}<br><small style="color:#888">${e.colonia||''}</small></td>
       <td style="padding:8px 12px;font-size:.82rem">${e.responsable||'–'}<br><small style="color:#888">${e.telefono||''}</small></td>
-      <td style="padding:8px 12px;font-size:.78rem;color:#555">${e.personal||'–'}</td>
       <td style="padding:8px 12px;text-align:center">${CUMPL_BADGE[e.estado_cumplimiento||'sin_verificar']||''}</td>
       <td style="padding:8px 12px;text-align:center;white-space:nowrap">
         <button onclick="editarEstablecimiento(${e.id})" class="btn btn-secondary btn-sm" style="font-size:.72rem;padding:4px 8px;margin:1px">✏️ Editar</button>
         <button onclick="programarVerificacionDesde(${e.id})" class="btn btn-primary btn-sm" style="font-size:.72rem;padding:4px 8px;margin:1px">🔍 Verificar</button>
-        ${(e.lat && e.lon) ? `<a href="https://www.google.com/maps?q=${e.lat},${e.lon}&z=18" target="_blank" class="btn btn-secondary btn-sm" style="font-size:.72rem;padding:4px 8px;margin:1px;text-decoration:none">📍 Mapa</a>` : ''}
       </td>
     </tr>`).join('');
 }
@@ -3746,11 +3628,7 @@ function abrirModalEstablecimiento() {
   document.getElementById('est-estado-cump').value = 'sin_verificar';
   document.querySelectorAll('.perm-check').forEach(c => c.checked = false);
   document.getElementById('est-modal-alert').innerHTML = '';
-  document.getElementById('est-lat').value = '';
-  document.getElementById('est-lon').value = '';
-  document.getElementById('est-coords-txt').textContent = 'Sin ubicación — haz clic en el mapa';
   document.getElementById('modal-establecimiento').style.display = 'flex';
-  setTimeout(_initMapEst, 200);
 }
 
 function cerrarModalEst() {
@@ -3774,24 +3652,7 @@ function editarEstablecimiento(id) {
   const perms = est.permisos || [];
   document.querySelectorAll('.perm-check').forEach(c => { c.checked = perms.includes(c.value); });
   document.getElementById('est-modal-alert').innerHTML = '';
-  // Cargar coords si existen
-  const latEl = document.getElementById('est-lat');
-  const lonEl = document.getElementById('est-lon');
-  if (latEl) latEl.value = est.lat || '';
-  if (lonEl) lonEl.value = est.lon || '';
-  if (est.lat && est.lon) {
-    document.getElementById('est-coords-txt').textContent = `📍 ${parseFloat(est.lat).toFixed(5)}, ${parseFloat(est.lon).toFixed(5)}`;
-  } else {
-    document.getElementById('est-coords-txt').textContent = 'Sin ubicación — haz clic en el mapa';
-  }
   document.getElementById('modal-establecimiento').style.display = 'flex';
-  setTimeout(function() {
-    _initMapEst();
-    if (est.lat && est.lon) {
-      _mapEst.setView([est.lat, est.lon], 17);
-      _geocodeEst(est.lat, est.lon);
-    }
-  }, 200);
 }
 
 async function guardarEstablecimiento() {
@@ -3804,8 +3665,6 @@ async function guardarEstablecimiento() {
   if (!giro)      { alertEl.innerHTML = alert_html('error','Selecciona el giro.'); return; }
   if (!domicilio) { alertEl.innerHTML = alert_html('error','El domicilio es obligatorio.'); return; }
   const permisos = Array.from(document.querySelectorAll('.perm-check:checked')).map(c => c.value);
-  const latVal = document.getElementById('est-lat').value;
-  const lonVal = document.getElementById('est-lon').value;
   const body = {
     nombre, giro, domicilio, responsable,
     rfc:      document.getElementById('est-rfc').value.trim().toUpperCase(),
@@ -3813,9 +3672,7 @@ async function guardarEstablecimiento() {
     telefono: document.getElementById('est-telefono').value.trim(),
     estado_cumplimiento: document.getElementById('est-estado-cump').value,
     observaciones: document.getElementById('est-observaciones').value.trim(),
-    permisos,
-    lat: latVal ? parseFloat(latVal) : null,
-    lon: lonVal ? parseFloat(lonVal) : null,
+    permisos
   };
   const editId = document.getElementById('est-edit-id').value;
   const btn = document.getElementById('btn-guardar-est');
@@ -3972,8 +3829,7 @@ function abrirDetalleVerificacion(id) {
     nivel_ruido:'Nivel de ruido', emisiones_aire:'Emisiones al aire',
     almacen_productos:'Almacenamiento productos peligrosos', areas_verdes_predio:'Áreas verdes del predio',
     fauna_control:'Control de fauna nociva', senaletica:'Señalética ambiental',
-    uso_suelo:'Uso de suelo', proteccion_civil:'Protección Civil',
-    pago_rsu:'Pago recolección RSU', contrato_rsu:'Contrato disposición RSU'
+    uso_suelo:'Uso de suelo', proteccion_civil:'Protección Civil'
   };
   if (ckWrap && ver.checklist && ver.checklist.length) {
     ckWrap.innerHTML = ver.checklist.map(ck => `

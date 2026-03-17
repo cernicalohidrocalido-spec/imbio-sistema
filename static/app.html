@@ -857,14 +857,33 @@ async function geocodePos(lat, lng) {
 function initSigApp() {
   sigAppCanvas = document.getElementById('sig-app');
   sigAppCtx    = sigAppCanvas.getContext('2d');
-  sigAppCtx.strokeStyle = '#003B7A';
-  sigAppCtx.lineWidth   = 2.5;
-  sigAppCtx.lineCap     = 'round';
-  sigAppCtx.lineJoin    = 'round';
+
+  // Ajustar el canvas al tamaño real en píxeles para evitar desfase
+  function resizeCanvas() {
+    const rect = sigAppCanvas.getBoundingClientRect();
+    const dpr  = window.devicePixelRatio || 1;
+    sigAppCanvas.width  = rect.width  * dpr;
+    sigAppCanvas.height = rect.height * dpr;
+    sigAppCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    sigAppCtx.strokeStyle = '#003B7A';
+    sigAppCtx.lineWidth   = 2.5;
+    sigAppCtx.lineCap     = 'round';
+    sigAppCtx.lineJoin    = 'round';
+  }
+  resizeCanvas();
+  // Re-ajustar si cambia el tamaño de ventana
+  window.addEventListener('resize', resizeCanvas);
+
   function getPos(e) {
-    const r = sigAppCanvas.getBoundingClientRect();
+    const r   = sigAppCanvas.getBoundingClientRect();
     const src = e.touches ? e.touches[0] : e;
-    return { x: src.clientX - r.left, y: src.clientY - r.top };
+    // Escalar la posición del puntero al espacio de coordenadas del canvas
+    const scaleX = sigAppCanvas.width  / (r.width  * (window.devicePixelRatio || 1));
+    const scaleY = sigAppCanvas.height / (r.height * (window.devicePixelRatio || 1));
+    return {
+      x: (src.clientX - r.left) * scaleX,
+      y: (src.clientY - r.top)  * scaleY
+    };
   }
   sigAppCanvas.addEventListener('mousedown',  e => { sigDrawing=true; sigAppCtx.beginPath(); const p=getPos(e); sigAppCtx.moveTo(p.x,p.y); });
   sigAppCanvas.addEventListener('mousemove',  e => { if(!sigDrawing)return; const p=getPos(e); sigAppCtx.lineTo(p.x,p.y); sigAppCtx.stroke(); });

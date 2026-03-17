@@ -473,7 +473,7 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
     </div>
   </div>
   <!-- AUTOSAVE BAR -->
-  <div id="autosave-bar" class="autosave-bar">
+  <div id="autosave-bar" class="autosave-bar" style="display:none">
     <span id="autosave-icon">💾</span>
     <span id="autosave-msg">Borrador guardado</span>
   </div>
@@ -1066,9 +1066,13 @@ function _showAutosaveBar(msg, isError) {
   const msgEl = document.getElementById('autosave-msg');
   if (!bar || !msgEl) return;
   msgEl.textContent = msg;
+  bar.style.display = 'flex';
   bar.className = 'autosave-bar show' + (isError ? ' error' : '');
   clearTimeout(bar._timer);
-  bar._timer = setTimeout(() => { bar.className = 'autosave-bar'; }, 2500);
+  bar._timer = setTimeout(() => {
+    bar.className = 'autosave-bar';
+    bar.style.display = 'none';
+  }, 2500);
 }
 
 // ═══════════════════════════════════════════════════════════════
