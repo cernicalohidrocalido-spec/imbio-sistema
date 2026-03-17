@@ -731,6 +731,51 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                     "Reincidente: " + datos.get('reincidente','no') + "\n"
                     "Sancion propuesta: " + datos.get('sancion','')
                 ),
+                'circ_resumen_ejecutivo': (
+                    "Eres redactor de actas municipales del IMBIO de Pabellon de Arteaga. "
+                    "Genera un RESUMEN EJECUTIVO conciso (maximo 400 caracteres). "
+                    "Responde QUE se encontro, DONDE y en QUE estado. Solo el texto.\n\n"
+                    "Tipo incidencia: " + datos.get('tipo_incidencia','') + "\n"
+                    "Giro: " + datos.get('giro','') + "\n"
+                    "Hallazgo: " + datos.get('hallazgo','')
+                ),
+                'circ_narrativa': (
+                    "Eres redactor de actas municipales del IMBIO. "
+                    "Genera la NARRATIVA CRONOLOGICA de un acta circunstanciada. "
+                    "Primera persona plural institucional. Solo hechos observados. "
+                    "NUNCA uses 'infractor', 'culpable' ni 'ilegal'. Maximo 5 oraciones.\n\n"
+                    "Fecha/hora: " + datos.get('fecha','') + " " + datos.get('hora','') + "\n"
+                    "Inspector: " + datos.get('inspector','') + "\n"
+                    "Tipo: " + datos.get('tipo_incidencia','') + "\n"
+                    "Giro: " + datos.get('giro','') + "\n"
+                    "Hallazgo: " + datos.get('hallazgo','') + "\n"
+                    "Clima: " + datos.get('clima','') + "\n"
+                    "Visitado presente: " + datos.get('visitado_presente','')
+                ),
+                'circ_hechos_lista': (
+                    "Eres redactor de actas municipales del IMBIO. "
+                    "Genera lista numerada de HECHOS Y OMISIONES especificos (maximo 5 puntos). "
+                    "Formato: '1. [hecho observado]'. Lenguaje neutro. Solo la lista.\n\n"
+                    "Tipo: " + datos.get('tipo_incidencia','') + "\n"
+                    "Giro: " + datos.get('giro','') + "\n"
+                    "Hallazgo: " + datos.get('hallazgo','') + "\n"
+                    "Narrativa: " + datos.get('narrativa','')
+                ),
+                'circ_fundamento': (
+                    "Eres especialista en derecho administrativo municipal de Pabellon de Arteaga. "
+                    "Genera el FUNDAMENTO LEGAL para un acta circunstanciada del IMBIO. "
+                    "Incluye Codigo Municipal, LPAEA, LGEEPA. Maximo 3 oraciones. Solo el texto.\n\n"
+                    "Tipo: " + datos.get('tipo_incidencia','') + "\n"
+                    "Hechos: " + datos.get('hechos','')
+                ),
+                'circ_manifestacion': (
+                    "Eres redactor de actas municipales del IMBIO de Pabellon de Arteaga. "
+                    "Genera el texto de MANIFESTACION DEL VISITADO para acta circunstanciada. "
+                    "Tercera persona: 'El C. [NOMBRE] manifesto que...'. Maximo 3 oraciones.\n\n"
+                    "Visitado: " + datos.get('visitado','') + "\n"
+                    "Estuvo presente: " + datos.get('visitado_presente','') + "\n"
+                    "Hechos: " + datos.get('hechos','')
+                ),
             }
             prompt = prompts.get(tipo)
             if not prompt:
@@ -1429,7 +1474,177 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                     f"Reincidente: {datos.get('reincidente','no')}\n"
                     f"Medidas adoptadas: {datos.get('medidas_adoptadas','')}"
                 ),
-                'chat': (
+                'circ_resumen_ejecutivo': (
+                    "Eres redactor de actas administrativas municipales del IMBIO de Pabellon de Arteaga. "
+                    "Genera un RESUMEN EJECUTIVO conciso (maximo 400 caracteres) para el encabezado de un "
+                    "acta circunstanciada. Debe responder: QUE se encontro, DONDE y en QUE estado. "
+                    "Lenguaje tecnico neutro. Solo el texto del resumen, sin prefijos ni comillas.\n\n"
+                    f"Tipo de incidencia: {datos.get('tipo_incidencia','')}\n"
+                    f"Giro del predio: {datos.get('giro','')}\n"
+                    f"Ubicacion: {datos.get('colonia','')} {datos.get('senas','')}\n"
+                    f"Hallazgo principal: {datos.get('hallazgo','')}\n"
+                    f"Visitado: {datos.get('visitado','')}"
+                ),
+                'circ_narrativa': (
+                    "Eres redactor de actas administrativas municipales del IMBIO de Pabellon de Arteaga. "
+                    "Genera la NARRATIVA CRONOLOGICA DETALLADA de un acta circunstanciada. "
+                    "REGLAS ESTRICTAS: (1) Usa primera persona plural institucional ('los suscritos', 'se constituyo'). "
+                    "(2) Solo hechos observados, NUNCA uses las palabras 'infractor', 'culpable', 'ilegal'. "
+                    "(3) Incluye: hora de llegada, condiciones del lugar, personas presentes, documentos revisados. "
+                    "(4) Maximo 5 oraciones. Solo el texto, sin encabezados.\n\n"
+                    f"Fecha y hora: {datos.get('fecha','')} {datos.get('hora','')}\n"
+                    f"Inspector: {datos.get('inspector','')}\n"
+                    f"Tipo de incidencia: {datos.get('tipo_incidencia','')}\n"
+                    f"Giro del predio: {datos.get('giro','')}\n"
+                    f"Colonia: {datos.get('colonia','')}\n"
+                    f"Visitado presente: {datos.get('visitado_presente','')}\n"
+                    f"Visitado nombre: {datos.get('visitado','')}\n"
+                    f"Hallazgos del inspector: {datos.get('hallazgo','')}\n"
+                    f"Condiciones climaticas: {datos.get('clima','')}\n"
+                    f"Visibilidad: {datos.get('visibilidad','')}"
+                ),
+                'circ_hechos_lista': (
+                    "Eres redactor de actas administrativas municipales del IMBIO de Pabellon de Arteaga. "
+                    "Genera una lista numerada de HECHOS Y OMISIONES ESPECIFICOS detectados durante la diligencia. "
+                    "REGLAS: (1) Maximo 5 puntos. (2) Cada punto inicia con numero y punto: '1. '. "
+                    "(3) Lenguaje descriptivo y neutro, NUNCA uses 'infractor' ni 'ilegal'. "
+                    "(4) Describe solo lo observado. (5) Solo la lista, sin encabezados ni prefijos.\n\n"
+                    f"Tipo de incidencia: {datos.get('tipo_incidencia','')}\n"
+                    f"Giro del predio: {datos.get('giro','')}\n"
+                    f"Descripcion del hallazgo: {datos.get('hallazgo','')}\n"
+                    f"Narrativa base: {datos.get('narrativa','')}"
+                ),
+                'circ_fundamento': (
+                    "Eres especialista en derecho administrativo municipal de Pabellon de Arteaga, Aguascalientes. "
+                    "Genera el FUNDAMENTO LEGAL aplicable a un acta circunstanciada del IMBIO. "
+                    "Incluye: Codigo Municipal, LPAEA, LGEEPA, y normas especificas segun el tipo de caso. "
+                    "Maximo 3 oraciones tecnicas. Solo el texto del fundamento.\n\n"
+                    f"Tipo de incidencia: {datos.get('tipo_incidencia','')}\n"
+                    f"Giro del predio: {datos.get('giro','')}\n"
+                    f"Hechos detectados: {datos.get('hechos','')}"
+                ),
+                'circ_manifestacion': (
+                    "Eres redactor de actas administrativas municipales del IMBIO de Pabellon de Arteaga. "
+                    "Genera el texto de MANIFESTACION DEL VISITADO para un acta circunstanciada. "
+                    "El visitado no esta siendo sancionado, solo se documenta. "
+                    "Redacta en tercera persona: 'El C. [NOMBRE] manifesto que...' "
+                    "Si no hay manifestacion, genera la clausula de ausencia. "
+                    "Maximo 3 oraciones. Solo el texto.\n\n"
+                    f"Nombre visitado: {datos.get('visitado','')}\n"
+                    f"Estuvo presente: {datos.get('visitado_presente','')}\n"
+                    f"Hechos documentados: {datos.get('hechos','')}\n"
+                    f"Notas del inspector: {datos.get('notas','')}"
+                ),
+                'anim_narrativa': (
+                    "Eres redactor de actas municipales del IMBIO de Pabellon de Arteaga. "
+                    "Genera la NARRATIVA CRONOLOGICA de un Acta de Inspeccion de incidente animal. "
+                    "Primera persona plural institucional. Solo hechos objetivos y observables. "
+                    "NUNCA uses terminos como 'peligroso', 'agresivo culpable', 'criminal'. Maximo 4 oraciones.\n\n"
+                    f"Tipo de incidente: {datos.get('tipo_incidente','')}\n"
+                    f"Lugar: {datos.get('lugar','')}\n"
+                    f"Inspector: {datos.get('inspector','')}\n"
+                    f"Especie: {datos.get('especie','')} — {datos.get('descripcion_fisica','')}\n"
+                    f"Cantidad: {datos.get('cantidad','')}\n"
+                    f"Condicion: {datos.get('condicion','')}\n"
+                    f"Situacion al llegar: {datos.get('situacion','')}\n"
+                    f"Victima: {datos.get('vic_nombre','')} (edad {datos.get('vic_edad','')}), lesion {datos.get('vic_gravedad','')}\n"
+                    f"Zonas afectadas: {datos.get('zonas_mordida','')}\n"
+                    f"Duenio: {datos.get('duenio','')}\n"
+                    f"Vacunacion: {datos.get('vacuna','')}"
+                ),
+                'anim_riesgo': (
+                    "Eres veterinario de salud publica y especialista en control animal del IMBIO de Pabellon de Arteaga. "
+                    "Evalua el NIVEL DE RIESGO del incidente animal para la salud publica. "
+                    "Responde con: Nivel de riesgo (BAJO/MEDIO/ALTO/CRITICO), justificacion en 2 oraciones y accion inmediata recomendada. "
+                    "Considera: tipo de incidente, especie, vacunacion, condicion, zonas afectadas, gravedad de lesion.\n\n"
+                    f"Tipo de incidente: {datos.get('tipo_incidente','')}\n"
+                    f"Especie: {datos.get('especie','')}\n"
+                    f"Vacunacion antirabica: {datos.get('vacuna','')}\n"
+                    f"Condicion del animal: {datos.get('condicion','')}\n"
+                    f"Gravedad de lesion en victima: {datos.get('vic_gravedad','')}\n"
+                    f"Zonas afectadas: {datos.get('zonas_mordida','')}\n"
+                    f"Situacion: {datos.get('situacion','')}"
+                ),
+                'anim_recomendaciones': (
+                    "Eres inspector del IMBIO de Pabellon de Arteaga especializado en proteccion animal. "
+                    "Genera RECOMENDACIONES practicas y claras para el afectado y/o la comunidad segun el tipo de incidente. "
+                    "Incluye: acciones de salud para la victima si aplica, obligaciones del propietario, seguimiento del animal. "
+                    "Maximo 4 recomendaciones numeradas. Lenguaje claro y directo.\n\n"
+                    f"Tipo de incidente: {datos.get('tipo_incidente','')}\n"
+                    f"Especie: {datos.get('especie','')}\n"
+                    f"Vacunacion: {datos.get('vacuna','')}\n"
+                    f"Gravedad lesion: {datos.get('vic_gravedad','')}\n"
+                    f"Atencion medica recibida: {datos.get('vic_atencion','')}\n"
+                    f"Duenio identificado: {datos.get('duenio','')}\n"
+                    f"Acciones tomadas: {datos.get('acciones','')}"
+                ),
+                                'aper_sincronizar_hallazgos': (
+                    "Eres redactor de actas municipales del IMBIO de Pabellon de Arteaga. "
+                    "Filtra de la siguiente informacion de un Acta Circunstanciada SOLO las incidencias "
+                    "que constituyen hechos infractores o irregularidades que deben ser corregidas. "
+                    "Presenta el resultado como lista numerada concisa. Solo los hechos, sin interpretaciones.\n\n"
+                    f"Tipo de caso: {datos.get('tipo_incidencia','')}\n"
+                    f"Hechos registrados: {datos.get('hechos_circ','')}\n"
+                    f"Narrativa: {datos.get('narrativa','')[:600]}\n"
+                    f"Resumen ejecutivo: {datos.get('resumen','')}"
+                ),
+                'aper_asesor_juridico': (
+                    "Eres especialista en derecho administrativo municipal de Pabellon de Arteaga, Aguascalientes. "
+                    "Sugiere el articulado legal aplicable para una Acta de Apercibimiento o Sancion del IMBIO. "
+                    "Incluye: Codigo Municipal de Pabellon de Arteaga, LGEEPA, LPAEA y NOMs especificas segun el tipo de caso. "
+                    "Para sanciones incluye los articulos que definen montos de multas. "
+                    "Formato: 'Art. X [Nombre de ley] — [breve descripcion de lo que establece]'. "
+                    "Maximo 5 articulos. Advertir que debe validarse con el Director del IMBIO.\n\n"
+                    f"Tipo de incidencia: {datos.get('tipo_incidencia','')}\n"
+                    f"Hechos detectados: {datos.get('hechos','')[:400]}\n"
+                    f"Norma seleccionada: {datos.get('norma_seleccionada','')}\n"
+                    f"Gravedad: {datos.get('gravedad','')}"
+                ),
+                'sanc_linea_tiempo': (
+                    "Eres redactor de actas municipales del IMBIO de Pabellon de Arteaga. "
+                    "Genera un RESUMEN CRONOLOGICO del expediente administrativo en formato de linea de tiempo. "
+                    "Lenguaje formal administrativo. Maximo 5 lineas. Formato: 'Fecha — Evento: descripcion'. "
+                    "Solo el texto, sin encabezados.\n\n"
+                    f"Eventos del expediente: {datos.get('eventos','')}"
+                ),
+                'sanc_ponderador_gravedad': (
+                    "Eres especialista en derecho ambiental municipal de Pabellon de Arteaga. "
+                    "Analiza los criterios de individualizacion de la sancion y sugiere la calificacion de gravedad. "
+                    "Justifica brevemente en 2-3 oraciones. Empieza con 'Matlacho sugiere: Gravedad [NIVEL]'. "
+                    "Considera: reincidencia, intencionalidad, magnitud del dano, capacidad economica.\n\n"
+                    f"Tipo de incidencia: {datos.get('tipo_incidencia','')}\n"
+                    f"Gravedad actual: {datos.get('gravedad_actual','')}\n"
+                    f"Reincidente: {datos.get('reincidente','')}\n"
+                    f"Intencionalidad: {datos.get('intencionalidad','')}\n"
+                    f"Dano ambiental: {datos.get('dano_ambiental','')}\n"
+                    f"Capacidad economica: {datos.get('capacidad_economica','')}\n"
+                    f"Hechos: {datos.get('hechos','')[:300]}"
+                ),
+                'sanc_calculadora_multa': (
+                    "Eres especialista en derecho administrativo sancionatorio de Pabellon de Arteaga. "
+                    f"El valor de la UMA vigente 2026 es ${datos.get('uma_vigente','117.31')} MXN. "
+                    "Basandote en el tipo de infraccion y gravedad, sugiere el rango de UMAs aplicable "
+                    "segun el Codigo Municipal de Pabellon de Arteaga y la LGEEPA. "
+                    "Formato: 'Rango sugerido: [X] a [Y] UMAs. Monto minimo: $[Z] MXN. Monto maximo: $[W] MXN. "
+                    "Razon: [articulo y justificacion breve]'. "
+                    "ADVERTIR que el monto final debe ser autorizado por el Director del IMBIO.\n\n"
+                    f"Tipo de infraccion: {datos.get('tipo_incidencia','')}\n"
+                    f"Gravedad: {datos.get('gravedad','')}\n"
+                    f"Reincidente: {datos.get('reincidente','')}\n"
+                    f"Intencionalidad: {datos.get('intencionalidad','')}\n"
+                    f"Articulado aplicable: {datos.get('articulado','')[:300]}"
+                ),
+                'sanc_explicacion_ciudadano': (
+                    "Eres Matlacho, asistente del IMBIO de Pabellon de Arteaga. "
+                    "Explica en lenguaje SIMPLE y amigable, sin terminos juridicos complejos, "
+                    "lo que significa esta sancion para el ciudadano y como puede actuar. "
+                    "Cubre: que debe pagar y donde, que plazo tiene, como puede impugnar si no esta de acuerdo. "
+                    "Tono tranquilo y respetuoso. Maximo 4 oraciones cortas.\n\n"
+                    f"Monto de la multa: {datos.get('monto','')}\n"
+                    f"Plazo de pago: {datos.get('plazo','')}\n"
+                    f"Tipo de falta: {datos.get('falta','')}"
+                ),
+                                'chat': (
                     f"El usuario dice: {datos.get('mensaje','')}\n\n"
                     "Responde de forma amigable y concisa como Matlacho. "
                     "Si la pregunta es sobre procedimientos ambientales municipales, da orientacion. "
