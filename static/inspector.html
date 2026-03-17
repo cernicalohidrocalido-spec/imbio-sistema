@@ -1,68 +1,3 @@
-function renderMisActas() {
-  const el = document.getElementById('lista-actas');
-
-  // ── Actualizar contadores del dashboard ──
-  const tipos = ['inspeccion','circunstanciada','apercibimiento','sancion'];
-  tipos.forEach(function(t) {
-    var cnt = document.getElementById('cnt-' + t);
-    if (cnt) cnt.textContent = misActas.filter(function(a){ return a.tipo_acta === t; }).length;
-  });
-
-  // ── Filtrar si hay filtro activo ──
-  var actasMostrar = misActas;
-  if (window._actasFiltro) {
-    actasMostrar = misActas.filter(function(a){ return a.tipo_acta === window._actasFiltro; });
-  }
-
-  if (!actasMostrar.length) {
-    var msg = window._actasFiltro
-      ? 'No tienes actas de tipo ' + ({inspeccion:'Inspección',circunstanciada:'Circunstanciada',apercibimiento:'Apercibimiento',sancion:'Sanción'}[window._actasFiltro]||window._actasFiltro) + '.'
-      : 'Las actas que generes aparecerán aquí.';
-    el.innerHTML = '<div class="empty"><div class="em-ic">📄</div><p>' + msg + '</p></div>';
-    return;
-  }
-
-  const labels = { circunstanciada:'Circunstanciada', apercibimiento:'Apercibimiento', sancion:'Sanción', inspeccion:'Inspección' };
-  const colors = { inspeccion:'#1a3a5c', circunstanciada:'#5b21b6', apercibimiento:'#92400e', sancion:'#991b1b' };
-
-  el.innerHTML = actasMostrar.map((a, idx) => `
-    <div class="acta-card">
-      <div class="acta-card-head">
-        <span class="acta-folio">${a.folio_acta || '—'}</span>
-        <span class="acta-tipo-badge" style="background:${colors[a.tipo_acta]||'#1a3a5c'};color:#fff;padding:3px 9px;border-radius:20px;font-size:.68rem;font-weight:800">
-          ${labels[a.tipo_acta] || a.tipo_acta || 'Acta'}
-        </span>
-      </div>
-      <div class="acta-card-body">
-        <div class="acta-row"><span class="acta-lbl">Reporte</span><span>${a.report_folio || a.folio_acta || '—'}</span></div>
-        <div class="acta-row"><span class="acta-lbl">Infractor</span><span>${a.infractor || '—'}</span></div>
-        <div class="acta-row"><span class="acta-lbl">Descripción</span><span>${(a.descripcion||'').substring(0,60)}${(a.descripcion||'').length>60?'...':''}</span></div>
-        <div class="acta-row"><span class="acta-lbl">Fecha</span><span>${a.fecha ? new Date(a.fecha).toLocaleString('es-MX') : '—'}</span></div>
-        <div class="acta-row"><span class="acta-lbl">Estado</span><span class="est-badge est-${a.estado_acta||'emitida'}">${(a.estado_acta||'EMITIDA').toUpperCase()}</span></div>
-      </div>
-      <div class="icard-foot">
-        <button class="ibtn ibtn-success ibtn-sm" style="flex:1" onclick="compartirPDFActa(misActas[${misActas.indexOf(a)}])">📤 Compartir PDF por WhatsApp</button>
-        <button class="ibtn ibtn-sm" style="background:#dc2626;color:#fff;padding:0 14px;flex:none" onclick="borrarActaLocal(${a.id||0}, ${misActas.indexOf(a)})">🗑️</button>
-      </div>
-    </div>`).join('');
-}
-
-function filtrarActas(tipo) {
-  window._actasFiltro = tipo;
-  // Update visual state of cards
-  ['inspeccion','circunstanciada','apercibimiento','sancion'].forEach(function(t) {
-    var card = document.getElementById('card-' + t);
-    if (card) card.style.opacity = (!tipo || tipo === t) ? '1' : '0.5';
-  });
-  // Update label
-  var lbl = document.getElementById('actas-filtro-label');
-  var txt = document.getElementById('actas-filtro-txt');
-  var labels = {inspeccion:'🔍 Inspección',circunstanciada:'📋 Circunstanciada',apercibimiento:'⚠️ Apercibimiento',sancion:'🚫 Sanción'};
-  if (lbl) lbl.style.display = tipo ? 'flex' : 'none';
-  if (txt) txt.textContent = tipo ? ('Mostrando: ' + (labels[tipo]||tipo)) : '';
-  renderMisActas();
-}
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -473,7 +408,7 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
     </div>
   </div>
   <!-- AUTOSAVE BAR -->
-  <div id="autosave-bar" class="autosave-bar" style="display:none">
+  <div id="autosave-bar" class="autosave-bar">
     <span id="autosave-icon">💾</span>
     <span id="autosave-msg">Borrador guardado</span>
   </div>
@@ -1066,13 +1001,9 @@ function _showAutosaveBar(msg, isError) {
   const msgEl = document.getElementById('autosave-msg');
   if (!bar || !msgEl) return;
   msgEl.textContent = msg;
-  bar.style.display = 'flex';
   bar.className = 'autosave-bar show' + (isError ? ' error' : '');
   clearTimeout(bar._timer);
-  bar._timer = setTimeout(() => {
-    bar.className = 'autosave-bar';
-    bar.style.display = 'none';
-  }, 2500);
+  bar._timer = setTimeout(() => { bar.className = 'autosave-bar'; }, 2500);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1556,15 +1487,27 @@ function abrirMapaVerificacion(vid, nombreEst) {
 
 window.onerror = function(msg, src, line, col, err) {
   console.error("IMBIO Error:", msg, "linea:", line);
-  // Mostrar error visible en pantalla (ayuda a depurar en celular)
+  // Mostrar error visible en pantalla con auto-dismiss a los 5 segundos
   var d = document.getElementById('error-overlay');
   if (!d) {
     d = document.createElement('div');
     d.id = 'error-overlay';
-    d.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#fee2e2;color:#991b1b;padding:10px;font-size:12px;z-index:99999;font-family:monospace;border-top:2px solid #dc2626';
+    d.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#fee2e2;color:#991b1b;padding:8px 40px 8px 10px;font-size:12px;z-index:99999;font-family:monospace;border-top:2px solid #dc2626';
+    var btnClose = document.createElement('button');
+    btnClose.textContent = '✕';
+    btnClose.style.cssText = 'position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#991b1b;font-size:16px;cursor:pointer;font-weight:bold;padding:0 4px';
+    btnClose.onclick = function(){ d.style.display='none'; };
+    d.appendChild(btnClose);
     document.body.appendChild(d);
   }
-  d.textContent = 'Error linea ' + line + ': ' + msg;
+  d.style.display = 'block';
+  // Actualizar solo el texto, no el botón
+  var span = d.querySelector('span') || document.createElement('span');
+  span.textContent = 'Error linea ' + line + ': ' + msg;
+  if (!d.querySelector('span')) d.insertBefore(span, d.firstChild);
+  // Auto-ocultar después de 5 segundos
+  clearTimeout(d._timer);
+  d._timer = setTimeout(function(){ d.style.display = 'none'; }, 5000);
   return true;
 };
 window.addEventListener("unhandledrejection", function(e) {
@@ -3034,29 +2977,64 @@ async function borrarActaLocal(id, idx) {
 }
 
 
+function filtrarActas(tipo) {
+  window._actasFiltro = tipo;
+  // Resaltar / atenuar tarjetas de tipo
+  ['inspeccion','circunstanciada','apercibimiento','sancion'].forEach(function(t) {
+    var card = document.getElementById('card-' + t);
+    if (card) card.style.opacity = (!tipo || tipo === t) ? '1' : '0.5';
+  });
+  // Actualizar label de filtro activo
+  var lbl = document.getElementById('actas-filtro-label');
+  var txt = document.getElementById('actas-filtro-txt');
+  var labels = { inspeccion:'🔍 Inspección', circunstanciada:'📋 Circunstanciada', apercibimiento:'⚠️ Apercibimiento', sancion:'🚫 Sanción' };
+  if (lbl) lbl.style.display = tipo ? 'flex' : 'none';
+  if (txt) txt.textContent = tipo ? ('Mostrando: ' + (labels[tipo] || tipo)) : '';
+  renderMisActas();
+}
+
 function renderMisActas() {
   const el = document.getElementById('lista-actas');
-  if (!misActas.length) {
-    el.innerHTML = '<div class="empty"><div class="em-ic">📄</div><p>Las actas que generes aparecerán aquí.</p></div>';
+  if (!el) return;
+
+  // ── Actualizar contadores del dashboard ──
+  const tipos = ['inspeccion','circunstanciada','apercibimiento','sancion'];
+  tipos.forEach(function(t) {
+    var cnt = document.getElementById('cnt-' + t);
+    if (cnt) cnt.textContent = misActas.filter(function(a){ return a.tipo_acta === t; }).length;
+  });
+
+  // ── Aplicar filtro activo ──
+  var actasMostrar = window._actasFiltro
+    ? misActas.filter(function(a){ return a.tipo_acta === window._actasFiltro; })
+    : misActas;
+
+  if (!actasMostrar.length) {
+    var labelsVacios = { inspeccion:'Inspección', circunstanciada:'Circunstanciada', apercibimiento:'Apercibimiento', sancion:'Sanción' };
+    var msg = window._actasFiltro
+      ? 'No tienes actas de tipo ' + (labelsVacios[window._actasFiltro] || window._actasFiltro) + '.'
+      : 'Las actas que generes aparecerán aquí.';
+    el.innerHTML = '<div class="empty"><div class="em-ic">📄</div><p>' + msg + '</p></div>';
     return;
   }
+
   const labels = { circunstanciada:'Circunstanciada', apercibimiento:'Apercibimiento', sancion:'Sanción', inspeccion:'Inspección' };
-  el.innerHTML = misActas.map((a, idx) => `
+  el.innerHTML = actasMostrar.map((a, idx) => `
     <div class="acta-card">
       <div class="acta-card-head">
-        <span class="acta-folio">${a.folio_acta}</span>
-        <span class="acta-tipo-badge acta-${a.tipo_acta}">${labels[a.tipo_acta]||a.tipo_acta}</span>
+        <span class="acta-folio">${a.folio_acta || '—'}</span>
+        <span class="acta-tipo-badge acta-${a.tipo_acta}">${labels[a.tipo_acta] || a.tipo_acta || 'Acta'}</span>
       </div>
       <div class="acta-card-body">
-        <div class="acta-row"><label>Reporte</label><span style="font-family:monospace;color:var(--azul)">${a.report_folio}</span></div>
-        ${a.infractor?`<div class="acta-row"><label>Infractor</label><span>${a.infractor}</span></div>`:''}
-        <div class="acta-row"><label>Descripción</label><span>${a.descripcion}</span></div>
-        <div class="acta-row"><label>Fecha</label><span>${fmtFecha(a.fecha)}</span></div>
-        <div class="acta-row"><label>Estado</label><span class="est-badge est-asignado">${a.estado}</span></div>
+        <div class="acta-row"><label>Reporte</label><span style="font-family:monospace;color:var(--azul)">${a.report_folio || a.folio_acta || '—'}</span></div>
+        ${a.infractor ? `<div class="acta-row"><label>Infractor</label><span>${a.infractor}</span></div>` : ''}
+        <div class="acta-row"><label>Descripción</label><span>${(a.descripcion||'').substring(0,80)}${(a.descripcion||'').length>80?'...':''}</span></div>
+        <div class="acta-row"><label>Fecha</label><span>${a.fecha ? new Date(a.fecha).toLocaleString('es-MX') : '—'}</span></div>
+        <div class="acta-row"><label>Estado</label><span class="est-badge est-asignado">${(a.estado_acta || a.estado || 'emitida').toUpperCase()}</span></div>
       </div>
       <div class="icard-foot">
-        <button class="ibtn ibtn-success ibtn-sm" style="flex:1" onclick="compartirPDFActa(misActas[${idx}])">📤 Compartir PDF por WhatsApp</button>
-        <button class="ibtn ibtn-sm" style="background:#dc2626;color:#fff;padding:0 14px;flex:none" onclick="borrarActaLocal(${a.id||0}, ${idx})">🗑️</button>
+        <button class="ibtn ibtn-success ibtn-sm" style="flex:1" onclick="compartirPDFActa(misActas[${misActas.indexOf(a)}])">📤 Compartir PDF por WhatsApp</button>
+        <button class="ibtn ibtn-sm" style="background:#dc2626;color:#fff;padding:0 14px;flex:none" onclick="borrarActaLocal(${a.id||0}, ${misActas.indexOf(a)})">🗑️</button>
       </div>
     </div>`).join('');
 }
