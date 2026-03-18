@@ -1213,14 +1213,19 @@ let tipoActaSel = 'circunstanciada';
 
 function selTipoActa(tipo) {
   tipoActaSel = tipo;
+  // Actualizar hidden input si ya existe en el DOM
   var _te = document.getElementById('acta-tipo'); if (_te) _te.value = tipo;
-  ['circunstanciada','apercibimiento','sancion','inspeccion'].forEach(t => {
-    var _chip = document.getElementById('ta-' + t); if (_chip) _chip.classList.toggle('sel', t === tipo);
+  // Actualizar chips si ya existen en el DOM
+  ['circunstanciada','apercibimiento','sancion','inspeccion'].forEach(function(t) {
+    var _chip = document.getElementById('ta-' + t);
+    if (_chip) _chip.className = _chip.className.replace(/\bsel\b/g,'').trim() + (t === tipo ? ' sel' : '');
   });
-  // Rebuild the form so adaptive sections update
+  // Reconstruir el formulario (el template ahora usa tipoActaSel para los chips)
   var d = document.getElementById('acta-form-dynamic');
   if (d) { delete d.dataset.built; }
   _buildActaForm();
+  // Después del rebuild, los chips del DOM nuevo también deben estar correctos
+  // (el template ya los genera con la clase sel correcta via tipoActaSel)
   // Re-init sig canvases after rebuild
   setTimeout(function() { initSig(); }, 50);
 }
@@ -2406,24 +2411,24 @@ function _buildActaForm() {
     <!-- ── TIPO DE ACTA ── -->
     <div id="acta-tipo-badge" style="display:none"></div>
     <div class="tipo-acta-grid">
-      <div class="ta-chip" onclick="selTipoActa('inspeccion')" id="ta-inspeccion">
+      <div class="${tipoActaSel==='inspeccion'?'ta-chip sel':'ta-chip'}" onclick="selTipoActa('inspeccion')" id="ta-inspeccion">
         <span class="ta-ic">🔍</span><span class="ta-lbl">Inspección</span>
         <span style="font-size:.62rem;color:#64748b;line-height:1.2">Visita inicial al sitio</span>
       </div>
-      <div class="ta-chip sel" onclick="selTipoActa('circunstanciada')" id="ta-circunstanciada">
+      <div class="${tipoActaSel==='circunstanciada'?'ta-chip sel':'ta-chip'}" onclick="selTipoActa('circunstanciada')" id="ta-circunstanciada">
         <span class="ta-ic">📋</span><span class="ta-lbl">Circunstanciada</span>
         <span style="font-size:.62rem;color:#64748b;line-height:1.2">Documenta los hechos</span>
       </div>
-      <div class="ta-chip" onclick="selTipoActa('apercibimiento')" id="ta-apercibimiento">
+      <div class="${tipoActaSel==='apercibimiento'?'ta-chip sel':'ta-chip'}" onclick="selTipoActa('apercibimiento')" id="ta-apercibimiento">
         <span class="ta-ic">⚠️</span><span class="ta-lbl">Apercibimiento</span>
         <span style="font-size:.62rem;color:#64748b;line-height:1.2">Irregularidad corregible</span>
       </div>
-      <div class="ta-chip" onclick="selTipoActa('sancion')" id="ta-sancion">
+      <div class="${tipoActaSel==='sancion'?'ta-chip sel':'ta-chip'}" onclick="selTipoActa('sancion')" id="ta-sancion">
         <span class="ta-ic">🚫</span><span class="ta-lbl">Sanción</span>
         <span style="font-size:.62rem;color:#64748b;line-height:1.2">Infracción / reincidencia</span>
       </div>
     </div>
-    <input type="hidden" id="acta-tipo" value="circunstanciada">
+    <input type="hidden" id="acta-tipo" value="${tipoActaSel}">
 
     <!-- ── ENCABEZADO INSTITUCIONAL (Sec. 2) ── -->
     <div class="section-title" style="background:#1a3a5c">🏛️ 2. Encabezado Institucional</div>
@@ -4173,13 +4178,16 @@ function _buildActaForm() {
 
 // Llamar _buildActaForm ANTES de usar cualquier campo del formulario
 var _origAbrirActa = abrirNuevaActa;
-abrirNuevaActa = function(reportId, folio) {
+abrirNuevaActa = function(reportId, folio, tipoInicial) {
   var repData = window._reportesCache ? window._reportesCache.find(function(r){ return r.id === reportId; }) : null;
   window._actaReporteTipo = repData ? (repData.tipo || '') : '';
+  // Guardar tipo deseado ANTES de reconstruir el form
+  if (tipoInicial) tipoActaSel = tipoInicial;
   var dynDiv = document.getElementById('acta-form-dynamic');
   if (dynDiv) { dynDiv.innerHTML = ''; delete dynDiv.dataset.built; delete dynDiv.dataset.tipo; }
   _buildActaForm();
-  setTimeout(function(){ _origAbrirActa(reportId, folio); }, 80);
+  // Pasar tipoInicial al original para que selTipoActa lo aplique correctamente
+  setTimeout(function(){ _origAbrirActa(reportId, folio, tipoInicial); }, 80);
 };
 
 
