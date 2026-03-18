@@ -618,7 +618,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
         <div class="form-card">
           <div class="form-card-header"><span class="ic">✍️</span><span>Firma digital (opcional)</span></div>
           <div class="form-card-body">
-            <div style="touch-action:none;user-select:none;-webkit-user-select:none">
+            <div style="touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none">
               <canvas id="sig-app" onclick="sigFocusResize()"></canvas>
             </div>
             <div style="display:flex;gap:8px;margin-top:8px">
@@ -1014,69 +1014,103 @@ function initSigApp() {
   sigAppCanvas = document.getElementById('sig-app');
   sigAppCtx    = sigAppCanvas.getContext('2d');
 
-  // Asignar dimensiones reales en píxeles (CSS width:100% no las establece solo)
+  function applyCtxStyles() {
+    sigAppCtx.strokeStyle = '#003B7A';
+    sigAppCtx.lineWidth   = 2.5;
+    sigAppCtx.lineCap     = 'round';
+    sigAppCtx.lineJoin    = 'round';
+  }
+
+  // Asignar dimensiones reales — SOLO cuando NO se está dibujando
   function resizeCanvas() {
-    var rect = sigAppCanvas.getBoundingClientRect();
-    var w = rect.width  || sigAppCanvas.offsetWidth  || 300;
-    var h = rect.height || sigAppCanvas.offsetHeight || 120;
+    if (sigDrawing) return; // nunca interrumpir un trazo en curso
+    var w = Math.round(sigAppCanvas.offsetWidth)  || 300;
+    var h = Math.round(sigAppCanvas.offsetHeight) || 120;
+    if (w < 10 || h < 10) return; // layout aún no listo
     if (sigAppCanvas.width !== w || sigAppCanvas.height !== h) {
       sigAppCanvas.width  = w;
       sigAppCanvas.height = h;
-      // Re-aplicar estilos de dibujo (se pierden al cambiar width/height)
-      sigAppCtx.strokeStyle = '#003B7A';
-      sigAppCtx.lineWidth   = 2.5;
-      sigAppCtx.lineCap     = 'round';
-      sigAppCtx.lineJoin    = 'round';
+      applyCtxStyles();
     }
   }
 
-  // Inicializar cuando el layout ya esté pintado
-  setTimeout(resizeCanvas, 100);
-  setTimeout(resizeCanvas, 400); // segundo intento por si el layout tardó
+  // Resize en distintos momentos para capturar el layout correcto
+  setTimeout(resizeCanvas, 50);
+  setTimeout(resizeCanvas, 200);
+  setTimeout(resizeCanvas, 600);
   window.addEventListener('resize', resizeCanvas);
 
-  // Redimensionar cuando el canvas entra en el viewport (scroll)
+  // Resize cuando el canvas entra en pantalla al hacer scroll
   if ('IntersectionObserver' in window) {
-    var obs = new IntersectionObserver(function(entries) {
-      if (entries[0].isIntersecting) {
-        resizeCanvas();
-        // Re-aplicar estilos de contexto también
-        sigAppCtx.strokeStyle = '#003B7A';
-        sigAppCtx.lineWidth   = 2.5;
-        sigAppCtx.lineCap     = 'round';
-        sigAppCtx.lineJoin    = 'round';
-      }
-    }, { threshold: 0.1 });
-    obs.observe(sigAppCanvas);
+    new IntersectionObserver(function(entries) {
+      if (entries[0].isIntersecting) { resizeCanvas(); applyCtxStyles(); }
+    }, { threshold: 0.2 }).observe(sigAppCanvas);
   }
 
+  // Coordenadas correctas — sin llamar resizeCanvas (evita borrar el trazo)
   function getPos(e) {
-    resizeCanvas(); // garantizar dimensiones actualizadas
-    const r = sigAppCanvas.getBoundingClientRect();
-    const src = e.touches ? e.touches[0] : e;
-    return { x: src.clientX - r.left, y: src.clientY - r.top };
+    var r   = sigAppCanvas.getBoundingClientRect();
+    var src = e.touches ? e.touches[0] : e;
+    var sx  = sigAppCanvas.width  / (r.width  || sigAppCanvas.width);
+    var sy  = sigAppCanvas.height / (r.height || sigAppCanvas.height);
+    return { x: (src.clientX - r.left) * sx, y: (src.clientY - r.top) * sy };
   }
-  sigAppCanvas.addEventListener('mousedown',  e => { sigDrawing=true; sigAppCtx.beginPath(); const p=getPos(e); sigAppCtx.moveTo(p.x,p.y); });
-  sigAppCanvas.addEventListener('mousemove',  e => { if(!sigDrawing)return; const p=getPos(e); sigAppCtx.lineTo(p.x,p.y); sigAppCtx.stroke(); });
-  sigAppCanvas.addEventListener('mouseup',    () => sigDrawing=false);
-  sigAppCanvas.addEventListener('mouseleave', () => sigDrawing=false);
-  sigAppCanvas.addEventListener('touchstart', e => { e.preventDefault(); sigDrawing=true; sigAppCtx.beginPath(); const p=getPos(e); sigAppCtx.moveTo(p.x,p.y); }, {passive:false});
-  sigAppCanvas.addEventListener('touchmove',  e => { e.preventDefault(); if(!sigDrawing)return; const p=getPos(e); sigAppCtx.lineTo(p.x,p.y); sigAppCtx.stroke(); }, {passive:false});
-  sigAppCanvas.addEventListener('touchend',   () => sigDrawing=false);
+
+  // Bloquear scroll del contenedor mientras se firma (iOS/Android)
+  var contentEl = document.querySelector('.content');
+  function lockScroll()   { if (contentEl) contentEl.style.overflow = 'hidden'; }
+  function unlockScroll() { if (contentEl) contentEl.style.overflow = ''; }
+
+  // Mouse
+  sigAppCanvas.addEventListener('mousedown', function(e) {
+    resizeCanvas(); applyCtxStyles();
+    sigDrawing = true; sigAppCtx.beginPath();
+    var p = getPos(e); sigAppCtx.moveTo(p.x, p.y);
+  });
+  sigAppCanvas.addEventListener('mousemove', function(e) {
+    if (!sigDrawing) return;
+    var p = getPos(e); sigAppCtx.lineTo(p.x, p.y); sigAppCtx.stroke();
+  });
+  sigAppCanvas.addEventListener('mouseup',    function() { sigDrawing = false; });
+  sigAppCanvas.addEventListener('mouseleave', function() { sigDrawing = false; });
+
+  // Touch — preventDefault + lockScroll para que el scroll no se robe el toque
+  sigAppCanvas.addEventListener('touchstart', function(e) {
+    e.preventDefault(); e.stopPropagation();
+    resizeCanvas(); applyCtxStyles();
+    lockScroll();
+    sigDrawing = true; sigAppCtx.beginPath();
+    var p = getPos(e); sigAppCtx.moveTo(p.x, p.y);
+  }, { passive: false });
+
+  sigAppCanvas.addEventListener('touchmove', function(e) {
+    e.preventDefault(); e.stopPropagation();
+    if (!sigDrawing) return;
+    var p = getPos(e); sigAppCtx.lineTo(p.x, p.y); sigAppCtx.stroke();
+  }, { passive: false });
+
+  sigAppCanvas.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    sigDrawing = false;
+    unlockScroll();
+  }, { passive: false });
+
+  sigAppCanvas.addEventListener('touchcancel', function() {
+    sigDrawing = false;
+    unlockScroll();
+  });
 }
 function clearSigApp() { sigAppCtx.clearRect(0, 0, sigAppCanvas.width, sigAppCanvas.height); }
 function sigIsEmpty()  { return !sigAppCtx.getImageData(0,0,sigAppCanvas.width,sigAppCanvas.height).data.some(v=>v!==0); }
-// Forzar redimensión al tocar el canvas (fallback para dispositivos que no disparan IntersectionObserver correctamente)
 function sigFocusResize() {
-  if (!sigAppCanvas || !sigAppCtx) return;
-  var rect = sigAppCanvas.getBoundingClientRect();
-  var w = rect.width  || sigAppCanvas.offsetWidth  || 300;
-  var h = rect.height || sigAppCanvas.offsetHeight || 120;
+  if (!sigAppCanvas || !sigAppCtx || sigDrawing) return;
+  var w = Math.round(sigAppCanvas.offsetWidth)  || 300;
+  var h = Math.round(sigAppCanvas.offsetHeight) || 120;
+  if (w < 10 || h < 10) return;
   if (sigAppCanvas.width !== w || sigAppCanvas.height !== h) {
     sigAppCanvas.width  = w;
     sigAppCanvas.height = h;
   }
-  // Siempre re-aplicar estilos (pueden perderse si el context fue reseteado)
   sigAppCtx.strokeStyle = '#003B7A';
   sigAppCtx.lineWidth   = 2.5;
   sigAppCtx.lineCap     = 'round';
