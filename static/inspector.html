@@ -1637,7 +1637,9 @@ function initSig() {
   const getPos = e => {
     const r = sigCanvas.getBoundingClientRect();
     const src = e.touches ? e.touches[0] : e;
-    return { x: src.clientX - r.left, y: src.clientY - r.top };
+    const scaleX = sigCanvas.width  / (r.width  || sigCanvas.width);
+    const scaleY = sigCanvas.height / (r.height || sigCanvas.height);
+    return { x: (src.clientX - r.left) * scaleX, y: (src.clientY - r.top) * scaleY };
   };
   sigCanvas.onmousedown  = e => { sigDrawing=true; sigCtx.beginPath(); const p=getPos(e); sigCtx.moveTo(p.x,p.y); };
   sigCanvas.onmousemove  = e => { if(!sigDrawing)return; const p=getPos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); };
@@ -1661,7 +1663,12 @@ function initSigExtra(canvas) {
   var ctx = canvas.getContext('2d');
   ctx.strokeStyle = '#002A5C'; ctx.lineWidth = 2; ctx.lineCap = 'round';
   var drawing = false;
-  function gp(e) { var r=canvas.getBoundingClientRect(),s=e.touches?e.touches[0]:e; return{x:s.clientX-r.left,y:s.clientY-r.top}; }
+  function gp(e) {
+    var r=canvas.getBoundingClientRect(), s=e.touches?e.touches[0]:e;
+    var sx = canvas.width  / (r.width  || canvas.width);
+    var sy = canvas.height / (r.height || canvas.height);
+    return { x: (s.clientX-r.left)*sx, y: (s.clientY-r.top)*sy };
+  }
   canvas.onmousedown  = function(e){ drawing=true; ctx.beginPath(); var p=gp(e); ctx.moveTo(p.x,p.y); };
   canvas.onmousemove  = function(e){ if(!drawing)return; var p=gp(e); ctx.lineTo(p.x,p.y); ctx.stroke(); };
   canvas.onmouseup    = function(){ drawing=false; };
