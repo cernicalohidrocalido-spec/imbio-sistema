@@ -599,7 +599,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
         <div class="form-card">
           <div class="form-card-header"><span class="ic">✍️</span><span>Firma digital (opcional)</span></div>
           <div class="form-card-body">
-            <canvas id="sig-app"></canvas>
+            <canvas id="sig-app" onclick="sigFocusResize()"></canvas>
             <div style="display:flex;gap:8px;margin-top:8px">
               <div class="fgroup" style="flex:1"><input id="nr-firmante" placeholder="Nombre del firmante"></div>
               <button class="map-btn" onclick="clearSigApp()" style="flex:none;width:44px">🗑</button>
@@ -959,11 +959,37 @@ async function geocodePos(lat, lng) {
 function initSigApp() {
   sigAppCanvas = document.getElementById('sig-app');
   sigAppCtx    = sigAppCanvas.getContext('2d');
-  sigAppCtx.strokeStyle = '#003B7A';
-  sigAppCtx.lineWidth   = 2.5;
-  sigAppCtx.lineCap     = 'round';
-  sigAppCtx.lineJoin    = 'round';
+
+  // Asignar dimensiones reales en píxeles (CSS width:100% no las establece solo)
+  function resizeCanvas() {
+    var rect = sigAppCanvas.getBoundingClientRect();
+    var w = rect.width  || sigAppCanvas.offsetWidth  || 300;
+    var h = rect.height || sigAppCanvas.offsetHeight || 120;
+    if (sigAppCanvas.width !== w || sigAppCanvas.height !== h) {
+      sigAppCanvas.width  = w;
+      sigAppCanvas.height = h;
+      // Re-aplicar estilos de dibujo (se pierden al cambiar width/height)
+      sigAppCtx.strokeStyle = '#003B7A';
+      sigAppCtx.lineWidth   = 2.5;
+      sigAppCtx.lineCap     = 'round';
+      sigAppCtx.lineJoin    = 'round';
+    }
+  }
+
+  // Inicializar cuando el layout ya esté pintado
+  setTimeout(resizeCanvas, 200);
+  window.addEventListener('resize', resizeCanvas);
+
+  // Redimensionar cuando el canvas entra en el viewport (scroll)
+  if ('IntersectionObserver' in window) {
+    var obs = new IntersectionObserver(function(entries) {
+      if (entries[0].isIntersecting) resizeCanvas();
+    }, { threshold: 0.1 });
+    obs.observe(sigAppCanvas);
+  }
+
   function getPos(e) {
+    resizeCanvas(); // garantizar dimensiones actualizadas
     const r = sigAppCanvas.getBoundingClientRect();
     const src = e.touches ? e.touches[0] : e;
     return { x: src.clientX - r.left, y: src.clientY - r.top };
@@ -978,6 +1004,21 @@ function initSigApp() {
 }
 function clearSigApp() { sigAppCtx.clearRect(0, 0, sigAppCanvas.width, sigAppCanvas.height); }
 function sigIsEmpty()  { return !sigAppCtx.getImageData(0,0,sigAppCanvas.width,sigAppCanvas.height).data.some(v=>v!==0); }
+// Forzar redimensión al tocar el canvas (fallback para dispositivos que no disparan IntersectionObserver correctamente)
+function sigFocusResize() {
+  if (!sigAppCanvas || !sigAppCtx) return;
+  var rect = sigAppCanvas.getBoundingClientRect();
+  var w = rect.width  || sigAppCanvas.offsetWidth  || 300;
+  var h = rect.height || sigAppCanvas.offsetHeight || 120;
+  if (sigAppCanvas.width !== w || sigAppCanvas.height !== h) {
+    sigAppCanvas.width  = w;
+    sigAppCanvas.height = h;
+    sigAppCtx.strokeStyle = '#003B7A';
+    sigAppCtx.lineWidth   = 2.5;
+    sigAppCtx.lineCap     = 'round';
+    sigAppCtx.lineJoin    = 'round';
+  }
+}
 
 // ── Enviar reporte ────────────────────────────────────────
 async function enviarReporte() {
