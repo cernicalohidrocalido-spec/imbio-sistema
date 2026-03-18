@@ -85,40 +85,49 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 /* ── APP SHELL ── */
 #app { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--gris); padding-top: var(--safe-top); padding-bottom: var(--safe-bot); }
 
-/* ── HEADER ── */
+/* ── HEADER — se oculta al bajar, reaparece al subir ── */
 .app-header {
   background: linear-gradient(135deg, var(--oscuro), var(--verde));
   padding: 14px 18px 12px;
   display: flex; align-items: center; gap: 12px;
   box-shadow: 0 3px 16px rgba(0,42,92,.25);
   flex-shrink: 0; position: relative; overflow: hidden;
+  transition: transform .28s cubic-bezier(.4,0,.2,1), opacity .28s ease;
+  will-change: transform;
+}
+.app-header.hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
 }
 .app-header::before {
   content: ''; position: absolute; top: -30px; right: -20px;
   width: 120px; height: 120px; border-radius: 50%;
   background: rgba(255,255,255,.04);
 }
-.header-leaf { font-size: 1.7rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,.3)); }
-.header-text h1 { color: #fff; font-family: 'Nunito', sans-serif; font-size: 1.08rem; font-weight: 800; letter-spacing: -.3px; }
-.header-text p  { color: rgba(255,255,255,.55); font-size: .7rem; margin-top: 1px; }
+.header-leaf { font-size: 1.9rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,.3)); }
+.header-text h1 { color: #fff; font-family: 'Nunito', sans-serif; font-size: 1.15rem; font-weight: 800; letter-spacing: -.3px; }
+.header-text p  { color: rgba(255,255,255,.55); font-size: .72rem; margin-top: 1px; }
 .header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .conn-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ambar); box-shadow: 0 0 0 3px rgba(245,158,11,.25); transition: .3s; }
 .conn-dot.ok  { background: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,.25); }
 .conn-dot.off { background: #f87171; box-shadow: 0 0 0 3px rgba(248,113,113,.25); }
 
-/* ── TABS ── */
+/* ── TABS — siempre visibles (navegación crítica) ── */
 .tabs {
   display: flex; background: var(--verde); flex-shrink: 0;
   border-bottom: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 2px 8px rgba(0,42,92,.2);
+  z-index: 10; position: relative;
 }
 .tab {
-  flex: 1; padding: 10px 4px; display: flex; flex-direction: column;
-  align-items: center; gap: 3px; cursor: pointer; transition: .2s;
-  color: rgba(255,255,255,.45); font-size: .62rem; font-weight: 700;
+  flex: 1; padding: 12px 4px 10px; display: flex; flex-direction: column;
+  align-items: center; gap: 4px; cursor: pointer; transition: .2s;
+  color: rgba(255,255,255,.45); font-size: .72rem; font-weight: 700;
   text-transform: uppercase; letter-spacing: .05em;
-  border-bottom: 2px solid transparent;
+  border-bottom: 3px solid transparent;
 }
-.tab .tab-ic { font-size: 1.3rem; }
+.tab .tab-ic { font-size: 1.55rem; }
 .tab.active { color: var(--ambar); border-bottom-color: var(--ambar); }
 .tab:active { background: rgba(255,255,255,.07); }
 
@@ -135,45 +144,45 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
   overflow: hidden; margin-bottom: 12px;
 }
 .form-card-header {
-  background: var(--verde-bg); padding: 11px 16px;
+  background: var(--verde-bg); padding: 13px 16px;
   border-bottom: 1px solid var(--verde-borde);
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: 9px;
 }
-.form-card-header .ic { font-size: 1.1rem; }
-.form-card-header span { font-size: .78rem; font-weight: 800; color: var(--verde); text-transform: uppercase; letter-spacing: .06em; }
-.form-card-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.form-card-header .ic { font-size: 1.25rem; }
+.form-card-header span { font-size: .86rem; font-weight: 800; color: var(--verde); text-transform: uppercase; letter-spacing: .06em; }
+.form-card-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
 
 .fgroup label {
-  display: block; font-size: .78rem; font-weight: 700;
-  color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px;
+  display: block; font-size: .85rem; font-weight: 700;
+  color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 7px;
 }
 .fgroup input, .fgroup select, .fgroup textarea {
-  width: 100%; padding: 12px 14px; border: 1.5px solid var(--borde);
-  border-radius: 10px; font-size: .95rem; font-family: inherit;
+  width: 100%; padding: 14px 15px; border: 1.5px solid var(--borde);
+  border-radius: 11px; font-size: 1rem; font-family: inherit;
   background: #fff; color: var(--texto); outline: none;
   transition: border-color .15s, box-shadow .15s; appearance: none;
 }
 .fgroup input:focus, .fgroup select:focus, .fgroup textarea:focus {
   border-color: var(--verde-medio); box-shadow: 0 0 0 3px rgba(13,138,86,.12);
 }
-.fgroup textarea { resize: none; min-height: 80px; }
+.fgroup textarea { resize: none; min-height: 90px; font-size: 1rem; }
 .fgroup select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
 
 /* ── CATEGORÍAS DE TIPO ── */
 .cat-label {
-  display: flex; align-items: center; gap: 6px;
-  font-size: .7rem; font-weight: 800; text-transform: uppercase;
-  letter-spacing: .07em; margin: 12px 0 7px; padding: 0 2px;
+  display: flex; align-items: center; gap: 7px;
+  font-size: .84rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .06em; margin: 14px 0 9px; padding: 0 2px;
 }
 .cat-line { flex: 1; height: 1px; background: var(--borde); }
 
 /* Grid de chips */
-.tipo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tipo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
 /* Chips de tipo mejorados */
 .tipo-chip {
-  padding: 11px 8px 9px; border: 2px solid var(--borde);
-  border-radius: 12px; background: #fff; cursor: pointer;
+  padding: 16px 10px 13px; border: 2px solid var(--borde);
+  border-radius: 14px; background: #fff; cursor: pointer;
   text-align: center; transition: all .18s;
   display: flex; flex-direction: column; align-items: center; gap: 5px;
   position: relative; overflow: hidden;
@@ -183,10 +192,10 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
   background: var(--chip-color, var(--verde)); opacity: 0;
   transition: opacity .18s;
 }
-.tipo-chip .chip-ic { font-size: 1.6rem; position: relative; z-index: 1; }
+.tipo-chip .chip-ic { font-size: 2rem; position: relative; z-index: 1; }
 .tipo-chip .chip-lbl {
-  font-size: .68rem; font-weight: 700; color: var(--muted);
-  line-height: 1.2; position: relative; z-index: 1;
+  font-size: .8rem; font-weight: 700; color: var(--muted);
+  line-height: 1.25; position: relative; z-index: 1;
 }
 .tipo-chip.sel {
   border-color: var(--chip-color, var(--verde));
@@ -208,22 +217,22 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 .chip-otro          { --chip-color: #64748b; }
 
 /* chip de emergencia full-width especial */
-.chip-full { grid-column: 1/-1; flex-direction: row !important; padding: 12px 16px !important; gap: 12px !important; }
-.chip-full .chip-lbl { text-align: left !important; font-size: .78rem !important; }
+.chip-full { grid-column: 1/-1; flex-direction: row !important; padding: 14px 18px !important; gap: 14px !important; }
+.chip-full .chip-lbl { text-align: left !important; font-size: .9rem !important; }
 
 /* ── MAPA ── */
-#map-app { height: 220px; border-radius: 10px; overflow: hidden; border: 1.5px solid var(--borde); }
+#map-app { height: 240px; border-radius: 12px; overflow: hidden; border: 1.5px solid var(--borde); }
 .map-addr {
   margin-top: 8px; padding: 10px 12px; background: var(--verde-bg);
   border-radius: 8px; border: 1px solid var(--verde-borde);
-  font-size: .82rem; color: var(--oscuro); line-height: 1.4;
-  min-height: 38px;
+  font-size: .9rem; color: var(--oscuro); line-height: 1.45;
+  min-height: 42px;
 }
 .map-btns { display: flex; gap: 8px; margin-top: 8px; }
 .map-btn {
-  flex: 1; padding: 9px; border: 1.5px solid var(--borde); border-radius: 8px;
-  background: #fff; font-size: .78rem; font-weight: 700; color: var(--verde);
-  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;
+  flex: 1; padding: 11px 6px; border: 1.5px solid var(--borde); border-radius: 10px;
+  background: #fff; font-size: .86rem; font-weight: 700; color: var(--verde);
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
   transition: .15s;
 }
 .map-btn:active { background: var(--verde-bg); }
@@ -240,7 +249,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
   background: linear-gradient(135deg, var(--verde) 0%, var(--verde-medio) 100%);
   color: #fff; border: none; border-radius: 14px; font-size: 1.02rem;
   font-family: 'Nunito', sans-serif; font-weight: 800; cursor: pointer;
-  letter-spacing: .02em;
+  letter-spacing: .02em; font-size: 1.08rem;
   box-shadow: 0 6px 24px rgba(10,102,64,.35), 0 2px 8px rgba(10,102,64,.2);
   display: flex; align-items: center; justify-content: center; gap: 8px;
   transition: .15s; margin-top: 4px; position: relative; overflow: hidden;
@@ -260,7 +269,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 .btn-sec:active { background: var(--borde); }
 
 /* ── ALERTS ── */
-.alert { padding: 12px 14px; border-radius: 10px; font-size: .85rem; margin-bottom: 12px; line-height: 1.4; }
+.alert { padding: 13px 15px; border-radius: 10px; font-size: .92rem; margin-bottom: 12px; line-height: 1.45; }
 .alert-ok  { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
 .alert-err { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
 .alert-inf { background: var(--verde-bg); color: var(--oscuro); border: 1px solid var(--verde-borde); }
@@ -282,8 +291,8 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 .est-badge-asignado   { background: #dbeafe; color: #1e40af; }
 .est-badge-en_proceso { background: #d1fae5; color: #065f46; }
 .est-badge-cerrado    { background: #dcfce7; color: #166534; }
-.reporte-tipo { font-size: .84rem; font-weight: 700; color: var(--texto); padding: 0 14px; }
-.reporte-desc { font-size: .8rem; color: var(--muted); padding: 4px 14px 10px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.reporte-tipo { font-size: .92rem; font-weight: 700; color: var(--texto); padding: 0 14px; }
+.reporte-desc { font-size: .88rem; color: var(--muted); padding: 4px 14px 10px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .reporte-foot { padding: 8px 14px; background: var(--gris); border-top: 1px solid var(--borde); display: flex; justify-content: space-between; align-items: center; }
 .reporte-fecha, .reporte-colonia { font-size: .72rem; color: var(--muted); font-weight: 600; }
 
@@ -303,7 +312,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 .grav-btn { padding:12px 8px; border:2px solid var(--borde); border-radius:10px; background:#fff; cursor:pointer; text-align:center; font-size:.82rem; font-weight:700; color:var(--muted); transition:.15s }
 .grav-btn.sel-sup { border-color:var(--verde-medio); background:var(--verde-bg); color:var(--verde) }
 .grav-btn.sel-pro { border-color:#dc2626; background:#fee2e2; color:#991b1b }
-.animal-check { display:flex; align-items:center; gap:10px; padding:12px 14px; border:1.5px solid var(--borde); border-radius:10px; background:#fff; cursor:pointer; font-size:.88rem; font-weight:600 }
+.animal-check { display:flex; align-items:center; gap:10px; padding:13px 14px; border:1.5px solid var(--borde); border-radius:10px; background:#fff; cursor:pointer; font-size:.96rem; font-weight:600 }
 .animal-check input { width:18px; height:18px; accent-color:var(--verde) }
 
 /* ── ÉXITO ── */
@@ -355,8 +364,8 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
   display: flex; align-items: center; gap: 12px;
 }
 .banner-comercial .bc-icon { font-size: 2rem; flex-shrink: 0; }
-.banner-comercial .bc-txt h4 { color: #fff; font-size: .88rem; font-weight: 800; margin-bottom: 2px; }
-.banner-comercial .bc-txt p  { color: rgba(255,255,255,.7); font-size: .75rem; line-height: 1.3; }
+.banner-comercial .bc-txt h4 { color: #fff; font-size: .96rem; font-weight: 800; margin-bottom: 2px; }
+.banner-comercial .bc-txt p  { color: rgba(255,255,255,.7); font-size: .82rem; line-height: 1.35; }
 </style>
 </head>
 <body>
@@ -430,7 +439,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
             <div class="tipo-grid">
               <div class="tipo-chip chip-emergencia chip-full" onclick="selTipo('emergencia')" data-tipo="emergencia">
                 <span class="chip-ic">🚨</span>
-                <div><div class="chip-lbl" style="font-size:.82rem;font-weight:800">Emergencia Ambiental</div><div style="font-size:.68rem;color:#94a3b8;margin-top:1px">Derrame, incendio, contaminación grave</div></div>
+                <div><div class="chip-lbl" style="font-size:.82rem;font-weight:800">Emergencia Ambiental</div><div style="font-size:.78rem;color:#94a3b8;margin-top:2px">Derrame, incendio, contaminación grave</div></div>
               </div>
             </div>
 
@@ -528,10 +537,10 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
             <div class="fgroup">
               <textarea id="nr-desc" placeholder="Describe la situación con detalle: ¿qué ocurre?, ¿desde cuándo?, ¿qué tan urgente es?..." rows="4"></textarea>
               <button type="button" onclick="_matlachoMejorarDesc(this)"
-                style="margin-top:8px;width:100%;padding:9px 14px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;border-radius:10px;font-size:.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px">
+                style="margin-top:10px;width:100%;padding:12px 14px;background:linear-gradient(135deg,#003B7A,#0057B8);color:#fff;border:none;border-radius:11px;font-size:.9rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Nunito',sans-serif">
                 🐭 Matlacho — Mejorar mi descripción
               </button>
-              <div id="matlacho-desc-result" style="display:none;margin-top:8px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:9px;padding:10px 12px;font-size:.82rem;color:#15803d;line-height:1.6"></div>
+              <div id="matlacho-desc-result" style="display:none;margin-top:8px;background:#E8F1FB;border:1.5px solid #B3CFF0;border-radius:11px;padding:12px 14px;font-size:.9rem;color:#1a3a5c;line-height:1.6"></div>
             </div>
           </div>
         </div>
@@ -735,6 +744,8 @@ function initApp() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/app/sw.js').catch(() => {});
   }
+  // Header auto-hide on scroll
+  initHeaderHide();
 }
 
 // ── Tabs ────────────────────────────────────────────────
@@ -745,6 +756,33 @@ function setTab(name) {
   });
   if (name === 'mis') cargarMisReportes();
   if (name === 'nuevo') setTimeout(() => mapApp && mapApp.invalidateSize(), 150);
+  // Siempre mostrar header al cambiar de tab
+  var h = document.querySelector('.app-header');
+  if (h) h.classList.remove('hidden');
+}
+
+// ── Header auto-hide al hacer scroll hacia abajo ─────────
+function initHeaderHide() {
+  var content = document.querySelector('.content');
+  var header  = document.querySelector('.app-header');
+  if (!content || !header) return;
+  var lastY = 0;
+  var ticking = false;
+  content.addEventListener('scroll', function() {
+    if (!ticking) {
+      requestAnimationFrame(function() {
+        var y = content.scrollTop;
+        if (y > lastY && y > 60) {
+          header.classList.add('hidden');    // scrolling down → hide
+        } else {
+          header.classList.remove('hidden'); // scrolling up → show
+        }
+        lastY = y;
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
 }
 
 // ── Conexión ────────────────────────────────────────────
@@ -777,9 +815,10 @@ function guardarServidor() {
 function selTipo(t) {
   tipoSel = t;
   document.querySelectorAll('.tipo-chip').forEach(c => c.classList.toggle('sel', c.dataset.tipo === t));
-  // El panel de animal NO se muestra al ciudadano — esos campos son del inspector
   const panelAnimal = document.getElementById('panel-animal-agresivo');
-  if (panelAnimal) panelAnimal.style.display = 'none';
+  if (panelAnimal) {
+    panelAnimal.style.display = (t === 'perro_agresivo' || t === 'animal_calle') ? 'block' : 'none';
+  }
   // Scroll suave al formulario de descripción
   setTimeout(() => {
     document.querySelector('.content').scrollTo({ top: document.getElementById('nr-desc')?.offsetTop - 80 || 0, behavior: 'smooth' });
@@ -1302,74 +1341,6 @@ async function _matlachoCiudadano() {
   }
 }
 
-// Botón inline: Matlacho mejorar descripción (sin abrir el widget)
-async function _matlachoMejorarDesc(btnEl) {
-  var descEl = document.getElementById('nr-desc');
-  var desc = descEl ? descEl.value.trim() : '';
-  var resultEl = document.getElementById('matlacho-desc-result');
-  if (!desc || desc.length < 10) {
-    if (resultEl) {
-      resultEl.style.display = 'block';
-      resultEl.style.background = '#fef2f2';
-      resultEl.style.borderColor = '#fca5a5';
-      resultEl.style.color = '#991b1b';
-      resultEl.textContent = '✏️ Escribe al menos una oración describiendo el problema y luego pulsa este botón.';
-    }
-    return;
-  }
-  var tipoChip = document.querySelector('.tipo-chip.sel');
-  var tipo = tipoChip ? (tipoChip.dataset.tipo || '') : '';
-  var colonia = (document.getElementById('nr-colonia') || {}).value || '';
-  var original = btnEl.innerHTML;
-  btnEl.innerHTML = '⏳ Matlacho está mejorando tu texto...';
-  btnEl.disabled = true;
-  try {
-    var serverUrl = window.location.origin;
-    var resp = await fetch(serverUrl + '/api/ai/ciudadano', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ descripcion: desc, tipo_incidencia: tipo, colonia: colonia }),
-      signal: AbortSignal.timeout(30000)
-    });
-    var d = await resp.json();
-    if (d.success && d.data && d.data.texto) {
-      if (resultEl) {
-        resultEl.style.display = 'block';
-        resultEl.style.background = '#f0fdf4';
-        resultEl.style.borderColor = '#86efac';
-        resultEl.style.color = '#15803d';
-        resultEl.innerHTML = '<b>🐭 Matlacho sugiere:</b><br><br>' +
-          d.data.texto +
-          '<br><br><button onclick="document.getElementById(\'nr-desc\').value=\'' +
-          d.data.texto.replace(/'/g,"&#39;").replace(/\n/g,' ').replace(/"/g,'&quot;') +
-          '\';document.getElementById(\'matlacho-desc-result\').style.display=\'none\'" ' +
-          'style="padding:7px 16px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;margin-right:8px">✅ Aplicar</button>' +
-          '<button onclick="document.getElementById(\'matlacho-desc-result\').style.display=\'none\'" ' +
-          'style="padding:7px 14px;background:#e5e7eb;color:#374151;border:none;border-radius:8px;font-size:.82rem;cursor:pointer">✕ Cerrar</button>';
-      }
-    } else {
-      if (resultEl) {
-        resultEl.style.display = 'block';
-        resultEl.style.background = '#fef2f2';
-        resultEl.style.borderColor = '#fca5a5';
-        resultEl.style.color = '#991b1b';
-        resultEl.textContent = 'No se pudo mejorar el texto. Intenta de nuevo.';
-      }
-    }
-  } catch(e) {
-    if (resultEl) {
-      resultEl.style.display = 'block';
-      resultEl.style.background = '#fef2f2';
-      resultEl.style.borderColor = '#fca5a5';
-      resultEl.style.color = '#991b1b';
-      resultEl.textContent = 'Error de conexión. Intenta de nuevo.';
-    }
-  } finally {
-    btnEl.innerHTML = original;
-    btnEl.disabled = false;
-  }
-}
-
 function _matlachoAplicar(campoId, texto) {
   var campo = document.getElementById(campoId);
   if (campo) {
@@ -1378,6 +1349,73 @@ function _matlachoAplicar(campoId, texto) {
     setTimeout(function(){ campo.style.borderColor=''; }, 2000);
   }
   _matlachoAddBubble('✅ Texto aplicado. Puedes editarlo antes de enviar.', false);
+}
+
+// Botón inline Matlacho en el campo de descripción
+async function _matlachoMejorarDesc(btnEl) {
+  var descEl   = document.getElementById('nr-desc');
+  var resultEl = document.getElementById('matlacho-desc-result');
+  var desc     = descEl ? descEl.value.trim() : '';
+  if (!desc || desc.length < 10) {
+    if (resultEl) {
+      resultEl.style.display = 'block';
+      resultEl.style.background = '#fee2e2';
+      resultEl.style.borderColor = '#fca5a5';
+      resultEl.style.color = '#991b1b';
+      resultEl.textContent = '✏️ Escribe al menos una oración describiendo el problema y presiona de nuevo.';
+    }
+    return;
+  }
+  var tipoChip = document.querySelector('.tipo-chip.sel');
+  var tipo     = tipoChip ? (tipoChip.dataset.tipo || '') : '';
+  var colonia  = (document.getElementById('nr-colonia') || {}).value || '';
+  var original = btnEl.innerHTML;
+  btnEl.innerHTML = '⏳ Matlacho está mejorando tu texto...';
+  btnEl.disabled  = true;
+  try {
+    var resp = await fetch(window.location.origin + '/api/ai/ciudadano', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ descripcion: desc, tipo_incidencia: tipo, colonia: colonia }),
+      signal: AbortSignal.timeout(30000)
+    });
+    var d = await resp.json();
+    if (d.success && d.data && d.data.texto) {
+      if (resultEl) {
+        resultEl.style.display  = 'block';
+        resultEl.style.background = '#E8F1FB';
+        resultEl.style.borderColor = '#B3CFF0';
+        resultEl.style.color = '#1a3a5c';
+        var escaped = d.data.texto.replace(/'/g,"&#39;").replace(/\n/g,' ').replace(/"/g,'&quot;');
+        resultEl.innerHTML =
+          '<b>🐭 Matlacho sugiere:</b><br><br>' + d.data.texto +
+          '<br><br>' +
+          '<button onclick="document.getElementById(\'nr-desc\').value=\'' + escaped + '\';document.getElementById(\'matlacho-desc-result\').style.display=\'none\'" ' +
+          'style="padding:9px 18px;background:#003B7A;color:#fff;border:none;border-radius:9px;font-size:.88rem;font-weight:700;cursor:pointer;margin-right:8px">✅ Aplicar</button>' +
+          '<button onclick="document.getElementById(\'matlacho-desc-result\').style.display=\'none\'" ' +
+          'style="padding:9px 14px;background:#e5e7eb;color:#374151;border:none;border-radius:9px;font-size:.88rem;cursor:pointer">✕ Cerrar</button>';
+      }
+    } else {
+      if (resultEl) {
+        resultEl.style.display = 'block';
+        resultEl.style.background = '#fee2e2';
+        resultEl.style.borderColor = '#fca5a5';
+        resultEl.style.color = '#991b1b';
+        resultEl.textContent = 'No se pudo mejorar el texto en este momento. Intenta de nuevo.';
+      }
+    }
+  } catch(e) {
+    if (resultEl) {
+      resultEl.style.display = 'block';
+      resultEl.style.background = '#fee2e2';
+      resultEl.style.borderColor = '#fca5a5';
+      resultEl.style.color = '#991b1b';
+      resultEl.textContent = '⚠️ Sin conexión. Verifica tu red e intenta de nuevo.';
+    }
+  } finally {
+    btnEl.innerHTML = original;
+    btnEl.disabled  = false;
+  }
 }
 
 if (document.readyState === 'loading') {
