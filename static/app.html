@@ -240,7 +240,22 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 .chip-full .chip-lbl { text-align: left !important; font-size: .9rem !important; }
 
 /* ── MAPA ── */
-#map-app { height: 240px; border-radius: 12px; overflow: hidden; border: 1.5px solid var(--borde); }
+#map-app {
+  height: 240px;
+  border-radius: 12px;
+  border: 1.5px solid var(--borde);
+  transition: height .35s cubic-bezier(.4,0,.2,1);
+  position: relative;
+}
+#map-app.expanded { height: 420px; }
+.map-expand-btn {
+  position: absolute; bottom: 10px; right: 10px; z-index: 1000;
+  background: #fff; border: 1.5px solid var(--borde); border-radius: 8px;
+  padding: 7px 11px; font-size: .8rem; font-weight: 700; color: var(--verde);
+  cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  display: flex; align-items: center; gap: 5px;
+  touch-action: manipulation;
+}
 .map-addr {
   margin-top: 8px; padding: 10px 12px; background: var(--verde-bg);
   border-radius: 8px; border: 1px solid var(--verde-borde);
@@ -573,7 +588,11 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
               <button class="map-btn" onclick="setMapLayer('sat')" id="btn-sat">🛰️ Satelital</button>
               <button class="map-btn" onclick="setMapLayer('osm')" id="btn-osm">🗺️ Calles</button>
             </div>
-            <div id="map-app" style="margin-top:10px"></div>
+            <div id="map-app" style="margin-top:10px">
+              <button class="map-expand-btn" onclick="toggleMapSize()" id="map-expand-btn" title="Ampliar/reducir mapa">
+                <span id="map-expand-ic">⛶</span> <span id="map-expand-lbl">Ampliar</span>
+              </button>
+            </div>
             <div class="map-addr" id="map-addr">📍 Toca el mapa o usa tu GPS para marcar la ubicación exacta</div>
             <div class="addr-grid" id="addr-grid" style="margin-top:10px">
               <div class="fgroup"><label>Calle</label><input id="nr-calle" placeholder="Se autocompleta"></div>
@@ -775,6 +794,16 @@ function setTab(name) {
   });
   if (name === 'mis') cargarMisReportes();
   if (name === 'nuevo') setTimeout(() => mapApp && mapApp.invalidateSize(), 150);
+  // Colapsar mapa si se cambia de pestaña
+  if (name !== 'nuevo' && _mapExpanded) {
+    _mapExpanded = false;
+    const mapEl = document.getElementById('map-app');
+    if (mapEl) mapEl.classList.remove('expanded');
+    const ic  = document.getElementById('map-expand-ic');
+    const lbl = document.getElementById('map-expand-lbl');
+    if (ic)  ic.textContent  = '⛶';
+    if (lbl) lbl.textContent = 'Ampliar';
+  }
   // Siempre mostrar header al cambiar de tab y recalcular posiciones
   var h = document.querySelector('.app-header');
   if (h) {
@@ -875,9 +904,7 @@ function selTipo(t) {
   tipoSel = t;
   document.querySelectorAll('.tipo-chip').forEach(c => c.classList.toggle('sel', c.dataset.tipo === t));
   const panelAnimal = document.getElementById('panel-animal-agresivo');
-  if (panelAnimal) {
-    panelAnimal.style.display = (t === 'perro_agresivo' || t === 'animal_calle') ? 'block' : 'none';
-  }
+  if (panelAnimal) panelAnimal.style.display = 'none'; // inspector solo
   // Scroll suave al formulario de descripción
   setTimeout(() => {
     document.querySelector('.content').scrollTo({ top: document.getElementById('nr-desc')?.offsetTop - 80 || 0, behavior: 'smooth' });
@@ -891,10 +918,35 @@ const TILES = {
 };
 
 function initMapApp() {
-  mapApp = L.map('map-app', { zoomControl: true, attributionControl: false }).setView([22.1508, -102.2913], 15);
+  mapApp = L.map('map-app', {
+    zoomControl:       true,
+    attributionControl: false,
+    scrollWheelZoom:   true,
+    dragging:          true,
+    touchZoom:         true,
+    doubleClickZoom:   true,
+    boxZoom:           true,
+    tap:               true,       // habilita tap en móvil
+    tapTolerance:      15
+  }).setView([22.1508, -102.2913], 15);
   const cfg = TILES.osm;
   appLayerActive = L.tileLayer(cfg.url, { attribution: cfg.attr, maxZoom: 19 }).addTo(mapApp);
   mapApp.on('click', e => geocodePos(e.latlng.lat, e.latlng.lng));
+}
+
+let _mapExpanded = false;
+function toggleMapSize() {
+  _mapExpanded = !_mapExpanded;
+  const mapEl  = document.getElementById('map-app');
+  const ic     = document.getElementById('map-expand-ic');
+  const lbl    = document.getElementById('map-expand-lbl');
+  mapEl.classList.toggle('expanded', _mapExpanded);
+  if (ic)  ic.textContent  = _mapExpanded ? '⊡' : '⛶';
+  if (lbl) lbl.textContent = _mapExpanded ? 'Reducir' : 'Ampliar';
+  // Leaflet necesita recalcular tamaño después de la transición CSS
+  setTimeout(function() {
+    if (mapApp) mapApp.invalidateSize({ animate: false });
+  }, 380);
 }
 
 function setMapLayer(name) {

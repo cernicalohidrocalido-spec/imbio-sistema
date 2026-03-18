@@ -1,68 +1,3 @@
-function renderMisActas() {
-  const el = document.getElementById('lista-actas');
-
-  // ── Actualizar contadores del dashboard ──
-  const tipos = ['inspeccion','circunstanciada','apercibimiento','sancion'];
-  tipos.forEach(function(t) {
-    var cnt = document.getElementById('cnt-' + t);
-    if (cnt) cnt.textContent = misActas.filter(function(a){ return a.tipo_acta === t; }).length;
-  });
-
-  // ── Filtrar si hay filtro activo ──
-  var actasMostrar = misActas;
-  if (window._actasFiltro) {
-    actasMostrar = misActas.filter(function(a){ return a.tipo_acta === window._actasFiltro; });
-  }
-
-  if (!actasMostrar.length) {
-    var msg = window._actasFiltro
-      ? 'No tienes actas de tipo ' + ({inspeccion:'Inspección',circunstanciada:'Circunstanciada',apercibimiento:'Apercibimiento',sancion:'Sanción'}[window._actasFiltro]||window._actasFiltro) + '.'
-      : 'Las actas que generes aparecerán aquí.';
-    el.innerHTML = '<div class="empty"><div class="em-ic">📄</div><p>' + msg + '</p></div>';
-    return;
-  }
-
-  const labels = { circunstanciada:'Circunstanciada', apercibimiento:'Apercibimiento', sancion:'Sanción', inspeccion:'Inspección' };
-  const colors = { inspeccion:'#1a3a5c', circunstanciada:'#5b21b6', apercibimiento:'#92400e', sancion:'#991b1b' };
-
-  el.innerHTML = actasMostrar.map((a, idx) => `
-    <div class="acta-card">
-      <div class="acta-card-head">
-        <span class="acta-folio">${a.folio_acta || '—'}</span>
-        <span class="acta-tipo-badge" style="background:${colors[a.tipo_acta]||'#1a3a5c'};color:#fff;padding:3px 9px;border-radius:20px;font-size:.68rem;font-weight:800">
-          ${labels[a.tipo_acta] || a.tipo_acta || 'Acta'}
-        </span>
-      </div>
-      <div class="acta-card-body">
-        <div class="acta-row"><span class="acta-lbl">Reporte</span><span>${a.report_folio || a.folio_acta || '—'}</span></div>
-        <div class="acta-row"><span class="acta-lbl">Infractor</span><span>${a.infractor || '—'}</span></div>
-        <div class="acta-row"><span class="acta-lbl">Descripción</span><span>${(a.descripcion||'').substring(0,60)}${(a.descripcion||'').length>60?'...':''}</span></div>
-        <div class="acta-row"><span class="acta-lbl">Fecha</span><span>${a.fecha ? new Date(a.fecha).toLocaleString('es-MX') : '—'}</span></div>
-        <div class="acta-row"><span class="acta-lbl">Estado</span><span class="est-badge est-${a.estado_acta||'emitida'}">${(a.estado_acta||'EMITIDA').toUpperCase()}</span></div>
-      </div>
-      <div class="icard-foot">
-        <button class="ibtn ibtn-success ibtn-sm" style="flex:1" onclick="compartirPDFActa(misActas[${misActas.indexOf(a)}])">📤 Compartir PDF por WhatsApp</button>
-        <button class="ibtn ibtn-sm" style="background:#dc2626;color:#fff;padding:0 14px;flex:none" onclick="borrarActaLocal(${a.id||0}, ${misActas.indexOf(a)})">🗑️</button>
-      </div>
-    </div>`).join('');
-}
-
-function filtrarActas(tipo) {
-  window._actasFiltro = tipo;
-  // Update visual state of cards
-  ['inspeccion','circunstanciada','apercibimiento','sancion'].forEach(function(t) {
-    var card = document.getElementById('card-' + t);
-    if (card) card.style.opacity = (!tipo || tipo === t) ? '1' : '0.5';
-  });
-  // Update label
-  var lbl = document.getElementById('actas-filtro-label');
-  var txt = document.getElementById('actas-filtro-txt');
-  var labels = {inspeccion:'🔍 Inspección',circunstanciada:'📋 Circunstanciada',apercibimiento:'⚠️ Apercibimiento',sancion:'🚫 Sanción'};
-  if (lbl) lbl.style.display = tipo ? 'flex' : 'none';
-  if (txt) txt.textContent = tipo ? ('Mostrando: ' + (labels[tipo]||tipo)) : '';
-  renderMisActas();
-}
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -2200,6 +2135,20 @@ function renderMisActas() {
 // ════════════════════════════════════════════════════════════════
 // VERIFICACIONES DE COMERCIOS — INSPECTOR
 // ════════════════════════════════════════════════════════════════
+
+function filtrarActas(tipo) {
+  window._actasFiltro = tipo;
+  ['inspeccion','circunstanciada','apercibimiento','sancion'].forEach(function(t) {
+    var card = document.getElementById('card-' + t);
+    if (card) card.style.opacity = (!tipo || tipo === t) ? '1' : '0.5';
+  });
+  var lbl = document.getElementById('actas-filtro-label');
+  var txt = document.getElementById('actas-filtro-txt');
+  var labels = {inspeccion:'🔍 Inspección',circunstanciada:'📋 Circunstanciada',apercibimiento:'⚠️ Apercibimiento',sancion:'🚫 Sanción'};
+  if (lbl) lbl.style.display = tipo ? 'flex' : 'none';
+  if (txt) txt.textContent = tipo ? ('Mostrando: ' + (labels[tipo]||tipo)) : '';
+  renderMisActas();
+}
 
 var _verifInspCache = [];
 var _verifInspActual = null;
