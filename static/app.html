@@ -148,7 +148,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
   position: fixed; left: 0; right: 0; bottom: var(--safe-bot);
   /* top se ajusta por JS */
   top: calc(var(--safe-top) + var(--header-h, 58px) + var(--tabs-h, 54px));
-  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
   transition: top .28s cubic-bezier(.4,0,.2,1);
   background: var(--gris);
 }
@@ -618,7 +618,9 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
         <div class="form-card">
           <div class="form-card-header"><span class="ic">✍️</span><span>Firma digital (opcional)</span></div>
           <div class="form-card-body">
-            <canvas id="sig-app" onclick="sigFocusResize()"></canvas>
+            <div style="touch-action:none;user-select:none;-webkit-user-select:none">
+              <canvas id="sig-app" onclick="sigFocusResize()"></canvas>
+            </div>
             <div style="display:flex;gap:8px;margin-top:8px">
               <div class="fgroup" style="flex:1"><input id="nr-firmante" placeholder="Nombre del firmante"></div>
               <button class="map-btn" onclick="clearSigApp()" style="flex:none;width:44px">🗑</button>
@@ -1029,13 +1031,21 @@ function initSigApp() {
   }
 
   // Inicializar cuando el layout ya esté pintado
-  setTimeout(resizeCanvas, 200);
+  setTimeout(resizeCanvas, 100);
+  setTimeout(resizeCanvas, 400); // segundo intento por si el layout tardó
   window.addEventListener('resize', resizeCanvas);
 
   // Redimensionar cuando el canvas entra en el viewport (scroll)
   if ('IntersectionObserver' in window) {
     var obs = new IntersectionObserver(function(entries) {
-      if (entries[0].isIntersecting) resizeCanvas();
+      if (entries[0].isIntersecting) {
+        resizeCanvas();
+        // Re-aplicar estilos de contexto también
+        sigAppCtx.strokeStyle = '#003B7A';
+        sigAppCtx.lineWidth   = 2.5;
+        sigAppCtx.lineCap     = 'round';
+        sigAppCtx.lineJoin    = 'round';
+      }
     }, { threshold: 0.1 });
     obs.observe(sigAppCanvas);
   }
@@ -1065,11 +1075,12 @@ function sigFocusResize() {
   if (sigAppCanvas.width !== w || sigAppCanvas.height !== h) {
     sigAppCanvas.width  = w;
     sigAppCanvas.height = h;
-    sigAppCtx.strokeStyle = '#003B7A';
-    sigAppCtx.lineWidth   = 2.5;
-    sigAppCtx.lineCap     = 'round';
-    sigAppCtx.lineJoin    = 'round';
   }
+  // Siempre re-aplicar estilos (pueden perderse si el context fue reseteado)
+  sigAppCtx.strokeStyle = '#003B7A';
+  sigAppCtx.lineWidth   = 2.5;
+  sigAppCtx.lineCap     = 'round';
+  sigAppCtx.lineJoin    = 'round';
 }
 
 // ── Enviar reporte ────────────────────────────────────────
