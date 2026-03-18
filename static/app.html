@@ -1415,7 +1415,9 @@ async function _matlachoCallAPI(tipo, datos) {
     });
     var d = await resp.json();
     if (loading) loading.remove();
-    return (d.success || d.texto) ? { texto: d.texto } : null;
+    // self.ok() envuelve en { success, message, data } → leer d.data.texto
+    var texto = (d.data && d.data.texto) ? d.data.texto : d.texto;
+    return texto ? { texto: texto } : null;
   } catch(e) {
     if (loading) loading.remove();
     _matlachoAddBubble('⚠️ No pude conectarme. Verifica tu conexión e intenta de nuevo.', false);
