@@ -1356,21 +1356,53 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             if not _check_ia_limit('ciu_' + ip_ciu):
                 self.err('Limite de uso de IA alcanzado. Intenta en una hora.', 429); return
             body_ciu = self.parse_json_body()
-            desc_ciu = (body_ciu.get('descripcion', '') or '').strip()[:500]
-            if not desc_ciu:
-                self.err('Descripcion requerida.', 400); return
+            tipo_ciu = (body_ciu.get('tipo', 'reporte_ciudadano') or 'reporte_ciudadano').strip()
             import urllib.request as _ur_c
             ak_ciu = os.environ.get('ANTHROPIC_API_KEY', '')
             if not ak_ciu:
                 self.err('IA no configurada.', 503); return
-            pl_ciu = __import__('json').dumps({'model':'claude-haiku-4-5','max_tokens':200,
-                'messages':[{'role':'user','content':'Reescribe este reporte ambiental de forma mas clara, max 2 oraciones, solo el texto:\n'+desc_ciu}]}).encode()
+
+            if tipo_ciu == 'chat':
+                mensaje = (body_ciu.get('mensaje', '') or
+                           (body_ciu.get('datos') or {}).get('mensaje', '')).strip()[:600]
+                if not mensaje:
+                    self.err('Mensaje requerido.', 400); return
+                system_ciu = (
+                    "Eres Matlacho, el asistente ambiental del IMBIO (Instituto Municipal de "
+                    "Biodiversidad) de Pabellon de Arteaga, Aguascalientes. Ayudas a ciudadanos "
+                    "a reportar problemas ambientales. Eres amigable, claro y conciso. "
+                    "Maximo 3 oraciones en tus respuestas."
+                )
+                pl_ciu = __import__('json').dumps({
+                    'model': 'claude-haiku-4-5', 'max_tokens': 300,
+                    'system': system_ciu,
+                    'messages': [{'role': 'user', 'content': mensaje}]
+                }).encode()
+            else:
+                desc_ciu = (body_ciu.get('descripcion', '') or '').strip()[:500]
+                if not desc_ciu:
+                    self.err('Descripcion requerida.', 400); return
+                tipo_inc = (body_ciu.get('tipo_incidencia', '') or '').strip()
+                colonia  = (body_ciu.get('colonia', '') or '').strip()
+                contexto = ''
+                if tipo_inc: contexto += f'Tipo de problema: {tipo_inc}. '
+                if colonia:  contexto += f'Colonia: {colonia}. '
+                pl_ciu = __import__('json').dumps({
+                    'model': 'claude-haiku-4-5', 'max_tokens': 250,
+                    'messages': [{'role': 'user', 'content':
+                        f'Reescribe este reporte ambiental de forma mas clara y descriptiva, '
+                        f'maximo 2-3 oraciones, solo el texto mejorado. {contexto}'
+                        f'Texto original: {desc_ciu}'}]
+                }).encode()
+
             rq_ciu = _ur_c.Request('https://api.anthropic.com/v1/messages', data=pl_ciu,
-                headers={'Content-Type':'application/json','x-api-key':ak_ciu,'anthropic-version':'2023-06-01'}, method='POST')
+                headers={'Content-Type': 'application/json', 'x-api-key': ak_ciu,
+                         'anthropic-version': '2023-06-01'}, method='POST')
             try:
                 with _ur_c.urlopen(rq_ciu, timeout=30) as rs_ciu:
-                    texto_ciu = __import__('json').loads(rs_ciu.read().decode()).get('content',[{}])[0].get('text','').strip()
-                self.ok({'texto': texto_ciu}, 'OK')
+                    texto_ciu = __import__('json').loads(
+                        rs_ciu.read().decode()).get('content', [{}])[0].get('text', '').strip()
+                self.ok({'texto': texto_ciu, 'success': True}, 'OK')
             except Exception as ec:
                 self.err('Error IA: ' + str(ec), 502)
             return
