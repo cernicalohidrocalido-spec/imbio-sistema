@@ -1396,15 +1396,26 @@ async function _matlachoCallAPI(tipo, datos) {
   var loading = _matlachoAddBubble('🐭 Matlacho está pensando...', false, true);
   try {
     var serverUrl = (typeof SERVER_URL !== 'undefined') ? SERVER_URL : window.location.origin;
-    var resp = await fetch(serverUrl + '/api/ai/matlacho', {
+    // La app ciudadana usa el endpoint público /api/ai/ciudadano
+    // que no requiere autenticación. Soporta tipo='chat' y 'reporte_ciudadano'.
+    var body = { tipo: tipo };
+    if (tipo === 'chat') {
+      body.mensaje = datos.mensaje || '';
+    } else {
+      // reporte_ciudadano y otros — mapear campos
+      body.descripcion      = datos.descripcion || '';
+      body.tipo_incidencia  = datos.tipo_incidencia || '';
+      body.colonia          = datos.colonia || '';
+    }
+    var resp = await fetch(serverUrl + '/api/ai/ciudadano', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tipo: tipo, datos: datos }),
+      body: JSON.stringify(body),
       signal: AbortSignal.timeout(35000)
     });
     var d = await resp.json();
     if (loading) loading.remove();
-    return d.success ? d.data : null;
+    return (d.success || d.texto) ? { texto: d.texto } : null;
   } catch(e) {
     if (loading) loading.remove();
     _matlachoAddBubble('⚠️ No pude conectarme. Verifica tu conexión e intenta de nuevo.', false);
