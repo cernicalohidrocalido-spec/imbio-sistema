@@ -83,20 +83,28 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 @keyframes load { 0%{transform:translateX(-100%)} 100%{transform:translateX(350%)} }
 
 /* ── APP SHELL ── */
-#app { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--gris); padding-top: var(--safe-top); padding-bottom: var(--safe-bot); }
+/* Header + Tabs fijos arriba; content se desplaza debajo */
+#app {
+  position: fixed; inset: 0;
+  background: var(--gris);
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bot);
+}
 
-/* ── HEADER — se oculta al bajar, reaparece al subir ── */
+/* ── HEADER — fijo en la parte superior, se oculta al bajar ── */
 .app-header {
+  position: fixed; top: var(--safe-top); left: 0; right: 0;
+  z-index: 20;
   background: linear-gradient(135deg, var(--oscuro), var(--verde));
   padding: 14px 18px 12px;
   display: flex; align-items: center; gap: 12px;
   box-shadow: 0 3px 16px rgba(0,42,92,.25);
-  flex-shrink: 0; position: relative; overflow: hidden;
-  transition: transform .28s cubic-bezier(.4,0,.2,1), opacity .28s ease;
+  overflow: hidden;
+  transition: transform .28s cubic-bezier(.4,0,.2,1), opacity .22s ease;
   will-change: transform;
 }
 .app-header.hidden {
-  transform: translateY(-100%);
+  transform: translateY(-110%);
   opacity: 0;
   pointer-events: none;
 }
@@ -113,12 +121,16 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 .conn-dot.ok  { background: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,.25); }
 .conn-dot.off { background: #f87171; box-shadow: 0 0 0 3px rgba(248,113,113,.25); }
 
-/* ── TABS — siempre visibles (navegación crítica) ── */
+/* ── TABS — fijos justo debajo del header ── */
 .tabs {
-  display: flex; background: var(--verde); flex-shrink: 0;
-  border-bottom: 1px solid rgba(255,255,255,.08);
+  position: fixed; left: 0; right: 0;
+  z-index: 19;
+  /* top se ajusta por JS según si el header está visible */
+  top: calc(var(--safe-top) + var(--header-h, 58px));
+  display: flex; background: var(--verde);
+  border-bottom: 2px solid rgba(255,255,255,.10);
   box-shadow: 0 2px 8px rgba(0,42,92,.2);
-  z-index: 10; position: relative;
+  transition: top .28s cubic-bezier(.4,0,.2,1);
 }
 .tab {
   flex: 1; padding: 12px 4px 10px; display: flex; flex-direction: column;
@@ -131,8 +143,15 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 .tab.active { color: var(--ambar); border-bottom-color: var(--ambar); }
 .tab:active { background: rgba(255,255,255,.07); }
 
-/* ── CONTENT ── */
-.content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+/* ── CONTENT — debajo de header + tabs ── */
+.content {
+  position: fixed; left: 0; right: 0; bottom: var(--safe-bot);
+  /* top se ajusta por JS */
+  top: calc(var(--safe-top) + var(--header-h, 58px) + var(--tabs-h, 54px));
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  transition: top .28s cubic-bezier(.4,0,.2,1);
+  background: var(--gris);
+}
 .screen { display: none; min-height: 100%; }
 .screen.active { display: block; }
 .screen-pad { padding: 16px; }
@@ -756,28 +775,68 @@ function setTab(name) {
   });
   if (name === 'mis') cargarMisReportes();
   if (name === 'nuevo') setTimeout(() => mapApp && mapApp.invalidateSize(), 150);
-  // Siempre mostrar header al cambiar de tab
+  // Siempre mostrar header al cambiar de tab y recalcular posiciones
   var h = document.querySelector('.app-header');
-  if (h) h.classList.remove('hidden');
+  if (h) {
+    h.classList.remove('hidden');
+    setTimeout(function() {
+      var hh = h.offsetHeight;
+      var tabs = document.querySelector('.tabs');
+      var cont = document.querySelector('.content');
+      var safeTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-top') || '0') || 0;
+      if (tabs) tabs.style.top    = (safeTop + hh) + 'px';
+      if (cont) cont.style.top = (safeTop + hh + (tabs ? tabs.offsetHeight : 54)) + 'px';
+    }, 30);
+  }
 }
 
-// ── Header auto-hide al hacer scroll hacia abajo ─────────
+// ── Header auto-hide al hacer scroll — sin hueco ─────────
 function initHeaderHide() {
-  var content = document.querySelector('.content');
-  var header  = document.querySelector('.app-header');
-  if (!content || !header) return;
-  var lastY = 0;
+  var contentEl = document.querySelector('.content');
+  var headerEl  = document.querySelector('.app-header');
+  var tabsEl    = document.querySelector('.tabs');
+  if (!contentEl || !headerEl || !tabsEl) return;
+
+  // Measure real heights after render
+  function measureAndApply(headerVisible) {
+    var hh = headerEl.offsetHeight;   // real header height
+    var th = tabsEl.offsetHeight;     // real tabs height
+    var safeTop = parseInt(getComputedStyle(document.documentElement)
+                    .getPropertyValue('--safe-top') || '0') || 0;
+    document.documentElement.style.setProperty('--header-h', hh + 'px');
+    document.documentElement.style.setProperty('--tabs-h',   th + 'px');
+    if (headerVisible) {
+      tabsEl.style.top    = (safeTop + hh) + 'px';
+      contentEl.style.top = (safeTop + hh + th) + 'px';
+    } else {
+      tabsEl.style.top    = safeTop + 'px';
+      contentEl.style.top = (safeTop + th) + 'px';
+    }
+  }
+
+  // Initial measure after fonts load
+  setTimeout(function() { measureAndApply(true); }, 100);
+
+  var lastY   = 0;
+  var visible = true;
   var ticking = false;
-  content.addEventListener('scroll', function() {
+
+  contentEl.addEventListener('scroll', function() {
     if (!ticking) {
       requestAnimationFrame(function() {
-        var y = content.scrollTop;
-        if (y > lastY && y > 60) {
-          header.classList.add('hidden');    // scrolling down → hide
-        } else {
-          header.classList.remove('hidden'); // scrolling up → show
+        var y = contentEl.scrollTop;
+        if (y > lastY && y > 60 && visible) {
+          // scroll hacia abajo — ocultar header
+          headerEl.classList.add('hidden');
+          visible = false;
+          measureAndApply(false);
+        } else if (y < lastY && !visible) {
+          // scroll hacia arriba — mostrar header
+          headerEl.classList.remove('hidden');
+          visible = true;
+          measureAndApply(true);
         }
-        lastY = y;
+        lastY   = y;
         ticking = false;
       });
       ticking = true;
