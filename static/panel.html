@@ -457,7 +457,7 @@
 
             <div class="form-group full">
               <label>✍️ Firma Digital del Ciudadano</label>
-              <canvas id="sig-canvas" width="500" height="140"></canvas>
+              <canvas id="sig-canvas"></canvas>
               <div class="sig-controls">
                 <input id="nr-firmante" placeholder="Nombre completo del firmante" style="flex:1">
                 <button class="btn btn-secondary btn-sm" onclick="clearSig()">🗑️ Borrar firma</button>
@@ -1815,16 +1815,43 @@ let sigCanvas, sigCtx, drawing=false;
 function initCanvas() {
   sigCanvas = document.getElementById('sig-canvas');
   sigCtx    = sigCanvas.getContext('2d');
-  sigCtx.strokeStyle='#003B7A'; sigCtx.lineWidth=2.5; sigCtx.lineCap='round';
-  sigCanvas.onmousedown = e=>{ drawing=true; sigCtx.beginPath(); sigCtx.moveTo(pos(e).x,pos(e).y); };
+
+  function resizeSigCanvas() {
+    var w = sigCanvas.offsetWidth  || 500;
+    var h = sigCanvas.offsetHeight || 140;
+    if (sigCanvas.width !== w || sigCanvas.height !== h) {
+      sigCanvas.width  = w;
+      sigCanvas.height = h;
+      // Re-aplicar estilos tras resize (se pierden al cambiar width/height)
+      sigCtx.strokeStyle = '#003B7A';
+      sigCtx.lineWidth   = 2.5;
+      sigCtx.lineCap     = 'round';
+      sigCtx.lineJoin    = 'round';
+    }
+  }
+
+  // Esperar a que el modal esté completamente pintado
+  setTimeout(resizeSigCanvas, 100);
+  window.addEventListener('resize', resizeSigCanvas);
+
+  // Fallback: redimensionar al primer toque si aún no tiene dimensiones
+  function ensureSize() { resizeSigCanvas(); }
+
+  sigCtx.strokeStyle='#003B7A'; sigCtx.lineWidth=2.5; sigCtx.lineCap='round'; sigCtx.lineJoin='round';
+  sigCanvas.onmousedown = e=>{ ensureSize(); drawing=true; sigCtx.beginPath(); sigCtx.moveTo(pos(e).x,pos(e).y); };
   sigCanvas.onmousemove = e=>{ if(!drawing)return; sigCtx.lineTo(pos(e).x,pos(e).y); sigCtx.stroke(); };
   sigCanvas.onmouseup   = ()=>drawing=false;
   sigCanvas.onmouseleave= ()=>drawing=false;
-  sigCanvas.ontouchstart= e=>{ e.preventDefault(); drawing=true; const t=e.touches[0]; sigCtx.beginPath(); sigCtx.moveTo(pos(t).x,pos(t).y); };
+  sigCanvas.ontouchstart= e=>{ e.preventDefault(); ensureSize(); drawing=true; const t=e.touches[0]; sigCtx.beginPath(); sigCtx.moveTo(pos(t).x,pos(t).y); };
   sigCanvas.ontouchmove = e=>{ e.preventDefault(); if(!drawing)return; const t=e.touches[0]; sigCtx.lineTo(pos(t).x,pos(t).y); sigCtx.stroke(); };
   sigCanvas.ontouchend  = ()=>drawing=false;
 }
-function pos(e){ const r=sigCanvas.getBoundingClientRect(); return{x:e.clientX-r.left,y:e.clientY-r.top}; }
+function pos(e){
+  const r    = sigCanvas.getBoundingClientRect();
+  const scaleX = sigCanvas.width  / r.width;
+  const scaleY = sigCanvas.height / r.height;
+  return { x: (e.clientX - r.left) * scaleX, y: (e.clientY - r.top) * scaleY };
+}
 function clearSig(){ sigCtx&&sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height); }
 function getSigBase64(){ return sigCanvas?sigCanvas.toDataURL('image/png'):null; }
 function isSigEmpty(){ if(!sigCanvas)return true; return !sigCtx.getImageData(0,0,sigCanvas.width,sigCanvas.height).data.some(v=>v!==0); }
