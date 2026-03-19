@@ -3255,8 +3255,8 @@ function _buildActaForm() {
       </div>
     </div>` : '';
 
-  var seccionAnimal = esAnimal ? \`
-    \${_animalModuloBanner}
+  var seccionAnimal = esAnimal ? `
+    ${_animalModuloBanner}
     <!-- ══ ACTA DE INSPECCIÓN ANIMAL ══ -->
 
     <!-- BLQ 1: TIPO Y CONTEXTO -->
@@ -3267,7 +3267,7 @@ function _buildActaForm() {
         <select id="anim-tipo-incidente"
           style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem"
           onchange="toggleVictimaSection(this.value)">
-          \${_animTipoSelected}
+          ${_animTipoSelected}
         </select>
       </div>
       <div class="fg">
@@ -3503,7 +3503,7 @@ function _buildActaForm() {
       </div>
     </div>
 
-    \${_animalCalleExtra}
+    ${_animalCalleExtra}
 
     <!-- BLQ 5: ACCIONES EN CAMPO -->
     <div class="section-title" style="background:#1a3a5c">⚡ 5. Acciones Tomadas en Campo</div>
@@ -5064,7 +5064,7 @@ if (document.readyState === 'loading') {
   // Registrar Service Worker para instalar como app
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('/inspector/sw.js').catch(function() {});
+      navigator.serviceWorker.register('/inspector/sw.js', { scope: '/inspector' }).catch(function() {});
     });
   }
 

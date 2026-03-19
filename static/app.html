@@ -788,7 +788,7 @@ function initApp() {
   setInterval(checkConexion, 15000);
   document.getElementById('server-url').value = SERVER_URL;
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/app/sw.js').catch(() => {});
+    navigator.serviceWorker.register('/app/sw.js', { scope: '/app' }).catch(() => {});
   }
   // Header auto-hide on scroll
   initHeaderHide();
