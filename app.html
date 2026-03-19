@@ -44,11 +44,16 @@
   --safe-bot:     env(safe-area-inset-bottom, 0px);
   --r-card:       16px;
   --sombra:       0 2px 12px rgba(0,59,122,.10), 0 1px 3px rgba(0,0,0,.06);
+  /* ── ACCESIBILIDAD ── */
+  --fs-xs:   0.88rem;
+  --fs-sm:   0.95rem;
+  --fs-base: 1.05rem;
+  --fs-md:   1.15rem;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; overflow: hidden; background: var(--verde); }
-body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var(--texto); }
+body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var(--texto); font-size: var(--fs-base); }
 
 /* ── SPLASH ── */
 #splash {
@@ -63,7 +68,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
   background: rgba(255,255,255,.12);
   border-radius: 38% 62% 55% 45% / 45% 38% 62% 55%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 3.2rem; margin-bottom: 22px;
+  font-size: 3.8rem; margin-bottom: 22px;
   box-shadow: 0 0 0 1px rgba(255,255,255,.15), 0 24px 64px rgba(0,0,0,.25);
   animation: blobPulse 3s ease-in-out infinite;
 }
@@ -71,11 +76,11 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
   0%,100% { border-radius: 38% 62% 55% 45% / 45% 38% 62% 55%; }
   50%     { border-radius: 62% 38% 45% 55% / 55% 62% 38% 45%; }
 }
-.splash-title { color: #fff; font-family: 'Nunito', sans-serif; font-size: 2rem; font-weight: 900; letter-spacing: -.5px; }
-.splash-sub { color: rgba(255,255,255,.65); font-size: .88rem; margin-top: 6px; text-align: center; line-height: 1.4; }
+.splash-title { color: #fff; font-family: 'Nunito', sans-serif; font-size: 2.3rem; font-weight: 900; letter-spacing: -.5px; }
+.splash-sub { color: rgba(255,255,255,.65); font-size: 1rem; margin-top: 6px; text-align: center; line-height: 1.4; }
 .splash-municipio {
   margin-top: 8px; background: rgba(255,255,255,.12); border-radius: 99px;
-  padding: 4px 16px; color: rgba(255,255,255,.85); font-size: .75rem; font-weight: 700;
+  padding: 4px 16px; color: rgba(255,255,255,.85); font-size: .92rem; font-weight: 700;
   letter-spacing: .06em; text-transform: uppercase;
 }
 .splash-loader { margin-top: 52px; width: 44px; height: 4px; background: rgba(255,255,255,.18); border-radius: 99px; overflow: hidden; }
@@ -83,47 +88,75 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 @keyframes load { 0%{transform:translateX(-100%)} 100%{transform:translateX(350%)} }
 
 /* ── APP SHELL ── */
-#app { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--gris); padding-top: var(--safe-top); padding-bottom: var(--safe-bot); }
+/* Header + Tabs fijos arriba; content se desplaza debajo */
+#app {
+  position: fixed; inset: 0;
+  background: var(--gris);
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bot);
+}
 
-/* ── HEADER ── */
+/* ── HEADER — fijo en la parte superior, se oculta al bajar ── */
 .app-header {
+  position: fixed; top: var(--safe-top); left: 0; right: 0;
+  z-index: 20;
   background: linear-gradient(135deg, var(--oscuro), var(--verde));
   padding: 14px 18px 12px;
   display: flex; align-items: center; gap: 12px;
   box-shadow: 0 3px 16px rgba(0,42,92,.25);
-  flex-shrink: 0; position: relative; overflow: hidden;
+  overflow: hidden;
+  transition: transform .28s cubic-bezier(.4,0,.2,1), opacity .22s ease;
+  will-change: transform;
+}
+.app-header.hidden {
+  transform: translateY(-110%);
+  opacity: 0;
+  pointer-events: none;
 }
 .app-header::before {
   content: ''; position: absolute; top: -30px; right: -20px;
   width: 120px; height: 120px; border-radius: 50%;
   background: rgba(255,255,255,.04);
 }
-.header-leaf { font-size: 1.7rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,.3)); }
-.header-text h1 { color: #fff; font-family: 'Nunito', sans-serif; font-size: 1.08rem; font-weight: 800; letter-spacing: -.3px; }
-.header-text p  { color: rgba(255,255,255,.55); font-size: .7rem; margin-top: 1px; }
+.header-leaf { font-size: 1.9rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,.3)); }
+.header-text h1 { color: #fff; font-family: 'Nunito', sans-serif; font-size: 1.15rem; font-weight: 800; letter-spacing: -.3px; }
+.header-text p  { color: rgba(255,255,255,.55); font-size: .72rem; margin-top: 1px; }
 .header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .conn-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ambar); box-shadow: 0 0 0 3px rgba(245,158,11,.25); transition: .3s; }
 .conn-dot.ok  { background: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,.25); }
 .conn-dot.off { background: #f87171; box-shadow: 0 0 0 3px rgba(248,113,113,.25); }
 
-/* ── TABS ── */
+/* ── TABS — fijos justo debajo del header ── */
 .tabs {
-  display: flex; background: var(--verde); flex-shrink: 0;
-  border-bottom: 1px solid rgba(255,255,255,.08);
+  position: fixed; left: 0; right: 0;
+  z-index: 19;
+  /* top se ajusta por JS según si el header está visible */
+  top: calc(var(--safe-top) + var(--header-h, 58px));
+  display: flex; background: var(--verde);
+  border-bottom: 2px solid rgba(255,255,255,.10);
+  box-shadow: 0 2px 8px rgba(0,42,92,.2);
+  transition: top .28s cubic-bezier(.4,0,.2,1);
 }
 .tab {
-  flex: 1; padding: 10px 4px; display: flex; flex-direction: column;
-  align-items: center; gap: 3px; cursor: pointer; transition: .2s;
-  color: rgba(255,255,255,.45); font-size: .62rem; font-weight: 700;
+  flex: 1; padding: 12px 4px 10px; display: flex; flex-direction: column;
+  align-items: center; gap: 4px; cursor: pointer; transition: .2s;
+  color: rgba(255,255,255,.45); font-size: .72rem; font-weight: 700;
   text-transform: uppercase; letter-spacing: .05em;
-  border-bottom: 2px solid transparent;
+  border-bottom: 3px solid transparent;
 }
-.tab .tab-ic { font-size: 1.3rem; }
+.tab .tab-ic { font-size: 1.55rem; }
 .tab.active { color: var(--ambar); border-bottom-color: var(--ambar); }
 .tab:active { background: rgba(255,255,255,.07); }
 
-/* ── CONTENT ── */
-.content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+/* ── CONTENT — debajo de header + tabs ── */
+.content {
+  position: fixed; left: 0; right: 0; bottom: var(--safe-bot);
+  /* top se ajusta por JS */
+  top: calc(var(--safe-top) + var(--header-h, 58px) + var(--tabs-h, 54px));
+  overflow-y: auto;
+  transition: top .28s cubic-bezier(.4,0,.2,1);
+  background: var(--gris);
+}
 .screen { display: none; min-height: 100%; }
 .screen.active { display: block; }
 .screen-pad { padding: 16px; }
@@ -135,45 +168,45 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
   overflow: hidden; margin-bottom: 12px;
 }
 .form-card-header {
-  background: var(--verde-bg); padding: 11px 16px;
+  background: var(--verde-bg); padding: 13px 16px;
   border-bottom: 1px solid var(--verde-borde);
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: 9px;
 }
-.form-card-header .ic { font-size: 1.1rem; }
-.form-card-header span { font-size: .78rem; font-weight: 800; color: var(--verde); text-transform: uppercase; letter-spacing: .06em; }
-.form-card-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.form-card-header .ic { font-size: 1.25rem; }
+.form-card-header span { font-size: .86rem; font-weight: 800; color: var(--verde); text-transform: uppercase; letter-spacing: .06em; }
+.form-card-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
 
 .fgroup label {
-  display: block; font-size: .78rem; font-weight: 700;
-  color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px;
+  display: block; font-size: .85rem; font-weight: 700;
+  color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 7px;
 }
 .fgroup input, .fgroup select, .fgroup textarea {
-  width: 100%; padding: 12px 14px; border: 1.5px solid var(--borde);
-  border-radius: 10px; font-size: .95rem; font-family: inherit;
+  width: 100%; padding: 14px 15px; border: 1.5px solid var(--borde);
+  border-radius: 11px; font-size: 1rem; font-family: inherit;
   background: #fff; color: var(--texto); outline: none;
   transition: border-color .15s, box-shadow .15s; appearance: none;
 }
 .fgroup input:focus, .fgroup select:focus, .fgroup textarea:focus {
   border-color: var(--verde-medio); box-shadow: 0 0 0 3px rgba(13,138,86,.12);
 }
-.fgroup textarea { resize: none; min-height: 80px; }
+.fgroup textarea { resize: none; min-height: 90px; font-size: 1rem; }
 .fgroup select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
 
 /* ── CATEGORÍAS DE TIPO ── */
 .cat-label {
-  display: flex; align-items: center; gap: 6px;
-  font-size: .7rem; font-weight: 800; text-transform: uppercase;
-  letter-spacing: .07em; margin: 12px 0 7px; padding: 0 2px;
+  display: flex; align-items: center; gap: 7px;
+  font-size: .84rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .06em; margin: 14px 0 9px; padding: 0 2px;
 }
 .cat-line { flex: 1; height: 1px; background: var(--borde); }
 
 /* Grid de chips */
-.tipo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tipo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
 /* Chips de tipo mejorados */
 .tipo-chip {
-  padding: 11px 8px 9px; border: 2px solid var(--borde);
-  border-radius: 12px; background: #fff; cursor: pointer;
+  padding: 16px 10px 13px; border: 2px solid var(--borde);
+  border-radius: 14px; background: #fff; cursor: pointer;
   text-align: center; transition: all .18s;
   display: flex; flex-direction: column; align-items: center; gap: 5px;
   position: relative; overflow: hidden;
@@ -183,10 +216,10 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
   background: var(--chip-color, var(--verde)); opacity: 0;
   transition: opacity .18s;
 }
-.tipo-chip .chip-ic { font-size: 1.6rem; position: relative; z-index: 1; }
+.tipo-chip .chip-ic { font-size: 2rem; position: relative; z-index: 1; }
 .tipo-chip .chip-lbl {
-  font-size: .68rem; font-weight: 700; color: var(--muted);
-  line-height: 1.2; position: relative; z-index: 1;
+  font-size: .8rem; font-weight: 700; color: var(--muted);
+  line-height: 1.25; position: relative; z-index: 1;
 }
 .tipo-chip.sel {
   border-color: var(--chip-color, var(--verde));
@@ -208,22 +241,37 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 .chip-otro          { --chip-color: #64748b; }
 
 /* chip de emergencia full-width especial */
-.chip-full { grid-column: 1/-1; flex-direction: row !important; padding: 12px 16px !important; gap: 12px !important; }
-.chip-full .chip-lbl { text-align: left !important; font-size: .78rem !important; }
+.chip-full { grid-column: 1/-1; flex-direction: row !important; padding: 14px 18px !important; gap: 14px !important; }
+.chip-full .chip-lbl { text-align: left !important; font-size: .9rem !important; }
 
 /* ── MAPA ── */
-#map-app { height: 220px; border-radius: 10px; overflow: hidden; border: 1.5px solid var(--borde); }
+#map-app {
+  height: 240px;
+  border-radius: 12px;
+  border: 1.5px solid var(--borde);
+  transition: height .35s cubic-bezier(.4,0,.2,1);
+  position: relative;
+}
+#map-app.expanded { height: 420px; }
+.map-expand-btn {
+  position: absolute; bottom: 10px; right: 10px; z-index: 1000;
+  background: #fff; border: 1.5px solid var(--borde); border-radius: 8px;
+  padding: 7px 11px; font-size: .8rem; font-weight: 700; color: var(--verde);
+  cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  display: flex; align-items: center; gap: 5px;
+  touch-action: manipulation;
+}
 .map-addr {
   margin-top: 8px; padding: 10px 12px; background: var(--verde-bg);
   border-radius: 8px; border: 1px solid var(--verde-borde);
-  font-size: .82rem; color: var(--oscuro); line-height: 1.4;
-  min-height: 38px;
+  font-size: .9rem; color: var(--oscuro); line-height: 1.45;
+  min-height: 42px;
 }
 .map-btns { display: flex; gap: 8px; margin-top: 8px; }
 .map-btn {
-  flex: 1; padding: 9px; border: 1.5px solid var(--borde); border-radius: 8px;
-  background: #fff; font-size: .78rem; font-weight: 700; color: var(--verde);
-  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;
+  flex: 1; padding: 11px 6px; border: 1.5px solid var(--borde); border-radius: 10px;
+  background: #fff; font-size: .86rem; font-weight: 700; color: var(--verde);
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
   transition: .15s;
 }
 .map-btn:active { background: var(--verde-bg); }
@@ -240,7 +288,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
   background: linear-gradient(135deg, var(--verde) 0%, var(--verde-medio) 100%);
   color: #fff; border: none; border-radius: 14px; font-size: 1.02rem;
   font-family: 'Nunito', sans-serif; font-weight: 800; cursor: pointer;
-  letter-spacing: .02em;
+  letter-spacing: .02em; font-size: 1.08rem;
   box-shadow: 0 6px 24px rgba(10,102,64,.35), 0 2px 8px rgba(10,102,64,.2);
   display: flex; align-items: center; justify-content: center; gap: 8px;
   transition: .15s; margin-top: 4px; position: relative; overflow: hidden;
@@ -260,7 +308,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 .btn-sec:active { background: var(--borde); }
 
 /* ── ALERTS ── */
-.alert { padding: 12px 14px; border-radius: 10px; font-size: .85rem; margin-bottom: 12px; line-height: 1.4; }
+.alert { padding: 13px 15px; border-radius: 10px; font-size: .92rem; margin-bottom: 12px; line-height: 1.45; }
 .alert-ok  { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
 .alert-err { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
 .alert-inf { background: var(--verde-bg); color: var(--oscuro); border: 1px solid var(--verde-borde); }
@@ -282,8 +330,8 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 .est-badge-asignado   { background: #dbeafe; color: #1e40af; }
 .est-badge-en_proceso { background: #d1fae5; color: #065f46; }
 .est-badge-cerrado    { background: #dcfce7; color: #166534; }
-.reporte-tipo { font-size: .84rem; font-weight: 700; color: var(--texto); padding: 0 14px; }
-.reporte-desc { font-size: .8rem; color: var(--muted); padding: 4px 14px 10px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.reporte-tipo { font-size: .92rem; font-weight: 700; color: var(--texto); padding: 0 14px; }
+.reporte-desc { font-size: .88rem; color: var(--muted); padding: 4px 14px 10px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .reporte-foot { padding: 8px 14px; background: var(--gris); border-top: 1px solid var(--borde); display: flex; justify-content: space-between; align-items: center; }
 .reporte-fecha, .reporte-colonia { font-size: .72rem; color: var(--muted); font-weight: 600; }
 
@@ -303,7 +351,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 .grav-btn { padding:12px 8px; border:2px solid var(--borde); border-radius:10px; background:#fff; cursor:pointer; text-align:center; font-size:.82rem; font-weight:700; color:var(--muted); transition:.15s }
 .grav-btn.sel-sup { border-color:var(--verde-medio); background:var(--verde-bg); color:var(--verde) }
 .grav-btn.sel-pro { border-color:#dc2626; background:#fee2e2; color:#991b1b }
-.animal-check { display:flex; align-items:center; gap:10px; padding:12px 14px; border:1.5px solid var(--borde); border-radius:10px; background:#fff; cursor:pointer; font-size:.88rem; font-weight:600 }
+.animal-check { display:flex; align-items:center; gap:10px; padding:13px 14px; border:1.5px solid var(--borde); border-radius:10px; background:#fff; cursor:pointer; font-size:.96rem; font-weight:600 }
 .animal-check input { width:18px; height:18px; accent-color:var(--verde) }
 
 /* ── ÉXITO ── */
@@ -355,8 +403,8 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
   display: flex; align-items: center; gap: 12px;
 }
 .banner-comercial .bc-icon { font-size: 2rem; flex-shrink: 0; }
-.banner-comercial .bc-txt h4 { color: #fff; font-size: .88rem; font-weight: 800; margin-bottom: 2px; }
-.banner-comercial .bc-txt p  { color: rgba(255,255,255,.7); font-size: .75rem; line-height: 1.3; }
+.banner-comercial .bc-txt h4 { color: #fff; font-size: .96rem; font-weight: 800; margin-bottom: 2px; }
+.banner-comercial .bc-txt p  { color: rgba(255,255,255,.7); font-size: .82rem; line-height: 1.35; }
 </style>
 </head>
 <body>
@@ -430,7 +478,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
             <div class="tipo-grid">
               <div class="tipo-chip chip-emergencia chip-full" onclick="selTipo('emergencia')" data-tipo="emergencia">
                 <span class="chip-ic">🚨</span>
-                <div><div class="chip-lbl" style="font-size:.82rem;font-weight:800">Emergencia Ambiental</div><div style="font-size:.68rem;color:#94a3b8;margin-top:1px">Derrame, incendio, contaminación grave</div></div>
+                <div><div class="chip-lbl" style="font-size:.82rem;font-weight:800">Emergencia Ambiental</div><div style="font-size:.78rem;color:#94a3b8;margin-top:2px">Derrame, incendio, contaminación grave</div></div>
               </div>
             </div>
 
@@ -527,6 +575,11 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
           <div class="form-card-body">
             <div class="fgroup">
               <textarea id="nr-desc" placeholder="Describe la situación con detalle: ¿qué ocurre?, ¿desde cuándo?, ¿qué tan urgente es?..." rows="4"></textarea>
+              <button type="button" onclick="_matlachoMejorarDesc(this)"
+                style="margin-top:10px;width:100%;padding:12px 14px;background:linear-gradient(135deg,#003B7A,#0057B8);color:#fff;border:none;border-radius:11px;font-size:.9rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Nunito',sans-serif">
+                🐭 Matlacho — Mejorar mi descripción
+              </button>
+              <div id="matlacho-desc-result" style="display:none;margin-top:8px;background:#E8F1FB;border:1.5px solid #B3CFF0;border-radius:11px;padding:12px 14px;font-size:.9rem;color:#1a3a5c;line-height:1.6"></div>
             </div>
           </div>
         </div>
@@ -540,7 +593,11 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
               <button class="map-btn" onclick="setMapLayer('sat')" id="btn-sat">🛰️ Satelital</button>
               <button class="map-btn" onclick="setMapLayer('osm')" id="btn-osm">🗺️ Calles</button>
             </div>
-            <div id="map-app" style="margin-top:10px"></div>
+            <div id="map-app" style="margin-top:10px">
+              <button class="map-expand-btn" onclick="toggleMapSize()" id="map-expand-btn" title="Ampliar/reducir mapa">
+                <span id="map-expand-ic">⛶</span> <span id="map-expand-lbl">Ampliar</span>
+              </button>
+            </div>
             <div class="map-addr" id="map-addr">📍 Toca el mapa o usa tu GPS para marcar la ubicación exacta</div>
             <div class="addr-grid" id="addr-grid" style="margin-top:10px">
               <div class="fgroup"><label>Calle</label><input id="nr-calle" placeholder="Se autocompleta"></div>
@@ -566,7 +623,9 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
         <div class="form-card">
           <div class="form-card-header"><span class="ic">✍️</span><span>Firma digital (opcional)</span></div>
           <div class="form-card-body">
-            <canvas id="sig-app"></canvas>
+            <div style="touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none">
+              <canvas id="sig-app" onclick="sigFocusResize()"></canvas>
+            </div>
             <div style="display:flex;gap:8px;margin-top:8px">
               <div class="fgroup" style="flex:1"><input id="nr-firmante" placeholder="Nombre del firmante"></div>
               <button class="map-btn" onclick="clearSigApp()" style="flex:none;width:44px">🗑</button>
@@ -685,7 +744,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
             </div>
             <div class="about-row"><div class="row-ic" id="conn-status-ic">🔴</div><div class="row-info"><label>Estado de conexión</label><span id="conn-status-txt">Sin conexión</span></div></div>
             <div class="about-row"><div class="row-ic">👨‍💻</div><div class="row-info"><label>Desarrollo</label><span>Biol. Luis Felipe Lozano Román</span></div></div>
-            <div class="about-row"><div class="row-ic">📧</div><div class="row-info"><label>Contacto</label><span><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="a9c0c4cbc0c6e9d9c8cbccc5c5c6c787cec6cb87c4d1">[email&#160;protected]</a></span></div></div>
+            <div class="about-row"><div class="row-ic">📧</div><div class="row-info"><label>Contacto</label><span>imbio@pabellon.gob.mx</span></div></div>
             <div class="about-row"><div class="row-ic">📞</div><div class="row-info"><label>Emergencias</label><span>911 / Protección Civil</span></div></div>
             <div class="about-row"><div class="row-ic">©</div><div class="row-info"><label>Derechos</label><span>2026 · Municipio de Pabellón de Arteaga</span></div></div>
           </div>
@@ -730,6 +789,8 @@ function initApp() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/app/sw.js').catch(() => {});
   }
+  // Header auto-hide on scroll
+  initHeaderHide();
 }
 
 // ── Tabs ────────────────────────────────────────────────
@@ -740,6 +801,83 @@ function setTab(name) {
   });
   if (name === 'mis') cargarMisReportes();
   if (name === 'nuevo') setTimeout(() => mapApp && mapApp.invalidateSize(), 150);
+  // Colapsar mapa si se cambia de pestaña
+  if (name !== 'nuevo' && _mapExpanded) {
+    _mapExpanded = false;
+    const mapEl = document.getElementById('map-app');
+    if (mapEl) mapEl.classList.remove('expanded');
+    const ic  = document.getElementById('map-expand-ic');
+    const lbl = document.getElementById('map-expand-lbl');
+    if (ic)  ic.textContent  = '⛶';
+    if (lbl) lbl.textContent = 'Ampliar';
+  }
+  // Siempre mostrar header al cambiar de tab y recalcular posiciones
+  var h = document.querySelector('.app-header');
+  if (h) {
+    h.classList.remove('hidden');
+    setTimeout(function() {
+      var hh = h.offsetHeight;
+      var tabs = document.querySelector('.tabs');
+      var cont = document.querySelector('.content');
+      var safeTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-top') || '0') || 0;
+      if (tabs) tabs.style.top    = (safeTop + hh) + 'px';
+      if (cont) cont.style.top = (safeTop + hh + (tabs ? tabs.offsetHeight : 54)) + 'px';
+    }, 30);
+  }
+}
+
+// ── Header auto-hide al hacer scroll — sin hueco ─────────
+function initHeaderHide() {
+  var contentEl = document.querySelector('.content');
+  var headerEl  = document.querySelector('.app-header');
+  var tabsEl    = document.querySelector('.tabs');
+  if (!contentEl || !headerEl || !tabsEl) return;
+
+  // Measure real heights after render
+  function measureAndApply(headerVisible) {
+    var hh = headerEl.offsetHeight;   // real header height
+    var th = tabsEl.offsetHeight;     // real tabs height
+    var safeTop = parseInt(getComputedStyle(document.documentElement)
+                    .getPropertyValue('--safe-top') || '0') || 0;
+    document.documentElement.style.setProperty('--header-h', hh + 'px');
+    document.documentElement.style.setProperty('--tabs-h',   th + 'px');
+    if (headerVisible) {
+      tabsEl.style.top    = (safeTop + hh) + 'px';
+      contentEl.style.top = (safeTop + hh + th) + 'px';
+    } else {
+      tabsEl.style.top    = safeTop + 'px';
+      contentEl.style.top = (safeTop + th) + 'px';
+    }
+  }
+
+  // Initial measure after fonts load
+  setTimeout(function() { measureAndApply(true); }, 100);
+
+  var lastY   = 0;
+  var visible = true;
+  var ticking = false;
+
+  contentEl.addEventListener('scroll', function() {
+    if (!ticking) {
+      requestAnimationFrame(function() {
+        var y = contentEl.scrollTop;
+        if (y > lastY && y > 60 && visible) {
+          // scroll hacia abajo — ocultar header
+          headerEl.classList.add('hidden');
+          visible = false;
+          measureAndApply(false);
+        } else if (y < lastY && !visible) {
+          // scroll hacia arriba — mostrar header
+          headerEl.classList.remove('hidden');
+          visible = true;
+          measureAndApply(true);
+        }
+        lastY   = y;
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
 }
 
 // ── Conexión ────────────────────────────────────────────
@@ -773,9 +911,7 @@ function selTipo(t) {
   tipoSel = t;
   document.querySelectorAll('.tipo-chip').forEach(c => c.classList.toggle('sel', c.dataset.tipo === t));
   const panelAnimal = document.getElementById('panel-animal-agresivo');
-  if (panelAnimal) {
-    panelAnimal.style.display = (t === 'perro_agresivo' || t === 'animal_calle') ? 'block' : 'none';
-  }
+  if (panelAnimal) panelAnimal.style.display = 'none'; // inspector solo
   // Scroll suave al formulario de descripción
   setTimeout(() => {
     document.querySelector('.content').scrollTo({ top: document.getElementById('nr-desc')?.offsetTop - 80 || 0, behavior: 'smooth' });
@@ -789,10 +925,35 @@ const TILES = {
 };
 
 function initMapApp() {
-  mapApp = L.map('map-app', { zoomControl: true, attributionControl: false }).setView([22.1508, -102.2913], 15);
+  mapApp = L.map('map-app', {
+    zoomControl:       true,
+    attributionControl: false,
+    scrollWheelZoom:   true,
+    dragging:          true,
+    touchZoom:         true,
+    doubleClickZoom:   true,
+    boxZoom:           true,
+    tap:               true,       // habilita tap en móvil
+    tapTolerance:      15
+  }).setView([22.1508, -102.2913], 15);
   const cfg = TILES.osm;
   appLayerActive = L.tileLayer(cfg.url, { attribution: cfg.attr, maxZoom: 19 }).addTo(mapApp);
   mapApp.on('click', e => geocodePos(e.latlng.lat, e.latlng.lng));
+}
+
+let _mapExpanded = false;
+function toggleMapSize() {
+  _mapExpanded = !_mapExpanded;
+  const mapEl  = document.getElementById('map-app');
+  const ic     = document.getElementById('map-expand-ic');
+  const lbl    = document.getElementById('map-expand-lbl');
+  mapEl.classList.toggle('expanded', _mapExpanded);
+  if (ic)  ic.textContent  = _mapExpanded ? '⊡' : '⛶';
+  if (lbl) lbl.textContent = _mapExpanded ? 'Reducir' : 'Ampliar';
+  // Leaflet necesita recalcular tamaño después de la transición CSS
+  setTimeout(function() {
+    if (mapApp) mapApp.invalidateSize({ animate: false });
+  }, 380);
 }
 
 function setMapLayer(name) {
@@ -857,25 +1018,109 @@ async function geocodePos(lat, lng) {
 function initSigApp() {
   sigAppCanvas = document.getElementById('sig-app');
   sigAppCtx    = sigAppCanvas.getContext('2d');
+
+  function applyCtxStyles() {
+    sigAppCtx.strokeStyle = '#003B7A';
+    sigAppCtx.lineWidth   = 2.5;
+    sigAppCtx.lineCap     = 'round';
+    sigAppCtx.lineJoin    = 'round';
+  }
+
+  // Asignar dimensiones reales — SOLO cuando NO se está dibujando
+  function resizeCanvas() {
+    if (sigDrawing) return; // nunca interrumpir un trazo en curso
+    var w = Math.round(sigAppCanvas.offsetWidth)  || 300;
+    var h = Math.round(sigAppCanvas.offsetHeight) || 120;
+    if (w < 10 || h < 10) return; // layout aún no listo
+    if (sigAppCanvas.width !== w || sigAppCanvas.height !== h) {
+      sigAppCanvas.width  = w;
+      sigAppCanvas.height = h;
+      applyCtxStyles();
+    }
+  }
+
+  // Resize en distintos momentos para capturar el layout correcto
+  setTimeout(resizeCanvas, 50);
+  setTimeout(resizeCanvas, 200);
+  setTimeout(resizeCanvas, 600);
+  window.addEventListener('resize', resizeCanvas);
+
+  // Resize cuando el canvas entra en pantalla al hacer scroll
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function(entries) {
+      if (entries[0].isIntersecting) { resizeCanvas(); applyCtxStyles(); }
+    }, { threshold: 0.2 }).observe(sigAppCanvas);
+  }
+
+  // Coordenadas correctas — sin llamar resizeCanvas (evita borrar el trazo)
+  function getPos(e) {
+    var r   = sigAppCanvas.getBoundingClientRect();
+    var src = e.touches ? e.touches[0] : e;
+    var sx  = sigAppCanvas.width  / (r.width  || sigAppCanvas.width);
+    var sy  = sigAppCanvas.height / (r.height || sigAppCanvas.height);
+    return { x: (src.clientX - r.left) * sx, y: (src.clientY - r.top) * sy };
+  }
+
+  // Bloquear scroll del contenedor mientras se firma (iOS/Android)
+  var contentEl = document.querySelector('.content');
+  function lockScroll()   { if (contentEl) contentEl.style.overflow = 'hidden'; }
+  function unlockScroll() { if (contentEl) contentEl.style.overflow = ''; }
+
+  // Mouse
+  sigAppCanvas.addEventListener('mousedown', function(e) {
+    resizeCanvas(); applyCtxStyles();
+    sigDrawing = true; sigAppCtx.beginPath();
+    var p = getPos(e); sigAppCtx.moveTo(p.x, p.y);
+  });
+  sigAppCanvas.addEventListener('mousemove', function(e) {
+    if (!sigDrawing) return;
+    var p = getPos(e); sigAppCtx.lineTo(p.x, p.y); sigAppCtx.stroke();
+  });
+  sigAppCanvas.addEventListener('mouseup',    function() { sigDrawing = false; });
+  sigAppCanvas.addEventListener('mouseleave', function() { sigDrawing = false; });
+
+  // Touch — preventDefault + lockScroll para que el scroll no se robe el toque
+  sigAppCanvas.addEventListener('touchstart', function(e) {
+    e.preventDefault(); e.stopPropagation();
+    resizeCanvas(); applyCtxStyles();
+    lockScroll();
+    sigDrawing = true; sigAppCtx.beginPath();
+    var p = getPos(e); sigAppCtx.moveTo(p.x, p.y);
+  }, { passive: false });
+
+  sigAppCanvas.addEventListener('touchmove', function(e) {
+    e.preventDefault(); e.stopPropagation();
+    if (!sigDrawing) return;
+    var p = getPos(e); sigAppCtx.lineTo(p.x, p.y); sigAppCtx.stroke();
+  }, { passive: false });
+
+  sigAppCanvas.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    sigDrawing = false;
+    unlockScroll();
+  }, { passive: false });
+
+  sigAppCanvas.addEventListener('touchcancel', function() {
+    sigDrawing = false;
+    unlockScroll();
+  });
+}
+function clearSigApp() { sigAppCtx.clearRect(0, 0, sigAppCanvas.width, sigAppCanvas.height); }
+function sigIsEmpty()  { return !sigAppCtx.getImageData(0,0,sigAppCanvas.width,sigAppCanvas.height).data.some(v=>v!==0); }
+function sigFocusResize() {
+  if (!sigAppCanvas || !sigAppCtx || sigDrawing) return;
+  var w = Math.round(sigAppCanvas.offsetWidth)  || 300;
+  var h = Math.round(sigAppCanvas.offsetHeight) || 120;
+  if (w < 10 || h < 10) return;
+  if (sigAppCanvas.width !== w || sigAppCanvas.height !== h) {
+    sigAppCanvas.width  = w;
+    sigAppCanvas.height = h;
+  }
   sigAppCtx.strokeStyle = '#003B7A';
   sigAppCtx.lineWidth   = 2.5;
   sigAppCtx.lineCap     = 'round';
   sigAppCtx.lineJoin    = 'round';
-  function getPos(e) {
-    const r = sigAppCanvas.getBoundingClientRect();
-    const src = e.touches ? e.touches[0] : e;
-    return { x: src.clientX - r.left, y: src.clientY - r.top };
-  }
-  sigAppCanvas.addEventListener('mousedown',  e => { sigDrawing=true; sigAppCtx.beginPath(); const p=getPos(e); sigAppCtx.moveTo(p.x,p.y); });
-  sigAppCanvas.addEventListener('mousemove',  e => { if(!sigDrawing)return; const p=getPos(e); sigAppCtx.lineTo(p.x,p.y); sigAppCtx.stroke(); });
-  sigAppCanvas.addEventListener('mouseup',    () => sigDrawing=false);
-  sigAppCanvas.addEventListener('mouseleave', () => sigDrawing=false);
-  sigAppCanvas.addEventListener('touchstart', e => { e.preventDefault(); sigDrawing=true; sigAppCtx.beginPath(); const p=getPos(e); sigAppCtx.moveTo(p.x,p.y); }, {passive:false});
-  sigAppCanvas.addEventListener('touchmove',  e => { e.preventDefault(); if(!sigDrawing)return; const p=getPos(e); sigAppCtx.lineTo(p.x,p.y); sigAppCtx.stroke(); }, {passive:false});
-  sigAppCanvas.addEventListener('touchend',   () => sigDrawing=false);
 }
-function clearSigApp() { sigAppCtx.clearRect(0, 0, sigAppCanvas.width, sigAppCanvas.height); }
-function sigIsEmpty()  { return !sigAppCtx.getImageData(0,0,sigAppCanvas.width,sigAppCanvas.height).data.some(v=>v!==0); }
 
 // ── Enviar reporte ────────────────────────────────────────
 async function enviarReporte() {
@@ -1253,15 +1498,28 @@ async function _matlachoCallAPI(tipo, datos) {
   var loading = _matlachoAddBubble('🐭 Matlacho está pensando...', false, true);
   try {
     var serverUrl = (typeof SERVER_URL !== 'undefined') ? SERVER_URL : window.location.origin;
-    var resp = await fetch(serverUrl + '/api/ai/matlacho', {
+    // La app ciudadana usa el endpoint público /api/ai/ciudadano
+    // que no requiere autenticación. Soporta tipo='chat' y 'reporte_ciudadano'.
+    var body = { tipo: tipo };
+    if (tipo === 'chat') {
+      body.mensaje = datos.mensaje || '';
+    } else {
+      // reporte_ciudadano y otros — mapear campos
+      body.descripcion      = datos.descripcion || '';
+      body.tipo_incidencia  = datos.tipo_incidencia || '';
+      body.colonia          = datos.colonia || '';
+    }
+    var resp = await fetch(serverUrl + '/api/ai/ciudadano', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tipo: tipo, datos: datos }),
+      body: JSON.stringify(body),
       signal: AbortSignal.timeout(35000)
     });
     var d = await resp.json();
     if (loading) loading.remove();
-    return d.success ? d.data : null;
+    // self.ok() envuelve en { success, message, data } → leer d.data.texto
+    var texto = (d.data && d.data.texto) ? d.data.texto : d.texto;
+    return texto ? { texto: texto } : null;
   } catch(e) {
     if (loading) loading.remove();
     _matlachoAddBubble('⚠️ No pude conectarme. Verifica tu conexión e intenta de nuevo.', false);
@@ -1306,6 +1564,73 @@ function _matlachoAplicar(campoId, texto) {
     setTimeout(function(){ campo.style.borderColor=''; }, 2000);
   }
   _matlachoAddBubble('✅ Texto aplicado. Puedes editarlo antes de enviar.', false);
+}
+
+// Botón inline Matlacho en el campo de descripción
+async function _matlachoMejorarDesc(btnEl) {
+  var descEl   = document.getElementById('nr-desc');
+  var resultEl = document.getElementById('matlacho-desc-result');
+  var desc     = descEl ? descEl.value.trim() : '';
+  if (!desc || desc.length < 10) {
+    if (resultEl) {
+      resultEl.style.display = 'block';
+      resultEl.style.background = '#fee2e2';
+      resultEl.style.borderColor = '#fca5a5';
+      resultEl.style.color = '#991b1b';
+      resultEl.textContent = '✏️ Escribe al menos una oración describiendo el problema y presiona de nuevo.';
+    }
+    return;
+  }
+  var tipoChip = document.querySelector('.tipo-chip.sel');
+  var tipo     = tipoChip ? (tipoChip.dataset.tipo || '') : '';
+  var colonia  = (document.getElementById('nr-colonia') || {}).value || '';
+  var original = btnEl.innerHTML;
+  btnEl.innerHTML = '⏳ Matlacho está mejorando tu texto...';
+  btnEl.disabled  = true;
+  try {
+    var resp = await fetch(window.location.origin + '/api/ai/ciudadano', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ descripcion: desc, tipo_incidencia: tipo, colonia: colonia }),
+      signal: AbortSignal.timeout(30000)
+    });
+    var d = await resp.json();
+    if (d.success && d.data && d.data.texto) {
+      if (resultEl) {
+        resultEl.style.display  = 'block';
+        resultEl.style.background = '#E8F1FB';
+        resultEl.style.borderColor = '#B3CFF0';
+        resultEl.style.color = '#1a3a5c';
+        var escaped = d.data.texto.replace(/'/g,"&#39;").replace(/\n/g,' ').replace(/"/g,'&quot;');
+        resultEl.innerHTML =
+          '<b>🐭 Matlacho sugiere:</b><br><br>' + d.data.texto +
+          '<br><br>' +
+          '<button onclick="document.getElementById(\'nr-desc\').value=\'' + escaped + '\';document.getElementById(\'matlacho-desc-result\').style.display=\'none\'" ' +
+          'style="padding:9px 18px;background:#003B7A;color:#fff;border:none;border-radius:9px;font-size:.88rem;font-weight:700;cursor:pointer;margin-right:8px">✅ Aplicar</button>' +
+          '<button onclick="document.getElementById(\'matlacho-desc-result\').style.display=\'none\'" ' +
+          'style="padding:9px 14px;background:#e5e7eb;color:#374151;border:none;border-radius:9px;font-size:.88rem;cursor:pointer">✕ Cerrar</button>';
+      }
+    } else {
+      if (resultEl) {
+        resultEl.style.display = 'block';
+        resultEl.style.background = '#fee2e2';
+        resultEl.style.borderColor = '#fca5a5';
+        resultEl.style.color = '#991b1b';
+        resultEl.textContent = 'No se pudo mejorar el texto en este momento. Intenta de nuevo.';
+      }
+    }
+  } catch(e) {
+    if (resultEl) {
+      resultEl.style.display = 'block';
+      resultEl.style.background = '#fee2e2';
+      resultEl.style.borderColor = '#fca5a5';
+      resultEl.style.color = '#991b1b';
+      resultEl.textContent = '⚠️ Sin conexión. Verifica tu red e intenta de nuevo.';
+    }
+  } finally {
+    btnEl.innerHTML = original;
+    btnEl.disabled  = false;
+  }
 }
 
 if (document.readyState === 'loading') {
