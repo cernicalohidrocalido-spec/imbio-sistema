@@ -2344,7 +2344,65 @@ function renderMisActas() {
       '</div>' +
     '</div>';
   }).join('');
-}  } catch(e) {
+}
+
+function filtrarActas(tipo) {
+  window._actasFiltro = tipo;
+  ['inspeccion','circunstanciada','apercibimiento','sancion'].forEach(function(t) {
+    var card = document.getElementById('card-' + t);
+    if (card) card.style.opacity = (!tipo || tipo === t) ? '1' : '0.5';
+  });
+  var lbl = document.getElementById('actas-filtro-label');
+  var txt = document.getElementById('actas-filtro-txt');
+  var labels = {inspeccion:'🔍 Inspección',circunstanciada:'📋 Circunstanciada',apercibimiento:'⚠️ Apercibimiento',sancion:'🚫 Sanción'};
+  if (lbl) lbl.style.display = tipo ? 'flex' : 'none';
+  if (txt) txt.textContent = tipo ? ('Mostrando: ' + (labels[tipo]||tipo)) : '';
+  renderMisActas();
+}
+
+// ── VERIFICACIONES DE COMERCIOS — INSPECTOR ──────────────────────────────────
+
+async function cargarVerificacionesInspector() {
+  var lista = document.getElementById('lista-verif-inspector');
+  if (!lista) return;
+  lista.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted)">⏳ Cargando...</div>';
+  try {
+    var r = await api('/api/verificaciones');
+    if (!r.success) {
+      lista.innerHTML = '<div style="text-align:center;padding:30px;color:#dc2626">Error al cargar verificaciones.</div>';
+      return;
+    }
+    _verifInspCache = r.data.verificaciones || [];
+    if (!_verifInspCache.length) {
+      lista.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--muted)"><div style="font-size:2.5rem;margin-bottom:10px">🏪</div><p style="font-size:.88rem;line-height:1.6">No tienes verificaciones asignadas.</p></div>';
+      return;
+    }
+    var EST_COLORS = { programada:'#3b82f6', en_proceso:'#f59e0b', completada:'#22c55e', cancelada:'#9ca3af' };
+    var EST_LABELS = { programada:'📅 Programada', en_proceso:'🔄 En Proceso', completada:'✅ Completada', cancelada:'❌ Cancelada' };
+    lista.innerHTML = _verifInspCache.map(function(v) {
+      return '<div style="background:#fff;border-radius:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);border-left:4px solid ' + (EST_COLORS[v.estado]||'#888') + ';overflow:hidden">' +
+        '<div style="padding:12px 14px">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">' +
+            '<div>' +
+              '<div style="font-family:monospace;font-size:.75rem;font-weight:700;color:#1a3a5c">' + v.folio + '</div>' +
+              '<div style="font-weight:800;font-size:.95rem;margin-top:2px">' + (v.establecimiento_nombre||'–') + '</div>' +
+              '<div style="font-size:.78rem;color:#888">' + (v.establecimiento_giro||'') + '</div>' +
+            '</div>' +
+            '<span style="background:' + (EST_COLORS[v.estado]||'#888') + '20;color:' + (EST_COLORS[v.estado]||'#888') + ';padding:3px 9px;border-radius:99px;font-size:.72rem;font-weight:700">' + (EST_LABELS[v.estado]||v.estado) + '</span>' +
+          '</div>' +
+          '<div style="font-size:.80rem;color:#555;line-height:1.6">' +
+            '<div>📍 ' + (v.establecimiento_domicilio||'–') + '</div>' +
+            (v.fecha_programada ? '<div>📅 Fecha: <b>' + new Date(v.fecha_programada+'T00:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'}) + '</b></div>' : '') +
+            (v.motivo ? '<div>📝 ' + v.motivo.substring(0,80) + (v.motivo.length>80?'...':'') + '</div>' : '') +
+          '</div>' +
+        '</div>' +
+        (v.estado !== 'completada' && v.estado !== 'cancelada' ?
+          '<div style="padding:8px 14px;background:#f8fafc;border-top:1px solid #f1f5f9"><button onclick="abrirVerifInspector(' + v.id + ')" style="width:100%;padding:9px;background:linear-gradient(135deg,#1a3a5c,#1e40af);color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer">📝 Registrar Hallazgos</button></div>' :
+          '<div style="padding:8px 14px;background:#f0fdf4;border-top:1px solid #bbf7d0;font-size:.78rem;color:#15803d;font-weight:700;text-align:center">✅ Verificación completada</div>'
+        ) +
+        '</div>';
+    }).join('');
+  } catch(e) {
     lista.innerHTML = '<div style="text-align:center;padding:30px;color:#dc2626">Error: ' + e.message + '</div>';
   }
 }
