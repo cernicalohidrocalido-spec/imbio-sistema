@@ -4,9 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#1a3a5c">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="IMBIO Inspector">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Inspector IMBIO">
 <title>IMBIO Inspector</title>
+<link rel="manifest" href="/inspector/manifest.json">
+<link rel="apple-touch-icon" href="/inspector/icon-192.png">
 <link rel="stylesheet" href="/static/leaflet.css"/>
 <style>
 :root {
@@ -36,6 +40,225 @@
   --ic-md:   2.2rem;      /* iconos tabs       */
   --ic-lg:   2.8rem;    /* iconos splash     */
 }
+
+// ════════════════════════════════════════════════════════════════
+// MATLACHO — MÓDULO B: ARBOLADO TÉCNICO
+// ════════════════════════════════════════════════════════════════
+
+function _arbolDatos() {
+  var gv = function(id){ var e=document.getElementById(id); return e?e.value:''; };
+  var gc = function(id){ var e=document.getElementById(id); return e?e.checked:false; };
+  return {
+    especie_cient: gv('arb-especie-cient'),
+    especie_com:   gv('arb-especie-com'),
+    dap:           gv('arb-dap'),
+    altura:        gv('arb-altura'),
+    copa:          gv('arb-copa'),
+    vigor:         gv('arb-vigor'),
+    estructura:    gv('arb-estructura'),
+    plagas:        gv('fs-plagas'),
+    enfermedades:  gv('fs-enfermedades'),
+    raiz:          gv('fs-raiz'),
+    infra:         gv('fs-infra'),
+    riesgo:        gv('acta-nivel-riesgo'),
+    d_poda:        gc('d-poda'),
+    d_derribo:     gc('d-derribo'),
+    d_tratamiento: gc('d-tratamiento'),
+    d_monitoreo:   gc('d-monitoreo'),
+    ubicacion:     (document.getElementById('acta-domicilio')||{value:''}).value
+  };
+}
+
+async function matlachoArbolDictamen(btnEl) {
+  var datos = _arbolDatos();
+  if (!datos.especie_cient && !datos.especie_com) {
+    alert('Ingresa al menos la especie del árbol antes de solicitar el dictamen.');
+    return;
+  }
+  var res = document.getElementById('arbol-matlacho-result');
+  if (res) { res.style.display = 'block'; res.innerHTML = '⏳ Matlacho está elaborando el dictamen técnico...'; }
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⏳ Procesando...'; }
+  try {
+    var serverUrl = (typeof SERVER_URL !== 'undefined') ? SERVER_URL : window.location.origin;
+    var token = (typeof TOKEN !== 'undefined') ? TOKEN : (localStorage.getItem('imbio_token') || '');
+    var resp = await fetch(serverUrl + '/api/ai/matlacho', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ tipo: 'chat', datos: { mensaje:
+        'Redacta la justificación técnica del dictamen para esta acta de arbolado municipal. ' +
+        'Especie: ' + (datos.especie_cient || datos.especie_com || 'no especificada') + '. ' +
+        'DAP: ' + (datos.dap || 'nd') + ' cm. Altura: ' + (datos.altura || 'nd') + ' m. ' +
+        'Vigor: ' + (datos.vigor || 'nd') + '. Estructura: ' + (datos.estructura || 'nd') + '. ' +
+        'Plagas: ' + (datos.plagas || 'ninguna') + '. Enfermedades: ' + (datos.enfermedades || 'ninguna') + '. ' +
+        'Daño raíz: ' + (datos.raiz || 'ninguno') + '. Interferencia: ' + (datos.infra || 'ninguna') + '. ' +
+        'Nivel de riesgo evaluado: ' + (datos.riesgo || 'no determinado') + '. ' +
+        'Intervención propuesta: ' + [datos.d_poda?'poda':'',datos.d_derribo?'derribo':'',datos.d_tratamiento?'tratamiento fitosanitario':'',datos.d_monitoreo?'monitoreo':''].filter(Boolean).join(', ') + '. ' +
+        'Redacta un párrafo técnico que justifique la intervención con base en los datos anteriores, citando la NTEA-AGS-ARBOLADO-2026. Máximo 5 oraciones.'
+      }}),
+      signal: AbortSignal.timeout(35000)
+    });
+    var d = await resp.json();
+    if (res) res.innerHTML = d.success && d.data ? '🌳 <b>Dictamen técnico:</b><br>' + d.data.texto : '⚠️ No se pudo generar el dictamen.';
+    // Auto-fill descripción si está vacía
+    var descEl = document.getElementById('acta-descripcion');
+    if (descEl && !descEl.value.trim() && d.success && d.data) {
+      descEl.value = d.data.texto;
+    }
+  } catch(e) {
+    if (res) res.innerHTML = '⚠️ Error de conexión: ' + e.message;
+  } finally {
+    if (btnEl) { btnEl.disabled = false; btnEl.innerHTML = '🌿 Justificar dictamen técnico'; }
+  }
+}
+
+async function matlachoArbolAlternativas(btnEl) {
+  var datos = _arbolDatos();
+  if (!datos.especie_cient && !datos.especie_com) {
+    alert('Ingresa la especie del árbol antes de consultar alternativas.');
+    return;
+  }
+  var res = document.getElementById('arbol-matlacho-result');
+  if (res) { res.style.display = 'block'; res.innerHTML = '⏳ Matlacho está evaluando alternativas al derribo...'; }
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⏳ Procesando...'; }
+  try {
+    var serverUrl = (typeof SERVER_URL !== 'undefined') ? SERVER_URL : window.location.origin;
+    var token = (typeof TOKEN !== 'undefined') ? TOKEN : (localStorage.getItem('imbio_token') || '');
+    var resp = await fetch(serverUrl + '/api/ai/matlacho', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ tipo: 'chat', datos: { mensaje:
+        'Evalúa si existen alternativas viables al derribo para este árbol municipal. ' +
+        'Especie: ' + (datos.especie_cient || datos.especie_com || 'no especificada') + '. ' +
+        'Vigor: ' + (datos.vigor || 'nd') + '. Nivel de riesgo: ' + (datos.riesgo || 'nd') + '. ' +
+        'Plagas: ' + (datos.plagas || 'ninguna') + '. Enfermedades: ' + (datos.enfermedades || 'ninguna') + '. ' +
+        'Interferencia con infraestructura: ' + (datos.infra || 'ninguna') + '. ' +
+        'Lista de 2 a 4 alternativas técnicas posibles (poda correctiva, tratamiento fitosanitario, refuerzo estructural, cables de sujeción, etc.) con su justificación breve. ' +
+        'Si el derribo es la única opción viable, explica por qué. Cita la normativa aplicable. Sé conciso.'
+      }}),
+      signal: AbortSignal.timeout(35000)
+    });
+    var d = await resp.json();
+    if (res) res.innerHTML = d.success && d.data ? '♻️ <b>Alternativas técnicas evaluadas:</b><br>' + d.data.texto.replace(/
+/g,'<br>') : '⚠️ No se pudo generar la evaluación.';
+  } catch(e) {
+    if (res) res.innerHTML = '⚠️ Error: ' + e.message;
+  } finally {
+    if (btnEl) { btnEl.disabled = false; btnEl.innerHTML = '♻️ Alternativas al derribo'; }
+  }
+}
+
+async function matlachoArbolFitosanitario(btnEl) {
+  var datos = _arbolDatos();
+  var res = document.getElementById('arbol-matlacho-result');
+  if (res) { res.style.display = 'block'; res.innerHTML = '⏳ Matlacho está analizando el estado fitosanitario...'; }
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⏳ Analizando...'; }
+  try {
+    var serverUrl = (typeof SERVER_URL !== 'undefined') ? SERVER_URL : window.location.origin;
+    var token = (typeof TOKEN !== 'undefined') ? TOKEN : (localStorage.getItem('imbio_token') || '');
+    var resp = await fetch(serverUrl + '/api/ai/matlacho', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ tipo: 'chat', datos: { mensaje:
+        'Realiza un análisis fitosanitario breve para el siguiente árbol: ' +
+        'Especie: ' + (datos.especie_cient || datos.especie_com || 'no especificada') + '. ' +
+        'Plagas detectadas: ' + (datos.plagas || 'ninguna') + '. ' +
+        'Enfermedades / patógenos: ' + (datos.enfermedades || 'ninguna') + '. ' +
+        'Daño en raíz/base: ' + (datos.raiz || 'ninguno') + '. ' +
+        'Vigor general: ' + (datos.vigor || 'nd') + '. ' +
+        'Proporciona: 1) Diagnóstico fitosanitario, 2) Agentes causales probables, ' +
+        '3) Tratamiento fitosanitario recomendado con nombre técnico del producto o método, ' +
+        '4) Pronóstico con y sin tratamiento. Formato técnico, máximo 6 oraciones.'
+      }}),
+      signal: AbortSignal.timeout(35000)
+    });
+    var d = await resp.json();
+    if (res) res.innerHTML = d.success && d.data ? '🔬 <b>Análisis fitosanitario:</b><br>' + d.data.texto.replace(/
+/g,'<br>') : '⚠️ No se pudo generar el análisis.';
+  } catch(e) {
+    if (res) res.innerHTML = '⚠️ Error: ' + e.message;
+  } finally {
+    if (btnEl) { btnEl.disabled = false; btnEl.innerHTML = '🔬 Análisis fitosanitario'; }
+  }
+}
+
+async function matlachoArbolAuditoria(btnEl) {
+  var datos = _arbolDatos();
+  var faltantes = [];
+  if (!datos.especie_cient && !datos.especie_com) faltantes.push('Especie del árbol');
+  if (!datos.dap)    faltantes.push('DAP (diámetro)');
+  if (!datos.altura) faltantes.push('Altura total');
+  if (!datos.vigor)  faltantes.push('Vigor general');
+  if (!datos.riesgo) faltantes.push('Nivel de riesgo');
+  var tieneIntervenciones = datos.d_poda || datos.d_derribo || datos.d_tratamiento || datos.d_monitoreo;
+  if (!tieneIntervenciones) faltantes.push('Intervención dictaminada');
+
+  var res = document.getElementById('arbol-matlacho-result');
+  if (!res) return;
+  res.style.display = 'block';
+
+  if (faltantes.length) {
+    res.innerHTML = '<b style="color:#dc2626">🔴 Campos obligatorios faltantes:</b><ul style="margin:6px 0 0 16px">' +
+      faltantes.map(function(f){ return '<li style="color:#991b1b">' + f + '</li>'; }).join('') +
+      '</ul><div style="margin-top:8px;background:#fef2f2;padding:8px;border-radius:6px;color:#991b1b;font-weight:700">❌ Completa los campos para tener un acta válida</div>';
+  } else {
+    res.innerHTML = '<div style="background:#f0fdf4;padding:8px;border-radius:6px;color:#15803d;font-weight:700">✅ Campos técnicos completos — Acta lista para firma</div>';
+  }
+}
+
+// ─── Matlacho: Estado de salud animal (Módulo C Calle) ────────────────────
+async function matlachoAnimalEstadoSalud(btnEl) {
+  var gv = function(id){ var e=document.getElementById(id); return e?e.value:''; };
+  var especie = gv('anim-especie');
+  var estado  = gv('anim-estado-fisico');
+  var actitud = gv('anim-actitud');
+  var desc    = gv('anim-estado-descripcion');
+  var tipo    = gv('anim-tipo-incidente');
+  var lugar   = gv('anim-lugar-incidente');
+
+  if (!estado && !actitud && !desc) {
+    alert('Selecciona el estado físico y/o actitud del animal antes de solicitar asistencia.');
+    return;
+  }
+
+  var res = document.getElementById('anim-estado-result');
+  if (res) { res.style.display = 'block'; res.innerHTML = '⏳ Matlacho está redactando la descripción objetiva...'; }
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⏳ Procesando...'; }
+  try {
+    var serverUrl = (typeof SERVER_URL !== 'undefined') ? SERVER_URL : window.location.origin;
+    var token = (typeof TOKEN !== 'undefined') ? TOKEN : (localStorage.getItem('imbio_token') || '');
+    var resp = await fetch(serverUrl + '/api/ai/matlacho', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ tipo: 'chat', datos: { mensaje:
+        'Redacta una descripción objetiva y técnica del estado de salud de un animal para un acta de inspección de bienestar animal. ' +
+        'Tipo de incidente: ' + (tipo || 'en situación de calle') + '. ' +
+        'Especie/descripción: ' + (especie || 'no especificada') + '. ' +
+        'Estado físico visible: ' + (estado || 'no evaluado') + '. ' +
+        'Actitud/comportamiento: ' + (actitud || 'no evaluado') + '. ' +
+        'Lugar: ' + (lugar || 'no especificado') + '. ' +
+        (desc ? 'Observaciones del inspector: ' + desc.substring(0,300) + '. ' : '') +
+        'Redacta un párrafo de 2-3 oraciones en tercera persona, lenguaje técnico-administrativo, sin juicios de valor, ' +
+        'describiendo objetivamente las condiciones físicas y de comportamiento observadas en el ejemplar. ' +
+        'Inicia con "Se observa ejemplar..."'
+      }}),
+      signal: AbortSignal.timeout(35000)
+    });
+    var d = await resp.json();
+    if (d.success && d.data) {
+      if (res) res.innerHTML = '🐭 <b>Descripción objetiva:</b><br>' + d.data.texto;
+      var descEl = document.getElementById('anim-estado-descripcion');
+      if (descEl) descEl.value = d.data.texto;
+    } else {
+      if (res) res.innerHTML = '⚠️ No se pudo generar la descripción.';
+    }
+  } catch(e) {
+    if (res) res.innerHTML = '⚠️ Error: ' + e.message;
+  } finally {
+    if (btnEl) { btnEl.disabled = false; btnEl.innerHTML = '🐭 Matlacho — Redactar descripción objetiva del estado de salud'; }
+  }
+}
+
+
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{font-size:17px}
 html,body{height:100%;overflow:hidden;overflow-x:hidden;background:#1a3a5c;max-width:100vw}
@@ -301,10 +524,6 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
 .spinner{width:42px;height:42px;border:4px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
-<link rel="manifest" href="/inspector/manifest.json">
-<link rel="apple-touch-icon" href="/inspector/icon-192.png">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Inspector IMBIO">
 </head>
 <body>
 
@@ -764,6 +983,66 @@ let actaFotos = [];   // { dataUrl, file }
 let mapActa = null, mapActaLayer = null, mapActaMarker = null;
 let sigCanvas, sigCtx, sigDrawing = false;
 let misActas = JSON.parse(localStorage.getItem('imbio_actas_local') || '[]');
+
+// ── ESTADO GLOBAL DEL CASO ACTIVO (herencia entre actas) ──────────────────
+// Persiste en localStorage para sobrevivir recargas y switches de acta
+function _guardarCasoActivo() {
+  var gv = function(id){ var e=document.getElementById(id); return e?e.value.trim():''; };
+  var caso = {
+    reportId:         currentReporteId,
+    reportTipo:       window._actaReporteTipo || '',
+    inspector:        gv('acta-firmante'),
+    numInspector:     gv('acta-num-inspector'),
+    ordenInspeccion:  gv('acta-orden-inspeccion'),
+    motivo:           gv('acta-motivo'),
+    infractor:        gv('acta-infractor'),
+    domicilio:        gv('acta-domicilio'),
+    cargoVisitado:    gv('acta-cargo-visitado'),
+    actividadPredio:  gv('acta-actividad-predio'),
+    lat:              gv('acta-lat'),
+    lon:              gv('acta-lon'),
+    ts:               Date.now()
+  };
+  try {
+    localStorage.setItem('imbio_caso_activo', JSON.stringify(caso));
+  } catch(e) {}
+}
+
+function _cargarCasoActivo(reportId) {
+  try {
+    var raw = localStorage.getItem('imbio_caso_activo');
+    if (!raw) return null;
+    var caso = JSON.parse(raw);
+    // Solo usar si es del mismo reporte y tiene menos de 24 horas
+    if (String(caso.reportId) !== String(reportId)) return null;
+    if (Date.now() - caso.ts > 86400000) return null;
+    return caso;
+  } catch(e) { return null; }
+}
+
+function _aplicarCasoActivo(caso) {
+  if (!caso) return;
+  var s = function(id, v) { if (!v) return; var el=document.getElementById(id); if(el && !el.value.trim()) el.value = v; };
+  s('acta-firmante',          caso.inspector);
+  s('acta-num-inspector',     caso.numInspector);
+  s('acta-orden-inspeccion',  caso.ordenInspeccion);
+  s('acta-infractor',         caso.infractor);
+  s('acta-domicilio',         caso.domicilio);
+  s('acta-actividad-predio',  caso.actividadPredio);
+  s('acta-lat',               caso.lat);
+  s('acta-lon',               caso.lon);
+  if (caso.lat && caso.lon) {
+    var bar = document.getElementById('acta-coords-bar');
+    if (bar && !bar.textContent.includes(caso.lat)) {
+      bar.textContent = '📍 ' + parseFloat(caso.lat).toFixed(5) + ', ' + parseFloat(caso.lon).toFixed(5) + ' (del caso previo)';
+    }
+  }
+  // Motivo en select
+  var motEl = document.getElementById('acta-motivo');
+  if (motEl && caso.motivo && !motEl.value) motEl.value = caso.motivo;
+  var cvEl  = document.getElementById('acta-cargo-visitado');
+  if (cvEl && caso.cargoVisitado && !cvEl.value) cvEl.value = caso.cargoVisitado;
+}
 
 // ── SPLASH ──────────────────────────────────────────────
 window.addEventListener('load', () => {
@@ -2768,6 +3047,30 @@ function _buildActaForm() {
       </div>
     </div>
 
+    <!-- ═══ MATLACHO — ASISTENCIA MÓDULO B ═══ -->
+    <div style="background:linear-gradient(135deg,#14532d,#166534);border-radius:10px;padding:12px 14px;margin:10px 0">
+      <div style="color:#fff;font-weight:800;font-size:.95rem;margin-bottom:8px">🌳 Asistencia Técnica Arbolado — Matlacho</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+        <button type="button" onclick="matlachoArbolDictamen(this)"
+          style="padding:9px 8px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;font-size:.93rem;font-weight:700;cursor:pointer;text-align:left">
+          🌿 Justificar dictamen técnico
+        </button>
+        <button type="button" onclick="matlachoArbolAlternativas(this)"
+          style="padding:9px 8px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;font-size:.93rem;font-weight:700;cursor:pointer;text-align:left">
+          ♻️ Alternativas al derribo
+        </button>
+        <button type="button" onclick="matlachoArbolFitosanitario(this)"
+          style="padding:9px 8px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;font-size:.93rem;font-weight:700;cursor:pointer;text-align:left">
+          🔬 Análisis fitosanitario
+        </button>
+        <button type="button" onclick="matlachoArbolAuditoria(this)"
+          style="padding:9px 8px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:8px;font-size:.93rem;font-weight:800;cursor:pointer;text-align:left">
+          🛑 Auditar acta arbolado
+        </button>
+      </div>
+      <div id="arbol-matlacho-result" style="display:none;margin-top:8px;background:rgba(255,255,255,.95);border-radius:8px;padding:10px 12px;font-size:.96rem;color:#14532d;line-height:1.7"></div>
+    </div>
+
     <!-- AVISO DE REQUISITOS IMBIO -->
     <div class="section-title" style="background:#1a3a5c">📋 6. Requisitos para el Trámite en Oficinas IMBIO</div>
     <div style="background:#EEF5FC;border-radius:10px;padding:14px 16px;margin-bottom:10px;font-size:.97rem;line-height:1.7;color:#1a3a5c">
@@ -2788,28 +3091,6 @@ function _buildActaForm() {
       <label>Observaciones para el solicitante</label>
       <textarea id="arb-obs-solicitante" rows="2" placeholder="Indicaciones adicionales al ciudadano sobre su trámite..." style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem;resize:vertical"></textarea>
     </div>
-    <!-- Firmas -->
-    <div class="section-title" style="background:#1a3a5c">✍️ Firmas</div>
-    <div class="firmante-wrap">
-      <div class="firmante-header">
-        <span>✍️ Firma del Inspector</span>
-        <button class="ibtn ibtn-ghost ibtn-sm" onclick="clearSig('sig-inspector')" style="padding:3px 8px">🗑 Borrar</button>
-      </div>
-      <canvas id="sig-inspector" class="sig-visitado"></canvas>
-      <div style="padding:8px 10px">
-        <input id="acta-firmante" placeholder="Nombre completo del inspector" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
-      </div>
-    </div>
-    <div class="firmante-wrap">
-      <div class="firmante-header">
-        <span>✍️ Firma del Solicitante <span style="font-weight:400;font-size:.92rem">(opcional)</span></span>
-        <button class="ibtn ibtn-ghost ibtn-sm" onclick="clearSig('sig-visitado')" style="padding:3px 8px">🗑 Borrar</button>
-      </div>
-      <canvas id="sig-visitado" class="sig-visitado"></canvas>
-      <div style="padding:8px 10px">
-        <input id="acta-nombre-visitado" placeholder="Nombre del solicitante" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
-      </div>
-    </div>
     <!-- Estado del reporte -->
     <div class="section-title" style="background:#1a3a5c">🔄 Estado del Reporte</div>
     <select id="acta-nuevo-estado" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem;margin-bottom:10px">
@@ -2826,8 +3107,156 @@ function _buildActaForm() {
     </div>` : '';
 
   // ── SECCIÓN ANIMAL (denuncia animal) ────────────────────────────────────
-  var seccionAnimal = esAnimal ? `
+  // ── Diferenciación visual Módulo C ──────────────────────────────────────
+  var _esAgresivo   = ['perro_agresivo','animal_calle'].includes(tipoRep) && tipoRep === 'perro_agresivo';
+  var _esCalle      = tipoRep === 'animal_calle';
+  var _esAbandonado = ['animal_maltrato','animal_abandonado'].includes(tipoRep);
+  var _esSilvestre  = tipoRep === 'fauna_silvestre';
 
+  var _animalModuloBanner = '';
+  if (_esAgresivo) {
+    _animalModuloBanner = `<div style="background:linear-gradient(135deg,#7f1d1d,#dc2626);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:1.8rem">🐕</span>
+      <div><div style="color:#fff;font-weight:800;font-size:.97rem">Módulo C · Flujo de Respuesta Rápida</div>
+      <div style="color:rgba(255,255,255,.8);font-size:.88rem">Animal Agresivo — Documentar incidente, propietario y medidas de seguridad</div></div></div>`;
+  } else if (_esCalle) {
+    _animalModuloBanner = `<div style="background:linear-gradient(135deg,#1e3a5c,#1d4ed8);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:1.8rem">🛣️</span>
+      <div><div style="color:#fff;font-weight:800;font-size:.97rem">Módulo C · Flujo de Respuesta Rápida</div>
+      <div style="color:rgba(255,255,255,.8);font-size:.88rem">Animal en Situación de Calle — Ubicación, estado de salud y destino de resguardo</div></div></div>`;
+  } else if (_esAbandonado) {
+    _animalModuloBanner = `<div style="background:linear-gradient(135deg,#4c1d95,#7c3aed);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:1.8rem">💔</span>
+      <div><div style="color:#fff;font-weight:800;font-size:.97rem">Módulo C · Bienestar Animal</div>
+      <div style="color:rgba(255,255,255,.8);font-size:.88rem">Maltrato / Abandono — Documentar condiciones y acciones de protección</div></div></div>`;
+  } else if (_esSilvestre) {
+    _animalModuloBanner = `<div style="background:linear-gradient(135deg,#14532d,#16a34a);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:1.8rem">🦎</span>
+      <div><div style="color:#fff;font-weight:800;font-size:.97rem">Módulo C · Fauna Silvestre</div>
+      <div style="color:rgba(255,255,255,.8);font-size:.88rem">Fauna en Zona Urbana — Documentar especie, estado y canalización</div></div></div>`;
+  } else {
+    _animalModuloBanner = `<div style="background:linear-gradient(135deg,#1a3a5c,#0369a1);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:1.8rem">🐾</span>
+      <div><div style="color:#fff;font-weight:800;font-size:.97rem">Módulo C · Bienestar Animal</div>
+      <div style="color:rgba(255,255,255,.8);font-size:.88rem">Inspección Animal — Registro de incidente y acciones en campo</div></div></div>`;
+  }
+
+  // Pre-select incident type based on reporte tipo
+  var _animTipoSelected = _esAgresivo
+    ? `<option value="mordida" selected>🦷 Mordida / ataque a persona</option>
+       <option value="rasguño">🐾 Rasguño / contacto agresivo</option>
+       <option value="amenaza">⚠️ Comportamiento amenazante sin contacto</option>
+       <option value="calle_suelto">🛣️ Animal en vía pública suelto</option>
+       <option value="jauría">🐕‍🦺 Jauría callejera</option>
+       <option value="maltrato">😢 Maltrato o negligencia</option>
+       <option value="abandono">🚫 Abandono de animal</option>
+       <option value="fauna_silvestre">🦎 Fauna silvestre en zona urbana</option>
+       <option value="otro">📌 Otro</option>`
+    : _esCalle
+    ? `<option value="mordida">🦷 Mordida / ataque a persona</option>
+       <option value="rasguño">🐾 Rasguño / contacto agresivo</option>
+       <option value="amenaza">⚠️ Comportamiento amenazante sin contacto</option>
+       <option value="calle_suelto" selected>🛣️ Animal en vía pública suelto</option>
+       <option value="jauría">🐕‍🦺 Jauría callejera</option>
+       <option value="maltrato">😢 Maltrato o negligencia</option>
+       <option value="abandono">🚫 Abandono de animal</option>
+       <option value="fauna_silvestre">🦎 Fauna silvestre en zona urbana</option>
+       <option value="otro">📌 Otro</option>`
+    : _esAbandonado
+    ? `<option value="mordida">🦷 Mordida / ataque a persona</option>
+       <option value="rasguño">🐾 Rasguño / contacto agresivo</option>
+       <option value="amenaza">⚠️ Comportamiento amenazante sin contacto</option>
+       <option value="calle_suelto">🛣️ Animal en vía pública suelto</option>
+       <option value="jauría">🐕‍🦺 Jauría callejera</option>
+       <option value="maltrato" selected>😢 Maltrato o negligencia</option>
+       <option value="abandono">🚫 Abandono de animal</option>
+       <option value="fauna_silvestre">🦎 Fauna silvestre en zona urbana</option>
+       <option value="otro">📌 Otro</option>`
+    : _esSilvestre
+    ? `<option value="mordida">🦷 Mordida / ataque a persona</option>
+       <option value="rasguño">🐾 Rasguño / contacto agresivo</option>
+       <option value="amenaza">⚠️ Comportamiento amenazante sin contacto</option>
+       <option value="calle_suelto">🛣️ Animal en vía pública suelto</option>
+       <option value="jauría">🐕‍🦺 Jauría callejera</option>
+       <option value="maltrato">😢 Maltrato o negligencia</option>
+       <option value="abandono">🚫 Abandono de animal</option>
+       <option value="fauna_silvestre" selected>🦎 Fauna silvestre en zona urbana</option>
+       <option value="otro">📌 Otro</option>`
+    : `<option value="mordida">🦷 Mordida / ataque a persona</option>
+       <option value="rasguño">🐾 Rasguño / contacto agresivo</option>
+       <option value="amenaza">⚠️ Comportamiento amenazante sin contacto</option>
+       <option value="calle_suelto">🛣️ Animal en vía pública suelto</option>
+       <option value="jauría">🐕‍🦺 Jauría callejera</option>
+       <option value="maltrato">😢 Maltrato o negligencia</option>
+       <option value="abandono">🚫 Abandono de animal</option>
+       <option value="fauna_silvestre">🦎 Fauna silvestre en zona urbana</option>
+       <option value="otro">📌 Otro</option>`;
+
+  // Sección específica calle: estado de salud y resguardo
+  var _animalCalleExtra = (_esCalle || _esAbandonado || _esSilvestre) ? `
+    <div class="section-title" style="background:#1e3a8a">🏥 Estado de Salud y Condición del Ejemplar</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div class="fg">
+        <label>Estado físico visible</label>
+        <select id="anim-estado-fisico" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
+          <option value="">Seleccionar...</option>
+          <option value="aparentemente_sano">✅ Aparentemente sano</option>
+          <option value="desnutricion_leve">⚠️ Desnutrición leve</option>
+          <option value="desnutricion_severa">🔴 Desnutrición severa</option>
+          <option value="heridas_visibles">🩹 Heridas visibles</option>
+          <option value="enfermedad_aparente">🤒 Signos de enfermedad</option>
+          <option value="muerto">💀 Sin signos de vida</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Actitud / comportamiento</label>
+        <select id="anim-actitud" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
+          <option value="">Seleccionar...</option>
+          <option value="tranquilo">Tranquilo / dócil</option>
+          <option value="asustado">Asustado / evasivo</option>
+          <option value="agresivo">Agresivo / defensivo</option>
+          <option value="letargico">Letárgico / débil</option>
+          <option value="inconsciente">Inconsciente / no reactivo</option>
+        </select>
+      </div>
+      <div class="fg fg2">
+        <label>Descripción del estado del animal (observaciones objetivas)</label>
+        <textarea id="anim-estado-descripcion" rows="2" placeholder="Ej: Ejemplar canino macho, delgado, sin collar, con herida superficial en mano derecha, se encontraba echado junto a contenedor de basura..."
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem;resize:vertical"></textarea>
+        <button type="button" onclick="matlachoAnimalEstadoSalud(this)"
+          style="margin-top:5px;width:100%;padding:8px;background:linear-gradient(135deg,#1e3a8a,#1d4ed8);color:#fff;border:none;border-radius:8px;font-size:.94rem;font-weight:700;cursor:pointer">
+          🐭 Matlacho — Redactar descripción objetiva del estado de salud
+        </button>
+        <div id="anim-estado-result" style="display:none;margin-top:6px;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:8px;padding:10px 12px;font-size:.96rem;color:#1e40af;line-height:1.6"></div>
+      </div>
+    </div>
+    <div class="section-title" style="background:#1e3a8a">📋 Plan de Resguardo y Destino</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div class="fg">
+        <label>Destino inmediato</label>
+        <select id="anim-destino-calle" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
+          <option value="">Seleccionar...</option>
+          <option value="albergue">🏠 Albergue Municipal IMBIO</option>
+          <option value="veterinaria_urgencia">🏥 Veterinaria de urgencia</option>
+          <option value="liberado_habitat">🌿 Liberado en hábitat natural</option>
+          <option value="entregado_propietario">👤 Entregado a propietario</option>
+          <option value="rescatista_voluntario">🤝 Rescatista voluntario</option>
+          <option value="autoridad_competente">⚖️ Canalizado a autoridad competente</option>
+          <option value="en_lugar">📍 Dejado en lugar por imposibilidad de rescate</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>¿Requiere atención veterinaria urgente?</label>
+        <select id="anim-urgencia-vet" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
+          <option value="no">No — Estado estable</option>
+          <option value="si_programada">Sí — Consulta programada</option>
+          <option value="si_urgente">🚨 Sí — Urgencia inmediata</option>
+        </select>
+      </div>
+    </div>` : '';
+
+  var seccionAnimal = esAnimal ? \`
+    \${_animalModuloBanner}
     <!-- ══ ACTA DE INSPECCIÓN ANIMAL ══ -->
 
     <!-- BLQ 1: TIPO Y CONTEXTO -->
@@ -2838,15 +3267,7 @@ function _buildActaForm() {
         <select id="anim-tipo-incidente"
           style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem"
           onchange="toggleVictimaSection(this.value)">
-          <option value="mordida">🦷 Mordida / ataque a persona</option>
-          <option value="rasguño">🐾 Rasguño / contacto agresivo</option>
-          <option value="amenaza">⚠️ Comportamiento amenazante sin contacto</option>
-          <option value="calle_suelto">🛣️ Animal en vía pública suelto</option>
-          <option value="jauría">🐕‍🦺 Jauría callejera</option>
-          <option value="maltrato">😢 Maltrato o negligencia</option>
-          <option value="abandono">🚫 Abandono de animal</option>
-          <option value="fauna_silvestre">🦎 Fauna silvestre en zona urbana</option>
-          <option value="otro">📌 Otro</option>
+          \${_animTipoSelected}
         </select>
       </div>
       <div class="fg">
@@ -3081,6 +3502,8 @@ function _buildActaForm() {
         <div id="anim-riesgo-result" style="display:none;margin-top:6px;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:8px;padding:10px 12px;font-size:.96rem;color:#991b1b;line-height:1.7"></div>
       </div>
     </div>
+
+    \${_animalCalleExtra}
 
     <!-- BLQ 5: ACCIONES EN CAMPO -->
     <div class="section-title" style="background:#1a3a5c">⚡ 5. Acciones Tomadas en Campo</div>
@@ -3396,25 +3819,7 @@ function _buildActaForm() {
         </select>
       </div>
     </div>
-    <div class="section-title" style="background:#1a3a5c">✍️ Firmas</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div>
-        <label style="font-size:.95rem;font-weight:700;color:var(--muted);text-transform:uppercase">Inspector actuante</label>
-        <canvas id="sig-inspector" style="width:100%;height:90px;border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;background:#f8fafc"></canvas>
-        <div style="display:flex;gap:6px;margin-top:4px">
-          <input id="acta-firmante-nombre" placeholder="Nombre del inspector" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.92rem">
-          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.92rem" onclick="clearSig('sig-inspector')">🗑</button>
-        </div>
-      </div>
-      <div>
-        <label style="font-size:.95rem;font-weight:700;color:var(--muted);text-transform:uppercase">Visitado / Responsable</label>
-        <canvas id="sig-visitado" style="width:100%;height:90px;border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;background:#f8fafc"></canvas>
-        <div style="display:flex;gap:6px;margin-top:4px">
-          <input id="nombre-visitado" placeholder="Nombre del visitado" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.92rem">
-          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.92rem" onclick="clearSig('sig-visitado')">🗑</button>
-        </div>
-      </div>
-    </div>`;
+`;
 
   // ════════════════════════════════════════════════════════════════════════
   // ACTA CIRCUNSTANCIADA — Documenta hechos con detalle legal
@@ -3554,35 +3959,7 @@ function _buildActaForm() {
       <label class="chk-lbl"><input type="checkbox" id="circ-copia-entregada"> Se entregó copia del acta</label>
     </div>
 
-    <div class="section-title" style="background:#1a3a5c">✍️ Firmas</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div>
-        <label style="font-size:.95rem;font-weight:700;color:var(--muted);text-transform:uppercase">Inspector actuante</label>
-        <canvas id="sig-inspector" style="width:100%;height:90px;border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;background:#f8fafc"></canvas>
-        <div style="display:flex;gap:6px;margin-top:4px">
-          <input id="acta-firmante-nombre" placeholder="Nombre" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.92rem">
-          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.92rem" onclick="clearSig('sig-inspector')">🗑</button>
-        </div>
-      </div>
-      <div>
-        <label style="font-size:.95rem;font-weight:700;color:var(--muted);text-transform:uppercase">Visitado</label>
-        <canvas id="sig-visitado" style="width:100%;height:90px;border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;background:#f8fafc"></canvas>
-        <div style="display:flex;gap:6px;margin-top:4px">
-          <input id="nombre-visitado" placeholder="Nombre" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.92rem">
-          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.92rem" onclick="clearSig('sig-visitado')">🗑</button>
-        </div>
-      </div>
-      <div>
-        <label style="font-size:.95rem;font-weight:700;color:var(--muted);text-transform:uppercase">Testigo 1</label>
-        <canvas id="sig-testigo1" style="width:100%;height:80px;border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;background:#f8fafc"></canvas>
-        <button type="button" class="ibtn ibtn-ghost" style="margin-top:4px;width:100%;font-size:.92rem" onclick="clearSig('sig-testigo1')">🗑 Borrar</button>
-      </div>
-      <div>
-        <label style="font-size:.95rem;font-weight:700;color:var(--muted);text-transform:uppercase">Testigo 2</label>
-        <canvas id="sig-testigo2" style="width:100%;height:80px;border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;background:#f8fafc"></canvas>
-        <button type="button" class="ibtn ibtn-ghost" style="margin-top:4px;width:100%;font-size:.92rem" onclick="clearSig('sig-testigo2')">🗑 Borrar</button>
-      </div>
-    </div>`;
+`;
 
   // ════════════════════════════════════════════════════════════════════════
   // ACTA DE APERCIBIMIENTO — Irregularidad corregible con plazo
@@ -3656,25 +4033,7 @@ function _buildActaForm() {
       ⚠️ <b>Advertencia:</b> El incumplimiento en el plazo establecido dará lugar a sanción económica y/o clausura conforme al Código Municipal.
     </div>
 
-    <div class="section-title" style="background:#92400e">✍️ Firmas</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div>
-        <label style="font-size:.95rem;font-weight:700;color:var(--muted);text-transform:uppercase">Inspector actuante</label>
-        <canvas id="sig-inspector" style="width:100%;height:90px;border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;background:#f8fafc"></canvas>
-        <div style="display:flex;gap:6px;margin-top:4px">
-          <input id="acta-firmante-nombre" placeholder="Nombre" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.92rem">
-          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.92rem" onclick="clearSig('sig-inspector')">🗑</button>
-        </div>
-      </div>
-      <div>
-        <label style="font-size:.95rem;font-weight:700;color:var(--muted);text-transform:uppercase">Notificado</label>
-        <canvas id="sig-visitado" style="width:100%;height:90px;border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;background:#f8fafc"></canvas>
-        <div style="display:flex;gap:6px;margin-top:4px">
-          <input id="nombre-visitado" placeholder="Nombre" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.92rem">
-          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.92rem" onclick="clearSig('sig-visitado')">🗑</button>
-        </div>
-      </div>
-    </div>`;
+`;
 
   // ════════════════════════════════════════════════════════════════════════
   // ACTA DE SANCIÓN — Infracción / reincidencia con multa
@@ -3759,25 +4118,7 @@ function _buildActaForm() {
     </button>
     <div id="sanc-calculo-result" style="display:none"></div>
 
-    <div class="section-title" style="background:#991b1b">✍️ Firmas</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div>
-        <label style="font-size:.95rem;font-weight:700;color:var(--muted);text-transform:uppercase">Inspector / Autoridad</label>
-        <canvas id="sig-inspector" style="width:100%;height:90px;border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;background:#f8fafc"></canvas>
-        <div style="display:flex;gap:6px;margin-top:4px">
-          <input id="acta-firmante-nombre" placeholder="Nombre" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.92rem">
-          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.92rem" onclick="clearSig('sig-inspector')">🗑</button>
-        </div>
-      </div>
-      <div>
-        <label style="font-size:.95rem;font-weight:700;color:var(--muted);text-transform:uppercase">Infractor</label>
-        <canvas id="sig-visitado" style="width:100%;height:90px;border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;background:#f8fafc"></canvas>
-        <div style="display:flex;gap:6px;margin-top:4px">
-          <input id="nombre-visitado" placeholder="Nombre" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.92rem">
-          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.92rem" onclick="clearSig('sig-visitado')">🗑</button>
-        </div>
-      </div>
-    </div>`;
+`;
   }
   var seccionDesc = `
     ${tipoActaSel !== 'circunstanciada' ? `
@@ -3890,6 +4231,24 @@ function _buildActaForm() {
     var tc = document.getElementById(id);
     if (tc) { tc.width = tc.offsetWidth || 320; tc.height = 80; initSigExtra(tc); }
   });
+
+  // ── Auto-restore global case state into common fields ───────────────
+  setTimeout(function() {
+    var caso = _cargarCasoActivo(currentReporteId);
+    if (caso) _aplicarCasoActivo(caso);
+
+    // Auto-save on blur of key common fields
+    var autoSaveFields = ['acta-firmante','acta-num-inspector','acta-orden-inspeccion',
+                          'acta-infractor','acta-domicilio','acta-actividad-predio'];
+    autoSaveFields.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el && !el._casoAutoSave) {
+        el._casoAutoSave = true;
+        el.addEventListener('blur', _guardarCasoActivo);
+        el.addEventListener('change', _guardarCasoActivo);
+      }
+    });
+  }, 200);
 }
 
 
@@ -4454,38 +4813,76 @@ function _matlachoToggle() {
 }
 
 function _matlachoSetContext() {
-  // Detect current context and show relevant quick actions
   var actions = document.getElementById('matlacho-quick-actions');
   if (!actions) return;
-  var isInspector = typeof tipoActaSel !== 'undefined';
   var isModal = document.getElementById('modal-nueva-acta') &&
                 document.getElementById('modal-nueva-acta').style.display === 'flex';
-  var tipo = (typeof tipoActaSel !== 'undefined') ? tipoActaSel : '';
+  var tipo    = (typeof tipoActaSel !== 'undefined') ? tipoActaSel : '';
+  var tipoRep = window._actaReporteTipo || '';
+
+  // Detect module
+  var esArbolMod  = ['poda_arbol','derribo_arbol','corte_arbol','arbol_riesgo'].includes(tipoRep);
+  var esAnimalMod = ['perro_agresivo','animal_calle','animal_maltrato','fauna_silvestre','animal_abandonado'].includes(tipoRep);
+  var esAgresivo  = tipoRep === 'perro_agresivo';
+  var esCalle     = tipoRep === 'animal_calle';
 
   var btns = [];
 
-  if (isModal || isInspector) {
-    // Inspector context
-    if (tipo === 'circunstanciada') {
-      btns.push({cls:'morado', icon:'✨', label:'Pulir narrativa', fn:'matlachoPulirNarrativa(document.querySelector(\'[onclick*=matlachoPulirNarrativa]\'))'});
-      btns.push({cls:'rojo',   icon:'🚫', label:'Filtro legal', fn:'matlachoFiltroLegal(document.querySelector(\'[onclick*=matlachoFiltroLegal]\'))'});
-      btns.push({cls:'verde',  icon:'📋', label:'Lista de hechos', fn:'matlachoHechosLista(document.querySelector(\'[onclick*=matlachoHechosLista]\'))'});
-      btns.push({cls:'naranja',icon:'🛑', label:'Auditoría del acta', fn:'matlachoAuditoriaActa(document.querySelector(\'[onclick*=matlachoAuditoriaActa]\'))'});
-    } else if (tipo === 'inspeccion' || tipo === '') {
-      btns.push({cls:'verde', icon:'📝', label:'Redactar descripción', fn:'_matlachoRedactarDesc()'});
-    }
-    if (tipo === 'apercibimiento') {
-      btns.push({cls:'naranja', icon:'⚠️', label:'Redactar apercibimiento', fn:'_matlachoRedactarAper()'});
-    }
-    if (tipo === 'sancion') {
-      btns.push({cls:'rojo', icon:'🚫', label:'Redactar motivación sanción', fn:'_matlachoRedactarSanc()'});
-    }
-    if (tipo !== 'circunstanciada') {
-      btns.push({cls:'morado', icon:'🔍', label:'Sugerir medida administrativa', fn:'_matlachoSugerirMedida()'});
+  if (isModal) {
+    // ── Módulo B: Arbolado Técnico ────────────────────────────────
+    if (esArbolMod) {
+      btns.push({cls:'verde',  icon:'🌿', label:'Justificar dictamen', fn:"matlachoArbolDictamen(null)"});
+      btns.push({cls:'verde',  icon:'♻️', label:'Alternativas al derribo', fn:"matlachoArbolAlternativas(null)"});
+      btns.push({cls:'morado', icon:'🔬', label:'Análisis fitosanitario', fn:"matlachoArbolFitosanitario(null)"});
+      btns.push({cls:'naranja',icon:'🛑', label:'Auditar acta arbolado', fn:"matlachoArbolAuditoria(null)"});
+
+    // ── Módulo C: Animal Agresivo ─────────────────────────────────
+    } else if (esAgresivo) {
+      btns.push({cls:'rojo',   icon:'✨', label:'Redactar narrativa incidente', fn:"matlachoAnimalNarrativa(null)"});
+      btns.push({cls:'rojo',   icon:'⚠️', label:'Evaluar nivel de riesgo', fn:"matlachoAnimalRiesgo(null)"});
+      btns.push({cls:'naranja',icon:'📋', label:'Recomendaciones seguridad', fn:"matlachoAnimalRecomendaciones(null)"});
+      btns.push({cls:'rojo',   icon:'🛑', label:'Auditar acta animal', fn:"matlachoAuditoriaAnimal(null)"});
+
+    // ── Módulo C: Animal en Calle ─────────────────────────────────
+    } else if (esCalle) {
+      btns.push({cls:'azul',   icon:'🐾', label:'Descripción estado de salud', fn:"matlachoAnimalEstadoSalud(null)"});
+      btns.push({cls:'verde',  icon:'📋', label:'Recomendaciones resguardo', fn:"matlachoAnimalRecomendaciones(null)"});
+      btns.push({cls:'naranja',icon:'🛑', label:'Auditar acta animal', fn:"matlachoAuditoriaAnimal(null)"});
+
+    // ── Módulo C: Otro animal ─────────────────────────────────────
+    } else if (esAnimalMod) {
+      btns.push({cls:'azul',   icon:'✨', label:'Redactar narrativa', fn:"matlachoAnimalNarrativa(null)"});
+      btns.push({cls:'verde',  icon:'📋', label:'Generar recomendaciones', fn:"matlachoAnimalRecomendaciones(null)"});
+      btns.push({cls:'naranja',icon:'🛑', label:'Auditar acta', fn:"matlachoAuditoriaAnimal(null)"});
+
+    // ── Módulo A: Denuncia — Circunstanciada ──────────────────────
+    } else if (tipo === 'circunstanciada') {
+      btns.push({cls:'morado', icon:'✨', label:'Pulir narrativa', fn:"matlachoPulirNarrativa(document.querySelector('[onclick*=matlachoPulirNarrativa]'))"});
+      btns.push({cls:'rojo',   icon:'⚖️', label:'Filtro legal', fn:"matlachoFiltroLegal(document.querySelector('[onclick*=matlachoFiltroLegal]'))"});
+      btns.push({cls:'verde',  icon:'📋', label:'Lista de hechos', fn:"matlachoHechosLista(document.querySelector('[onclick*=matlachoHechosLista]'))"});
+      btns.push({cls:'naranja',icon:'🛑', label:'Auditoría circunstanciada', fn:"matlachoAuditoriaActa(document.querySelector('[onclick*=matlachoAuditoriaActa]'))"});
+
+    // ── Módulo A: Denuncia — Apercibimiento ───────────────────────
+    } else if (tipo === 'apercibimiento') {
+      btns.push({cls:'naranja',icon:'⚠️', label:'Redactar apercibimiento', fn:"_matlachoRedactarAper()"});
+      btns.push({cls:'naranja',icon:'📐', label:'Calcular plazo legal', fn:"matlachoCalcularPlazo()"});
+      btns.push({cls:'morado', icon:'⚖️', label:'Fundamento legal municipal', fn:"matlachoAsesorJuridico(document.querySelector('[onclick*=matlachoAsesorJuridico]'))"});
+      btns.push({cls:'naranja',icon:'🛑', label:'Auditar apercibimiento', fn:"matlachoAuditoriaApercibimiento(document.querySelector('[onclick*=matlachoAuditoriaApercibimiento]'))"});
+
+    // ── Módulo A: Denuncia — Sanción ──────────────────────────────
+    } else if (tipo === 'sancion') {
+      btns.push({cls:'rojo',   icon:'🚫', label:'Redactar motivación sanción', fn:"_matlachoRedactarSanc()"});
+      btns.push({cls:'rojo',   icon:'💰', label:'Calculadora de multas', fn:"matlachoCalculadoraMultas(document.querySelector('[onclick*=matlachoCalculadoraMultas]'))"});
+      btns.push({cls:'morado', icon:'⚖️', label:'Asesor jurídico sanción', fn:"matlachoAsesorJuridicoSancion(document.querySelector('[onclick*=matlachoAsesorJuridicoSancion]'))"});
+      btns.push({cls:'rojo',   icon:'🛑', label:'Auditar sanción', fn:"matlachoAuditoriaSancion(document.querySelector('[onclick*=matlachoAuditoriaSancion]'))"});
+
+    // ── Módulo A: Inspección inicial ──────────────────────────────
+    } else {
+      btns.push({cls:'verde',  icon:'📝', label:'Redactar descripción', fn:"_matlachoRedactarDesc()"});
+      btns.push({cls:'morado', icon:'🔍', label:'Sugerir medida', fn:"_matlachoSugerirMedida()"});
     }
   } else {
-    // Ciudadano o panel context
-    btns.push({cls:'verde', icon:'✍️', label:'Mejorar mi descripción', fn:'_matlachoCiudadano()'});
+    btns.push({cls:'verde', icon:'✍️', label:'Mejorar descripción', fn:"_matlachoCiudadano()"});
   }
   btns.push({cls:'azul', icon:'❓', label:'¿Cómo uso la plataforma?', fn:"_matlachoChat('¿Cómo puedo usar la plataforma IMBIO?')"});
 

@@ -151,9 +151,14 @@ import threading as _thr
 _LEAFLET_CSS = b''
 _LEAFLET_JS  = b''
 
-INSPECTOR_MANIFEST = '{\n  "name": "IMBIO Inspector",\n  "short_name": "Inspector IMBIO",\n  "description": "App para inspectores del Instituto Municipal de Biodiversidad y Protecci\u00f3n Ambiental de Pabll\u00f3n de Arteaga",\n  "start_url": "/inspector",\n  "display": "standalone",\n  "background_color": "#0d1f35",\n  "theme_color": "#003B7A",\n  "orientation": "portrait",\n  "icons": [\n    { "src": "/inspector/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },\n    { "src": "/inspector/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }\n  ],\n  "categories": ["utilities"],\n  "lang": "es"\n}'
+INSPECTOR_MANIFEST = '{\n  "name": "IMBIO Inspector",\n  "short_name": "Inspector IMBIO",\n  "description": "App para inspectores del Instituto Municipal de Biodiversidad y Protecci\u00f3n Ambiental de Pabll\u00f3n de Arteaga",\n  "start_url": "/inspector",\n  "display": "standalone",\n  "background_color": "#0d1f35",\n  "theme_color": "#1a3a5c",\n  "orientation": "portrait",\n  "icons": [\n    { "src": "/inspector/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },\n    { "src": "/inspector/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }\n  ],\n  "categories": ["utilities"],\n  "lang": "es"\n}'
 
 INSPECTOR_SW = "// IMBIO Inspector SW\nconst CACHE='imbio-insp-v1';\nself.addEventListener('install',e=>{self.skipWaiting();});\nself.addEventListener('activate',e=>{self.clients.claim();});\nself.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});"
+
+# ── Panel Admin PWA ─────────────────────────────────────────────────────────
+PANEL_MANIFEST = '{\n  "name": "IMBIO Panel Admin",\n  "short_name": "Panel IMBIO",\n  "description": "Plataforma de monitoreo y gestión operativa ambiental municipal de Pabellón de Arteaga",\n  "start_url": "/",\n  "display": "standalone",\n  "background_color": "#002A5C",\n  "theme_color": "#002A5C",\n  "orientation": "any",\n  "icons": [\n    { "src": "/panel/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },\n    { "src": "/panel/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }\n  ],\n  "categories": ["utilities", "government"],\n  "lang": "es-MX"\n}'
+
+PANEL_SW = "// IMBIO Panel Admin SW\nconst CACHE='imbio-panel-v1';\nself.addEventListener('install',e=>{self.skipWaiting();});\nself.addEventListener('activate',e=>{self.clients.claim();});\nself.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});"
 
 def _fetch_leaflet():
     global _LEAFLET_CSS, _LEAFLET_JS
@@ -941,6 +946,29 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             self.end_headers(); self.wfile.write(body); return
 
         if path in ('/inspector/icon-192.png', '/inspector/icon-512.png'):
+            icon = APP_ICON_192 if '192' in path else APP_ICON_512
+            self.send_response(200)
+            self.send_header('Content-Type', 'image/png')
+            self.send_header('Content-Length', len(icon))
+            self.end_headers(); self.wfile.write(icon); return
+
+        # ── Panel Admin PWA assets ────────────────────────────
+        if path == '/panel/manifest.json':
+            body = PANEL_MANIFEST.encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/manifest+json')
+            self.send_header('Content-Length', len(body))
+            self.end_headers(); self.wfile.write(body); return
+
+        if path == '/panel/sw.js':
+            body = PANEL_SW.encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/javascript')
+            self.send_header('Service-Worker-Allowed', '/')
+            self.send_header('Content-Length', len(body))
+            self.end_headers(); self.wfile.write(body); return
+
+        if path in ('/panel/icon-192.png', '/panel/icon-512.png'):
             icon = APP_ICON_192 if '192' in path else APP_ICON_512
             self.send_response(200)
             self.send_header('Content-Type', 'image/png')
