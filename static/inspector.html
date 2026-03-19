@@ -26,18 +26,28 @@
   --gris:       #f0f4fa;
   --borde:      #e2e8f0;
   --blanco:     #ffffff;
+  /* ── ACCESIBILIDAD: escala base de fuentes e iconos ── */
+  --fs-xs:   0.88rem;   /* antes: .68-.72rem */
+  --fs-sm:   0.95rem;   /* antes: .78-.82rem */
+  --fs-base: 1.05rem;   /* antes: .88-.95rem */
+  --fs-md:   1.15rem;   /* antes: 1rem       */
+  --fs-lg:   1.3rem;    /* titulos           */
+  --ic-sm:   1.6rem;    /* iconos pequeños   */
+  --ic-md:   2rem;      /* iconos tabs       */
+  --ic-lg:   2.6rem;    /* iconos splash     */
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:16px}
 html,body{height:100%;overflow:hidden;background:#1a3a5c}
-body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto)}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto);font-size:var(--fs-base)}
 
 /* SPLASH */
 #splash{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0d1f35 0%,#1a3a5c 60%,#003B7A 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s}
 #splash.hide{opacity:0;pointer-events:none}
-.sp-badge{background:var(--acento);color:#000;font-size:.7rem;font-weight:800;padding:3px 10px;border-radius:99px;letter-spacing:.1em;margin-bottom:16px}
+.sp-badge{background:var(--acento);color:#000;font-size:.92rem;font-weight:800;padding:3px 10px;border-radius:99px;letter-spacing:.1em;margin-bottom:16px}
 .sp-logo{font-size:4rem;margin-bottom:12px}
-.sp-title{color:#fff;font-size:1.8rem;font-weight:800;letter-spacing:-.5px}
-.sp-sub{color:rgba(255,255,255,.6);font-size:.82rem;margin-top:6px;text-align:center;line-height:1.5}
+.sp-title{color:#fff;font-size:2.1rem;font-weight:800;letter-spacing:-.5px}
+.sp-sub{color:rgba(255,255,255,.6);font-size:1rem;margin-top:6px;text-align:center;line-height:1.5}
 .sp-loader{margin-top:40px;width:44px;height:4px;background:rgba(255,255,255,.15);border-radius:99px;overflow:hidden}
 .sp-loader::after{content:'';display:block;height:100%;width:35%;background:var(--acento);border-radius:99px;animation:ld 1.1s ease-in-out infinite}
 @keyframes ld{0%{transform:translateX(-100%)}100%{transform:translateX(380%)}}
@@ -48,12 +58,12 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 .login-box{background:#fff;border-radius:20px;padding:32px 28px;width:340px;box-shadow:0 24px 80px rgba(0,0,0,.4)}
 .login-box .lb-logo{text-align:center;margin-bottom:24px}
 .login-box .lb-logo .ic{font-size:2.8rem}
-.login-box .lb-logo h1{font-size:1.2rem;font-weight:800;color:var(--inspector);margin-top:8px}
-.login-box .lb-logo p{font-size:.75rem;color:var(--muted);margin-top:3px}
-.login-box .lb-badge{background:#fef3c7;color:#92400e;font-size:.72rem;font-weight:700;padding:4px 10px;border-radius:6px;text-align:center;margin-bottom:18px}
+.login-box .lb-logo h1{font-size:1.35rem;font-weight:800;color:var(--inspector);margin-top:8px}
+.login-box .lb-logo p{font-size:.92rem;color:var(--muted);margin-top:3px}
+.login-box .lb-badge{background:#fef3c7;color:#92400e;font-size:.88rem;font-weight:700;padding:6px 12px;border-radius:6px;text-align:center;margin-bottom:18px}
 .lf{margin-bottom:14px}
-.lf label{display:block;font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:5px}
-.lf input{width:100%;padding:11px 14px;border:1.5px solid var(--borde);border-radius:10px;font-size:.95rem;outline:none}
+.lf label{display:block;font-size:.93rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:5px}
+.lf input{width:100%;padding:11px 14px;border:1.5px solid var(--borde);border-radius:10px;font-size:1.05rem;outline:none}
 .lf input:focus{border-color:var(--azul-claro)}
 .btn-login{width:100%;padding:13px;background:var(--inspector);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:800;cursor:pointer;margin-top:4px}
 #login-err{color:var(--rojo);font-size:.82rem;margin-top:8px;text-align:center}
@@ -63,19 +73,19 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 
 /* HEADER */
 .iheader{background:linear-gradient(135deg,#0d1f35,#1a3a5c);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
-.ih-icon{font-size:1.5rem}
-.ih-text h1{color:#fff;font-size:1rem;font-weight:800}
-.ih-text p{color:rgba(255,255,255,.55);font-size:.68rem;margin-top:1px}
+.ih-icon{font-size:1.9rem}
+.ih-text h1{color:#fff;font-size:1.15rem;font-weight:800}
+.ih-text p{color:rgba(255,255,255,.55);font-size:.85rem;margin-top:1px}
 .ih-right{margin-left:auto;display:flex;align-items:center;gap:8px}
 .conn-dot{width:8px;height:8px;border-radius:50%;background:#4ade80}
 .conn-dot.off{background:#f87171}
-.btn-logout{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 10px;border-radius:7px;font-size:.75rem;cursor:pointer}
-.user-chip{background:var(--acento);color:#000;font-size:.7rem;font-weight:800;padding:3px 10px;border-radius:99px}
+.btn-logout{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 10px;border-radius:7px;font-size:.9rem;cursor:pointer}
+.user-chip{background:var(--acento);color:#000;font-size:.87rem;font-weight:800;padding:5px 12px;border-radius:99px}
 
 /* TABS */
 .itabs{display:flex;background:#1a3a5c;flex-shrink:0}
-.itab{flex:1;padding:12px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:rgba(255,255,255,.45);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;border-bottom:3px solid transparent;transition:.15s}
-.itab .ic{font-size:1.6rem}
+.itab{flex:1;padding:12px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:rgba(255,255,255,.45);font-size:.88rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;border-bottom:3px solid transparent;transition:.15s}
+.itab .ic{font-size:2.1rem}
 .itab.active{color:var(--acento);border-bottom-color:var(--acento)}
 
 /* CONTENT */
@@ -101,11 +111,11 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 .rep-card.est-apercibido{border-left-color:#f59e0b}
 .rep-card.est-sancionado{border-left-color:#3b82f6}
 @keyframes pulse-border{0%,100%{border-left-color:#dc2626}50%{border-left-color:#fca5a5}}
-.rep-folio{font-family:monospace;font-size:.8rem;font-weight:800;color:var(--azul)}
-.rep-tipo{font-size:.88rem;font-weight:700;color:var(--texto);margin-top:3px}
-.rep-desc{font-size:.78rem;color:var(--muted);margin-top:4px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.rep-meta{display:flex;gap:10px;margin-top:6px;font-size:.72rem;color:var(--muted)}
-.est-badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.68rem;font-weight:800;text-transform:uppercase}
+.rep-folio{font-family:monospace;font-size:.95rem;font-weight:800;color:var(--azul)}
+.rep-tipo{font-size:1rem;font-weight:700;color:var(--texto);margin-top:3px}
+.rep-desc{font-size:.9rem;color:var(--muted);margin-top:4px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rep-meta{display:flex;gap:10px;margin-top:6px;font-size:.87rem;color:var(--muted)}
+.est-badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.85rem;font-weight:800;text-transform:uppercase}
 .est-reportado{background:#fef3c7;color:#92400e}
 .est-asignado{background:#dbeafe;color:#1e40af}
 .est-en_proceso{background:#fce7f3;color:#9d174d}
@@ -117,8 +127,8 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 
 /* FORMS */
 .fg{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
-.fg label{font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-.fg input,.fg select,.fg textarea{width:100%;padding:11px 13px;border:1.5px solid var(--borde);border-radius:10px;font-size:.9rem;font-family:inherit;outline:none;background:#fff}
+.fg label{font-size:.9rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.fg input,.fg select,.fg textarea{width:100%;padding:11px 13px;border:1.5px solid var(--borde);border-radius:10px;font-size:1rem;font-family:inherit;outline:none;background:#fff}
 .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--azul-claro);box-shadow:0 0 0 3px rgba(25,118,210,.1)}
 .fg textarea{resize:none;min-height:75px}
 .fg select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px;appearance:none}
@@ -151,7 +161,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 #sig-inspector{width:100%;height:110px;border:2px dashed var(--borde);border-radius:10px;cursor:crosshair;touch-action:none;background:#fafcff;display:block}
 
 /* BOTONES */
-.ibtn{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 18px;border-radius:10px;border:none;cursor:pointer;font-size:.88rem;font-weight:800;transition:.15s;width:100%}
+.ibtn{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 18px;border-radius:10px;border:none;cursor:pointer;font-size:1rem;font-weight:800;transition:.15s;width:100%}
 .ibtn:active{transform:scale(.98)}
 .ibtn-primary{background:var(--azul);color:#fff}
 .ibtn-success{background:var(--verde);color:#fff}
@@ -159,7 +169,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 .ibtn-danger{background:var(--rojo);color:#fff}
 .ibtn-ghost{background:var(--gris);color:var(--muted);border:1.5px solid var(--borde)}
 .ibtn-acento{background:var(--acento);color:#000}
-.ibtn-sm{padding:7px 14px;font-size:.78rem;width:auto}
+.ibtn-sm{padding:7px 14px;font-size:.92rem;width:auto}
 
 /* ALERTS */
 .ialert{padding:10px 14px;border-radius:8px;margin-bottom:10px;font-size:.82rem;line-height:1.4}
@@ -177,11 +187,11 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 .acta-card{background:#fff;border-radius:12px;border:2px solid var(--borde);overflow:hidden;margin-bottom:10px}
 .acta-card-head{background:var(--inspector);padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
 .acta-folio{color:#fff;font-family:monospace;font-size:.82rem;font-weight:800}
-.acta-tipo-badge{font-size:.65rem;font-weight:800;padding:3px 8px;border-radius:99px;text-transform:uppercase}
+.acta-tipo-badge{font-size:.82rem;font-weight:800;padding:4px 10px;border-radius:99px;text-transform:uppercase}
 .acta-circunstanciada{background:#dbeafe;color:#1e40af}
 .acta-apercibimiento{background:#fef3c7;color:#92400e}
 .acta-sancion{background:#fee2e2;color:#991b1b}
-.acta-card-body{padding:12px 14px;font-size:.82rem}
+.acta-card-body{padding:12px 14px;font-size:.97rem}
 .acta-row{display:flex;gap:8px;margin-bottom:6px}
 .acta-row label{color:var(--muted);font-weight:700;min-width:90px;font-size:.75rem}
 .acta-row span{color:var(--texto);flex:1}
@@ -284,7 +294,7 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
 .empty{text-align:center;padding:40px 20px;color:var(--muted)}
 .empty .em-ic{font-size:3rem;margin-bottom:10px}
 .empty p{font-size:.85rem;line-height:1.5}
-.section-title{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--inspector);background:var(--azul-bg);padding:7px 14px;margin:-14px -14px 12px;border-bottom:1px solid #B3CFF0}
+.section-title{font-size:.9rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--inspector);background:var(--azul-bg);padding:7px 14px;margin:-14px -14px 12px;border-bottom:1px solid #B3CFF0}
 
 #loading{position:fixed;inset:0;background:rgba(0,43,92,.55);z-index:900;display:none;align-items:center;justify-content:center}
 #loading.show{display:flex}
@@ -1650,47 +1660,111 @@ function eliminarFoto(i) {
 // ── FIRMA ─────────────────────────────────────────────────
 function _initOneCanvas(canvas) {
   if (!canvas) return;
+  // ── ANTI-CONGELAMIENTO: evitar registrar listeners duplicados ──────────────
+  // Si ya fue inicializado, solo re-aplicar estilos de contexto y redimenisionar
+  if (canvas._sigInitialized) {
+    var _ctx2 = canvas.getContext('2d');
+    var _w2 = canvas.offsetWidth || 320;
+    var _h2 = canvas.offsetHeight || 90;
+    if (_w2 > 10 && _h2 > 10) {
+      canvas.width  = _w2;
+      canvas.height = _h2;
+    }
+    _ctx2.strokeStyle = '#1a3a5c';
+    _ctx2.lineWidth   = 2.5;
+    _ctx2.lineCap     = 'round';
+    _ctx2.lineJoin    = 'round';
+    return;
+  }
+  canvas._sigInitialized = true;
+
   var ctx = canvas.getContext('2d');
   var drawing = false;
 
-  function resize() {
-    if (drawing) return;
-    var w = canvas.offsetWidth || 320;
-    var h = canvas.offsetHeight || 90;
-    if (w < 10 || h < 10) return;
-    if (canvas.width !== w || canvas.height !== h) {
-      canvas.width  = w;
-      canvas.height = h;
-    }
+  // Obtener referencia al contenedor scrolleable en tiempo de evento (no en init)
+  function getModalBody() { return document.getElementById('acta-form-body'); }
+  function lock()   { var mb = getModalBody(); if (mb) mb.style.overflowY = 'hidden'; }
+  function unlock() { var mb = getModalBody(); if (mb) mb.style.overflowY = ''; }
+
+  function applyStyles() {
     ctx.strokeStyle = '#1a3a5c';
     ctx.lineWidth   = 2.5;
     ctx.lineCap     = 'round';
     ctx.lineJoin    = 'round';
   }
 
-  setTimeout(resize, 80);
-  setTimeout(resize, 300);
+  function resize() {
+    if (drawing) return;
+    var w = canvas.offsetWidth || 320;
+    var h = canvas.offsetHeight || 90;
+    if (w < 10 || h < 10) return;
+    // Solo redimensionar si cambió — preserva el trazado existente si no hay cambio
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width  = w;
+      canvas.height = h;
+    }
+    applyStyles();
+  }
+
+  // Esperar a que el layout esté disponible usando doble RAF + timeouts de seguridad
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      resize();
+      setTimeout(resize, 150);
+      setTimeout(resize, 400);
+    });
+  });
 
   function getPos(e) {
-    var r = canvas.getBoundingClientRect();
+    var r   = canvas.getBoundingClientRect();
     var src = e.touches ? e.touches[0] : e;
-    var sx = canvas.width  / (r.width  || canvas.width);
-    var sy = canvas.height / (r.height || canvas.height);
+    // Escalar coordenadas si el canvas CSS != canvas interno (alta resolución / zoom)
+    var sx = (r.width  > 0) ? canvas.width  / r.width  : 1;
+    var sy = (r.height > 0) ? canvas.height / r.height : 1;
     return { x: (src.clientX - r.left) * sx, y: (src.clientY - r.top) * sy };
   }
 
-  var modalBody = document.getElementById('acta-form-body');
-  function lock()   { if (modalBody) modalBody.style.overflowY = 'hidden'; }
-  function unlock() { if (modalBody) modalBody.style.overflowY = ''; }
-
-  canvas.onmousedown  = function(e) { resize(); drawing=true; ctx.beginPath(); var p=getPos(e); ctx.moveTo(p.x,p.y); };
+  // ── Eventos mouse (usando propiedades onX para que sean fácilmente reemplazables) ──
+  canvas.onmousedown  = function(e) { resize(); applyStyles(); drawing=true; ctx.beginPath(); var p=getPos(e); ctx.moveTo(p.x,p.y); };
   canvas.onmousemove  = function(e) { if(!drawing)return; var p=getPos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); };
   canvas.onmouseup    = function()  { drawing=false; };
   canvas.onmouseleave = function()  { drawing=false; };
-  canvas.addEventListener('touchstart', function(e){ e.preventDefault(); e.stopPropagation(); resize(); lock(); drawing=true; ctx.beginPath(); var p=getPos(e); ctx.moveTo(p.x,p.y); }, {passive:false});
-  canvas.addEventListener('touchmove',  function(e){ e.preventDefault(); e.stopPropagation(); if(!drawing)return; var p=getPos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); }, {passive:false});
-  canvas.addEventListener('touchend',   function(e){ e.preventDefault(); drawing=false; unlock(); }, {passive:false});
-  canvas.addEventListener('touchcancel',function(){ drawing=false; unlock(); });
+
+  // ── Eventos touch — un único registro con {passive:false} ─────────────────
+  // Se usan funciones nombradas para que no se acumulen (aunque con _sigInitialized ya es seguro)
+  function onTouchStart(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    resize();
+    applyStyles();
+    lock();
+    drawing = true;
+    ctx.beginPath();
+    var p = getPos(e);
+    ctx.moveTo(p.x, p.y);
+  }
+  function onTouchMove(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!drawing) return;
+    var p = getPos(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  }
+  function onTouchEnd(e) {
+    e.preventDefault();
+    drawing = false;
+    unlock();  // SIEMPRE desbloquear scroll, incluso si hubo error
+  }
+  function onTouchCancel() {
+    drawing = false;
+    unlock();  // SIEMPRE desbloquear scroll en cancel también
+  }
+
+  canvas.addEventListener('touchstart',  onTouchStart,  {passive:false});
+  canvas.addEventListener('touchmove',   onTouchMove,   {passive:false});
+  canvas.addEventListener('touchend',    onTouchEnd,    {passive:false});
+  canvas.addEventListener('touchcancel', onTouchCancel, {passive:false});
 }
 
 function initSig() {
@@ -1713,22 +1787,8 @@ function clearSig(id) {
 function sigIsEmpty() { return !sigCtx||!sigCtx.getImageData(0,0,sigCanvas?.width||1,sigCanvas?.height||1).data.some(v=>v!==0); }
 
 function initSigExtra(canvas) {
-  var ctx = canvas.getContext('2d');
-  ctx.strokeStyle = '#002A5C'; ctx.lineWidth = 2; ctx.lineCap = 'round';
-  var drawing = false;
-  function gp(e) {
-    var r=canvas.getBoundingClientRect(), s=e.touches?e.touches[0]:e;
-    var sx = canvas.width  / (r.width  || canvas.width);
-    var sy = canvas.height / (r.height || canvas.height);
-    return { x: (s.clientX-r.left)*sx, y: (s.clientY-r.top)*sy };
-  }
-  canvas.onmousedown  = function(e){ drawing=true; ctx.beginPath(); var p=gp(e); ctx.moveTo(p.x,p.y); };
-  canvas.onmousemove  = function(e){ if(!drawing)return; var p=gp(e); ctx.lineTo(p.x,p.y); ctx.stroke(); };
-  canvas.onmouseup    = function(){ drawing=false; };
-  canvas.onmouseleave = function(){ drawing=false; };
-  canvas.addEventListener('touchstart', function(e){ e.preventDefault(); drawing=true; ctx.beginPath(); var p=gp(e); ctx.moveTo(p.x,p.y); },{passive:false});
-  canvas.addEventListener('touchmove',  function(e){ e.preventDefault(); if(!drawing)return; var p=gp(e); ctx.lineTo(p.x,p.y); ctx.stroke(); },{passive:false});
-  canvas.addEventListener('touchend',   function(){ drawing=false; });
+  // Unificado: delegar a _initOneCanvas que tiene protección anti-duplicados
+  _initOneCanvas(canvas);
 }
 
 function selRiesgo(nivel) {
@@ -2249,94 +2309,42 @@ async function borrarActaLocal(id, idx) {
 
 function renderMisActas() {
   const el = document.getElementById('lista-actas');
-  if (!misActas.length) {
-    el.innerHTML = '<div class="empty"><div class="em-ic">📄</div><p>Las actas que generes aparecerán aquí.</p></div>';
+  if (!el) return;
+  // ── Aplicar filtro activo ──────────────────────────────────────────────────
+  var filtro = window._actasFiltro || null;
+  var actasMostrar = filtro
+    ? misActas.filter(function(a){ return a.tipo_acta === filtro; })
+    : misActas;
+
+  if (!actasMostrar.length) {
+    var msgVacio = filtro
+      ? '<div class="empty"><div class="em-ic">🔍</div><p>No hay actas de tipo <b>' + filtro + '</b>.<br><small>Usa "✕ Ver todas" para ver todas las actas.</small></p></div>'
+      : '<div class="empty"><div class="em-ic">📄</div><p>Las actas que generes aparecerán aquí.</p></div>';
+    el.innerHTML = msgVacio;
     return;
   }
   const labels = { circunstanciada:'Circunstanciada', apercibimiento:'Apercibimiento', sancion:'Sanción', inspeccion:'Inspección' };
-  el.innerHTML = misActas.map((a, idx) => `
-    <div class="acta-card">
-      <div class="acta-card-head">
-        <span class="acta-folio">${a.folio_acta}</span>
-        <span class="acta-tipo-badge acta-${a.tipo_acta}">${labels[a.tipo_acta]||a.tipo_acta}</span>
-      </div>
-      <div class="acta-card-body">
-        <div class="acta-row"><label>Reporte</label><span style="font-family:monospace;color:var(--azul)">${a.report_folio}</span></div>
-        ${a.infractor?`<div class="acta-row"><label>Infractor</label><span>${a.infractor}</span></div>`:''}
-        <div class="acta-row"><label>Descripción</label><span>${a.descripcion}</span></div>
-        <div class="acta-row"><label>Fecha</label><span>${fmtFecha(a.fecha)}</span></div>
-        <div class="acta-row"><label>Estado</label><span class="est-badge est-asignado">${a.estado}</span></div>
-      </div>
-      <div class="icard-foot">
-        <button class="ibtn ibtn-success ibtn-sm" style="flex:1" onclick="compartirPDFActa(misActas[${idx}])">📤 Compartir PDF por WhatsApp</button>
-        <button class="ibtn ibtn-sm" style="background:#dc2626;color:#fff;padding:0 14px;flex:none" onclick="borrarActaLocal(${a.id||0}, ${idx})">🗑️</button>
-      </div>
-    </div>`).join('');
-}
-
-// ── HELPERS ───────────────────────────────────────────────
-// ════════════════════════════════════════════════════════════════
-// VERIFICACIONES DE COMERCIOS — INSPECTOR
-// ════════════════════════════════════════════════════════════════
-
-function filtrarActas(tipo) {
-  window._actasFiltro = tipo;
-  ['inspeccion','circunstanciada','apercibimiento','sancion'].forEach(function(t) {
-    var card = document.getElementById('card-' + t);
-    if (card) card.style.opacity = (!tipo || tipo === t) ? '1' : '0.5';
-  });
-  var lbl = document.getElementById('actas-filtro-label');
-  var txt = document.getElementById('actas-filtro-txt');
-  var labels = {inspeccion:'🔍 Inspección',circunstanciada:'📋 Circunstanciada',apercibimiento:'⚠️ Apercibimiento',sancion:'🚫 Sanción'};
-  if (lbl) lbl.style.display = tipo ? 'flex' : 'none';
-  if (txt) txt.textContent = tipo ? ('Mostrando: ' + (labels[tipo]||tipo)) : '';
-  renderMisActas();
-}
-
-var _verifInspCache = [];
-var _verifInspActual = null;
-
-async function cargarVerificacionesInspector() {
-  var lista = document.getElementById('lista-verif-inspector');
-  if (!lista) return;
-  lista.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted)">⏳ Cargando...</div>';
-  try {
-    var r = await api('/api/verificaciones');
-    if (!r.success) {
-      lista.innerHTML = '<div style="text-align:center;padding:30px;color:#dc2626">Error al cargar verificaciones.</div>';
-      return;
-    }
-    _verifInspCache = r.data.verificaciones || [];
-    if (!_verifInspCache.length) {
-      lista.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--muted)"><div style="font-size:2.5rem;margin-bottom:10px">🏪</div><p style="font-size:.88rem;line-height:1.6">No tienes verificaciones asignadas.</p></div>';
-      return;
-    }
-    var EST_COLORS = { programada:'#3b82f6', en_proceso:'#f59e0b', completada:'#22c55e', cancelada:'#9ca3af' };
-    var EST_LABELS = { programada:'📅 Programada', en_proceso:'🔄 En Proceso', completada:'✅ Completada', cancelada:'❌ Cancelada' };
-    lista.innerHTML = _verifInspCache.map(function(v) {
-      return '<div style="background:#fff;border-radius:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);border-left:4px solid ' + (EST_COLORS[v.estado]||'#888') + ';overflow:hidden">' +
-        '<div style="padding:12px 14px">' +
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">' +
-            '<div>' +
-              '<div style="font-family:monospace;font-size:.75rem;font-weight:700;color:#1a3a5c">' + v.folio + '</div>' +
-              '<div style="font-weight:800;font-size:.95rem;margin-top:2px">' + (v.establecimiento_nombre||'–') + '</div>' +
-              '<div style="font-size:.78rem;color:#888">' + (v.establecimiento_giro||'') + '</div>' +
-            '</div>' +
-            '<span style="background:' + (EST_COLORS[v.estado]||'#888') + '20;color:' + (EST_COLORS[v.estado]||'#888') + ';padding:3px 9px;border-radius:99px;font-size:.72rem;font-weight:700">' + (EST_LABELS[v.estado]||v.estado) + '</span>' +
-          '</div>' +
-          '<div style="font-size:.80rem;color:#555;line-height:1.6">' +
-            '<div>📍 ' + (v.establecimiento_domicilio||'–') + '</div>' +
-            (v.fecha_programada ? '<div>📅 Fecha: <b>' + new Date(v.fecha_programada+'T00:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'}) + '</b></div>' : '') +
-            (v.motivo ? '<div>📝 ' + v.motivo.substring(0,80) + (v.motivo.length>80?'...':'') + '</div>' : '') +
-          '</div>' +
-        '</div>' +
-        (v.estado !== 'completada' && v.estado !== 'cancelada' ?
-          '<div style="padding:8px 14px;background:#f8fafc;border-top:1px solid #f1f5f9"><button onclick="abrirVerifInspector(' + v.id + ')" style="width:100%;padding:9px;background:linear-gradient(135deg,#1a3a5c,#1e40af);color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer">📝 Registrar Hallazgos</button></div>' :
-          '<div style="padding:8px 14px;background:#f0fdf4;border-top:1px solid #bbf7d0;font-size:.78rem;color:#15803d;font-weight:700;text-align:center">✅ Verificación completada</div>'
-        ) +
-        '</div>';
-    }).join('');
-  } catch(e) {
+  el.innerHTML = actasMostrar.map(function(a) {
+    var realIdx = misActas.indexOf(a);
+    return '<div class="acta-card">' +
+      '<div class="acta-card-head">' +
+        '<span class="acta-folio">' + a.folio_acta + '</span>' +
+        '<span class="acta-tipo-badge acta-' + a.tipo_acta + '">' + (labels[a.tipo_acta]||a.tipo_acta) + '</span>' +
+      '</div>' +
+      '<div class="acta-card-body">' +
+        '<div class="acta-row"><label>Reporte</label><span style="font-family:monospace;color:var(--azul)">' + a.report_folio + '</span></div>' +
+        (a.infractor ? '<div class="acta-row"><label>Infractor</label><span>' + a.infractor + '</span></div>' : '') +
+        '<div class="acta-row"><label>Descripción</label><span>' + (a.descripcion||'') + '</span></div>' +
+        '<div class="acta-row"><label>Fecha</label><span>' + fmtFecha(a.fecha) + '</span></div>' +
+        '<div class="acta-row"><label>Estado</label><span class="est-badge est-asignado">' + (a.estado||'') + '</span></div>' +
+      '</div>' +
+      '<div class="icard-foot">' +
+        '<button class="ibtn ibtn-success ibtn-sm" style="flex:1" onclick="compartirPDFActa(misActas[' + realIdx + '])">📤 Compartir PDF por WhatsApp</button>' +
+        '<button class="ibtn ibtn-sm" style="background:#dc2626;color:#fff;padding:0 14px;flex:none" onclick="borrarActaLocal(' + (a.id||0) + ', ' + realIdx + ')">🗑️</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}  } catch(e) {
     lista.innerHTML = '<div style="text-align:center;padding:30px;color:#dc2626">Error: ' + e.message + '</div>';
   }
 }
@@ -3259,8 +3267,12 @@ function _buildActaForm() {
   // Fundamento legal específico por tipo de acta
   if (tipoActaSel === 'circunstanciada') {
     fundoDefault = 'La presente diligencia y el levantamiento de esta acta circunstanciada se fundamentan en lo dispuesto por el Artículo 1796 del Código Municipal de Pabellón de Arteaga, que establece los requisitos de validez del acto administrativo, en relación con el Artículo 1800, el cual otorga carácter de exigibilidad inmediata a los actos de inspección, verificación y vigilancia. Asimismo, se actúa bajo las facultades conferidas en el Artículo 1805, fracción I, que autoriza a la autoridad municipal a requerir informes y documentos durante las visitas de verificación para asegurar el cumplimiento de la normativa vigente.';
+  } else if (tipoActaSel === 'apercibimiento') {
+    fundoDefault = 'El presente apercibimiento se fundamenta en el Artículo 1796 del Código Municipal de Pabellón de Arteaga, en relación con el Artículo 1800 que otorga carácter de exigibilidad inmediata a los actos de inspección, verificación y vigilancia, y el Artículo 1805 fracción II, que faculta a la autoridad municipal a formular advertencias formales ante conductas que contravengan las disposiciones ambientales del municipio. Se apercibe al visitado para que en el plazo señalado corrija las irregularidades detectadas, bajo el apercibimiento de que en caso de incumplimiento o reincidencia se procederá a la imposición de sanciones económicas y/o clausura, conforme a los Artículos 477 BIS y 672 del mismo ordenamiento.';
   } else if (tipoActaSel === 'sancion') {
     fundoDefault = 'La determinación de la presente sanción se sustenta legalmente en el Artículo 477 BIS, que faculta al Instituto Municipal de Biodiversidad para imponer las sanciones correspondientes ante infracciones normativas, y el Artículo 672, que autoriza al IMBIO a ejecutar medidas de seguridad y acciones legales ante actos u omisiones que contravengan las disposiciones de protección animal y ambiental en el municipio. Lo anterior, en estricto cumplimiento al procedimiento administrativo sancionador previsto en este cuerpo normativo.';
+  } else if (tipoActaSel === 'inspeccion') {
+    fundoDefault = 'La presente visita de inspección se realiza en ejercicio de las facultades conferidas por el Artículo 1805 fracción I del Código Municipal de Pabellón de Arteaga, que autoriza a la autoridad ambiental municipal a practicar visitas de verificación, inspección y vigilancia para constatar el cumplimiento de la normativa ambiental. Lo anterior, en concordancia con el Artículo 1800 que otorga carácter ejecutivo a los actos de autoridad, y con los Artículos 134 al 141 de la LGEEPA que establecen las bases del procedimiento de inspección y vigilancia ambiental.';
   }
 
   // ── SECCIÓN DESCRIPCIÓN (varía según tipo de ACTA) ──────────────
@@ -4255,11 +4267,11 @@ function _matlachoInit() {
     <style>
       #matlacho-fab {
         position:fixed;bottom:22px;right:18px;z-index:8000;
-        width:58px;height:58px;border-radius:50%;
+        width:68px;height:68px;border-radius:50%;
         background:linear-gradient(135deg,#16a34a,#15803d);
         box-shadow:0 4px 18px rgba(22,163,74,.45);
         cursor:pointer;display:flex;align-items:center;justify-content:center;
-        font-size:1.7rem;border:none;transition:transform .2s;
+        font-size:2.1rem;border:none;transition:transform .2s;
         animation:matlacho-bounce 3s ease-in-out infinite;
       }
       #matlacho-fab:hover { transform:scale(1.12); }
@@ -4267,8 +4279,8 @@ function _matlachoInit() {
         0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)}
       }
       #matlacho-panel {
-        position:fixed;bottom:92px;right:18px;z-index:7999;
-        width:320px;max-height:520px;
+        position:fixed;bottom:104px;right:18px;z-index:7999;
+        width:360px;max-height:580px;
         background:#fff;border-radius:18px;
         box-shadow:0 8px 40px rgba(0,0,0,.18);
         display:none;flex-direction:column;overflow:hidden;
@@ -4277,27 +4289,27 @@ function _matlachoInit() {
       #matlacho-panel.open { display:flex; }
       .matlacho-header {
         background:linear-gradient(135deg,#166534,#16a34a);
-        padding:14px 16px;display:flex;align-items:center;gap:10px;
+        padding:16px 18px;display:flex;align-items:center;gap:12px;
       }
       .matlacho-avatar {
-        width:40px;height:40px;border-radius:50%;
+        width:52px;height:52px;border-radius:50%;
         background:#fff;display:flex;align-items:center;justify-content:center;
-        font-size:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.15);flex-shrink:0;
+        font-size:1.9rem;box-shadow:0 2px 8px rgba(0,0,0,.15);flex-shrink:0;
       }
-      .matlacho-name { color:#fff;font-weight:800;font-size:.9rem; }
-      .matlacho-role { color:rgba(255,255,255,.75);font-size:.72rem; }
+      .matlacho-name { color:#fff;font-weight:800;font-size:1.1rem; }
+      .matlacho-role { color:rgba(255,255,255,.75);font-size:.88rem; }
       .matlacho-close {
         margin-left:auto;background:none;border:none;color:#fff;
-        font-size:1.2rem;cursor:pointer;padding:2px 6px;opacity:.8;
+        font-size:1.5rem;cursor:pointer;padding:4px 8px;opacity:.8;
       }
       .matlacho-body {
-        flex:1;overflow-y:auto;padding:12px;
-        display:flex;flex-direction:column;gap:8px;
-        max-height:320px;
+        flex:1;overflow-y:auto;padding:14px;
+        display:flex;flex-direction:column;gap:10px;
+        max-height:340px;
       }
       .matlacho-bubble {
         background:#f0fdf4;border-radius:12px 12px 12px 2px;
-        padding:10px 13px;font-size:.8rem;color:#1a3a5c;line-height:1.5;
+        padding:12px 15px;font-size:.97rem;color:#1a3a5c;line-height:1.55;
         border:1px solid #bbf7d0;max-width:92%;
       }
       .matlacho-bubble.user {
@@ -4309,12 +4321,12 @@ function _matlachoInit() {
       }
       .matlacho-actions {
         padding:10px 12px;border-top:1px solid #f1f5f9;
-        display:flex;flex-direction:column;gap:6px;
+        display:flex;flex-direction:column;gap:7px;
       }
       .matlacho-btn {
-        padding:8px 12px;border:none;border-radius:9px;
-        font-size:.78rem;font-weight:700;cursor:pointer;
-        display:flex;align-items:center;gap:6px;text-align:left;
+        padding:11px 14px;border:none;border-radius:10px;
+        font-size:.95rem;font-weight:700;cursor:pointer;
+        display:flex;align-items:center;gap:8px;text-align:left;
         transition:opacity .15s;
       }
       .matlacho-btn:hover { opacity:.88; }
@@ -4324,21 +4336,21 @@ function _matlachoInit() {
       .matlacho-btn.rojo  { background:#fee2e2;color:#991b1b; }
       .matlacho-btn.morado{ background:#ede9fe;color:#5b21b6; }
       .matlacho-input-row {
-        display:flex;gap:6px;padding:8px 12px;border-top:1px solid #f1f5f9;
+        display:flex;gap:8px;padding:10px 14px;border-top:1px solid #f1f5f9;
       }
       .matlacho-input {
-        flex:1;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:9px;
-        font-size:.8rem;outline:none;
+        flex:1;padding:10px 13px;border:1.5px solid #e2e8f0;border-radius:10px;
+        font-size:.97rem;outline:none;
       }
       .matlacho-input:focus { border-color:#16a34a; }
       .matlacho-send {
-        padding:7px 12px;background:#16a34a;color:#fff;border:none;
-        border-radius:9px;cursor:pointer;font-size:.85rem;
+        padding:10px 16px;background:#16a34a;color:#fff;border:none;
+        border-radius:10px;cursor:pointer;font-size:1.05rem;font-weight:700;
       }
       .matlacho-suggestion-banner {
         background:linear-gradient(135deg,#166534,#16a34a);
-        color:#fff;border-radius:10px;padding:10px 13px;
-        font-size:.8rem;font-weight:700;margin-top:4px;
+        color:#fff;border-radius:10px;padding:12px 15px;
+        font-size:.97rem;font-weight:700;margin-top:4px;
       }
     </style>
 
