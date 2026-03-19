@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#002A5C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Panel IMBIO">
+<link rel="manifest" href="/panel/manifest.json">
+<link rel="apple-touch-icon" href="/panel/icon-192.png">
 <title>Plataforma de Monitoreo Ambiental IMBIO-Pabellón</title>
 <link rel="stylesheet" href="/static/leaflet.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -1179,6 +1186,12 @@
 // ══════════════════════════════════════════════════════════════
 //  SGO-IMBIO Frontend
 // ══════════════════════════════════════════════════════════════
+
+// ── PWA: Service Worker registration ──────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/panel/sw.js', { scope: '/' }).catch(() => {});
+}
+
 let TOKEN = null, USER = null, currentPage = 1;
 
 // ── Mapa General ──────────────────────────────────────────────
