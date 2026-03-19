@@ -36,7 +36,7 @@
   --rojo-bg:      #fee2e2;
   --azul:         #1d4ed8;
   --texto:        #1a202c;
-  --muted:        #64748b;
+  --muted:        #475569;
   --gris:         #f0f4fa;
   --borde:        #d1dff0;
   --blanco:       #ffffff;
@@ -45,14 +45,15 @@
   --r-card:       16px;
   --sombra:       0 2px 12px rgba(0,59,122,.10), 0 1px 3px rgba(0,0,0,.06);
   /* ── ACCESIBILIDAD ── */
-  --fs-xs:   0.88rem;
-  --fs-sm:   0.95rem;
-  --fs-base: 1.05rem;
-  --fs-md:   1.15rem;
+  --fs-xs:   0.92rem;
+  --fs-sm:   1rem;
+  --fs-base: 1.08rem;
+  --fs-md:   1.2rem;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; overflow: hidden; background: var(--verde); }
+html { font-size: 17px; max-width: 100vw; overflow-x: hidden; }
+html, body { height: 100%; overflow: hidden; overflow-x: hidden; background: var(--verde); max-width: 100vw; }
 body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var(--texto); font-size: var(--fs-base); }
 
 /* ── SPLASH ── */
@@ -77,7 +78,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
   50%     { border-radius: 62% 38% 45% 55% / 55% 62% 38% 45%; }
 }
 .splash-title { color: #fff; font-family: 'Nunito', sans-serif; font-size: 2.3rem; font-weight: 900; letter-spacing: -.5px; }
-.splash-sub { color: rgba(255,255,255,.65); font-size: 1rem; margin-top: 6px; text-align: center; line-height: 1.4; }
+.splash-sub { color: rgba(255,255,255,.85); font-size: 1rem; margin-top: 6px; text-align: center; line-height: 1.4; }
 .splash-municipio {
   margin-top: 8px; background: rgba(255,255,255,.12); border-radius: 99px;
   padding: 4px 16px; color: rgba(255,255,255,.85); font-size: .92rem; font-weight: 700;
@@ -121,7 +122,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 .header-leaf { font-size: 1.9rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,.3)); }
 .header-text h1 { color: #fff; font-family: 'Nunito', sans-serif; font-size: 1.15rem; font-weight: 800; letter-spacing: -.3px; }
 .header-text p  { color: rgba(255,255,255,.55); font-size: .72rem; margin-top: 1px; }
-.header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; ; flex-wrap: wrap; }
 .conn-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ambar); box-shadow: 0 0 0 3px rgba(245,158,11,.25); transition: .3s; }
 .conn-dot.ok  { background: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,.25); }
 .conn-dot.off { background: #f87171; box-shadow: 0 0 0 3px rgba(248,113,113,.25); }
@@ -136,14 +137,14 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
   border-bottom: 2px solid rgba(255,255,255,.10);
   box-shadow: 0 2px 8px rgba(0,42,92,.2);
   transition: top .28s cubic-bezier(.4,0,.2,1);
-}
+; flex-wrap: wrap; }
 .tab {
   flex: 1; padding: 12px 4px 10px; display: flex; flex-direction: column;
   align-items: center; gap: 4px; cursor: pointer; transition: .2s;
   color: rgba(255,255,255,.45); font-size: .72rem; font-weight: 700;
   text-transform: uppercase; letter-spacing: .05em;
   border-bottom: 3px solid transparent;
-}
+; flex-wrap: wrap; }
 .tab .tab-ic { font-size: 1.55rem; }
 .tab.active { color: var(--ambar); border-bottom-color: var(--ambar); }
 .tab:active { background: rgba(255,255,255,.07); }
@@ -171,7 +172,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
   background: var(--verde-bg); padding: 13px 16px;
   border-bottom: 1px solid var(--verde-borde);
   display: flex; align-items: center; gap: 9px;
-}
+; flex-wrap: wrap; }
 .form-card-header .ic { font-size: 1.25rem; }
 .form-card-header span { font-size: .86rem; font-weight: 800; color: var(--verde); text-transform: uppercase; letter-spacing: .06em; }
 .form-card-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
@@ -197,11 +198,11 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
   display: flex; align-items: center; gap: 7px;
   font-size: .84rem; font-weight: 800; text-transform: uppercase;
   letter-spacing: .06em; margin: 14px 0 9px; padding: 0 2px;
-}
+; flex-wrap: wrap; }
 .cat-line { flex: 1; height: 1px; background: var(--borde); }
 
 /* Grid de chips */
-.tipo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tipo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
 
 /* Chips de tipo mejorados */
 .tipo-chip {
@@ -210,7 +211,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
   text-align: center; transition: all .18s;
   display: flex; flex-direction: column; align-items: center; gap: 5px;
   position: relative; overflow: hidden;
-}
+; flex-wrap: wrap; }
 .tipo-chip::before {
   content: ''; position: absolute; inset: 0;
   background: var(--chip-color, var(--verde)); opacity: 0;
@@ -260,20 +261,20 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
   cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.15);
   display: flex; align-items: center; gap: 5px;
   touch-action: manipulation;
-}
+; flex-wrap: wrap; }
 .map-addr {
   margin-top: 8px; padding: 10px 12px; background: var(--verde-bg);
   border-radius: 8px; border: 1px solid var(--verde-borde);
   font-size: .9rem; color: var(--oscuro); line-height: 1.45;
   min-height: 42px;
 }
-.map-btns { display: flex; gap: 8px; margin-top: 8px; }
+.map-btns { display: flex; gap: 8px; margin-top: 8px; ; flex-wrap: wrap; }
 .map-btn {
   flex: 1; padding: 11px 6px; border: 1.5px solid var(--borde); border-radius: 10px;
   background: #fff; font-size: .86rem; font-weight: 700; color: var(--verde);
   cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
   transition: .15s;
-}
+; flex-wrap: wrap; }
 .map-btn:active { background: var(--verde-bg); }
 
 /* ── FIRMA ── */
@@ -292,7 +293,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
   box-shadow: 0 6px 24px rgba(10,102,64,.35), 0 2px 8px rgba(10,102,64,.2);
   display: flex; align-items: center; justify-content: center; gap: 8px;
   transition: .15s; margin-top: 4px; position: relative; overflow: hidden;
-}
+; flex-wrap: wrap; }
 .btn-enviar::after {
   content: ''; position: absolute; inset: 0;
   background: linear-gradient(to bottom, rgba(255,255,255,.12), transparent);
@@ -323,7 +324,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 .reporte-card.est-asignado    { border-left-color: #3b82f6; }
 .reporte-card.est-en_proceso  { border-left-color: var(--verde-claro); }
 .reporte-card.est-cerrado     { border-left-color: #22c55e; }
-.reporte-card-head { padding: 12px 14px 8px; display: flex; justify-content: space-between; align-items: flex-start; }
+.reporte-card-head { padding: 12px 14px 8px; display: flex; justify-content: space-between; align-items: flex-start; ; flex-wrap: wrap; }
 .reporte-folio { font-size: .75rem; font-weight: 800; color: var(--verde); font-family: monospace; }
 .reporte-estado { font-size: .68rem; font-weight: 800; padding: 3px 9px; border-radius: 99px; text-transform: uppercase; }
 .est-badge-reportado  { background: #fef3c7; color: var(--ambar-oscuro); }
@@ -332,11 +333,11 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 .est-badge-cerrado    { background: #dcfce7; color: #166534; }
 .reporte-tipo { font-size: .92rem; font-weight: 700; color: var(--texto); padding: 0 14px; }
 .reporte-desc { font-size: .88rem; color: var(--muted); padding: 4px 14px 10px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.reporte-foot { padding: 8px 14px; background: var(--gris); border-top: 1px solid var(--borde); display: flex; justify-content: space-between; align-items: center; }
+.reporte-foot { padding: 8px 14px; background: var(--gris); border-top: 1px solid var(--borde); display: flex; justify-content: space-between; align-items: center; ; flex-wrap: wrap; }
 .reporte-fecha, .reporte-colonia { font-size: .72rem; color: var(--muted); font-weight: 600; }
 
 /* ── ADDR GRID ── */
-.addr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.addr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
 .addr-grid .fgroup.full { grid-column: 1/-1; }
 
 /* ── ANIMAL PANEL ── */
@@ -347,11 +348,11 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 .bzone:hover rect,.bzone:hover ellipse,.bzone:hover path { opacity:.7 }
 .bzone.sel rect,.bzone.sel ellipse,.bzone.sel path { fill:#003B7A !important }
 .bzone.sel text { fill:#fff !important }
-.gravedad-btns { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px }
-.grav-btn { padding:12px 8px; border:2px solid var(--borde); border-radius:10px; background:#fff; cursor:pointer; text-align:center; font-size:.82rem; font-weight:700; color:var(--muted); transition:.15s }
+.gravedad-btns { display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin-top:6px }
+.grav-btn { padding:12px 8px; border:2px solid var(--borde); border-radius:10px; background:#fff; cursor:pointer; text-align:center; font-size:.97rem; font-weight:700; color:var(--muted); transition:.15s }
 .grav-btn.sel-sup { border-color:var(--verde-medio); background:var(--verde-bg); color:var(--verde) }
 .grav-btn.sel-pro { border-color:#dc2626; background:#fee2e2; color:#991b1b }
-.animal-check { display:flex; align-items:center; gap:10px; padding:13px 14px; border:1.5px solid var(--borde); border-radius:10px; background:#fff; cursor:pointer; font-size:.96rem; font-weight:600 }
+.animal-check { display:flex; align-items:center; gap:10px; padding:13px 14px; border:1.5px solid var(--borde); border-radius:10px; background:#fff; cursor:pointer; font-size:.96rem; font-weight:600 ; flex-wrap: wrap; }
 .animal-check input { width:18px; height:18px; accent-color:var(--verde) }
 
 /* ── ÉXITO ── */
@@ -366,7 +367,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 @keyframes pop { from{transform:scale(0)} to{transform:scale(1)} }
 .exito-title { color: #fff; font-family: 'Nunito', sans-serif; font-size: 1.7rem; font-weight: 900; text-align: center; }
 .exito-folio { color: rgba(255,255,255,.8); font-size: .95rem; margin-top: 10px; font-family: monospace; text-align: center; background: rgba(255,255,255,.1); padding: 6px 18px; border-radius: 8px; }
-.exito-msg { color: rgba(255,255,255,.65); font-size: .9rem; margin-top: 14px; text-align: center; line-height: 1.5; }
+.exito-msg { color: rgba(255,255,255,.85); font-size: .9rem; margin-top: 14px; text-align: center; line-height: 1.5; }
 .exito-btn { margin-top: 36px; padding: 14px 36px; background: var(--ambar); color: var(--oscuro); border: none; border-radius: 14px; font-size: .95rem; font-weight: 800; cursor: pointer; font-family: 'Nunito', sans-serif; transition: .15s; }
 .exito-btn:active { background: var(--ambar-oscuro); }
 
@@ -376,12 +377,12 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 .about-logo .big-ic { font-size: 3.8rem; }
 .about-logo h2 { font-family: 'Nunito', sans-serif; font-size: 1.4rem; font-weight: 900; color: var(--verde); margin-top: 10px; }
 .about-logo p { font-size: .82rem; color: var(--muted); margin-top: 5px; line-height: 1.4; }
-.about-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--borde); }
+.about-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--borde); ; flex-wrap: wrap; }
 .about-row:last-child { border-bottom: none; }
 .about-row .row-ic { font-size: 1.3rem; width: 36px; text-align: center; }
 .about-row .row-info label { font-size: .72rem; color: var(--muted); font-weight: 700; text-transform: uppercase; }
 .about-row .row-info span { display: block; font-size: .88rem; color: var(--texto); font-weight: 600; margin-top: 1px; }
-.server-input { display: flex; gap: 8px; }
+.server-input { display: flex; gap: 8px; ; flex-wrap: wrap; }
 .server-input input { flex: 1; padding: 10px 12px; border: 1.5px solid var(--borde); border-radius: 8px; font-size: .85rem; outline: none; }
 .server-input input:focus { border-color: var(--verde-medio); }
 .server-input button { padding: 10px 14px; background: var(--verde); color: #fff; border: none; border-radius: 8px; font-size: .82rem; font-weight: 700; cursor: pointer; }
@@ -401,7 +402,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
   background: linear-gradient(135deg, #4c1d95, #6d28d9);
   border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
   display: flex; align-items: center; gap: 12px;
-}
+; flex-wrap: wrap; }
 .banner-comercial .bc-icon { font-size: 2rem; flex-shrink: 0; }
 .banner-comercial .bc-txt h4 { color: #fff; font-size: .96rem; font-weight: 800; margin-bottom: 2px; }
 .banner-comercial .bc-txt p  { color: rgba(255,255,255,.7); font-size: .82rem; line-height: 1.35; }
@@ -478,7 +479,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
             <div class="tipo-grid">
               <div class="tipo-chip chip-emergencia chip-full" onclick="selTipo('emergencia')" data-tipo="emergencia">
                 <span class="chip-ic">🚨</span>
-                <div><div class="chip-lbl" style="font-size:.82rem;font-weight:800">Emergencia Ambiental</div><div style="font-size:.78rem;color:#94a3b8;margin-top:2px">Derrame, incendio, contaminación grave</div></div>
+                <div><div class="chip-lbl" style="font-size:.97rem;font-weight:800">Emergencia Ambiental</div><div style="font-size:.92rem;color:#94a3b8;margin-top:2px">Derrame, incendio, contaminación grave</div></div>
               </div>
             </div>
 
@@ -576,10 +577,10 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
             <div class="fgroup">
               <textarea id="nr-desc" placeholder="Describe la situación con detalle: ¿qué ocurre?, ¿desde cuándo?, ¿qué tan urgente es?..." rows="4"></textarea>
               <button type="button" onclick="_matlachoMejorarDesc(this)"
-                style="margin-top:10px;width:100%;padding:12px 14px;background:linear-gradient(135deg,#003B7A,#0057B8);color:#fff;border:none;border-radius:11px;font-size:.9rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Nunito',sans-serif">
+                style="margin-top:10px;width:100%;padding:12px 14px;background:linear-gradient(135deg,#003B7A,#0057B8);color:#fff;border:none;border-radius:11px;font-size:.94rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Nunito',sans-serif">
                 🐭 Matlacho — Mejorar mi descripción
               </button>
-              <div id="matlacho-desc-result" style="display:none;margin-top:8px;background:#E8F1FB;border:1.5px solid #B3CFF0;border-radius:11px;padding:12px 14px;font-size:.9rem;color:#1a3a5c;line-height:1.6"></div>
+              <div id="matlacho-desc-result" style="display:none;margin-top:8px;background:#E8F1FB;border:1.5px solid #B3CFF0;border-radius:11px;padding:12px 14px;font-size:.94rem;color:#1a3a5c;line-height:1.6"></div>
             </div>
           </div>
         </div>
@@ -637,7 +638,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
         <div id="panel-animal-agresivo" class="form-card">
           <div class="form-card-header"><span class="ic">🐾</span><span>Información del Incidente Animal</span></div>
           <div class="form-card-body">
-            <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--verde);margin-bottom:8px">👤 Datos del Afectado</div>
+            <div style="font-size:.92rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--verde);margin-bottom:8px">👤 Datos del Afectado</div>
             <div class="fgroup"><label>Nombre completo del afectado *</label><input id="a-afectado-nombre" placeholder="Nombre de la persona afectada"></div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
               <div class="fgroup"><label>Teléfono *</label><input id="a-afectado-tel" type="tel" placeholder="449 000 0000"></div>
@@ -649,10 +650,10 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
               <span>🦷 ¿El animal mordió a la víctima?</span>
             </label>
             <div id="panel-mordida" style="display:none;margin-top:10px">
-              <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#dc2626;margin-bottom:8px">🩸 Datos de la Mordida</div>
+              <div style="font-size:.92rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#dc2626;margin-bottom:8px">🩸 Datos de la Mordida</div>
               <div class="fgroup">
                 <label>¿Dónde ocurrió? (toca el cuerpo)</label>
-                <p style="font-size:.75rem;color:var(--muted);margin-bottom:6px">Puede seleccionar más de una zona</p>
+                <p style="font-size:.95rem;color:var(--muted);margin-bottom:6px">Puede seleccionar más de una zona</p>
                 <div class="body-map-wrap">
                   <svg viewBox="0 0 160 340" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
                     <g class="bzone" id="bz-cabeza" onclick="toggleZona('cabeza')"><ellipse cx="80" cy="28" rx="24" ry="26" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/><text x="80" y="32" text-anchor="middle" font-size="10" fill="#475569" font-weight="700">Cabeza</text></g>
@@ -669,7 +670,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
                     <g class="bzone" id="bz-pie-der" onclick="toggleZona('pie_der')"><rect x="88" y="264" width="34" height="18" rx="5" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/><text x="105" y="277" text-anchor="middle" font-size="7.5" fill="#475569" font-weight="700">Pie Der.</text></g>
                   </svg>
                 </div>
-                <div id="zonas-sel-txt" style="font-size:.78rem;color:var(--verde);font-weight:700;text-align:center;margin-top:4px;min-height:18px">Ninguna zona seleccionada</div>
+                <div id="zonas-sel-txt" style="font-size:.92rem;color:var(--verde);font-weight:700;text-align:center;margin-top:4px;min-height:18px">Ninguna zona seleccionada</div>
               </div>
               <div class="fgroup">
                 <label>Gravedad de la mordida</label>
@@ -682,7 +683,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
               <label class="animal-check"><input type="checkbox" id="a-atencion-medica"><span>🏥 ¿El afectado requiere atención médica?</span></label>
               <label class="animal-check" style="margin-top:8px"><input type="checkbox" id="a-vacuna-antirabica"><span>💉 ¿Se requiere vacuna antirrábica?</span></label>
             </div>
-            <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--verde);margin:14px 0 8px">🐕 Datos del Animal</div>
+            <div style="font-size:.92rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--verde);margin:14px 0 8px">🐕 Datos del Animal</div>
             <div class="fgroup"><label>Descripción del animal *</label><input id="a-animal-desc" placeholder="Ej: Perro mediano café con manchas negras"></div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
               <div class="fgroup"><label>Especie</label><select id="a-animal-especie"><option value="">-- Tipo --</option><option value="perro">🐕 Perro</option><option value="gato">🐈 Gato</option><option value="otro">Otro</option></select></div>
@@ -750,7 +751,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
           </div>
         </div>
         <div class="about-card" style="padding:16px">
-          <p style="font-size:.8rem;color:var(--muted);text-align:center;line-height:1.6">
+          <p style="font-size:.94rem;color:var(--muted);text-align:center;line-height:1.6">
             Esta aplicación permite a los ciudadanos de Pabellón de Arteaga reportar incidencias ambientales y de servicios urbanos directamente al sistema municipal SGO-IMBIO.
           </p>
         </div>
@@ -1382,8 +1383,8 @@ function _matlachoInit() {
         background:#fff;display:flex;align-items:center;justify-content:center;
         font-size:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.15);flex-shrink:0;
       }
-      .matlacho-name { color:#fff;font-weight:800;font-size:.9rem;font-family:'Nunito',sans-serif; }
-      .matlacho-role { color:rgba(255,255,255,.75);font-size:.72rem; }
+      .matlacho-name { color:#fff;font-weight:800;font-size:.96rem;font-family:'Nunito',sans-serif; }
+      .matlacho-role { color:rgba(255,255,255,.75);font-size:.92rem; }
       .matlacho-close {
         margin-left:auto;background:none;border:none;color:#fff;
         font-size:1.2rem;cursor:pointer;padding:2px 6px;opacity:.8;
@@ -1394,7 +1395,7 @@ function _matlachoInit() {
       }
       .matlacho-bubble {
         background:#E8F1FB;border-radius:12px 12px 12px 2px;
-        padding:10px 13px;font-size:.8rem;color:#1a3a5c;line-height:1.5;
+        padding:10px 13px;font-size:.95rem;color:#1a3a5c;line-height:1.5;
         border:1px solid #B3CFF0;max-width:92%;
       }
       .matlacho-bubble.user {
@@ -1408,7 +1409,7 @@ function _matlachoInit() {
       }
       .matlacho-btn {
         padding:8px 12px;border:none;border-radius:9px;
-        font-size:.78rem;font-weight:700;cursor:pointer;
+        font-size:.93rem;font-weight:700;cursor:pointer;
         display:flex;align-items:center;gap:6px;text-align:left;transition:opacity .15s;
       }
       .matlacho-btn:hover { opacity:.88; }
@@ -1422,12 +1423,12 @@ function _matlachoInit() {
       }
       .matlacho-input {
         flex:1;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:9px;
-        font-size:.8rem;outline:none;font-family:inherit;
+        font-size:.95rem;outline:none;font-family:inherit;
       }
       .matlacho-input:focus { border-color:#003B7A; }
       .matlacho-send {
         padding:7px 12px;background:#003B7A;color:#fff;border:none;
-        border-radius:9px;cursor:pointer;font-size:.85rem;
+        border-radius:9px;cursor:pointer;font-size:.94rem;
       }
     </style>
 
@@ -1606,9 +1607,9 @@ async function _matlachoMejorarDesc(btnEl) {
           '<b>🐭 Matlacho sugiere:</b><br><br>' + d.data.texto +
           '<br><br>' +
           '<button onclick="document.getElementById(\'nr-desc\').value=\'' + escaped + '\';document.getElementById(\'matlacho-desc-result\').style.display=\'none\'" ' +
-          'style="padding:9px 18px;background:#003B7A;color:#fff;border:none;border-radius:9px;font-size:.88rem;font-weight:700;cursor:pointer;margin-right:8px">✅ Aplicar</button>' +
+          'style="padding:9px 18px;background:#003B7A;color:#fff;border:none;border-radius:9px;font-size:.92rem;font-weight:700;cursor:pointer;margin-right:8px">✅ Aplicar</button>' +
           '<button onclick="document.getElementById(\'matlacho-desc-result\').style.display=\'none\'" ' +
-          'style="padding:9px 14px;background:#e5e7eb;color:#374151;border:none;border-radius:9px;font-size:.88rem;cursor:pointer">✕ Cerrar</button>';
+          'style="padding:9px 14px;background:#e5e7eb;color:#374151;border:none;border-radius:9px;font-size:.92rem;cursor:pointer">✕ Cerrar</button>';
       }
     } else {
       if (resultEl) {

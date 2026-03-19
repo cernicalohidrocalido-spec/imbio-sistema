@@ -22,23 +22,23 @@
   --naranja:    #ea580c;
   --morado:     #7c3aed;
   --texto:      #1a202c;
-  --muted:      #64748b;
+  --muted:      #475569;
   --gris:       #f0f4fa;
   --borde:      #e2e8f0;
   --blanco:     #ffffff;
   /* ── ACCESIBILIDAD: escala base de fuentes e iconos ── */
-  --fs-xs:   0.88rem;   /* antes: .68-.72rem */
-  --fs-sm:   0.95rem;   /* antes: .78-.82rem */
-  --fs-base: 1.05rem;   /* antes: .88-.95rem */
-  --fs-md:   1.15rem;   /* antes: 1rem       */
-  --fs-lg:   1.3rem;    /* titulos           */
-  --ic-sm:   1.6rem;    /* iconos pequeños   */
-  --ic-md:   2rem;      /* iconos tabs       */
-  --ic-lg:   2.6rem;    /* iconos splash     */
+  --fs-xs:   0.92rem;   /* antes: .68-.72rem */
+  --fs-sm:   1rem;   /* antes: .78-.82rem */
+  --fs-base: 1.08rem;   /* antes: .88-.95rem */
+  --fs-md:   1.2rem;   /* antes: 1rem       */
+  --fs-lg:   1.4rem;    /* titulos           */
+  --ic-sm:   1.8rem;    /* iconos pequeños   */
+  --ic-md:   2.2rem;      /* iconos tabs       */
+  --ic-lg:   2.8rem;    /* iconos splash     */
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html{font-size:16px}
-html,body{height:100%;overflow:hidden;background:#1a3a5c}
+html{font-size:17px}
+html,body{height:100%;overflow:hidden;overflow-x:hidden;background:#1a3a5c;max-width:100vw}
 body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto);font-size:var(--fs-base)}
 
 /* SPLASH */
@@ -55,37 +55,37 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 /* LOGIN */
 #login-screen{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;background:linear-gradient(160deg,#0d1f35,#1a3a5c)}
 #login-screen.show{display:flex}
-.login-box{background:#fff;border-radius:20px;padding:32px 28px;width:340px;box-shadow:0 24px 80px rgba(0,0,0,.4)}
+.login-box{background:#fff;border-radius:20px;padding:32px 28px;width:min(340px,92vw);box-shadow:0 24px 80px rgba(0,0,0,.4)}
 .login-box .lb-logo{text-align:center;margin-bottom:24px}
 .login-box .lb-logo .ic{font-size:2.8rem}
 .login-box .lb-logo h1{font-size:1.35rem;font-weight:800;color:var(--inspector);margin-top:8px}
 .login-box .lb-logo p{font-size:.92rem;color:var(--muted);margin-top:3px}
-.login-box .lb-badge{background:#fef3c7;color:#92400e;font-size:.88rem;font-weight:700;padding:6px 12px;border-radius:6px;text-align:center;margin-bottom:18px}
+.login-box .lb-badge{background:#fef3c7;color:#92400e;font-size:.94rem;font-weight:700;padding:6px 12px;border-radius:6px;text-align:center;margin-bottom:18px}
 .lf{margin-bottom:14px}
 .lf label{display:block;font-size:.93rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:5px}
 .lf input{width:100%;padding:11px 14px;border:1.5px solid var(--borde);border-radius:10px;font-size:1.05rem;outline:none}
 .lf input:focus{border-color:var(--azul-claro)}
 .btn-login{width:100%;padding:13px;background:var(--inspector);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:800;cursor:pointer;margin-top:4px}
-#login-err{color:var(--rojo);font-size:.82rem;margin-top:8px;text-align:center}
+#login-err{color:var(--rojo);font-size:.97rem;margin-top:8px;text-align:center}
 
 /* APP SHELL */
 #app{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--gris);padding-top:env(safe-area-inset-top,0px)}
 
 /* HEADER */
-.iheader{background:linear-gradient(135deg,#0d1f35,#1a3a5c);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.iheader{background:linear-gradient(135deg,#0d1f35,#1a3a5c);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
 .ih-icon{font-size:1.9rem}
 .ih-text h1{color:#fff;font-size:1.15rem;font-weight:800}
-.ih-text p{color:rgba(255,255,255,.55);font-size:.85rem;margin-top:1px}
-.ih-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.ih-text p{color:rgba(255,255,255,.55);font-size:.94rem;margin-top:1px}
+.ih-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .conn-dot{width:8px;height:8px;border-radius:50%;background:#4ade80}
 .conn-dot.off{background:#f87171}
-.btn-logout{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 10px;border-radius:7px;font-size:.9rem;cursor:pointer}
-.user-chip{background:var(--acento);color:#000;font-size:.87rem;font-weight:800;padding:5px 12px;border-radius:99px}
+.btn-logout{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 10px;border-radius:7px;font-size:.96rem;cursor:pointer}
+.user-chip{background:var(--acento);color:#000;font-size:.96rem;font-weight:800;padding:5px 12px;border-radius:99px}
 
 /* TABS */
 .itabs{display:flex;background:#1a3a5c;flex-shrink:0}
-.itab{flex:1;padding:12px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:rgba(255,255,255,.45);font-size:.88rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;border-bottom:3px solid transparent;transition:.15s}
-.itab .ic{font-size:2.1rem}
+.itab{flex:1;padding:12px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:rgba(255,255,255,.78);font-size:.94rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;border-bottom:3px solid transparent;transition:.15s}
+.itab .ic{font-size:var(--ic-md)}
 .itab.active{color:var(--acento);border-bottom-color:var(--acento)}
 
 /* CONTENT */
@@ -96,7 +96,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 
 /* CARDS */
 .icard{background:#fff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:12px;overflow:hidden}
-.icard-head{padding:12px 14px 0;display:flex;justify-content:space-between;align-items:flex-start}
+.icard-head{padding:12px 14px 0;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}
 .icard-body{padding:10px 14px 14px}
 .icard-foot{padding:8px 14px;background:var(--gris);border-top:1px solid var(--borde);display:flex;gap:6px;flex-wrap:wrap}
 
@@ -113,9 +113,9 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 @keyframes pulse-border{0%,100%{border-left-color:#dc2626}50%{border-left-color:#fca5a5}}
 .rep-folio{font-family:monospace;font-size:.95rem;font-weight:800;color:var(--azul)}
 .rep-tipo{font-size:1rem;font-weight:700;color:var(--texto);margin-top:3px}
-.rep-desc{font-size:.9rem;color:var(--muted);margin-top:4px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.rep-meta{display:flex;gap:10px;margin-top:6px;font-size:.87rem;color:var(--muted)}
-.est-badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.85rem;font-weight:800;text-transform:uppercase}
+.rep-desc{font-size:.96rem;color:var(--muted);margin-top:4px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rep-meta{display:flex;gap:10px;margin-top:6px;font-size:.96rem;color:var(--muted);flex-wrap:wrap}
+.est-badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.94rem;font-weight:800;text-transform:uppercase}
 .est-reportado{background:#fef3c7;color:#92400e}
 .est-asignado{background:#dbeafe;color:#1e40af}
 .est-en_proceso{background:#fce7f3;color:#9d174d}
@@ -127,19 +127,19 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 
 /* FORMS */
 .fg{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
-.fg label{font-size:.9rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.fg label{font-size:.96rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .fg input,.fg select,.fg textarea{width:100%;padding:11px 13px;border:1.5px solid var(--borde);border-radius:10px;font-size:1rem;font-family:inherit;outline:none;background:#fff}
 .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--azul-claro);box-shadow:0 0 0 3px rgba(25,118,210,.1)}
 .fg textarea{resize:none;min-height:75px}
 .fg select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px;appearance:none}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
 .form-grid .full{grid-column:1/-1}
 
 /* TIPO ACTA selector */
-.tipo-acta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.tipo-acta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px}
 .ta-chip{padding:12px 8px;border:2px solid var(--borde);border-radius:10px;background:#fff;cursor:pointer;text-align:center;transition:.15s}
 .ta-chip .ta-ic{font-size:1.6rem;display:block;margin-bottom:4px}
-.ta-chip .ta-lbl{font-size:.7rem;font-weight:800;color:var(--muted);line-height:1.3}
+.ta-chip .ta-lbl{font-size:.94rem;font-weight:800;color:var(--muted);line-height:1.3}
 .ta-chip.sel{border-color:var(--azul-claro);background:var(--azul-bg)}
 .ta-chip.sel .ta-lbl{color:var(--inspector)}
 .ta-chip:active{transform:scale(.97)}
@@ -148,20 +148,20 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 .foto-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
 .foto-item{position:relative;border-radius:8px;overflow:hidden;background:var(--gris);aspect-ratio:1}
 .foto-item img{width:100%;height:100%;object-fit:cover}
-.foto-item .del-btn{position:absolute;top:3px;right:3px;background:rgba(220,38,38,.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.foto-item .del-btn{position:absolute;top:3px;right:3px;background:rgba(220,38,38,.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:.94rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .add-foto{border:2px dashed var(--borde);border-radius:8px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:#fafcff;gap:4px}
 .add-foto span{font-size:1.4rem}
-.add-foto p{font-size:.65rem;color:var(--muted);text-align:center}
+.add-foto p{font-size:.95rem;color:var(--muted);text-align:center}
 
 /* MAPA inspección */
 #map-inspector{height:200px;border-radius:10px;border:1.5px solid var(--borde)}
-.map-coord-bar{margin-top:6px;padding:8px 12px;background:var(--azul-bg);border-radius:8px;font-size:.78rem;color:var(--inspector);display:flex;justify-content:space-between;align-items:center}
+.map-coord-bar{margin-top:6px;padding:8px 12px;background:var(--azul-bg);border-radius:8px;font-size:.93rem;color:var(--inspector);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
 
 /* FIRMA */
 #sig-inspector{width:100%;height:110px;border:2px dashed var(--borde);border-radius:10px;cursor:crosshair;touch-action:none;background:#fafcff;display:block}
 
 /* BOTONES */
-.ibtn{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 18px;border-radius:10px;border:none;cursor:pointer;font-size:1rem;font-weight:800;transition:.15s;width:100%}
+.ibtn{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 18px;border-radius:10px;border:none;cursor:pointer;font-size:1rem;font-weight:800;transition:.15s;width:100%;flex-wrap:wrap}
 .ibtn:active{transform:scale(.98)}
 .ibtn-primary{background:var(--azul);color:#fff}
 .ibtn-success{background:var(--verde);color:#fff}
@@ -172,7 +172,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 .ibtn-sm{padding:7px 14px;font-size:.92rem;width:auto}
 
 /* ALERTS */
-.ialert{padding:10px 14px;border-radius:8px;margin-bottom:10px;font-size:.82rem;line-height:1.4}
+.ialert{padding:10px 14px;border-radius:8px;margin-bottom:10px;font-size:.97rem;line-height:1.4}
 .ialert-ok{background:#dcfce7;color:#166534;border:1px solid #86efac}
 .ialert-err{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
 .ialert-inf{background:var(--azul-bg);color:var(--inspector);border:1px solid #B3CFF0}
@@ -185,15 +185,15 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 .acta-tipo-card:active { transform: scale(.97); }
 
 .acta-card{background:#fff;border-radius:12px;border:2px solid var(--borde);overflow:hidden;margin-bottom:10px}
-.acta-card-head{background:var(--inspector);padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
-.acta-folio{color:#fff;font-family:monospace;font-size:.82rem;font-weight:800}
-.acta-tipo-badge{font-size:.82rem;font-weight:800;padding:4px 10px;border-radius:99px;text-transform:uppercase}
+.acta-card-head{background:var(--inspector);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.acta-folio{color:#fff;font-family:monospace;font-size:.97rem;font-weight:800}
+.acta-tipo-badge{font-size:.97rem;font-weight:800;padding:4px 10px;border-radius:99px;text-transform:uppercase}
 .acta-circunstanciada{background:#dbeafe;color:#1e40af}
 .acta-apercibimiento{background:#fef3c7;color:#92400e}
 .acta-sancion{background:#fee2e2;color:#991b1b}
 .acta-card-body{padding:12px 14px;font-size:.97rem}
-.acta-row{display:flex;gap:8px;margin-bottom:6px}
-.acta-row label{color:var(--muted);font-weight:700;min-width:90px;font-size:.75rem}
+.acta-row{display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.acta-row label{color:var(--muted);font-weight:700;min-width:90px;font-size:.95rem}
 .acta-row span{color:var(--texto);flex:1}
 
 /* MODAL pantalla completa */
@@ -201,25 +201,25 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 #modal-acta.open{display:flex}
 .modal-header{background:var(--inspector);padding:13px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
 .modal-header h2{color:#fff;font-size:1rem;font-weight:800;flex:1}
-.modal-header button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 12px;border-radius:7px;font-size:.78rem;cursor:pointer}
+.modal-header button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 12px;border-radius:7px;font-size:.93rem;cursor:pointer}
 .modal-body{flex:1;overflow-y:auto;padding:14px}
 
 /* DETAIL SCREEN */
 .detail-section{margin-bottom:16px}
-.detail-section h3{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--borde)}
-.detail-row{display:flex;gap:8px;margin-bottom:6px;font-size:.82rem}
+.detail-section h3{font-size:.95rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--borde)}
+.detail-row{display:flex;gap:8px;margin-bottom:6px;font-size:.97rem;flex-wrap:wrap}
 .detail-row label{color:var(--muted);font-weight:700;min-width:80px}
 .detail-row span{color:var(--texto);flex:1;line-height:1.4}
 .foto-mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.foto-mini{border-radius:7px;overflow:hidden;background:var(--gris);aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:var(--muted)}
+.foto-mini{border-radius:7px;overflow:hidden;background:var(--gris);aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:.95rem;color:var(--muted)}
 
 /* MAPA DETALLE REPORTE */
 #map-detalle-rep{height:240px;border-radius:12px;border:2px solid var(--borde);margin:10px 0}
 .map-info-bar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .map-info-item{background:var(--azul-bg);border-radius:8px;padding:10px;text-align:center}
 .map-info-item .val{font-size:1.1rem;font-weight:800;color:var(--inspector)}
-.map-info-item .lbl{font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-top:2px}
-.btn-nav{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;background:var(--verde);color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:800;cursor:pointer;width:100%;margin-top:8px}
+.map-info-item .lbl{font-size:.94rem;color:var(--muted);text-transform:uppercase;margin-top:2px}
+.btn-nav{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;background:var(--verde);color:#fff;border:none;border-radius:10px;font-size:.96rem;font-weight:800;cursor:pointer;width:100%;margin-top:8px;flex-wrap:wrap}
 .btn-waze{background:#33ccff;color:#000}
 
 /* MAPA DETALLE REPORTE */
@@ -227,8 +227,8 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 .map-info-bar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .map-info-item{background:var(--azul-bg);border-radius:8px;padding:10px;text-align:center}
 .map-info-item .val{font-size:1.1rem;font-weight:800;color:var(--inspector)}
-.map-info-item .lbl{font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-top:2px}
-.btn-nav{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;background:var(--verde);color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:800;cursor:pointer;width:100%;margin-top:8px}
+.map-info-item .lbl{font-size:.94rem;color:var(--muted);text-transform:uppercase;margin-top:2px}
+.btn-nav{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;background:var(--verde);color:#fff;border:none;border-radius:10px;font-size:.94rem;font-weight:800;cursor:pointer;width:100%;margin-top:8px}
 .btn-waze{background:#33ccff;color:#000}
 
 /* MAP picker en acta */
@@ -236,27 +236,27 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto
 
 /* ── FORMULARIO ARBÓREO (NTEA-AGS-ARBOLADO-2026) ── */
 .arb-section{margin-bottom:14px}
-.arb-section-title{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--azul);background:var(--azul-bg);padding:7px 14px;margin:0 -14px 10px;border-bottom:1px solid var(--azul-borde);border-left:4px solid var(--azul)}
+.arb-section-title{font-size:.92rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--azul);background:var(--azul-bg);padding:7px 14px;margin:0 -14px 10px;border-bottom:1px solid var(--azul-borde);border-left:4px solid var(--azul)}
 .check-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
-.check-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1.5px solid var(--borde);border-radius:8px;background:#fff;cursor:pointer;font-size:.8rem;transition:.15s}
+.check-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1.5px solid var(--borde);border-radius:8px;background:#fff;cursor:pointer;font-size:.95rem;transition:.15s;flex-wrap:wrap}
 .check-item.checked{border-color:var(--azul-claro);background:var(--azul-bg)}
 .check-item input[type=checkbox]{width:16px;height:16px;accent-color:var(--azul-claro);cursor:pointer;flex-shrink:0}
-.severity-row{display:flex;gap:6px;margin-top:4px}
-.sev-btn{flex:1;padding:7px 4px;border:1.5px solid var(--borde);border-radius:7px;background:#fff;font-size:.72rem;font-weight:700;cursor:pointer;text-align:center;transition:.15s}
+.severity-row{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap}
+.sev-btn{flex:1;padding:7px 4px;border:1.5px solid var(--borde);border-radius:7px;background:#fff;font-size:.92rem;font-weight:700;cursor:pointer;text-align:center;transition:.15s}
 .sev-btn.sev-baja.act{background:#dcfce7;border-color:#16a34a;color:#166534}
 .sev-btn.sev-media.act{background:#fef3c7;border-color:#ca8a04;color:#92400e}
 .sev-btn.sev-alta.act{background:#fee2e2;border-color:#dc2626;color:#991b1b}
-.risk-badge{display:inline-block;padding:6px 14px;border-radius:8px;font-size:.82rem;font-weight:800;text-align:center}
+.risk-badge{display:inline-block;padding:6px 14px;border-radius:8px;font-size:.97rem;font-weight:800;text-align:center}
 .risk-bajo{background:#dcfce7;color:#166534}
 .risk-moderado{background:#fef3c7;color:#92400e}
 .risk-alto{background:#fee2e2;color:#dc2626}
 .risk-extremo{background:#450a0a;color:#fca5a5}
-.arb-tabla{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:6px}
-.arb-tabla th{background:var(--azul-bg);padding:7px 8px;text-align:left;font-size:.7rem;font-weight:800;color:var(--inspector);border-bottom:1px solid var(--azul-borde)}
+.arb-tabla{width:100%;border-collapse:collapse;font-size:.93rem;margin-top:6px}
+.arb-tabla th{background:var(--azul-bg);padding:7px 8px;text-align:left;font-size:.94rem;font-weight:800;color:var(--inspector);border-bottom:1px solid var(--azul-borde)}
 .arb-tabla td{padding:7px 8px;border-bottom:1px solid var(--borde);vertical-align:middle}
-.arb-tabla input,.arb-tabla select{padding:5px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.78rem;width:100%;outline:none}
+.arb-tabla input,.arb-tabla select{padding:5px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.93rem;width:100%;outline:none}
 .firmante-wrap{border:1.5px solid var(--borde);border-radius:10px;overflow:hidden;margin-bottom:10px}
-.firmante-header{background:var(--gris);padding:8px 12px;font-size:.78rem;font-weight:700;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+.firmante-header{background:var(--gris);padding:8px 12px;font-size:.93rem;font-weight:700;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
 canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-action:none;background:#fafcff}
 
 /* ── FORMULARIO ANIMAL AGRESIVO ── */
@@ -266,35 +266,35 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
 .body-part:active{transform:scale(.97)}
 .body-part.sel{fill:#dc2626;stroke:#991b1b}
 .bp-label{font-size:10px;fill:#1a202c;text-anchor:middle;pointer-events:none;font-weight:600}
-.gravedad-btn{flex:1;padding:10px 6px;border:2px solid var(--borde);border-radius:10px;background:#fff;font-size:.82rem;font-weight:700;cursor:pointer;text-align:center;transition:.15s}
+.gravedad-btn{flex:1;padding:10px 6px;border:2px solid var(--borde);border-radius:10px;background:#fff;font-size:.97rem;font-weight:700;cursor:pointer;text-align:center;transition:.15s}
 .gravedad-btn.sel-sup{background:#fef3c7;border-color:#ca8a04;color:#92400e}
 .gravedad-btn.sel-pro{background:#fee2e2;border-color:#dc2626;color:#991b1b}
-.vacuna-toggle{display:flex;align-items:center;gap:10px;padding:12px 14px;border:2px solid var(--borde);border-radius:10px;background:#fff;cursor:pointer;font-size:.88rem;font-weight:600;transition:.15s}
+.vacuna-toggle{display:flex;align-items:center;gap:10px;padding:12px 14px;border:2px solid var(--borde);border-radius:10px;background:#fff;cursor:pointer;font-size:.94rem;font-weight:600;transition:.15s;flex-wrap:wrap}
 .vacuna-toggle.si{border-color:#16a34a;background:#dcfce7;color:#166534}
 .vacuna-toggle.no{border-color:#dc2626;background:#fee2e2;color:#991b1b}
 .vacuna-toggle .vt-ic{font-size:1.3rem}
 #seccion-animal-agresivo{display:none}
 /* ACERCA */
-.acerca-row{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid var(--borde)}
+.acerca-row{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid var(--borde);flex-wrap:wrap}
 .acerca-row:last-child{border-bottom:none}
 .acerca-ic{font-size:1.3rem;width:32px;text-align:center;flex-shrink:0;margin-top:2px}
-.acerca-info label{display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
-.acerca-info span{display:block;font-size:.85rem;color:var(--texto);font-weight:600;margin-top:2px;line-height:1.4}
+.acerca-info label{display:block;font-size:.94rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.acerca-info span{display:block;font-size:.94rem;color:var(--texto);font-weight:600;margin-top:2px;line-height:1.4}
 
 /* PDF y descarga */
-.btn-pdf{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;background:#dc2626;color:#fff;border:none;border-radius:9px;font-size:.82rem;font-weight:800;cursor:pointer;width:100%;margin-top:6px}
+.btn-pdf{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;background:#dc2626;color:#fff;border:none;border-radius:9px;font-size:.97rem;font-weight:800;cursor:pointer;width:100%;margin-top:6px;flex-wrap:wrap}
 .btn-pdf:active{transform:scale(.97)}
 .btn-share{background:#16a34a}
 
 /* Figura humana / mordida */
-.grav-btn-insp{padding:8px 4px;border:2px solid var(--borde);border-radius:8px;background:#fff;cursor:pointer;font-size:.75rem;font-weight:700;color:var(--muted);transition:.15s;width:100%}
+.grav-btn-insp{padding:8px 4px;border:2px solid var(--borde);border-radius:8px;background:#fff;cursor:pointer;font-size:.95rem;font-weight:700;color:var(--muted);transition:.15s;width:100%}
 .grav-btn-insp.sel-sup{border-color:#1976D2;background:var(--azul-bg);color:var(--azul)}
 .grav-btn-insp.sel-pro{border-color:#dc2626;background:#fee2e2;color:#991b1b}
 
 .empty{text-align:center;padding:40px 20px;color:var(--muted)}
 .empty .em-ic{font-size:3rem;margin-bottom:10px}
-.empty p{font-size:.85rem;line-height:1.5}
-.section-title{font-size:.9rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--inspector);background:var(--azul-bg);padding:7px 14px;margin:-14px -14px 12px;border-bottom:1px solid #B3CFF0}
+.empty p{font-size:.94rem;line-height:1.5}
+.section-title{font-size:.96rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--inspector);background:var(--azul-bg);padding:7px 14px;margin:-14px -14px 12px;border-bottom:1px solid #B3CFF0}
 
 #loading{position:fixed;inset:0;background:rgba(0,43,92,.55);z-index:900;display:none;align-items:center;justify-content:center}
 #loading.show{display:flex}
@@ -326,7 +326,7 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
       <p>Acceso exclusivo para inspectores</p>
     </div>
     <div class="lb-badge">🔒 Personal autorizado IMBIO</div>
-    <div id="login-status" style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:8px;font-size:.82rem;background:#E8F1FB;border:1px solid #B3CFF0;color:#0d1f35"></div>
+    <div id="login-status" style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:8px;font-size:.97rem;background:#E8F1FB;border:1px solid #B3CFF0;color:#0d1f35"></div>
     <div class="lf">
       <label>Usuario</label>
       <input id="l-user" type="text" placeholder="inspector01" autocomplete="username">
@@ -391,15 +391,15 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
       <div class="ipad">
         <!-- Context banner -->
         <div style="background:linear-gradient(135deg,#0d1f35,#1a3a5c);border-radius:12px;padding:12px 14px;margin-bottom:12px">
-          <div style="color:#fff;font-weight:800;font-size:.88rem;margin-bottom:4px">🔄 Registros En Proceso</div>
-          <div style="color:rgba(255,255,255,.75);font-size:.75rem;line-height:1.5">
+          <div style="color:#fff;font-weight:800;font-size:.92rem;margin-bottom:4px">🔄 Registros En Proceso</div>
+          <div style="color:rgba(255,255,255,.75);font-size:.95rem;line-height:1.5">
             Selecciona el tipo de acta según corresponda al trámite o denuncia.
           </div>
           <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px">
-            <span style="background:rgba(255,255,255,.15);color:#fff;padding:3px 9px;border-radius:20px;font-size:.68rem">🔍 Inspección → Arbolado / Animales</span>
-            <span style="background:rgba(255,255,255,.15);color:#fff;padding:3px 9px;border-radius:20px;font-size:.68rem">📋 Circunstanciada → Documentar hechos</span>
-            <span style="background:rgba(255,255,255,.15);color:#fff;padding:3px 9px;border-radius:20px;font-size:.68rem">⚠️ Apercibimiento → Irregularidad corregible</span>
-            <span style="background:rgba(255,255,255,.15);color:#fff;padding:3px 9px;border-radius:20px;font-size:.68rem">🚫 Sanción → Infracción / Reincidencia</span>
+            <span style="background:rgba(255,255,255,.15);color:#fff;padding:3px 9px;border-radius:20px;font-size:.94rem">🔍 Inspección → Arbolado / Animales</span>
+            <span style="background:rgba(255,255,255,.15);color:#fff;padding:3px 9px;border-radius:20px;font-size:.94rem">📋 Circunstanciada → Documentar hechos</span>
+            <span style="background:rgba(255,255,255,.15);color:#fff;padding:3px 9px;border-radius:20px;font-size:.94rem">⚠️ Apercibimiento → Irregularidad corregible</span>
+            <span style="background:rgba(255,255,255,.15);color:#fff;padding:3px 9px;border-radius:20px;font-size:.94rem">🚫 Sanción → Infracción / Reincidencia</span>
           </div>
         </div>
         <div id="lista-proceso">
@@ -414,7 +414,7 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
 
         <!-- Dashboard header -->
         <div style="padding:4px 0 12px">
-          <div style="font-size:.72rem;color:var(--muted);text-align:center">Toca una sección para ver las actas</div>
+          <div style="font-size:.92rem;color:var(--muted);text-align:center">Toca una sección para ver las actas</div>
         </div>
 
         <!-- Contadores / tarjetas de tipo -->
@@ -422,33 +422,33 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
           <div class="acta-tipo-card" onclick="filtrarActas('inspeccion')" id="card-inspeccion"
             style="background:linear-gradient(135deg,#1a3a5c,#2563eb);border-radius:14px;padding:14px 12px;cursor:pointer;text-align:center;transition:.2s">
             <div style="font-size:1.6rem">🔍</div>
-            <div style="color:#fff;font-weight:800;font-size:.88rem;margin-top:4px">Inspección</div>
+            <div style="color:#fff;font-weight:800;font-size:.92rem;margin-top:4px">Inspección</div>
             <div id="cnt-inspeccion" style="color:rgba(255,255,255,.8);font-size:1.4rem;font-weight:900;margin-top:2px">0</div>
           </div>
           <div class="acta-tipo-card" onclick="filtrarActas('circunstanciada')" id="card-circunstanciada"
             style="background:linear-gradient(135deg,#1a3a5c,#7c3aed);border-radius:14px;padding:14px 12px;cursor:pointer;text-align:center;transition:.2s">
             <div style="font-size:1.6rem">📋</div>
-            <div style="color:#fff;font-weight:800;font-size:.88rem;margin-top:4px">Circunstanciada</div>
+            <div style="color:#fff;font-weight:800;font-size:.92rem;margin-top:4px">Circunstanciada</div>
             <div id="cnt-circunstanciada" style="color:rgba(255,255,255,.8);font-size:1.4rem;font-weight:900;margin-top:2px">0</div>
           </div>
           <div class="acta-tipo-card" onclick="filtrarActas('apercibimiento')" id="card-apercibimiento"
             style="background:linear-gradient(135deg,#92400e,#d97706);border-radius:14px;padding:14px 12px;cursor:pointer;text-align:center;transition:.2s">
             <div style="font-size:1.6rem">⚠️</div>
-            <div style="color:#fff;font-weight:800;font-size:.88rem;margin-top:4px">Apercibimiento</div>
+            <div style="color:#fff;font-weight:800;font-size:.92rem;margin-top:4px">Apercibimiento</div>
             <div id="cnt-apercibimiento" style="color:rgba(255,255,255,.8);font-size:1.4rem;font-weight:900;margin-top:2px">0</div>
           </div>
           <div class="acta-tipo-card" onclick="filtrarActas('sancion')" id="card-sancion"
             style="background:linear-gradient(135deg,#991b1b,#dc2626);border-radius:14px;padding:14px 12px;cursor:pointer;text-align:center;transition:.2s">
             <div style="font-size:1.6rem">🚫</div>
-            <div style="color:#fff;font-weight:800;font-size:.88rem;margin-top:4px">Sanción</div>
+            <div style="color:#fff;font-weight:800;font-size:.92rem;margin-top:4px">Sanción</div>
             <div id="cnt-sancion" style="color:rgba(255,255,255,.8);font-size:1.4rem;font-weight:900;margin-top:2px">0</div>
           </div>
         </div>
 
         <!-- Filtro activo label -->
         <div id="actas-filtro-label" style="display:none;margin-bottom:8px;display:flex;align-items:center;gap:8px">
-          <span id="actas-filtro-txt" style="font-size:.8rem;font-weight:700;color:var(--accent)"></span>
-          <button onclick="filtrarActas(null)" style="background:none;border:none;color:var(--muted);font-size:.75rem;cursor:pointer;padding:2px 6px;border-radius:6px;background:#f1f5f9">✕ Ver todas</button>
+          <span id="actas-filtro-txt" style="font-size:.94rem;font-weight:700;color:var(--accent)"></span>
+          <button onclick="filtrarActas(null)" style="background:none;border:none;color:var(--muted);font-size:.95rem;cursor:pointer;padding:2px 6px;border-radius:6px;background:#f1f5f9">✕ Ver todas</button>
         </div>
 
         <!-- Lista filtrada -->
@@ -470,7 +470,7 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
         <div id="lista-verif-inspector">
           <div style="text-align:center;padding:40px;color:var(--muted)">
             <div style="font-size:2.5rem;margin-bottom:8px">🏪</div>
-            <p style="font-size:.85rem">Cargando verificaciones...</p>
+            <p style="font-size:.94rem">Cargando verificaciones...</p>
           </div>
         </div>
       </div>
@@ -483,22 +483,22 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
           <h3 id="verif-insp-titulo" style="font-size:1rem;font-weight:800;color:#1a3a5c;margin:0">🔍 Verificación</h3>
           <button onclick="document.getElementById('modal-verif-insp').style.display='none'" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888">✕</button>
         </div>
-        <div id="verif-insp-info" style="font-size:.83rem;line-height:1.8;background:#f0f4ff;border-radius:10px;padding:12px 14px;margin-bottom:14px"></div>
+        <div id="verif-insp-info" style="font-size:.92rem;line-height:1.8;background:#f0f4ff;border-radius:10px;padding:12px 14px;margin-bottom:14px"></div>
 
         <!-- Checklist -->
-        <div style="font-size:.78rem;font-weight:800;color:#1a3a5c;margin-bottom:8px">✅ Checklist de Verificación</div>
+        <div style="font-size:.92rem;font-weight:800;color:#1a3a5c;margin-bottom:8px">✅ Checklist de Verificación</div>
         <div id="verif-insp-checklist" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;max-height:220px;overflow-y:auto;padding:2px"></div>
 
         <!-- Hallazgos -->
-        <div style="font-size:.78rem;font-weight:800;color:#1a3a5c;margin-bottom:6px">📝 Hallazgos / Observaciones</div>
+        <div style="font-size:.92rem;font-weight:800;color:#1a3a5c;margin-bottom:6px">📝 Hallazgos / Observaciones</div>
         <textarea id="verif-insp-hallazgos" rows="4" placeholder="Describe detalladamente lo encontrado durante la verificación..."
-          style="width:100%;padding:10px 12px;border:1.5px solid var(--borde);border-radius:8px;font-size:.83rem;resize:vertical;outline:none;margin-bottom:12px"></textarea>
+          style="width:100%;padding:10px 12px;border:1.5px solid var(--borde);border-radius:8px;font-size:.92rem;resize:vertical;outline:none;margin-bottom:12px"></textarea>
 
         <!-- Resultado -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
           <div>
-            <div style="font-size:.78rem;font-weight:800;color:#1a3a5c;margin-bottom:6px">🎯 Resultado General</div>
-            <select id="verif-insp-resultado" style="width:100%;padding:9px 10px;border:1.5px solid var(--borde);border-radius:8px;font-size:.83rem">
+            <div style="font-size:.92rem;font-weight:800;color:#1a3a5c;margin-bottom:6px">🎯 Resultado General</div>
+            <select id="verif-insp-resultado" style="width:100%;padding:9px 10px;border:1.5px solid var(--borde);border-radius:8px;font-size:.92rem">
               <option value="">-- Seleccionar --</option>
               <option value="cumple">✅ Cumple</option>
               <option value="cumple_con_observaciones">⚠️ Cumple con observaciones</option>
@@ -507,8 +507,8 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
             </select>
           </div>
           <div>
-            <div style="font-size:.78rem;font-weight:800;color:#1a3a5c;margin-bottom:6px">⚡ Acción requerida</div>
-            <select id="verif-insp-accion" style="width:100%;padding:9px 10px;border:1.5px solid var(--borde);border-radius:8px;font-size:.83rem">
+            <div style="font-size:.92rem;font-weight:800;color:#1a3a5c;margin-bottom:6px">⚡ Acción requerida</div>
+            <select id="verif-insp-accion" style="width:100%;padding:9px 10px;border:1.5px solid var(--borde);border-radius:8px;font-size:.92rem">
               <option value="ninguna">✅ Ninguna acción requerida</option>
               <option value="orientacion">💬 Orientación al responsable</option>
               <option value="acta_inspeccion">📋 Levantar acta de inspección</option>
@@ -534,7 +534,7 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
           <div style="background:linear-gradient(135deg,#0d1f35,#1a3a5c);padding:28px 20px;text-align:center">
             <div style="font-size:3rem;margin-bottom:10px">🔍</div>
             <div style="color:#fff;font-size:1.2rem;font-weight:800">IMBIO Inspector</div>
-            <div style="color:var(--acento);font-size:.72rem;font-weight:700;margin-top:4px;letter-spacing:.05em">VERSIÓN 1.0.0</div>
+            <div style="color:var(--acento);font-size:.92rem;font-weight:700;margin-top:4px;letter-spacing:.05em">VERSIÓN 1.0.0</div>
           </div>
           <div class="icard-body" style="padding:0">
             <div class="acerca-row">
@@ -577,14 +577,14 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
 
         <div class="icard">
           <div class="icard-body">
-            <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">🔗 Servidor SGO-IMBIO</div>
+            <div style="font-size:.95rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">🔗 Servidor SGO-IMBIO</div>
             <div style="display:flex;gap:8px;align-items:center">
               <input id="acerca-server-input" type="url" placeholder="http://192.168.X.X:8080"
-                style="flex:1;padding:10px 12px;border:1.5px solid var(--borde);border-radius:8px;font-size:.85rem;outline:none"
+                style="flex:1;padding:10px 12px;border:1.5px solid var(--borde);border-radius:8px;font-size:.94rem;outline:none"
                 value="">
               <button class="ibtn ibtn-primary ibtn-sm" onclick="guardarServidorInspector()" style="width:auto;padding:10px 14px">✓</button>
             </div>
-            <div style="margin-top:8px;font-size:.72rem;color:var(--muted)">
+            <div style="margin-top:8px;font-size:.92rem;color:var(--muted)">
               <span id="acerca-conn-status">🔴 Verificando conexión...</span>
             </div>
           </div>
@@ -592,15 +592,15 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
 
         <div class="icard">
           <div class="icard-body">
-            <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">👷 Inspector en sesión</div>
-            <div style="font-size:.9rem;color:var(--texto)" id="acerca-usuario">–</div>
+            <div style="font-size:.95rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">👷 Inspector en sesión</div>
+            <div style="font-size:.94rem;color:var(--texto)" id="acerca-usuario">–</div>
             <button class="ibtn ibtn-danger" style="margin-top:12px" onclick="doLogout()">🚪 Cerrar Sesión</button>
           </div>
         </div>
 
         <div class="icard">
           <div class="icard-body" style="text-align:center">
-            <p style="font-size:.78rem;color:var(--muted);line-height:1.6">
+            <p style="font-size:.92rem;color:var(--muted);line-height:1.6">
               Sistema de Gestión Operativa IMBIO.<br>
               Uso exclusivo para personal autorizado del<br>
               Instituto Municipal de Biodiversidad y<br>
@@ -645,19 +645,19 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
     <div class="tipo-acta-grid" id="tipo-acta-grid-static">
       <div class="ta-chip" onclick="selTipoActa('inspeccion')" id="ta-inspeccion">
         <span class="ta-ic">🔍</span><span class="ta-lbl">Inspección</span>
-        <span style="font-size:.62rem;color:#64748b;line-height:1.2">Visita inicial al sitio</span>
+        <span style="font-size:.94rem;color:#64748b;line-height:1.2">Visita inicial al sitio</span>
       </div>
       <div class="ta-chip sel" onclick="selTipoActa('circunstanciada')" id="ta-circunstanciada">
         <span class="ta-ic">📋</span><span class="ta-lbl">Circunstanciada</span>
-        <span style="font-size:.62rem;color:#64748b;line-height:1.2">Documenta los hechos</span>
+        <span style="font-size:.94rem;color:#64748b;line-height:1.2">Documenta los hechos</span>
       </div>
       <div class="ta-chip" onclick="selTipoActa('apercibimiento')" id="ta-apercibimiento">
         <span class="ta-ic">⚠️</span><span class="ta-lbl">Apercibimiento</span>
-        <span style="font-size:.62rem;color:#64748b;line-height:1.2">Irregularidad corregible</span>
+        <span style="font-size:.94rem;color:#64748b;line-height:1.2">Irregularidad corregible</span>
       </div>
       <div class="ta-chip" onclick="selTipoActa('sancion')" id="ta-sancion">
         <span class="ta-ic">🚫</span><span class="ta-lbl">Sanción</span>
-        <span style="font-size:.62rem;color:#64748b;line-height:1.2">Infracción / reincidencia</span>
+        <span style="font-size:.94rem;color:#64748b;line-height:1.2">Infracción / reincidencia</span>
       </div>
     </div>
     <input type="hidden" id="acta-tipo" value="circunstanciada">
@@ -679,7 +679,7 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
       </div>
       <div class="fg">
         <label>Motivo</label>
-        <select id="acta-motivo" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="acta-motivo" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="denuncia">Denuncia ciudadana</option>
           <option value="programa">Programa de vigilancia</option>
           <option value="seguimiento">Seguimiento de expediente</option>
@@ -697,7 +697,7 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
       </div>
       <div class="fg">
         <label>Cargo o relación</label>
-        <select id="acta-cargo-visitado" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="acta-cargo-visitado" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="">Seleccionar...</option>
           <option>Propietario</option>
           <option>Representante legal</option>
@@ -719,7 +719,7 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
     <div class="section-title" style="background:#1a3a5c">📡 Ubicación GPS</div>
     <div class="acta-card-body" id="campos-comunes-gps">
       <button type="button" class="ibtn ibtn-secondary" style="width:100%;margin-bottom:6px" onclick="obtenerGPSActa()">📡 Capturar ubicación GPS</button>
-      <div id="acta-coords-bar" style="font-size:.78rem;color:var(--muted);text-align:center;padding:4px 0;min-height:20px">📍 Toca para capturar coordenadas</div>
+      <div id="acta-coords-bar" style="font-size:.92rem;color:var(--muted);text-align:center;padding:4px 0;min-height:20px">📍 Toca para capturar coordenadas</div>
     </div>
 
     <!-- ── SECCIÓN DINÁMICA POR TIPO DE ACTA (se reconstruye al cambiar tipo) ── -->
@@ -1013,18 +1013,18 @@ function repCard(rep) {
         // Denuncia / trámite general: tres opciones
         btnAccion = `
           <div style="display:flex;flex-direction:column;gap:5px;width:100%">
-            <div style="font-size:.68rem;color:var(--muted);font-weight:700;text-align:center;margin-bottom:2px">
+            <div style="font-size:.94rem;color:var(--muted);font-weight:700;text-align:center;margin-bottom:2px">
               📄 Selecciona el tipo de acta
             </div>
-            <button class="ibtn ibtn-sm" style="background:#1e3a8a;color:#fff;font-size:.75rem;padding:8px"
+            <button class="ibtn ibtn-sm" style="background:#1e3a8a;color:#fff;font-size:.95rem;padding:8px"
               onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','circunstanciada')">
               📋 Acta Circunstanciada
             </button>
-            <button class="ibtn ibtn-sm" style="background:#92400e;color:#fff;font-size:.75rem;padding:8px"
+            <button class="ibtn ibtn-sm" style="background:#92400e;color:#fff;font-size:.95rem;padding:8px"
               onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','apercibimiento')">
               ⚠️ Acta de Apercibimiento
             </button>
-            <button class="ibtn ibtn-sm" style="background:#991b1b;color:#fff;font-size:.75rem;padding:8px"
+            <button class="ibtn ibtn-sm" style="background:#991b1b;color:#fff;font-size:.95rem;padding:8px"
               onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','sancion')">
               🚫 Acta de Sanción
             </button>
@@ -1035,14 +1035,14 @@ function repCard(rep) {
     } else if (estado === 'pendiente_medida') {
       btnAccion = `
         <div style="display:flex;flex-direction:column;gap:5px;width:100%">
-          <div style="font-size:.68rem;color:#92400e;font-weight:700;text-align:center;margin-bottom:2px">
+          <div style="font-size:.94rem;color:#92400e;font-weight:700;text-align:center;margin-bottom:2px">
             ⚠️ Pendiente — elige la medida
           </div>
-          <button class="ibtn ibtn-sm" style="background:#92400e;color:#fff;font-size:.75rem;padding:8px"
+          <button class="ibtn ibtn-sm" style="background:#92400e;color:#fff;font-size:.95rem;padding:8px"
             onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','apercibimiento')">
             ⚠️ Acta de Apercibimiento
           </button>
-          <button class="ibtn ibtn-sm" style="background:#991b1b;color:#fff;font-size:.75rem;padding:8px"
+          <button class="ibtn ibtn-sm" style="background:#991b1b;color:#fff;font-size:.95rem;padding:8px"
             onclick="event.stopPropagation();abrirNuevaActa(${rep.id},'${rep.folio}','sancion')">
             🚫 Acta de Sanción
           </button>
@@ -1133,7 +1133,7 @@ async function verDetalle(id) {
       <div class="detail-section">
         <h3>Evidencias (${rep.evidencias.length})</h3>
         <div class="foto-mini-grid">
-          ${rep.evidencias.map(e=>`<div class="foto-mini">📸<br><span style="font-size:.6rem">${e.comentario||'Foto'}</span></div>`).join('')}
+          ${rep.evidencias.map(e=>`<div class="foto-mini">📸<br><span style="font-size:.92rem">${e.comentario||'Foto'}</span></div>`).join('')}
         </div>
       </div>`:''}
       ${rep.actas?.length?`
@@ -2147,43 +2147,43 @@ function showExitoActa(folio, tipo, reportId, reportFolio) {
   div.innerHTML = `
     <div style="font-size:4rem;margin-bottom:12px;animation:pop .4s cubic-bezier(.34,1.56,.64,1)">${esCirc ? '📋' : esCierre ? '✅' : '🔍'}</div>
     <div style="color:#fff;font-size:1.3rem;font-weight:800">Acta Generada</div>
-    <div style="color:rgba(255,255,255,.7);font-size:.85rem;margin-top:6px">${labels[tipo]||tipo}</div>
+    <div style="color:rgba(255,255,255,.7);font-size:.94rem;margin-top:6px">${labels[tipo]||tipo}</div>
     <div style="color:var(--acento);font-family:monospace;font-size:.95rem;margin-top:10px;font-weight:800">${folio}</div>
 
     <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap;justify-content:center">
-      <button onclick="compartirPDFActa(window._lastActa)" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer">📤 Compartir PDF</button>
+      <button onclick="compartirPDFActa(window._lastActa)" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-size:.94rem;font-weight:700;cursor:pointer">📤 Compartir PDF</button>
     </div>
 
     ${esCirc ? `
     <div style="margin-top:24px;background:rgba(245,158,11,.15);border:2px solid #f59e0b;border-radius:14px;padding:18px 20px;max-width:340px;width:100%">
       <div style="color:#f59e0b;font-weight:800;font-size:.95rem;margin-bottom:6px">⚖️ Seleccione la medida administrativa</div>
-      <div style="color:rgba(255,255,255,.7);font-size:.78rem;margin-bottom:14px">Una acta circunstanciada no resuelve el expediente.<br>Debe elegir una de las siguientes opciones:</div>
+      <div style="color:rgba(255,255,255,.7);font-size:.92rem;margin-bottom:14px">Una acta circunstanciada no resuelve el expediente.<br>Debe elegir una de las siguientes opciones:</div>
       <button onclick="document.getElementById('exito-acta-overlay').remove();abrirNuevaActa(${reportId},'${reportFolio}','apercibimiento')"
-        style="width:100%;padding:12px;background:#f59e0b;color:#000;border:none;border-radius:10px;font-size:.88rem;font-weight:800;cursor:pointer;margin-bottom:8px">
+        style="width:100%;padding:12px;background:#f59e0b;color:#000;border:none;border-radius:10px;font-size:.92rem;font-weight:800;cursor:pointer;margin-bottom:8px">
         ⚠️ Generar Acta de Apercibimiento
       </button>
       <button onclick="document.getElementById('exito-acta-overlay').remove();abrirNuevaActa(${reportId},'${reportFolio}','sancion')"
-        style="width:100%;padding:12px;background:#dc2626;color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:800;cursor:pointer">
+        style="width:100%;padding:12px;background:#dc2626;color:#fff;border:none;border-radius:10px;font-size:.92rem;font-weight:800;cursor:pointer">
         🚫 Generar Acta de Sanción
       </button>
     </div>
-    <button onclick="document.getElementById('exito-acta-overlay').remove()" style="margin-top:12px;padding:10px 24px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2);border-radius:10px;font-size:.8rem;cursor:pointer">
+    <button onclick="document.getElementById('exito-acta-overlay').remove()" style="margin-top:12px;padding:10px 24px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2);border-radius:10px;font-size:.94rem;cursor:pointer">
       Decidir después (el caso queda pendiente)
     </button>
     ` : esCierre ? `
     <div style="margin-top:20px;background:rgba(22,163,74,.15);border:2px solid #16a34a;border-radius:14px;padding:16px 20px;max-width:340px;width:100%">
       <div style="color:#4ade80;font-weight:800;margin-bottom:8px">✅ Medida administrativa aplicada</div>
-      <div style="color:rgba(255,255,255,.7);font-size:.8rem">Ahora puede cerrar el expediente o volver a los reportes.</div>
+      <div style="color:rgba(255,255,255,.7);font-size:.94rem">Ahora puede cerrar el expediente o volver a los reportes.</div>
     </div>
     <button onclick="confirmarCierre(${reportId},'${reportFolio}');document.getElementById('exito-acta-overlay').remove()"
-      style="margin-top:14px;padding:12px 28px;background:#16a34a;color:#fff;border:none;border-radius:12px;font-size:.9rem;font-weight:800;cursor:pointer">
+      style="margin-top:14px;padding:12px 28px;background:#16a34a;color:#fff;border:none;border-radius:12px;font-size:.94rem;font-weight:800;cursor:pointer">
       ✅ Cerrar el Caso
     </button>
-    <button onclick="document.getElementById('exito-acta-overlay').remove()" style="margin-top:8px;padding:10px 24px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2);border-radius:10px;font-size:.8rem;cursor:pointer">
+    <button onclick="document.getElementById('exito-acta-overlay').remove()" style="margin-top:8px;padding:10px 24px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2);border-radius:10px;font-size:.94rem;cursor:pointer">
       Volver a los reportes
     </button>
     ` : `
-    <button onclick="document.getElementById('exito-acta-overlay').remove()" style="margin-top:18px;padding:12px 28px;background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.35);border-radius:12px;font-size:.9rem;font-weight:700;cursor:pointer">← Volver</button>
+    <button onclick="document.getElementById('exito-acta-overlay').remove()" style="margin-top:18px;padding:12px 28px;background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.35);border-radius:12px;font-size:.94rem;font-weight:700;cursor:pointer">← Volver</button>
     `}`;
   document.body.appendChild(div);
 }
@@ -2374,7 +2374,7 @@ async function cargarVerificacionesInspector() {
     }
     _verifInspCache = r.data.verificaciones || [];
     if (!_verifInspCache.length) {
-      lista.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--muted)"><div style="font-size:2.5rem;margin-bottom:10px">🏪</div><p style="font-size:.88rem;line-height:1.6">No tienes verificaciones asignadas.</p></div>';
+      lista.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--muted)"><div style="font-size:2.5rem;margin-bottom:10px">🏪</div><p style="font-size:.92rem;line-height:1.6">No tienes verificaciones asignadas.</p></div>';
       return;
     }
     var EST_COLORS = { programada:'#3b82f6', en_proceso:'#f59e0b', completada:'#22c55e', cancelada:'#9ca3af' };
@@ -2384,21 +2384,21 @@ async function cargarVerificacionesInspector() {
         '<div style="padding:12px 14px">' +
           '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">' +
             '<div>' +
-              '<div style="font-family:monospace;font-size:.75rem;font-weight:700;color:#1a3a5c">' + v.folio + '</div>' +
+              '<div style="font-family:monospace;font-size:.95rem;font-weight:700;color:#1a3a5c">' + v.folio + '</div>' +
               '<div style="font-weight:800;font-size:.95rem;margin-top:2px">' + (v.establecimiento_nombre||'–') + '</div>' +
-              '<div style="font-size:.78rem;color:#888">' + (v.establecimiento_giro||'') + '</div>' +
+              '<div style="font-size:.92rem;color:#888">' + (v.establecimiento_giro||'') + '</div>' +
             '</div>' +
-            '<span style="background:' + (EST_COLORS[v.estado]||'#888') + '20;color:' + (EST_COLORS[v.estado]||'#888') + ';padding:3px 9px;border-radius:99px;font-size:.72rem;font-weight:700">' + (EST_LABELS[v.estado]||v.estado) + '</span>' +
+            '<span style="background:' + (EST_COLORS[v.estado]||'#888') + '20;color:' + (EST_COLORS[v.estado]||'#888') + ';padding:3px 9px;border-radius:99px;font-size:.92rem;font-weight:700">' + (EST_LABELS[v.estado]||v.estado) + '</span>' +
           '</div>' +
-          '<div style="font-size:.80rem;color:#555;line-height:1.6">' +
+          '<div style="font-size:.94rem;color:#555;line-height:1.6">' +
             '<div>📍 ' + (v.establecimiento_domicilio||'–') + '</div>' +
             (v.fecha_programada ? '<div>📅 Fecha: <b>' + new Date(v.fecha_programada+'T00:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'}) + '</b></div>' : '') +
             (v.motivo ? '<div>📝 ' + v.motivo.substring(0,80) + (v.motivo.length>80?'...':'') + '</div>' : '') +
           '</div>' +
         '</div>' +
         (v.estado !== 'completada' && v.estado !== 'cancelada' ?
-          '<div style="padding:8px 14px;background:#f8fafc;border-top:1px solid #f1f5f9"><button onclick="abrirVerifInspector(' + v.id + ')" style="width:100%;padding:9px;background:linear-gradient(135deg,#1a3a5c,#1e40af);color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer">📝 Registrar Hallazgos</button></div>' :
-          '<div style="padding:8px 14px;background:#f0fdf4;border-top:1px solid #bbf7d0;font-size:.78rem;color:#15803d;font-weight:700;text-align:center">✅ Verificación completada</div>'
+          '<div style="padding:8px 14px;background:#f8fafc;border-top:1px solid #f1f5f9"><button onclick="abrirVerifInspector(' + v.id + ')" style="width:100%;padding:9px;background:linear-gradient(135deg,#1a3a5c,#1e40af);color:#fff;border:none;border-radius:8px;font-size:.97rem;font-weight:700;cursor:pointer">📝 Registrar Hallazgos</button></div>' :
+          '<div style="padding:8px 14px;background:#f0fdf4;border-top:1px solid #bbf7d0;font-size:.92rem;color:#15803d;font-weight:700;text-align:center">✅ Verificación completada</div>'
         ) +
         '</div>';
     }).join('');
@@ -2431,17 +2431,17 @@ function abrirVerifInspector(vid) {
   if (v.checklist && v.checklist.length) {
     ckWrap.innerHTML = v.checklist.map(function(ck, i) {
       return '<div style="display:flex;align-items:center;gap:6px;background:#f8fafc;border:1px solid var(--borde);border-radius:7px;padding:7px 9px">' +
-        '<select id="ck-res-' + i + '" style="flex:none;width:90px;padding:4px 6px;border:1px solid var(--borde);border-radius:5px;font-size:.72rem">' +
+        '<select id="ck-res-' + i + '" style="flex:none;width:90px;padding:4px 6px;border:1px solid var(--borde);border-radius:5px;font-size:.92rem">' +
           '<option value="pendiente" ' + (ck.resultado==='pendiente'?'selected':'') + '>⏳ Pend.</option>' +
           '<option value="cumple" ' + (ck.resultado==='cumple'?'selected':'') + '>✅ Cumple</option>' +
           '<option value="no_cumple" ' + (ck.resultado==='no_cumple'?'selected':'') + '>❌ No</option>' +
           '<option value="no_aplica" ' + (ck.resultado==='no_aplica'?'selected':'') + '>➖ N/A</option>' +
         '</select>' +
-        '<span style="font-size:.75rem;color:#374151">' + (ITEM_LABELS[ck.item]||ck.item) + '</span>' +
+        '<span style="font-size:.95rem;color:#374151">' + (ITEM_LABELS[ck.item]||ck.item) + '</span>' +
       '</div>';
     }).join('');
   } else {
-    ckWrap.innerHTML = '<div style="grid-column:1/-1;color:#94a3b8;font-size:.78rem;padding:8px">Sin checklist definido.</div>';
+    ckWrap.innerHTML = '<div style="grid-column:1/-1;color:#94a3b8;font-size:.92rem;padding:8px">Sin checklist definido.</div>';
   }
   document.getElementById('verif-insp-hallazgos').value = v.hallazgos || '';
   document.getElementById('verif-insp-resultado').value  = v.resultado || '';
@@ -2455,7 +2455,7 @@ async function guardarVerificacionInspector() {
   var alertEl = document.getElementById('verif-insp-alert');
   var resultado = document.getElementById('verif-insp-resultado').value;
   if (!resultado) {
-    alertEl.innerHTML = '<div style="background:#fee2e2;color:#991b1b;padding:8px 12px;border-radius:7px;font-size:.78rem">Selecciona el resultado general antes de guardar.</div>';
+    alertEl.innerHTML = '<div style="background:#fee2e2;color:#991b1b;padding:8px 12px;border-radius:7px;font-size:.92rem">Selecciona el resultado general antes de guardar.</div>';
     return;
   }
   var hallazgos = document.getElementById('verif-insp-hallazgos').value.trim();
@@ -2464,7 +2464,7 @@ async function guardarVerificacionInspector() {
     var sel = document.getElementById('ck-res-' + i);
     return { item: ck.item, resultado: sel ? sel.value : ck.resultado };
   });
-  alertEl.innerHTML = '<div style="color:#1a3a5c;font-size:.78rem">⏳ Guardando...</div>';
+  alertEl.innerHTML = '<div style="color:#1a3a5c;font-size:.92rem">⏳ Guardando...</div>';
   var r = await api('/api/verificaciones/' + _verifInspActual.id, 'PATCH', {
     resultado: resultado,
     hallazgos: hallazgos,
@@ -2476,7 +2476,7 @@ async function guardarVerificacionInspector() {
     document.getElementById('modal-verif-insp').style.display = 'none';
     cargarVerificacionesInspector();
   } else {
-    alertEl.innerHTML = '<div style="background:#fee2e2;color:#991b1b;padding:8px 12px;border-radius:7px;font-size:.78rem">Error: ' + (r.message||'No se pudo guardar.') + '</div>';
+    alertEl.innerHTML = '<div style="background:#fee2e2;color:#991b1b;padding:8px 12px;border-radius:7px;font-size:.92rem">Error: ' + (r.message||'No se pudo guardar.') + '</div>';
   }
 }
 
@@ -2551,7 +2551,7 @@ function _actualizarListaMordida() {
     lista.innerHTML = '<em>Ninguna seleccionada</em>';
   } else {
     lista.innerHTML = _mordidaZonas.map(function(z) {
-      return '<span style="display:inline-block;background:#fee2e2;color:#991b1b;border-radius:5px;padding:2px 7px;margin:2px;font-size:.72rem;font-weight:700">🩸 ' + (_mordidaLabels[z]||z) + '</span>';
+      return '<span style="display:inline-block;background:#fee2e2;color:#991b1b;border-radius:5px;padding:2px 7px;margin:2px;font-size:.92rem;font-weight:700">🩸 ' + (_mordidaLabels[z]||z) + '</span>';
     }).join('');
   }
   if (data) data.value = _mordidaZonas.join(', ');
@@ -2614,7 +2614,7 @@ function _buildActaForm() {
       <div class="fg">
         <label>Folio expediente previo (si aplica)</label>
         <input id="acta-expediente-prev" placeholder="Ej: ACTA-INS-20260315-0001"
-          style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
     </div>
   `;
@@ -2622,7 +2622,7 @@ function _buildActaForm() {
   // ── SECCIÓN ÁRBOL (solo poda/derribo/arbol) ─────────────────────────────
   var seccionArbol = esArbol ? `
     <div class="section-title">🌳 2. Características Dendrométricas del Árbol</div>
-    <div class="form-note" style="background:#e8f5e9;padding:8px 12px;border-radius:7px;font-size:.78rem;color:#2e7d32;margin-bottom:10px">
+    <div class="form-note" style="background:#e8f5e9;padding:8px 12px;border-radius:7px;font-size:.92rem;color:#2e7d32;margin-bottom:10px">
       Art. 6 NTEA-AGS-ARBOLADO-2026 — Registrar datos del individuo arbóreo
     </div>
     <div class="form-grid">
@@ -2735,7 +2735,7 @@ function _buildActaForm() {
     <input type="hidden" id="acta-nivel-riesgo">
 
     <div class="section-title">✂️ 5. Dictamen Técnico</div>
-    <div class="form-note" style="background:#fff3e0;padding:8px 12px;border-radius:7px;font-size:.78rem;color:#e65100;margin-bottom:10px">
+    <div class="form-note" style="background:#fff3e0;padding:8px 12px;border-radius:7px;font-size:.92rem;color:#e65100;margin-bottom:10px">
       Marcar todas las intervenciones autorizadas
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
@@ -2770,23 +2770,23 @@ function _buildActaForm() {
 
     <!-- AVISO DE REQUISITOS IMBIO -->
     <div class="section-title" style="background:#1a3a5c">📋 6. Requisitos para el Trámite en Oficinas IMBIO</div>
-    <div style="background:#EEF5FC;border-radius:10px;padding:14px 16px;margin-bottom:10px;font-size:.82rem;line-height:1.7;color:#1a3a5c">
-      <div style="font-weight:800;margin-bottom:8px;font-size:.88rem">⚠️ Concluida la inspección, el solicitante debe presentarse a las oficinas del IMBIO con:</div>
+    <div style="background:#EEF5FC;border-radius:10px;padding:14px 16px;margin-bottom:10px;font-size:.97rem;line-height:1.7;color:#1a3a5c">
+      <div style="font-weight:800;margin-bottom:8px;font-size:.92rem">⚠️ Concluida la inspección, el solicitante debe presentarse a las oficinas del IMBIO con:</div>
       <div style="display:grid;grid-template-columns:1fr;gap:4px">
         <div style="padding:4px 0">✔️ Solicitud por escrito dirigida al Director del IMBIO</div>
         <div style="padding:4px 0">✔️ Comprobante de domicilio <b>o</b> pago de predial a nombre del solicitante</div>
-        <label class="chk-lbl"><input type="checkbox" id="req-impacto"> 🌿 Resolutivo de impacto ambiental <span style="color:#64748b;font-size:.75rem">(si amerita por magnitud del proyecto)</span></label>
-        <label class="chk-lbl"><input type="checkbox" id="req-licencia"> 🏗️ Licencia de construcción vigente <span style="color:#64748b;font-size:.75rem">(si la obra lo requiere)</span></label>
+        <label class="chk-lbl"><input type="checkbox" id="req-impacto"> 🌿 Resolutivo de impacto ambiental <span style="color:#64748b;font-size:.95rem">(si amerita por magnitud del proyecto)</span></label>
+        <label class="chk-lbl"><input type="checkbox" id="req-licencia"> 🏗️ Licencia de construcción vigente <span style="color:#64748b;font-size:.95rem">(si la obra lo requiere)</span></label>
         <label class="chk-lbl"><input type="checkbox" id="req-croquis"> 🗺️ Croquis o plano de ubicación del árbol en el predio</label>
         <label class="chk-lbl"><input type="checkbox" id="req-fotografia"> 📸 Fotografías del árbol (mínimo 3 vistas)</label>
       </div>
-      <div style="margin-top:10px;background:#fff3cd;border-radius:7px;padding:8px 10px;font-size:.78rem;color:#92400e">
+      <div style="margin-top:10px;background:#fff3cd;border-radius:7px;padding:8px 10px;font-size:.92rem;color:#92400e">
         <b>⏱ Plazo de resolución:</b> El IMBIO resolverá en un plazo de <b>15 días hábiles</b> a partir de la recepción del expediente completo.
       </div>
     </div>
     <div class="form-group" style="margin-bottom:10px">
       <label>Observaciones para el solicitante</label>
-      <textarea id="arb-obs-solicitante" rows="2" placeholder="Indicaciones adicionales al ciudadano sobre su trámite..." style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;resize:vertical"></textarea>
+      <textarea id="arb-obs-solicitante" rows="2" placeholder="Indicaciones adicionales al ciudadano sobre su trámite..." style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem;resize:vertical"></textarea>
     </div>
     <!-- Firmas -->
     <div class="section-title" style="background:#1a3a5c">✍️ Firmas</div>
@@ -2797,22 +2797,22 @@ function _buildActaForm() {
       </div>
       <canvas id="sig-inspector" class="sig-visitado"></canvas>
       <div style="padding:8px 10px">
-        <input id="acta-firmante" placeholder="Nombre completo del inspector" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <input id="acta-firmante" placeholder="Nombre completo del inspector" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
     </div>
     <div class="firmante-wrap">
       <div class="firmante-header">
-        <span>✍️ Firma del Solicitante <span style="font-weight:400;font-size:.72rem">(opcional)</span></span>
+        <span>✍️ Firma del Solicitante <span style="font-weight:400;font-size:.92rem">(opcional)</span></span>
         <button class="ibtn ibtn-ghost ibtn-sm" onclick="clearSig('sig-visitado')" style="padding:3px 8px">🗑 Borrar</button>
       </div>
       <canvas id="sig-visitado" class="sig-visitado"></canvas>
       <div style="padding:8px 10px">
-        <input id="acta-nombre-visitado" placeholder="Nombre del solicitante" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <input id="acta-nombre-visitado" placeholder="Nombre del solicitante" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
     </div>
     <!-- Estado del reporte -->
     <div class="section-title" style="background:#1a3a5c">🔄 Estado del Reporte</div>
-    <select id="acta-nuevo-estado" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;margin-bottom:10px">
+    <select id="acta-nuevo-estado" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem;margin-bottom:10px">
       <option value="">— Sin cambio —</option>
       <option value="en_inspeccion">🔍 En Inspección</option>
       <option value="en_proceso">🔄 En Proceso</option>
@@ -2836,7 +2836,7 @@ function _buildActaForm() {
       <div class="fg">
         <label>Tipo de incidente</label>
         <select id="anim-tipo-incidente"
-          style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem"
+          style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem"
           onchange="toggleVictimaSection(this.value)">
           <option value="mordida">🦷 Mordida / ataque a persona</option>
           <option value="rasguño">🐾 Rasguño / contacto agresivo</option>
@@ -2852,24 +2852,24 @@ function _buildActaForm() {
       <div class="fg">
         <label>Lugar exacto del incidente</label>
         <input id="anim-lugar-incidente" placeholder="Calle, colonia, referencia"
-          style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
       <div class="fg">
         <label>Fecha del incidente</label>
         <input id="an-fecha-incidente" type="date"
-          style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
       <div class="fg">
         <label>Hora aproximada</label>
         <input id="anim-hora-incidente" type="time"
-          style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
     </div>
 
     <!-- BLQ 2: VÍCTIMA (solo cuando hay contacto físico) -->
     <div id="sec-victima-wrap">
       <div style="background:#fff3e0;border:1.5px solid #f59e0b;border-radius:9px;padding:12px 14px;margin-bottom:10px">
-        <div style="font-size:.75rem;font-weight:800;color:#92400e;margin-bottom:10px">👤 Datos del Afectado / Víctima</div>
+        <div style="font-size:.95rem;font-weight:800;color:#92400e;margin-bottom:10px">👤 Datos del Afectado / Víctima</div>
         <div class="form-grid">
           <div class="fg fg2">
             <label>Nombre completo</label>
@@ -2911,7 +2911,7 @@ function _buildActaForm() {
 
       <!-- Figura de mordida (solo mordida/rasguño) -->
       <div id="sec-figura-mordida">
-        <div style="font-size:.75rem;font-weight:800;color:#1a3a5c;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">
+        <div style="font-size:.95rem;font-weight:800;color:#1a3a5c;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">
           🩹 Localización de la Lesión (toca la zona afectada)
         </div>
         <div style="display:flex;gap:12px;align-items:flex-start;justify-content:center;flex-wrap:wrap;margin-bottom:12px">
@@ -2974,11 +2974,11 @@ function _buildActaForm() {
           </svg>
           <div style="flex:1;min-width:130px">
             <div style="background:#fff;border:1.5px solid var(--borde);border-radius:10px;padding:12px;min-height:100px">
-              <div style="font-size:.72rem;font-weight:800;color:#1a3a5c;margin-bottom:8px">🩸 Zonas marcadas:</div>
-              <div id="mordida-zonas-lista" style="font-size:.8rem;color:#64748b;line-height:1.6"><em>Ninguna seleccionada</em></div>
+              <div style="font-size:.92rem;font-weight:800;color:#1a3a5c;margin-bottom:8px">🩸 Zonas marcadas:</div>
+              <div id="mordida-zonas-lista" style="font-size:.94rem;color:#64748b;line-height:1.6"><em>Ninguna seleccionada</em></div>
             </div>
             <div style="margin-top:10px">
-              <label style="font-size:.75rem;font-weight:700;color:#1a3a5c;display:block;margin-bottom:4px">Gravedad de la lesión</label>
+              <label style="font-size:.95rem;font-weight:700;color:#1a3a5c;display:block;margin-bottom:4px">Gravedad de la lesión</label>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
                 <button id="grav-sup" class="grav-btn-insp sel-sup" onclick="selGravMordida('superficial')">✓ Superficial</button>
                 <button id="grav-pro" class="grav-btn-insp" onclick="selGravMordida('profunda')">⚠️ Profunda</button>
@@ -2987,7 +2987,7 @@ function _buildActaForm() {
             <input type="hidden" id="mordida-zonas-data" value="">
             <input type="hidden" id="mordida-gravedad-data" value="superficial">
             <div style="margin-top:8px">
-              <button class="ibtn ibtn-ghost ibtn-sm" onclick="limpiarMordida()" style="width:100%;font-size:.72rem">🗑 Limpiar zonas</button>
+              <button class="ibtn ibtn-ghost ibtn-sm" onclick="limpiarMordida()" style="width:100%;font-size:.92rem">🗑 Limpiar zonas</button>
             </div>
           </div>
         </div>
@@ -2999,7 +2999,7 @@ function _buildActaForm() {
     <div class="form-grid">
       <div class="fg">
         <label>Especie</label>
-        <select id="anim-especie" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="anim-especie" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="perro">Perro doméstico</option>
           <option value="gato">Gato doméstico</option>
           <option value="fauna_silvestre">Fauna silvestre</option>
@@ -3009,16 +3009,16 @@ function _buildActaForm() {
       <div class="fg">
         <label>Cantidad de animales</label>
         <input id="anim-cantidad" type="number" min="1" value="1"
-          style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
       <div class="fg">
         <label>Descripción física (raza, color, tamaño)</label>
         <input id="anim-raza" placeholder="Ej: Perro mediano, pelaje café, sin collar"
-          style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
       <div class="fg">
         <label>Condición del animal</label>
-        <select id="anim-condicion" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="anim-condicion" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="">Seleccionar...</option>
           <option value="buen_estado">Buen estado general</option>
           <option value="delgado">Delgadez moderada</option>
@@ -3029,7 +3029,7 @@ function _buildActaForm() {
       </div>
       <div class="fg">
         <label>Situación al llegar</label>
-        <select id="anim-situacion" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="anim-situacion" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="">Seleccionar...</option>
           <option value="en_via_publica">En la vía pública / suelto</option>
           <option value="agresivo_activo">Animal agresivo activo</option>
@@ -3040,7 +3040,7 @@ function _buildActaForm() {
       </div>
       <div class="fg">
         <label>¿Tiene dueño identificado?</label>
-        <select id="anim-duenio" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="anim-duenio" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="no">No identificado</option>
           <option value="si">Sí — dueño presente</option>
           <option value="ausente">Sí — dueño ausente</option>
@@ -3048,7 +3048,7 @@ function _buildActaForm() {
       </div>
       <div class="fg" style="grid-column:1/-1">
         <label>¿Cuenta con vacunación antirrábica vigente?</label>
-        <select id="anim-vacuna" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="anim-vacuna" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="">No verificado</option>
           <option value="si">Sí — Presenta cartilla</option>
           <option value="no">No — Sin vacunación</option>
@@ -3060,25 +3060,25 @@ function _buildActaForm() {
     <!-- BLQ 4: NARRATIVA + MATLACHO -->
     <div class="section-title" style="background:#1e3a5f">📋 4. Narrativa del Incidente</div>
     <div style="background:#fafafa;border:1.5px solid #e2e8f0;border-radius:9px;padding:12px 14px;margin-bottom:10px">
-      <div style="font-size:.72rem;color:#64748b;margin-bottom:8px;background:#fef9c3;padding:6px 10px;border-radius:6px">
+      <div style="font-size:.92rem;color:#64748b;margin-bottom:8px;background:#fef9c3;padding:6px 10px;border-radius:6px">
         <b>⚠️ Instrucción:</b> Solo hechos objetivos y observables. No juzgar.
       </div>
       <div class="fg" style="margin-bottom:8px">
         <label>Descripción cronológica del incidente</label>
         <textarea id="acta-descripcion" rows="5"
           placeholder="¿Cómo se encontró al animal? ¿Cuál era su comportamiento? ¿Qué acciones se tomaron? ¿Quién estaba presente?"
-          style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;resize:vertical"></textarea>
+          style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem;resize:vertical"></textarea>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:5px">
           <button type="button" onclick="matlachoAnimalNarrativa(this)"
-            style="padding:8px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;border-radius:8px;font-size:.74rem;font-weight:700;cursor:pointer">
+            style="padding:8px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;border-radius:8px;font-size:.94rem;font-weight:700;cursor:pointer">
             ✨ Matlacho — Redactar narrativa
           </button>
           <button type="button" onclick="matlachoAnimalRiesgo(this)"
-            style="padding:8px;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;border:none;border-radius:8px;font-size:.74rem;font-weight:700;cursor:pointer">
+            style="padding:8px;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;border:none;border-radius:8px;font-size:.94rem;font-weight:700;cursor:pointer">
             ⚠️ Matlacho — Evaluar riesgo
           </button>
         </div>
-        <div id="anim-riesgo-result" style="display:none;margin-top:6px;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:8px;padding:10px 12px;font-size:.76rem;color:#991b1b;line-height:1.7"></div>
+        <div id="anim-riesgo-result" style="display:none;margin-top:6px;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:8px;padding:10px 12px;font-size:.96rem;color:#991b1b;line-height:1.7"></div>
       </div>
     </div>
 
@@ -3094,7 +3094,7 @@ function _buildActaForm() {
     </div>
     <div class="fg" style="margin-bottom:10px">
       <label>Destino del animal</label>
-      <select id="anim-destino" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+      <select id="anim-destino" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
         <option value="">No aplica / no rescatado</option>
         <option value="albergue">Albergue Municipal</option>
         <option value="veterinaria">Veterinaria de guardia</option>
@@ -3107,22 +3107,22 @@ function _buildActaForm() {
       <label>Recomendaciones al afectado / comunidad</label>
       <textarea id="anim-recomendaciones" rows="2"
         placeholder="Ej: Se recomienda al afectado valoración antirrábica. Se orienta al propietario sobre tenencia responsable..."
-        style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;resize:vertical"></textarea>
+        style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem;resize:vertical"></textarea>
       <button type="button" onclick="matlachoAnimalRecomendaciones(this)"
-        style="margin-top:5px;width:100%;padding:7px;background:linear-gradient(135deg,#0f766e,#0d9488);color:#fff;border:none;border-radius:8px;font-size:.74rem;font-weight:700;cursor:pointer">
+        style="margin-top:5px;width:100%;padding:7px;background:linear-gradient(135deg,#0f766e,#0d9488);color:#fff;border:none;border-radius:8px;font-size:.94rem;font-weight:700;cursor:pointer">
         🐭 Matlacho — Generar recomendaciones
       </button>
-      <div id="anim-recom-result" style="display:none;margin-top:6px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;padding:10px 12px;font-size:.76rem;color:#15803d;line-height:1.7"></div>
+      <div id="anim-recom-result" style="display:none;margin-top:6px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;padding:10px 12px;font-size:.96rem;color:#15803d;line-height:1.7"></div>
     </div>
 
     <!-- BLQ 6: AUDITORÍA -->
     <div style="background:linear-gradient(135deg,#1a3a5c,#1e3a8a);border-radius:10px;padding:12px 14px;margin:10px 0">
-      <div style="color:#fff;font-weight:800;font-size:.85rem;margin-bottom:4px">🛑 Auditoría del Acta — Matlacho</div>
+      <div style="color:#fff;font-weight:800;font-size:.94rem;margin-bottom:4px">🛑 Auditoría del Acta — Matlacho</div>
       <button type="button" onclick="matlachoAuditoriaAnimal(this)"
-        style="width:100%;padding:9px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:9px;font-size:.80rem;font-weight:800;cursor:pointer">
+        style="width:100%;padding:9px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:9px;font-size:.94rem;font-weight:800;cursor:pointer">
         🛑 Verificar que el acta esté completa
       </button>
-      <div id="anim-auditoria-result" style="display:none;margin-top:8px;background:rgba(255,255,255,.95);border-radius:8px;padding:10px 12px;font-size:.76rem;color:#1a3a5c;line-height:1.8"></div>
+      <div id="anim-auditoria-result" style="display:none;margin-top:8px;background:rgba(255,255,255,.95);border-radius:8px;padding:10px 12px;font-size:.96rem;color:#1a3a5c;line-height:1.8"></div>
     </div>` : ''
 
   // ── SECCIÓN DENUNCIA AMBIENTAL ──────────────────────────────────────────
@@ -3150,7 +3150,7 @@ function _buildActaForm() {
     _denEspecifico = `
       <div class="fg">
         <label>Tipo de residuos</label>
-        <select id="da-tipo-residuo" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="da-tipo-residuo" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="">Seleccionar...</option>
           <option>Residuos domésticos mezclados</option>
           <option>Residuos orgánicos</option>
@@ -3162,7 +3162,7 @@ function _buildActaForm() {
       </div>
       <div class="fg">
         <label>Volumen estimado</label>
-        <select id="da-volumen" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="da-volumen" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="">Seleccionar...</option>
           <option>Pequeño (menos de 1 m³)</option>
           <option>Mediano (1–5 m³)</option>
@@ -3174,7 +3174,7 @@ function _buildActaForm() {
     _denEspecifico = `
       <div class="fg">
         <label>Tipo de escombro</label>
-        <select id="da-tipo-residuo" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="da-tipo-residuo" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="">Seleccionar...</option>
           <option>Concreto / block / tabique</option>
           <option>Tierra y materiales de excavación</option>
@@ -3185,13 +3185,13 @@ function _buildActaForm() {
       </div>
       <div class="fg">
         <label>Volumen estimado (m³)</label>
-        <input id="da-volumen" type="number" min="0" placeholder="m³ aproximados" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <input id="da-volumen" type="number" min="0" placeholder="m³ aproximados" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>`;
   } else if (_denSubtipo === 'agua_contaminada') {
     _denEspecifico = `
       <div class="fg">
         <label>Tipo de cuerpo de agua afectado</label>
-        <select id="da-cuerpo-agua" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="da-cuerpo-agua" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="">Seleccionar...</option>
           <option>Canal / acequia de riego</option>
           <option>Arroyo o barranca</option>
@@ -3203,7 +3203,7 @@ function _buildActaForm() {
       </div>
       <div class="fg">
         <label>Tipo de contaminante</label>
-        <select id="da-tipo-contaminante" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="da-tipo-contaminante" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="">Seleccionar...</option>
           <option>Aguas residuales domésticas</option>
           <option>Aguas residuales industriales</option>
@@ -3217,7 +3217,7 @@ function _buildActaForm() {
     _denEspecifico = `
       <div class="fg">
         <label>Fuente del ruido</label>
-        <select id="da-fuente-ruido" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="da-fuente-ruido" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="">Seleccionar...</option>
           <option>Establecimiento comercial / bar / antro</option>
           <option>Industria / taller / maquinaria</option>
@@ -3230,7 +3230,7 @@ function _buildActaForm() {
       </div>
       <div class="fg">
         <label>Horario del problema</label>
-        <select id="da-horario-ruido" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="da-horario-ruido" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="">Seleccionar...</option>
           <option>Diurno (6:00–22:00 hrs)</option>
           <option>Nocturno (22:00–6:00 hrs)</option>
@@ -3241,7 +3241,7 @@ function _buildActaForm() {
 
   var seccionDenuncia = esDenuncia ? `
     <div class="section-title">🌿 2. Datos de la ${_denLabel}</div>
-    <div class="form-note" style="background:#fce4ec;padding:8px 12px;border-radius:7px;font-size:.78rem;color:#b71c1c;margin-bottom:10px">
+    <div class="form-note" style="background:#fce4ec;padding:8px 12px;border-radius:7px;font-size:.92rem;color:#b71c1c;margin-bottom:10px">
       Registrar la situación encontrada durante la inspección en campo.
       <b>Fundamento:</b> ${_denFundo}
     </div>
@@ -3363,7 +3363,7 @@ function _buildActaForm() {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div class="fg fg2">
         <label>¿Se exhibieron permisos / autorizaciones?</label>
-        <select id="tiene-permiso" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="tiene-permiso" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="">Seleccionar...</option>
           <option value="si">✅ Sí — Vigentes</option>
           <option value="vencido">⚠️ Sí — Vencidos</option>
@@ -3374,21 +3374,21 @@ function _buildActaForm() {
       <div class="fg" id="sec-permiso-datos" style="display:none">
         <label>Folio / número del permiso</label>
         <input id="num-permiso" placeholder="Folio o número"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
       <div class="fg fg2">
         <label>Medidas requeridas al visitado</label>
         <input id="acta-medida" placeholder="Ej: Regularizar permisos en 30 días"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
       <div class="fg">
         <label>Plazo</label>
         <input id="acta-plazo" placeholder="Ej: 15 días hábiles"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
       <div class="fg">
         <label>Firmó de enterado</label>
-        <select id="acta-firmado-enterado" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="acta-firmado-enterado" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="">Seleccionar...</option>
           <option value="si">✅ Sí firmó</option>
           <option value="no">❌ Se negó a firmar</option>
@@ -3399,19 +3399,19 @@ function _buildActaForm() {
     <div class="section-title" style="background:#1a3a5c">✍️ Firmas</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div>
-        <label style="font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase">Inspector actuante</label>
+        <label style="font-size:.95rem;font-weight:700;color:var(--muted);text-transform:uppercase">Inspector actuante</label>
         <canvas id="sig-inspector" style="width:100%;height:90px;border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;background:#f8fafc"></canvas>
         <div style="display:flex;gap:6px;margin-top:4px">
-          <input id="acta-firmante-nombre" placeholder="Nombre del inspector" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.78rem">
-          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.72rem" onclick="clearSig('sig-inspector')">🗑</button>
+          <input id="acta-firmante-nombre" placeholder="Nombre del inspector" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.92rem">
+          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.92rem" onclick="clearSig('sig-inspector')">🗑</button>
         </div>
       </div>
       <div>
-        <label style="font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase">Visitado / Responsable</label>
+        <label style="font-size:.95rem;font-weight:700;color:var(--muted);text-transform:uppercase">Visitado / Responsable</label>
         <canvas id="sig-visitado" style="width:100%;height:90px;border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;background:#f8fafc"></canvas>
         <div style="display:flex;gap:6px;margin-top:4px">
-          <input id="nombre-visitado" placeholder="Nombre del visitado" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.78rem">
-          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.72rem" onclick="clearSig('sig-visitado')">🗑</button>
+          <input id="nombre-visitado" placeholder="Nombre del visitado" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.92rem">
+          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.92rem" onclick="clearSig('sig-visitado')">🗑</button>
         </div>
       </div>
     </div>`;
@@ -3427,7 +3427,7 @@ function _buildActaForm() {
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
       <div class="fg">
         <label>Estatus</label>
-        <select id="circ-estatus" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="circ-estatus" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="borrador">📝 Borrador</option>
           <option value="finalizada">✅ Finalizada</option>
           <option value="cancelada">❌ Cancelada</option>
@@ -3436,12 +3436,12 @@ function _buildActaForm() {
       <div class="fg">
         <label>Hora apertura</label>
         <input id="circ-hora-apertura" type="time"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
       <div class="fg">
         <label>Hora cierre</label>
         <input id="circ-hora-cierre" type="time"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
     </div>
 
@@ -3449,7 +3449,7 @@ function _buildActaForm() {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div class="fg">
         <label>Sector / zona municipal</label>
-        <select id="circ-sector" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="circ-sector" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="">Seleccionar...</option>
           <option value="centro">Centro histórico</option>
           <option value="norte">Zona norte</option>
@@ -3462,25 +3462,25 @@ function _buildActaForm() {
       <div class="fg">
         <label>Referencias / colindancias</label>
         <input id="circ-referencias" placeholder="Ej: Entre Av. Hidalgo y calle Morelos"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
     </div>
     <button type="button" onclick="matlachoZonificacion(this)"
-      style="margin-top:6px;width:100%;padding:8px;background:linear-gradient(135deg,#0c4a6e,#0369a1);color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer">
+      style="margin-top:6px;width:100%;padding:8px;background:linear-gradient(135deg,#0c4a6e,#0369a1);color:#fff;border:none;border-radius:8px;font-size:.92rem;font-weight:700;cursor:pointer">
       📍 Matlacho — Verificar zonificación ambiental
     </button>
-    <div id="circ-zonificacion-result" style="display:none;background:#e0f2fe;border:1.5px solid #38bdf8;border-radius:8px;padding:10px 12px;margin-top:6px;font-size:.78rem;color:#0c4a6e;line-height:1.6"></div>
+    <div id="circ-zonificacion-result" style="display:none;background:#e0f2fe;border:1.5px solid #38bdf8;border-radius:8px;padding:10px 12px;margin-top:6px;font-size:.92rem;color:#0c4a6e;line-height:1.6"></div>
 
     <div class="section-title" style="background:#1a3a5c">👤 Identificación del Visitado</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div class="fg" style="grid-column:1/-1">
         <label>Nombre completo (quien atiende la diligencia)</label>
         <input id="circ-visitado-nombre" placeholder="Igual que en datos de diligencia o diferente si aplica"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
       <div class="fg">
         <label>Carácter</label>
-        <select id="circ-visitado-caracter" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="circ-visitado-caracter" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="">Seleccionar...</option>
           <option value="propietario">Propietario / Dueño</option>
           <option value="representante_legal">Representante Legal</option>
@@ -3491,7 +3491,7 @@ function _buildActaForm() {
       </div>
       <div class="fg">
         <label>Identificación oficial presentada</label>
-        <select id="circ-id-tipo" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem"
+        <select id="circ-id-tipo" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem"
           onchange="document.getElementById('sec-id-folio').style.display=this.value?'block':'none'">
           <option value="">No presentó / No aplica</option>
           <option value="INE/IFE">INE / IFE</option>
@@ -3503,7 +3503,7 @@ function _buildActaForm() {
       <div class="fg" id="sec-id-folio" style="display:none">
         <label>Folio del documento</label>
         <input id="circ-id-folio" placeholder="Número de folio"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
     </div>
 
@@ -3512,12 +3512,12 @@ function _buildActaForm() {
       <div class="fg">
         <label>Testigo 1</label>
         <input id="circ-testigo1" placeholder="Nombre completo"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
       <div class="fg">
         <label>Testigo 2</label>
         <input id="circ-testigo2" placeholder="Nombre completo"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
     </div>
 
@@ -3526,21 +3526,21 @@ function _buildActaForm() {
       <div class="fg">
         <label>Giro / actividad</label>
         <input id="circ-giro" placeholder="Ej: Restaurante, taller, bodega..."
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
       <div class="fg">
         <label>Superficie inspeccionada (m²)</label>
         <input id="circ-superficie" type="number" placeholder="m²"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
     </div>
 
     <div class="section-title" style="background:#1a3a5c">📝 Hechos Circunstanciados</div>
     <textarea id="circ-hechos-lista" rows="5"
       placeholder="Describe con exactitud los hechos observados: situación encontrada, acciones del presunto infractor, condiciones del lugar..."
-      style="width:100%;padding:10px;border:1.5px solid var(--borde);border-radius:8px;font-size:.85rem;resize:vertical"></textarea>
+      style="width:100%;padding:10px;border:1.5px solid var(--borde);border-radius:8px;font-size:.94rem;resize:vertical"></textarea>
     <button type="button" onclick="matlachoPulirNarrativa(this)"
-      style="margin-top:6px;width:100%;padding:8px;background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer">
+      style="margin-top:6px;width:100%;padding:8px;background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;border:none;border-radius:8px;font-size:.92rem;font-weight:700;cursor:pointer">
       🐭 Matlacho — Pulir narrativa circunstanciada
     </button>
     <div id="circ-narrativa-result" style="display:none"></div>
@@ -3548,7 +3548,7 @@ function _buildActaForm() {
     <div class="section-title" style="background:#1a3a5c">🗣️ Manifestación del Visitado</div>
     <textarea id="circ-manifestacion-visitado" rows="3"
       placeholder="Declaración o manifestación de quien atendió la diligencia..."
-      style="width:100%;padding:10px;border:1.5px solid var(--borde);border-radius:8px;font-size:.85rem;resize:vertical"></textarea>
+      style="width:100%;padding:10px;border:1.5px solid var(--borde);border-radius:8px;font-size:.94rem;resize:vertical"></textarea>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
       <label class="chk-lbl"><input type="checkbox" id="circ-derechos-leidos"> Se leyeron derechos y obligaciones</label>
       <label class="chk-lbl"><input type="checkbox" id="circ-copia-entregada"> Se entregó copia del acta</label>
@@ -3557,30 +3557,30 @@ function _buildActaForm() {
     <div class="section-title" style="background:#1a3a5c">✍️ Firmas</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div>
-        <label style="font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase">Inspector actuante</label>
+        <label style="font-size:.95rem;font-weight:700;color:var(--muted);text-transform:uppercase">Inspector actuante</label>
         <canvas id="sig-inspector" style="width:100%;height:90px;border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;background:#f8fafc"></canvas>
         <div style="display:flex;gap:6px;margin-top:4px">
-          <input id="acta-firmante-nombre" placeholder="Nombre" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.78rem">
-          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.72rem" onclick="clearSig('sig-inspector')">🗑</button>
+          <input id="acta-firmante-nombre" placeholder="Nombre" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.92rem">
+          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.92rem" onclick="clearSig('sig-inspector')">🗑</button>
         </div>
       </div>
       <div>
-        <label style="font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase">Visitado</label>
+        <label style="font-size:.95rem;font-weight:700;color:var(--muted);text-transform:uppercase">Visitado</label>
         <canvas id="sig-visitado" style="width:100%;height:90px;border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;background:#f8fafc"></canvas>
         <div style="display:flex;gap:6px;margin-top:4px">
-          <input id="nombre-visitado" placeholder="Nombre" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.78rem">
-          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.72rem" onclick="clearSig('sig-visitado')">🗑</button>
+          <input id="nombre-visitado" placeholder="Nombre" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.92rem">
+          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.92rem" onclick="clearSig('sig-visitado')">🗑</button>
         </div>
       </div>
       <div>
-        <label style="font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase">Testigo 1</label>
+        <label style="font-size:.95rem;font-weight:700;color:var(--muted);text-transform:uppercase">Testigo 1</label>
         <canvas id="sig-testigo1" style="width:100%;height:80px;border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;background:#f8fafc"></canvas>
-        <button type="button" class="ibtn ibtn-ghost" style="margin-top:4px;width:100%;font-size:.72rem" onclick="clearSig('sig-testigo1')">🗑 Borrar</button>
+        <button type="button" class="ibtn ibtn-ghost" style="margin-top:4px;width:100%;font-size:.92rem" onclick="clearSig('sig-testigo1')">🗑 Borrar</button>
       </div>
       <div>
-        <label style="font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase">Testigo 2</label>
+        <label style="font-size:.95rem;font-weight:700;color:var(--muted);text-transform:uppercase">Testigo 2</label>
         <canvas id="sig-testigo2" style="width:100%;height:80px;border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;background:#f8fafc"></canvas>
-        <button type="button" class="ibtn ibtn-ghost" style="margin-top:4px;width:100%;font-size:.72rem" onclick="clearSig('sig-testigo2')">🗑 Borrar</button>
+        <button type="button" class="ibtn ibtn-ghost" style="margin-top:4px;width:100%;font-size:.92rem" onclick="clearSig('sig-testigo2')">🗑 Borrar</button>
       </div>
     </div>`;
 
@@ -3592,9 +3592,9 @@ function _buildActaForm() {
     var _antec  = construirReferenciasAntecedentes();
     secResolucion = `
     <!-- ══ APERCIBIMIENTO: ordena corrección con plazo ══ -->
-    ${_antec ? `<div style="background:#fef9c3;border:1.5px solid #f59e0b;border-radius:9px;padding:10px 14px;margin-bottom:10px;font-size:.78rem;color:#92400e">
+    ${_antec ? `<div style="background:#fef9c3;border:1.5px solid #f59e0b;border-radius:9px;padding:10px 14px;margin-bottom:10px;font-size:.92rem;color:#92400e">
       <b>📎 Antecedentes:</b> ${_antec}
-    </div>` : `<div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:9px;padding:8px 14px;margin-bottom:10px;font-size:.78rem;color:#991b1b">
+    </div>` : `<div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:9px;padding:8px 14px;margin-bottom:10px;font-size:.92rem;color:#991b1b">
       ⚠️ No se detectó Acta Circunstanciada previa. Se recomienda generarla primero.
     </div>`}
 
@@ -3603,20 +3603,20 @@ function _buildActaForm() {
       <div class="fg">
         <label>No. de expediente administrativo</label>
         <input id="aper-expediente" placeholder="Ej: EXP-IMBIO-2026-001"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
       <div class="fg">
         <label>Folio acta circunstanciada de origen</label>
         <input id="aper-folio-circ" placeholder="Folio de la circunstanciada"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;background:#f8fafc">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem;background:#f8fafc">
       </div>
       <div class="fg" style="grid-column:1/-1">
         <label>Hechos que motivan el apercibimiento</label>
         <textarea id="aper-hechos-origen" rows="3"
           placeholder="Hechos y omisiones detectados en la inspección previa..."
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;resize:vertical"></textarea>
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem;resize:vertical"></textarea>
         <button type="button" onclick="matlachoSincronizarHallazgos(this)"
-          style="margin-top:5px;width:100%;padding:7px;background:linear-gradient(135deg,#92400e,#b45309);color:#fff;border:none;border-radius:8px;font-size:.74rem;font-weight:700;cursor:pointer">
+          style="margin-top:5px;width:100%;padding:7px;background:linear-gradient(135deg,#92400e,#b45309);color:#fff;border:none;border-radius:8px;font-size:.94rem;font-weight:700;cursor:pointer">
           🔄 Matlacho — Sincronizar hallazgos del acta circunstanciada
         </button>
       </div>
@@ -3628,9 +3628,9 @@ function _buildActaForm() {
         <label>Medidas correctivas requeridas *</label>
         <textarea id="acta-medidas-correctivas" rows="3"
           placeholder="Describe detalladamente las medidas que debe cumplir el infractor..."
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;resize:vertical"></textarea>
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem;resize:vertical"></textarea>
         <button type="button" onclick="matlachoOrdenCorrectiva(this)"
-          style="margin-top:5px;width:100%;padding:7px;background:linear-gradient(135deg,#92400e,#b45309);color:#fff;border:none;border-radius:8px;font-size:.74rem;font-weight:700;cursor:pointer">
+          style="margin-top:5px;width:100%;padding:7px;background:linear-gradient(135deg,#92400e,#b45309);color:#fff;border:none;border-radius:8px;font-size:.94rem;font-weight:700;cursor:pointer">
           🐭 Matlacho — Redactar orden correctiva
         </button>
       </div>
@@ -3638,40 +3638,40 @@ function _buildActaForm() {
         <label>Plazo (días hábiles) *</label>
         <input id="aper-plazo-dias" type="number" min="1" max="90" placeholder="Ej: 15"
           onchange="matlachoCalcularPlazo()"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
       <div class="fg">
         <label>Fecha inicio cómputo</label>
         <input id="aper-fecha-inicio" type="date"
           onchange="matlachoCalcularPlazo()"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
       <div class="fg fg2">
         <label>Fecha límite de cumplimiento</label>
         <input id="aper-fecha-limite" readonly placeholder="Se calcula automáticamente"
-          style="width:100%;padding:8px;border:1.5px solid var(--verde-claro);border-radius:7px;font-size:.82rem;background:#f0fdf4;font-weight:700">
+          style="width:100%;padding:8px;border:1.5px solid var(--verde-claro);border-radius:7px;font-size:.97rem;background:#f0fdf4;font-weight:700">
       </div>
     </div>
-    <div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:8px;padding:10px 14px;margin-top:6px;font-size:.78rem;color:#92400e">
+    <div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:8px;padding:10px 14px;margin-top:6px;font-size:.92rem;color:#92400e">
       ⚠️ <b>Advertencia:</b> El incumplimiento en el plazo establecido dará lugar a sanción económica y/o clausura conforme al Código Municipal.
     </div>
 
     <div class="section-title" style="background:#92400e">✍️ Firmas</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div>
-        <label style="font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase">Inspector actuante</label>
+        <label style="font-size:.95rem;font-weight:700;color:var(--muted);text-transform:uppercase">Inspector actuante</label>
         <canvas id="sig-inspector" style="width:100%;height:90px;border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;background:#f8fafc"></canvas>
         <div style="display:flex;gap:6px;margin-top:4px">
-          <input id="acta-firmante-nombre" placeholder="Nombre" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.78rem">
-          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.72rem" onclick="clearSig('sig-inspector')">🗑</button>
+          <input id="acta-firmante-nombre" placeholder="Nombre" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.92rem">
+          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.92rem" onclick="clearSig('sig-inspector')">🗑</button>
         </div>
       </div>
       <div>
-        <label style="font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase">Notificado</label>
+        <label style="font-size:.95rem;font-weight:700;color:var(--muted);text-transform:uppercase">Notificado</label>
         <canvas id="sig-visitado" style="width:100%;height:90px;border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;background:#f8fafc"></canvas>
         <div style="display:flex;gap:6px;margin-top:4px">
-          <input id="nombre-visitado" placeholder="Nombre" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.78rem">
-          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.72rem" onclick="clearSig('sig-visitado')">🗑</button>
+          <input id="nombre-visitado" placeholder="Nombre" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.92rem">
+          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.92rem" onclick="clearSig('sig-visitado')">🗑</button>
         </div>
       </div>
     </div>`;
@@ -3690,28 +3690,28 @@ function _buildActaForm() {
       <div class="fg">
         <label>Folio acta circunstanciada</label>
         <input id="sanc-folio-circ" placeholder="Folio circunstanciada"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;background:#f8fafc">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem;background:#f8fafc">
       </div>
       <div class="fg">
         <label>Folio acta apercibimiento</label>
         <input id="sanc-folio-aper" placeholder="Folio apercibimiento"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;background:#f8fafc">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem;background:#f8fafc">
       </div>
       <div class="fg">
         <label>No. expediente</label>
         <input id="sanc-expediente" placeholder="EXP-IMBIO-2026-001"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
       <div class="fg">
         <label>Infractor (readonly)</label>
         <input id="sanc-infractor-readonly" readonly
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;background:#f8fafc">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem;background:#f8fafc">
       </div>
       <div class="fg fg2">
         <label>Historial de incumplimiento</label>
         <textarea id="sanc-historial-incumplimiento" rows="2"
           placeholder="Medidas del apercibimiento que no fueron cumplidas..."
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;resize:vertical"></textarea>
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem;resize:vertical"></textarea>
       </div>
     </div>
 
@@ -3719,7 +3719,7 @@ function _buildActaForm() {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div class="fg">
         <label>Gravedad de la infracción</label>
-        <select id="acta-gravedad-infraccion" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="acta-gravedad-infraccion" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="">Seleccionar...</option>
           <option value="leve">🟡 Leve</option>
           <option value="grave">🟠 Grave</option>
@@ -3728,7 +3728,7 @@ function _buildActaForm() {
       </div>
       <div class="fg">
         <label>¿Reincidente?</label>
-        <select id="acta-reincidente" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+        <select id="acta-reincidente" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
           <option value="no">No</option>
           <option value="si">Sí — reincidente</option>
         </select>
@@ -3736,12 +3736,12 @@ function _buildActaForm() {
       <div class="fg">
         <label>Monto de la sanción ($MXN)</label>
         <input id="acta-monto" type="number" min="0" placeholder="0.00"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
       <div class="fg">
         <label>Plazo para pago / cumplimiento</label>
         <input id="acta-plazo" placeholder="Ej: 15 días hábiles"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem">
+          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
       </div>
       <div class="fg fg2">
         <label>Medida administrativa adicional</label>
@@ -3754,7 +3754,7 @@ function _buildActaForm() {
       </div>
     </div>
     <button type="button" onclick="matlachoCalculadoraMultas(this)"
-      style="margin-top:6px;width:100%;padding:8px;background:linear-gradient(135deg,#991b1b,#dc2626);color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer">
+      style="margin-top:6px;width:100%;padding:8px;background:linear-gradient(135deg,#991b1b,#dc2626);color:#fff;border:none;border-radius:8px;font-size:.92rem;font-weight:700;cursor:pointer">
       🐭 Matlacho — Calcular y justificar sanción (UMA 2026)
     </button>
     <div id="sanc-calculo-result" style="display:none"></div>
@@ -3762,19 +3762,19 @@ function _buildActaForm() {
     <div class="section-title" style="background:#991b1b">✍️ Firmas</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div>
-        <label style="font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase">Inspector / Autoridad</label>
+        <label style="font-size:.95rem;font-weight:700;color:var(--muted);text-transform:uppercase">Inspector / Autoridad</label>
         <canvas id="sig-inspector" style="width:100%;height:90px;border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;background:#f8fafc"></canvas>
         <div style="display:flex;gap:6px;margin-top:4px">
-          <input id="acta-firmante-nombre" placeholder="Nombre" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.78rem">
-          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.72rem" onclick="clearSig('sig-inspector')">🗑</button>
+          <input id="acta-firmante-nombre" placeholder="Nombre" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.92rem">
+          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.92rem" onclick="clearSig('sig-inspector')">🗑</button>
         </div>
       </div>
       <div>
-        <label style="font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase">Infractor</label>
+        <label style="font-size:.95rem;font-weight:700;color:var(--muted);text-transform:uppercase">Infractor</label>
         <canvas id="sig-visitado" style="width:100%;height:90px;border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;background:#f8fafc"></canvas>
         <div style="display:flex;gap:6px;margin-top:4px">
-          <input id="nombre-visitado" placeholder="Nombre" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.78rem">
-          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.72rem" onclick="clearSig('sig-visitado')">🗑</button>
+          <input id="nombre-visitado" placeholder="Nombre" style="flex:1;padding:6px 8px;border:1.5px solid var(--borde);border-radius:6px;font-size:.92rem">
+          <button type="button" class="ibtn ibtn-ghost" style="padding:4px 10px;font-size:.92rem" onclick="clearSig('sig-visitado')">🗑</button>
         </div>
       </div>
     </div>`;
@@ -3783,37 +3783,37 @@ function _buildActaForm() {
     ${tipoActaSel !== 'circunstanciada' ? `
     <div class="section-title">${numSeccion}. ${descLabel}</div>
     <textarea id="acta-descripcion" rows="5" placeholder="${descPlaceholder}"
-      style="width:100%;padding:10px 12px;border:1.5px solid var(--borde);border-radius:8px;font-size:.85rem;resize:vertical;outline:none;line-height:1.5"></textarea>
+      style="width:100%;padding:10px 12px;border:1.5px solid var(--borde);border-radius:8px;font-size:.94rem;resize:vertical;outline:none;line-height:1.5"></textarea>
     ${(tipoActaSel==='inspeccion') ? `
     <button type="button" onclick="llamarIAActa(this)"
-      style="margin-top:6px;width:100%;padding:9px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;border-radius:9px;font-size:.82rem;font-weight:700;cursor:pointer">
+      style="margin-top:6px;width:100%;padding:9px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;border-radius:9px;font-size:.97rem;font-weight:700;cursor:pointer">
       🐭 Matlacho redacta la descripción
     </button>
-    <div style="font-size:.7rem;color:var(--muted);text-align:center;margin-top:3px">Matlacho sugiere — edita antes de guardar</div>
+    <div style="font-size:.96rem;color:var(--muted);text-align:center;margin-top:3px">Matlacho sugiere — edita antes de guardar</div>
     ` : (tipoActaSel==='apercibimiento') ? `
     <button type="button" onclick="llamarIAApercibimiento(this)"
-      style="margin-top:6px;width:100%;padding:9px;background:linear-gradient(135deg,#92400e,#b45309);color:#fff;border:none;border-radius:9px;font-size:.82rem;font-weight:700;cursor:pointer">
+      style="margin-top:6px;width:100%;padding:9px;background:linear-gradient(135deg,#92400e,#b45309);color:#fff;border:none;border-radius:9px;font-size:.97rem;font-weight:700;cursor:pointer">
       🐭 Matlacho redacta el apercibimiento
     </button>
-    <div style="font-size:.7rem;color:var(--muted);text-align:center;margin-top:3px">Matlacho sugiere — edita antes de guardar</div>
+    <div style="font-size:.96rem;color:var(--muted);text-align:center;margin-top:3px">Matlacho sugiere — edita antes de guardar</div>
     ` : (tipoActaSel==='sancion') ? `
     <button type="button" onclick="llamarIASancion(this)"
-      style="margin-top:6px;width:100%;padding:9px;background:linear-gradient(135deg,#991b1b,#dc2626);color:#fff;border:none;border-radius:9px;font-size:.82rem;font-weight:700;cursor:pointer">
+      style="margin-top:6px;width:100%;padding:9px;background:linear-gradient(135deg,#991b1b,#dc2626);color:#fff;border:none;border-radius:9px;font-size:.97rem;font-weight:700;cursor:pointer">
       🐭 Matlacho redacta la motivación
     </button>
-    <div style="font-size:.7rem;color:var(--muted);text-align:center;margin-top:3px">Matlacho sugiere — edita antes de guardar</div>
+    <div style="font-size:.96rem;color:var(--muted);text-align:center;margin-top:3px">Matlacho sugiere — edita antes de guardar</div>
     ` : ''}
     ` : ''}
 
     <div class="section-title">📜 Fundamento Legal</div>
     <textarea id="acta-fundamento" rows="4" placeholder="${fundoDefault}"
-      style="width:100%;padding:10px 12px;border:1.5px solid var(--borde);border-radius:8px;font-size:.82rem;resize:vertical;outline:none;line-height:1.5">${fundoDefault}</textarea>
+      style="width:100%;padding:10px 12px;border:1.5px solid var(--borde);border-radius:8px;font-size:.97rem;resize:vertical;outline:none;line-height:1.5">${fundoDefault}</textarea>
 
     ${secResolucion}
 
     <!-- ESTADO DEL REPORTE -->
     <div class="section-title">🔄 Actualizar Estado del Reporte</div>
-    <select id="acta-nuevo-estado" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;margin-bottom:10px">
+    <select id="acta-nuevo-estado" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem;margin-bottom:10px">
       <option value="">— Sin cambio —</option>
       <option value="en_inspeccion">🔍 En Inspección</option>
       <option value="en_proceso">🔄 En Proceso</option>
@@ -3837,17 +3837,17 @@ function _buildActaForm() {
       </div>
       <canvas id="sig-inspector" class="sig-visitado"></canvas>
       <div style="padding:8px 10px">
-        <input id="acta-firmante" placeholder="Nombre completo del inspector" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none">
+        <input id="acta-firmante" placeholder="Nombre completo del inspector" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem;outline:none">
       </div>
     </div>
     <div class="firmante-wrap">
       <div class="firmante-header">
-        <span>✍️ Firma del Visitado / Propietario <span style="font-weight:400;font-size:.72rem">(opcional)</span></span>
+        <span>✍️ Firma del Visitado / Propietario <span style="font-weight:400;font-size:.92rem">(opcional)</span></span>
         <button class="ibtn ibtn-ghost ibtn-sm" onclick="clearSig('sig-visitado')" style="padding:3px 8px">🗑 Borrar</button>
       </div>
       <canvas id="sig-visitado" class="sig-visitado"></canvas>
       <div style="padding:8px 10px">
-        <input id="acta-nombre-visitado" placeholder="Nombre del visitado (si firmó)" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.82rem;outline:none">
+        <input id="acta-nombre-visitado" placeholder="Nombre del visitado (si firmó)" style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem;outline:none">
       </div>
     </div>
     ${tipoActaSel === 'circunstanciada' ? `
@@ -4355,7 +4355,7 @@ function _matlachoInit() {
         font-size:1.9rem;box-shadow:0 2px 8px rgba(0,0,0,.15);flex-shrink:0;
       }
       .matlacho-name { color:#fff;font-weight:800;font-size:1.1rem; }
-      .matlacho-role { color:rgba(255,255,255,.75);font-size:.88rem; }
+      .matlacho-role { color:rgba(255,255,255,.75);font-size:.94rem; }
       .matlacho-close {
         margin-left:auto;background:none;border:none;color:#fff;
         font-size:1.5rem;cursor:pointer;padding:4px 8px;opacity:.8;
@@ -4570,7 +4570,7 @@ async function _matlachoRedactarDesc() {
   _matlachoAddBubble('📋 Redactando descripción circunstanciada...', true);
   var result = await _matlachoCallAPI('acta_circunstanciada', datos);
   if (result) {
-    _matlachoAddBubble('✅ Descripción generada:<br><br><i style="font-size:.75rem">' +
+    _matlachoAddBubble('✅ Descripción generada:<br><br><i style="font-size:.95rem">' +
       result.texto.substring(0,200) + (result.texto.length>200?'...':'') + '</i><br><br>' +
       '<button class="matlacho-btn verde" onclick="_matlachoAplicarTextarea(\'acta-descripcion\',\'' +
       result.texto.replace(/'/g,'&#39;').replace(/\n/g,' ').replace(/"/g,'&quot;') + '\')" style="margin-top:4px">✅ Aplicar al campo</button>', false);
@@ -4588,7 +4588,7 @@ async function _matlachoRedactarAper() {
   _matlachoAddBubble('⚠️ Redactando apercibimiento...', true);
   var result = await _matlachoCallAPI('acta_apercibimiento', datos);
   if (result) {
-    _matlachoAddBubble('✅ Texto del apercibimiento:<br><br><i style="font-size:.75rem">' +
+    _matlachoAddBubble('✅ Texto del apercibimiento:<br><br><i style="font-size:.95rem">' +
       result.texto.substring(0,200) + (result.texto.length>200?'...':'') + '</i><br><br>' +
       '<button class="matlacho-btn naranja" onclick="_matlachoAplicarTextarea(\'acta-medida\',\'' +
       result.texto.replace(/'/g,'&#39;').replace(/\n/g,' ').replace(/"/g,'&quot;') + '\')" style="margin-top:4px">✅ Aplicar al campo</button>', false);
@@ -4607,7 +4607,7 @@ async function _matlachoRedactarSanc() {
   _matlachoAddBubble('🚫 Redactando motivación de sanción...', true);
   var result = await _matlachoCallAPI('acta_sancion', datos);
   if (result) {
-    _matlachoAddBubble('✅ Motivación de sanción:<br><br><i style="font-size:.75rem">' +
+    _matlachoAddBubble('✅ Motivación de sanción:<br><br><i style="font-size:.95rem">' +
       result.texto.substring(0,200) + (result.texto.length>200?'...':'') + '</i><br><br>' +
       '<button class="matlacho-btn rojo" onclick="_matlachoAplicarTextarea(\'acta-medida\',\'' +
       result.texto.replace(/'/g,'&#39;').replace(/\n/g,' ').replace(/"/g,'&quot;') + '\')" style="margin-top:4px">✅ Aplicar al campo</button>', false);
@@ -4633,11 +4633,11 @@ async function _matlachoSugerirMedida() {
   if (result) {
     var color = result.sugerencia_medida === 'sancion' ? 'rojo' : 'naranja';
     var banner = result.sugerencia_medida
-      ? '<div class="matlacho-suggestion-banner" style="margin-top:8px;font-size:.78rem">' +
+      ? '<div class="matlacho-suggestion-banner" style="margin-top:8px;font-size:.92rem">' +
         (result.sugerencia_medida === 'sancion' ? '🚫 Posible: Acta de Sanción' : '⚠️ Posible: Acta de Apercibimiento') +
         '</div>' : '';
     _matlachoAddBubble('<b>🐭 Matlacho sugiere:</b><br><br>' + result.texto + banner +
-      '<br><span style="font-size:.7rem;color:#94a3b8;display:block;margin-top:6px">Solo sugerencia — el inspector decide.</span>', false);
+      '<br><span style="font-size:.96rem;color:#94a3b8;display:block;margin-top:6px">Solo sugerencia — el inspector decide.</span>', false);
   }
 }
 
@@ -4852,7 +4852,7 @@ async function matlachoAsesorJuridico(btnEl) {
       resultEl.innerHTML = '<b>⚖️ Articulado sugerido:</b><br><br>' + texto.replace(/\n/g,'<br>') +
         '<br><br><button onclick="var t=document.getElementById(\'aper-articulado\');if(t){t.value=\'' +
         texto.replace(/'/g,"&#39;").replace(/\n/g,' ') + '\';this.textContent=\'✅ Aplicado\'}" ' +
-        'style="padding:5px 10px;background:#6d28d9;color:#fff;border:none;border-radius:6px;font-size:.72rem;cursor:pointer">✅ Aplicar al campo</button>';
+        'style="padding:5px 10px;background:#6d28d9;color:#fff;border:none;border-radius:6px;font-size:.92rem;cursor:pointer">✅ Aplicar al campo</button>';
     }
   } catch(e) { alert('Error: ' + e.message); }
   finally { btnEl.innerHTML = original; btnEl.disabled = false; }
@@ -5018,7 +5018,7 @@ async function matlachoCalculadoraMultas(btnEl) {
       resultEl.style.display = 'block';
       var texto = (dr.success && dr.data) ? dr.data.texto : 'No se pudo calcular.';
       resultEl.innerHTML = '<b>🧮 Sugerencia de multa (UMA $' + UMA_2026 + '):</b><br><br>' + texto.replace(/\n/g,'<br>') +
-        '<br><div style="font-size:.70rem;color:#dc2626;margin-top:6px;font-weight:700">⚠️ Orientativo — el Director del IMBIO debe autorizar el monto final antes de firmar.</div>';
+        '<br><div style="font-size:.96rem;color:#dc2626;margin-top:6px;font-weight:700">⚠️ Orientativo — el Director del IMBIO debe autorizar el monto final antes de firmar.</div>';
     }
   } catch(e) { alert('Error: ' + e.message); }
   finally { btnEl.innerHTML = original; btnEl.disabled = false; }
@@ -5057,7 +5057,7 @@ async function matlachoLineaTiempo(btnEl) {
       resultEl.innerHTML = '<b>📈 Línea de tiempo del expediente:</b><br><br>' + texto.replace(/\n/g,'<br>') +
         '<br><br><button onclick="var t=document.getElementById(\'sanc-historial-incumplimiento\');if(t){t.value=\'' +
         texto.replace(/'/g,"&#39;").replace(/\n/g,' ').replace(/"/g,'&quot;') + '\';this.textContent=\'✅ Aplicado\'}" ' +
-        'style="padding:5px 10px;background:#991b1b;color:#fff;border:none;border-radius:6px;font-size:.72rem;cursor:pointer">✅ Usar como historial</button>';
+        'style="padding:5px 10px;background:#991b1b;color:#fff;border:none;border-radius:6px;font-size:.92rem;cursor:pointer">✅ Usar como historial</button>';
     }
   } catch(e) { alert('Error: ' + e.message); }
   finally { btnEl.innerHTML = original; btnEl.disabled = false; }
@@ -5092,7 +5092,7 @@ async function matlachoPonderadorGravedad(btnEl) {
       resultEl.style.display = 'block';
       resultEl.innerHTML = '<b>⚖️ Matlacho pondera:</b><br><br>' +
         ((dr.success && dr.data) ? dr.data.texto.replace(/\n/g,'<br>') : 'No se pudo analizar.') +
-        '<br><div style="font-size:.70rem;color:#dc2626;margin-top:6px">Sugerencia orientativa — el Director del IMBIO toma la decisión final.</div>';
+        '<br><div style="font-size:.96rem;color:#dc2626;margin-top:6px">Sugerencia orientativa — el Director del IMBIO toma la decisión final.</div>';
     }
   } catch(e) { alert('Error: ' + e.message); }
   finally { btnEl.innerHTML = original; btnEl.disabled = false; }
@@ -5126,8 +5126,8 @@ async function matlachoAsesorJuridicoSancion(btnEl) {
       resultEl.innerHTML = '<b>⚖️ Articulado sancionatorio sugerido:</b><br><br>' + texto.replace(/\n/g,'<br>') +
         '<br><br><button onclick="var t=document.getElementById(\'sanc-articulado\');if(t){t.value=\'' +
         texto.replace(/'/g,"&#39;").replace(/\n/g,' ') + '\';this.textContent=\'✅ Aplicado\'}" ' +
-        'style="padding:5px 10px;background:#6d28d9;color:#fff;border:none;border-radius:6px;font-size:.72rem;cursor:pointer">✅ Aplicar</button>' +
-        '<div style="font-size:.70rem;color:#dc2626;margin-top:4px">⚠️ Validar con el Director del IMBIO antes de firmar</div>';
+        'style="padding:5px 10px;background:#6d28d9;color:#fff;border:none;border-radius:6px;font-size:.92rem;cursor:pointer">✅ Aplicar</button>' +
+        '<div style="font-size:.96rem;color:#dc2626;margin-top:4px">⚠️ Validar con el Director del IMBIO antes de firmar</div>';
     }
   } catch(e) { alert('Error: ' + e.message); }
   finally { btnEl.innerHTML = original; btnEl.disabled = false; }
@@ -5353,7 +5353,7 @@ async function matlachoAnimalRecomendaciones(btnEl) {
       resultEl.innerHTML = '<b>🐭 Recomendaciones:</b><br>' + texto.replace(/\n/g,'<br>') +
         '<br><br><button onclick="var t=document.getElementById(\'anim-recomendaciones\');if(t){t.value=\'' +
         texto.replace(/'/g,"&#39;").replace(/\n/g,' ') + '\';this.textContent=\'✅ Aplicado\'}" ' +
-        'style="padding:5px 10px;background:#0d9488;color:#fff;border:none;border-radius:6px;font-size:.72rem;cursor:pointer">✅ Aplicar</button>';
+        'style="padding:5px 10px;background:#0d9488;color:#fff;border:none;border-radius:6px;font-size:.92rem;cursor:pointer">✅ Aplicar</button>';
     }
   } catch(e) { alert('Error: ' + e.message); }
   finally { btnEl.innerHTML = original; btnEl.disabled = false; }
@@ -5595,7 +5595,7 @@ async function matlachoAnalisisEvidencia(btnEl) {
       resultEl.innerHTML = '<b>📸 Sugerencias de descripción técnica:</b><br><br>' + texto.replace(/\n/g,'<br>') +
         '<br><br><button onclick="var t=document.getElementById(\'circ-hallazgos-desc\');if(t){t.value=\'' +
         texto.replace(/'/g,"&#39;").replace(/\n/g,' ') + '\';this.textContent=\'✅ Aplicado\'}" ' +
-        'style="padding:5px 10px;background:#6d28d9;color:#fff;border:none;border-radius:6px;font-size:.72rem;cursor:pointer;margin-top:4px">✅ Aplicar como base</button>';
+        'style="padding:5px 10px;background:#6d28d9;color:#fff;border:none;border-radius:6px;font-size:.92rem;cursor:pointer;margin-top:4px">✅ Aplicar como base</button>';
     }
   } catch(e) {
     alert('Error: ' + e.message);
@@ -5740,7 +5740,7 @@ async function matlachoAuditoriaActa(btnEl) {
 
   // Si todo OK, pedir a Matlacho validación narrativa
   if (listo && diagnostico.narrativa.length > 80) {
-    html += '<div style="margin-top:8px;font-size:.72rem;color:#64748b">⏳ Matlacho está validando la coherencia del texto...</div>';
+    html += '<div style="margin-top:8px;font-size:.92rem;color:#64748b">⏳ Matlacho está validando la coherencia del texto...</div>';
     var resultEl = document.getElementById('circ-auditoria-result');
     if (resultEl) { resultEl.style.display = 'block'; resultEl.innerHTML = html; }
     try {
@@ -5779,7 +5779,7 @@ async function matlachoAuditoriaActa(btnEl) {
   <div class="modal" style="max-width:480px;max-height:90vh;overflow-y:auto">
     <div style="background:linear-gradient(135deg,#14532d,#166534);margin:-20px -20px 18px;padding:18px 20px;border-radius:14px 14px 0 0">
       <div style="color:#fff;font-size:1.1rem;font-weight:800">🌿 Reporte de Intervención</div>
-      <div style="color:rgba(255,255,255,.7);font-size:.78rem;margin-top:2px">Área Verde — Actividades de Mantenimiento</div>
+      <div style="color:rgba(255,255,255,.7);font-size:.92rem;margin-top:2px">Área Verde — Actividades de Mantenimiento</div>
     </div>
     <input type="hidden" id="av-report-id">
     <input type="hidden" id="av-report-folio">
@@ -5819,7 +5819,7 @@ async function matlachoAuditoriaActa(btnEl) {
     <!-- Ubicación GPS -->
     <div class="section-title" style="background:#14532d">📡 Ubicación GPS</div>
     <button type="button" class="ibtn ibtn-secondary" style="width:100%;margin-bottom:6px" onclick="obtenerGPSAV()">📡 Capturar GPS</button>
-    <div id="av-coords-bar" style="font-size:.78rem;color:var(--muted);text-align:center;padding:4px 0;min-height:20px">📍 Sin coordenadas capturadas</div>
+    <div id="av-coords-bar" style="font-size:.92rem;color:var(--muted);text-align:center;padding:4px 0;min-height:20px">📍 Sin coordenadas capturadas</div>
 
     <!-- Acciones realizadas -->
     <div class="section-title" style="background:#14532d">✅ Acciones Realizadas *</div>
@@ -5836,10 +5836,10 @@ async function matlachoAuditoriaActa(btnEl) {
 
     <!-- Descripción -->
     <div class="section-title" style="background:#14532d">📝 Descripción de Actividades</div>
-    <textarea id="av-descripcion" rows="3" placeholder="Describir detalladamente las actividades realizadas, condiciones del área, materiales utilizados..." style="width:100%;padding:10px;border:1.5px solid var(--borde);border-radius:8px;font-size:.82rem;resize:vertical;margin-bottom:10px"></textarea>
+    <textarea id="av-descripcion" rows="3" placeholder="Describir detalladamente las actividades realizadas, condiciones del área, materiales utilizados..." style="width:100%;padding:10px;border:1.5px solid var(--borde);border-radius:8px;font-size:.97rem;resize:vertical;margin-bottom:10px"></textarea>
 
     <div class="section-title" style="background:#14532d">📌 Observaciones</div>
-    <textarea id="av-observaciones" rows="2" placeholder="Observaciones adicionales, condiciones especiales, seguimiento requerido..." style="width:100%;padding:10px;border:1.5px solid var(--borde);border-radius:8px;font-size:.82rem;resize:vertical;margin-bottom:10px"></textarea>
+    <textarea id="av-observaciones" rows="2" placeholder="Observaciones adicionales, condiciones especiales, seguimiento requerido..." style="width:100%;padding:10px;border:1.5px solid var(--borde);border-radius:8px;font-size:.97rem;resize:vertical;margin-bottom:10px"></textarea>
 
     <div style="display:flex;gap:8px;margin-top:8px">
       <button class="ibtn ibtn-secondary" style="flex:1" onclick="document.getElementById('modal-intervencion-av').style.display='none'">Cancelar</button>

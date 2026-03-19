@@ -11,23 +11,24 @@
   :root{
     --verde:#003B7A;--verde-claro:#1976D2;--verde-oscuro:#002A5C;
     --naranja:#e8650a;--gris:#f0f4fa;--borde:#c8d9ee;
-    --texto:#1a202c;--muted:#6b7280;--blanco:#ffffff;
+    --texto:#1a202c;--muted:#4b5563;--blanco:#ffffff;
     --rojo:#dc2626;--azul:#0057B8;--amarillo:#d97706;
     --azul-claro:#E8F1FB;--azul-borde:#B3CFF0;
     /* ── ACCESIBILIDAD ── */
-    --fs-xs:0.88rem;--fs-sm:0.97rem;--fs-base:1.05rem;--fs-md:1.18rem;
+    --fs-xs:0.92rem;--fs-sm:1rem;--fs-base:1.08rem;--fs-md:1.22rem;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris);color:var(--texto);min-height:100vh;font-size:var(--fs-base)}
-  nav{background:var(--verde-oscuro);color:#fff;padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.3)}
-  nav .brand{display:flex;align-items:center;gap:10px;font-size:1.25rem;font-weight:700}
+  html{font-size:17px;max-width:100vw;overflow-x:hidden}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris);color:var(--texto);min-height:100vh;font-size:var(--fs-base);overflow-x:hidden}
+  nav{background:var(--verde-oscuro);color:#fff;padding:0 16px;min-height:60px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  nav .brand{display:flex;align-items:center;gap:10px;font-size:1.25rem;font-weight:700;flex-wrap:wrap}
   nav .brand span{font-size:2rem}
-  nav .user-info{display:flex;align-items:center;gap:12px;font-size:1rem}
-  nav .badge-rol{background:var(--verde-claro);padding:2px 10px;border-radius:99px;font-size:.9rem;font-weight:600;text-transform:uppercase}
+  nav .user-info{display:flex;align-items:center;gap:12px;font-size:1rem;flex-wrap:wrap}
+  nav .badge-rol{background:var(--verde-claro);padding:2px 10px;border-radius:99px;font-size:.96rem;font-weight:600;text-transform:uppercase}
   nav button.logout{background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:1rem}
   nav button.logout:hover{background:rgba(255,255,255,.1)}
   #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#002A5C,#0057B8)}
-  .login-card{background:#fff;border-radius:16px;padding:40px;width:380px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .login-card{background:#fff;border-radius:16px;padding:32px 24px;width:min(380px,94vw);box-shadow:0 20px 60px rgba(0,0,0,.3)}
   .login-card .logo{text-align:center;margin-bottom:28px}
   .login-card .logo .icon{font-size:3rem}
   .login-card .logo h1{font-size:1.4rem;color:var(--verde-oscuro);margin-top:8px}
@@ -36,13 +37,13 @@
   .creds-hint b{display:block;margin-bottom:4px}
   #app{display:none}
   .app-layout{display:flex;min-height:calc(100vh - 60px)}
-  aside{width:220px;background:var(--verde-oscuro);padding:16px 0;flex-shrink:0}
+  aside{width:clamp(160px,22vw,220px);background:var(--verde-oscuro);padding:16px 0;flex-shrink:0}
   aside a{display:flex;align-items:center;gap:10px;padding:14px 20px;color:rgba(255,255,255,.8);text-decoration:none;font-size:1rem;cursor:pointer;transition:.15s}
   aside a:hover,aside a.active{background:rgba(255,255,255,.12);color:#fff}
   aside a .ic{font-size:1.4rem;width:28px;text-align:center}
-  main{flex:1;padding:28px;overflow-y:auto;max-height:calc(100vh - 60px)}
+  main{flex:1;padding:20px;overflow-y:auto;overflow-x:hidden;max-height:calc(100vh - 60px);max-width:100%}
   .page{display:none}.page.active{display:block}
-  h2{font-size:1.3rem;color:var(--verde-oscuro);margin-bottom:20px;display:flex;align-items:center;gap:8px}
+  h2{font-size:1.3rem;color:var(--verde-oscuro);margin-bottom:20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .card{background:#fff;border-radius:12px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:20px}
   .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;margin-bottom:24px}
   .stat{background:#fff;border-radius:12px;padding:20px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.08)}
@@ -52,7 +53,7 @@
   .stat.naranja .num{color:var(--naranja)}
   .stat.azul .num{color:var(--azul)}
   .stat.rojo .num{color:var(--rojo)}
-  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px}
   .form-group{display:flex;flex-direction:column;gap:6px}
   .form-group.full{grid-column:1/-1}
   label{font-size:1rem;font-weight:600;color:var(--texto)}
@@ -64,17 +65,17 @@
   .btn-secondary{background:#e5e7eb;color:var(--texto)}.btn-secondary:hover{background:#d1d5db}
   .btn-danger{background:var(--rojo);color:#fff}.btn-danger:hover{background:#b91c1c}
   .btn-warning{background:var(--naranja);color:#fff}.btn-warning:hover{background:#c2570a}
-  .btn-sm{padding:5px 12px;font-size:.8rem}
+  .btn-sm{padding:5px 12px;font-size:.95rem}
   .btn-indigo{background:#6366f1;color:#fff}.btn-indigo:hover{background:#4f46e5}
   .edit-estado-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-  .edit-estado-row button{padding:7px 14px;border-radius:8px;border:2px solid var(--borde);background:#fff;cursor:pointer;font-size:.82rem;font-weight:600;transition:.15s}
+  .edit-estado-row button{padding:7px 14px;border-radius:8px;border:2px solid var(--borde);background:#fff;cursor:pointer;font-size:.97rem;font-weight:600;transition:.15s}
   .edit-estado-row button.sel{border-color:var(--verde);background:#E8F1FB;color:var(--verde-oscuro)}
   .table-wrap{overflow-x:auto}
-  table{width:100%;border-collapse:collapse;font-size:.88rem}
-  th{background:var(--gris);padding:10px 14px;text-align:left;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:2px solid var(--borde)}
+  table{width:100%;border-collapse:collapse;font-size:.94rem}
+  th{background:var(--gris);padding:10px 14px;text-align:left;font-size:.95rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:2px solid var(--borde)}
   td{padding:12px 14px;border-bottom:1px solid var(--borde);vertical-align:middle}
   tr:hover td{background:#f9fafb}
-  .badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.9rem;font-weight:600;text-transform:uppercase}
+  .badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.96rem;font-weight:600;text-transform:uppercase}
   .badge-reportado{background:#fef3c7;color:#92400e}
   .badge-asignado{background:#dbeafe;color:#1e40af}
   .badge-en_proceso{background:#fce7f3;color:#9d174d}
@@ -86,27 +87,27 @@
   .badge-admin{background:#ede9fe;color:#5b21b6}
   .badge-operador{background:#dbeafe;color:#1e40af}
   .badge-inspector{background:#dbeafe;color:#002A5C}
-  .alert{padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:.9rem}
+  .alert{padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:.96rem}
   .alert-success{background:#dbeafe;color:#1e3a6e;border:1px solid #93c5fd}
   .alert-error{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
   .alert-info{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
   .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center}
   .modal-bg.open{display:flex}
-  .modal{background:#fff;border-radius:16px;padding:32px;width:600px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.3)}
+  .modal{background:#fff;border-radius:16px;padding:32px;width:min(600px,96vw);max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.3)}
   .modal h3{font-size:1.15rem;color:var(--verde-oscuro);margin-bottom:20px}
   .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
   .detail-section{margin-bottom:20px}
-  .detail-section h4{font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--borde)}
+  .detail-section h4{font-size:.94rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--borde)}
   .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .detail-item label{font-size:.78rem;color:var(--muted);display:block}
+  .detail-item label{font-size:.93rem;color:var(--muted);display:block}
   .detail-item span{font-size:.92rem;font-weight:500}
   .timeline{list-style:none;padding-left:0}
-  .timeline li{padding:8px 0 8px 20px;border-left:2px solid var(--verde-claro);position:relative;font-size:.88rem}
+  .timeline li{padding:8px 0 8px 20px;border-left:2px solid var(--verde-claro);position:relative;font-size:.94rem}
   .timeline li::before{content:'';position:absolute;left:-5px;top:12px;width:8px;height:8px;border-radius:50%;background:var(--verde-claro)}
   #sig-canvas{border:2px dashed var(--borde);border-radius:8px;cursor:crosshair;touch-action:none;display:block;width:100%}
-  .sig-controls{display:flex;gap:8px;margin-top:8px}
+  .sig-controls{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
   .loading{text-align:center;padding:40px;color:var(--muted)}
-  .empty{text-align:center;padding:40px;color:var(--muted);font-size:.9rem}
+  .empty{text-align:center;padding:40px;color:var(--muted);font-size:.96rem}
   .folio-badge{font-family:monospace;font-weight:700;color:var(--verde-oscuro);background:#E8F1FB;padding:2px 8px;border-radius:4px}
   .filters{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end}
   .filters select,.filters input{width:auto;min-width:140px}
@@ -115,12 +116,12 @@
   #map-reportes{ height:520px; border-radius:10px; z-index:1; }
   #map-picker  { height:320px; border-radius:10px; z-index:1; border:2px solid var(--borde); }
   .map-layer-ctrl{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-  .map-layer-ctrl button{padding:6px 14px;border-radius:6px;border:1.5px solid var(--borde);background:#fff;cursor:pointer;font-size:.82rem;font-weight:600;transition:.15s}
+  .map-layer-ctrl button{padding:6px 14px;border-radius:6px;border:1.5px solid var(--borde);background:#fff;cursor:pointer;font-size:.97rem;font-weight:600;transition:.15s}
   .map-layer-ctrl button.active{background:var(--azul);color:#fff;border-color:var(--azul);box-shadow:0 2px 6px rgba(0,87,184,.25)}
-  .map-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:.82rem}
-  .map-legend span{display:flex;align-items:center;gap:5px}
+  .map-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:.97rem}
+  .map-legend span{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
   .map-legend i{width:12px;height:12px;border-radius:50%;display:inline-block}
-  .picker-coords{display:flex;gap:10px;margin-top:8px;align-items:flex-start;font-size:.85rem;background:#E8F1FB;padding:10px 14px;border-radius:8px;min-height:40px}
+  .picker-coords{display:flex;gap:10px;margin-top:8px;align-items:flex-start;font-size:.94rem;background:#E8F1FB;padding:10px 14px;border-radius:8px;min-height:40px;flex-wrap:wrap}
   .picker-coords b{color:var(--verde-oscuro)}
   .domicilio-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px;padding:14px;background:#EEF5FC;border-radius:8px;border:1px solid var(--azul-borde)}
   .domicilio-grid .form-group.full{grid-column:1/-1}
@@ -133,14 +134,14 @@
   .confirm-box{background:#fff3f3;border:1px solid #fca5a5;border-radius:10px;padding:18px;text-align:center;margin-bottom:8px}
   .confirm-box p{font-size:.95rem;color:#7f1d1d;margin-bottom:14px}
   /* ── MODAL EDITAR más ancho ── */
-  #modal-editar .modal{width:680px}
+  #modal-editar .modal{width:min(680px,98vw)}
 
   /* Popup personalizado */
   .leaflet-popup-content-wrapper{border-radius:10px!important;box-shadow:0 4px 20px rgba(0,0,0,.15)!important}
   .pop-title{font-weight:700;font-size:.95rem;color:var(--verde-oscuro);margin-bottom:4px}
-  .pop-row{font-size:.82rem;color:#444;margin:2px 0}
-  .pop-badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.72rem;font-weight:700;text-transform:uppercase;margin-top:4px}
-  .pop-btn{display:block;margin-top:8px;background:var(--verde);color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:.82rem;font-weight:600;width:100%;text-align:center}
+  .pop-row{font-size:.97rem;color:#444;margin:2px 0}
+  .pop-badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.92rem;font-weight:700;text-transform:uppercase;margin-top:4px}
+  .pop-btn{display:block;margin-top:8px;background:var(--verde);color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:.97rem;font-weight:600;width:100%;text-align:center}
 </style>
 </head>
 <body>
@@ -157,7 +158,7 @@
       <b>👤 Credenciales de acceso:</b>
       admin / admin123 &nbsp;·&nbsp; operador / operador123 &nbsp;·&nbsp; inspector01 / inspector123
     </div>
-    <div id="login-status" style="display:none;margin-bottom:12px;padding:10px 14px;border-radius:8px;font-size:.85rem;background:#E8F1FB;border:1px solid #B3CFF0;color:#002A5C"></div>
+    <div id="login-status" style="display:none;margin-bottom:12px;padding:10px 14px;border-radius:8px;font-size:.94rem;background:#E8F1FB;border:1px solid #B3CFF0;color:#002A5C"></div>
     <div id="login-error"></div>
     <form id="login-form" onsubmit="doLogin(); return false;" action="javascript:void(0)">
       <div class="form-group" style="margin-bottom:14px">
@@ -191,7 +192,7 @@
       <a onclick="showPage('nuevo-reporte')"><span class="ic">➕</span> Nuevo Reporte</a>
       <a onclick="showPage('inspectores')" id="nav-inspectores"><span class="ic">👷</span> Inspectores</a>
       <a onclick="showPage('catalogo-inspectores')" id="nav-catalogo-inspectores"><span class="ic">👤</span> Catálogo Inspectores</a>
-      <a onclick="showPage('alertas')" id="nav-alertas" style="position:relative"><span class="ic">🔔</span> Alertas <span id="alertas-badge" style="display:none;background:#dc2626;color:#fff;border-radius:20px;padding:1px 7px;font-size:.72rem;font-weight:800;margin-left:4px">0</span></a>
+      <a onclick="showPage('alertas')" id="nav-alertas" style="position:relative"><span class="ic">🔔</span> Alertas <span id="alertas-badge" style="display:none;background:#dc2626;color:#fff;border-radius:20px;padding:1px 7px;font-size:.92rem;font-weight:800;margin-left:4px">0</span></a>
       <a onclick="showPage('actas')" id="nav-actas"><span class="ic">📋</span> Actas</a>
       <a onclick="showPage('establecimientos')" id="nav-establecimientos"><span class="ic">🏪</span> Establecimientos</a>
       <a onclick="showPage('verificaciones')" id="nav-verificaciones"><span class="ic">🔍</span> Verificaciones</a>
@@ -203,8 +204,8 @@
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
           <h2 style="margin:0">📊 Panel de Control IMBIO</h2>
           <div style="display:flex;gap:8px">
-            <button class="btn btn-secondary" onclick="exportarExcel()" style="font-size:.8rem;padding:6px 12px">📥 Exportar Excel</button>
-            <button class="btn btn-primary" onclick="loadDashboard()" style="font-size:.8rem;padding:6px 12px">🔄 Actualizar</button>
+            <button class="btn btn-secondary" onclick="exportarExcel()" style="font-size:.94rem;padding:6px 12px">📥 Exportar Excel</button>
+            <button class="btn btn-primary" onclick="loadDashboard()" style="font-size:.94rem;padding:6px 12px">🔄 Actualizar</button>
           </div>
         </div>
 
@@ -220,7 +221,7 @@
 
         <!-- KPIs Establecimientos -->
         <div style="margin-bottom:16px">
-          <h4 style="font-size:.85rem;color:#1a3a5c;margin-bottom:8px">🏪 Verificación Ambiental a Establecimientos</h4>
+          <h4 style="font-size:.94rem;color:#1a3a5c;margin-bottom:8px">🏪 Verificación Ambiental a Establecimientos</h4>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">
             <div class="stat" style="background:#1e3a5f;color:#fff"><div class="num" id="st-est-total">–</div><div class="lbl">Establecimientos</div></div>
             <div class="stat verde"><div class="num" id="st-est-cumple">–</div><div class="lbl">✅ Cumplen</div></div>
@@ -234,11 +235,11 @@
         <!-- Charts Row 1 -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
           <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-            <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">📅 Denuncias por mes (últimos 12 meses)</h4>
+            <h4 style="margin:0 0 10px;font-size:.92rem;color:#1a3a5c">📅 Denuncias por mes (últimos 12 meses)</h4>
             <canvas id="chart-meses" height="180"></canvas>
           </div>
           <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-            <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">🗂 Reportes por tipo</h4>
+            <h4 style="margin:0 0 10px;font-size:.92rem;color:#1a3a5c">🗂 Reportes por tipo</h4>
             <canvas id="chart-tipos" height="180"></canvas>
           </div>
         </div>
@@ -246,11 +247,11 @@
         <!-- Charts Row 2 -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
           <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-            <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">🔄 Estado actual de reportes</h4>
+            <h4 style="margin:0 0 10px;font-size:.92rem;color:#1a3a5c">🔄 Estado actual de reportes</h4>
             <canvas id="chart-estados" height="180"></canvas>
           </div>
           <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-            <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">👷 Top inspectores por asignaciones</h4>
+            <h4 style="margin:0 0 10px;font-size:.92rem;color:#1a3a5c">👷 Top inspectores por asignaciones</h4>
             <canvas id="chart-inspectores" height="180"></canvas>
           </div>
         </div>
@@ -258,18 +259,18 @@
         <!-- Charts Row 3 -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
           <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-            <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">📍 Colonias con más denuncias</h4>
+            <h4 style="margin:0 0 10px;font-size:.92rem;color:#1a3a5c">📍 Colonias con más denuncias</h4>
             <canvas id="chart-colonias" height="180"></canvas>
           </div>
           <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-            <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">📋 Actas generadas por tipo</h4>
+            <h4 style="margin:0 0 10px;font-size:.92rem;color:#1a3a5c">📋 Actas generadas por tipo</h4>
             <canvas id="chart-actas" height="180"></canvas>
           </div>
         </div>
 
         <!-- Recent reports -->
         <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-          <h4 style="margin:0 0 10px;font-size:.88rem;color:#1a3a5c">🕒 Reportes Recientes</h4>
+          <h4 style="margin:0 0 10px;font-size:.92rem;color:#1a3a5c">🕒 Reportes Recientes</h4>
           <div id="dash-recent"></div>
         </div>
 
@@ -310,7 +311,7 @@
               </select>
               <button class="btn btn-secondary btn-sm" onclick="document.getElementById('mf-estado').value='';document.getElementById('mf-tipo').value='';refreshMapMarkers()">✕ Limpiar</button>
               <button class="btn btn-primary btn-sm" onclick="refreshMapMarkers()" id="btn-map-refresh">🔄 Actualizar</button>
-              <span id="map-last-update" style="font-size:.75rem;color:var(--muted);margin-left:4px"></span>
+              <span id="map-last-update" style="font-size:.95rem;color:var(--muted);margin-left:4px"></span>
             </div>
           </div>
           <div id="map-reportes"></div>
@@ -400,7 +401,7 @@
               <textarea id="nr-desc" placeholder="Describa la situación con detalle..."></textarea>
               <button type="button"
                 onclick="llamarIA('reporte_ciudadano',{descripcion:document.getElementById('nr-desc').value||'sin descripcion'},'nr-desc',this)"
-                style="margin-top:6px;width:100%;padding:9px;background:linear-gradient(135deg,#6d28d9,#4f46e5);color:#fff;border:none;border-radius:9px;font-size:.82rem;font-weight:700;cursor:pointer">
+                style="margin-top:6px;width:100%;padding:9px;background:linear-gradient(135deg,#6d28d9,#4f46e5);color:#fff;border:none;border-radius:9px;font-size:.97rem;font-weight:700;cursor:pointer">
                 🐭 Matlacho mejora la descripción
               </button>
             </div>
@@ -495,23 +496,23 @@
           <h3 style="margin-bottom:16px;color:var(--azul)">➕ Registrar Inspector</h3>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
             <div>
-              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Nombre completo *</label>
+              <label style="font-size:.92rem;font-weight:700;color:#64748b;text-transform:uppercase">Nombre completo *</label>
               <input id="ci-nombre" class="form-control" placeholder="Nombre y apellidos" style="margin-top:4px">
             </div>
             <div>
-              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Usuario *</label>
+              <label style="font-size:.92rem;font-weight:700;color:#64748b;text-transform:uppercase">Usuario *</label>
               <input id="ci-usuario" class="form-control" placeholder="Ej: inspector02" style="margin-top:4px">
             </div>
             <div>
-              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Contraseña *</label>
+              <label style="font-size:.92rem;font-weight:700;color:#64748b;text-transform:uppercase">Contraseña *</label>
               <input id="ci-password" type="password" class="form-control" placeholder="Contraseña de acceso" style="margin-top:4px">
             </div>
             <div>
-              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Teléfono</label>
+              <label style="font-size:.92rem;font-weight:700;color:#64748b;text-transform:uppercase">Teléfono</label>
               <input id="ci-telefono" class="form-control" placeholder="Teléfono de contacto" style="margin-top:4px">
             </div>
             <div>
-              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Brigada / Área</label>
+              <label style="font-size:.92rem;font-weight:700;color:#64748b;text-transform:uppercase">Brigada / Área</label>
               <input id="ci-brigada" class="form-control" placeholder="Ej: Brigada Norte" style="margin-top:4px">
             </div>
             <div style="display:flex;align-items:flex-end">
@@ -551,13 +552,13 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
           <h2>📋 Registro de Actas Circunstanciadas</h2>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <select id="acta-filtro-tipo" onchange="cargarActas()" style="padding:6px 10px;border:1.5px solid var(--azul-borde);border-radius:6px;font-size:.82rem">
+            <select id="acta-filtro-tipo" onchange="cargarActas()" style="padding:6px 10px;border:1.5px solid var(--azul-borde);border-radius:6px;font-size:.97rem">
               <option value="">Todos los tipos</option>
               <option value="circunstanciada">Circunstanciada</option>
               <option value="infraccion">Infracción</option>
               <option value="clausura">Clausura</option>
             </select>
-            <select id="acta-filtro-estado" onchange="cargarActas()" style="padding:6px 10px;border:1.5px solid var(--azul-borde);border-radius:6px;font-size:.82rem">
+            <select id="acta-filtro-estado" onchange="cargarActas()" style="padding:6px 10px;border:1.5px solid var(--azul-borde);border-radius:6px;font-size:.97rem">
               <option value="">Todos los estados</option>
               <option value="emitida">Emitida</option>
               <option value="notificada">Notificada</option>
@@ -594,13 +595,13 @@
     <div class="form-grid">
       <div class="form-group full">
         <label>Inspector Responsable *</label>
-        <select id="asig-inspector" style="width:100%;padding:10px;border:1.5px solid var(--azul-borde);border-radius:8px;font-size:.9rem">
+        <select id="asig-inspector" style="width:100%;padding:10px;border:1.5px solid var(--azul-borde);border-radius:8px;font-size:.94rem">
           <option value="">— Seleccionar inspector —</option>
         </select>
       </div>
       <div class="form-group full">
         <label>Brigada *</label>
-        <select id="asig-brigada" style="width:100%;padding:10px;border:1.5px solid var(--azul-borde);border-radius:8px;font-size:.9rem">
+        <select id="asig-brigada" style="width:100%;padding:10px;border:1.5px solid var(--azul-borde);border-radius:8px;font-size:.94rem">
           <option value="">— Seleccionar brigada —</option>
         </select>
       </div>
@@ -767,23 +768,23 @@
           <input type="hidden" id="ei-id">
           <div style="display:flex;flex-direction:column;gap:12px">
             <div>
-              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Nombre completo</label>
+              <label style="font-size:.92rem;font-weight:700;color:#64748b;text-transform:uppercase">Nombre completo</label>
               <input id="ei-nombre" class="form-control" style="margin-top:4px">
             </div>
             <div>
-              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Brigada / Área</label>
+              <label style="font-size:.92rem;font-weight:700;color:#64748b;text-transform:uppercase">Brigada / Área</label>
               <input id="ei-brigada" class="form-control" style="margin-top:4px">
             </div>
             <div>
-              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Teléfono</label>
+              <label style="font-size:.92rem;font-weight:700;color:#64748b;text-transform:uppercase">Teléfono</label>
               <input id="ei-telefono" class="form-control" style="margin-top:4px">
             </div>
             <div>
-              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Nueva contraseña (dejar vacío para no cambiar)</label>
+              <label style="font-size:.92rem;font-weight:700;color:#64748b;text-transform:uppercase">Nueva contraseña (dejar vacío para no cambiar)</label>
               <input id="ei-password" type="password" class="form-control" placeholder="Nueva contraseña" style="margin-top:4px">
             </div>
             <div>
-              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase">Estado</label>
+              <label style="font-size:.92rem;font-weight:700;color:#64748b;text-transform:uppercase">Estado</label>
               <select id="ei-activo" class="form-control" style="margin-top:4px">
                 <option value="true">✅ Activo</option>
                 <option value="false">⛔ Inactivo</option>
@@ -804,8 +805,8 @@
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
           <h2 style="margin:0">🏪 Padrón de Establecimientos</h2>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-secondary" onclick="exportarEstablecimientos()" style="font-size:.8rem;padding:6px 12px">📥 Exportar</button>
-            <button class="btn btn-primary" onclick="abrirModalEstablecimiento()" style="font-size:.8rem;padding:6px 12px">➕ Nuevo Establecimiento</button>
+            <button class="btn btn-secondary" onclick="exportarEstablecimientos()" style="font-size:.94rem;padding:6px 12px">📥 Exportar</button>
+            <button class="btn btn-primary" onclick="abrirModalEstablecimiento()" style="font-size:.94rem;padding:6px 12px">➕ Nuevo Establecimiento</button>
           </div>
         </div>
 
@@ -831,8 +832,8 @@
         <!-- Filtros -->
         <div class="card" style="padding:12px;margin-bottom:12px">
           <div class="filters" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <input id="est-buscar" placeholder="🔍 Buscar nombre, domicilio..." style="padding:7px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem;min-width:200px" oninput="cargarEstablecimientos()">
-            <select id="est-filtro-giro" onchange="cargarEstablecimientos()" style="padding:7px 10px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+            <input id="est-buscar" placeholder="🔍 Buscar nombre, domicilio..." style="padding:7px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.94rem;min-width:200px" oninput="cargarEstablecimientos()">
+            <select id="est-filtro-giro" onchange="cargarEstablecimientos()" style="padding:7px 10px;border:1px solid var(--borde);border-radius:6px;font-size:.94rem">
               <option value="">Todos los giros</option>
               <option value="restaurante">🍽️ Restaurante</option>
               <option value="cocina_economica">🥘 Cocina Económica</option>
@@ -858,7 +859,7 @@
               <option value="escuela">🏫 Escuela/Guardería</option>
               <option value="otro">📌 Otro</option>
             </select>
-            <select id="est-filtro-estado" onchange="cargarEstablecimientos()" style="padding:7px 10px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+            <select id="est-filtro-estado" onchange="cargarEstablecimientos()" style="padding:7px 10px;border:1px solid var(--borde);border-radius:6px;font-size:.94rem">
               <option value="">Todos los estados</option>
               <option value="sin_verificar">🔘 Sin verificar</option>
               <option value="cumple">✅ Cumple</option>
@@ -872,7 +873,7 @@
         <!-- Tabla establecimientos -->
         <div class="card" style="padding:0;overflow:hidden">
           <div id="est-tabla-wrap" style="overflow-x:auto">
-            <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+            <table style="width:100%;border-collapse:collapse;font-size:.97rem">
               <thead>
                 <tr style="background:#f1f5f9">
                   <th style="padding:10px 12px;text-align:left;font-weight:700;color:#1a3a5c">Folio</th>
@@ -899,14 +900,14 @@
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
           <h2 style="margin:0">🔍 Verificaciones Ambientales</h2>
           <div style="display:flex;gap:8px">
-            <button class="btn btn-primary" onclick="abrirModalVerificacion()" style="font-size:.8rem;padding:6px 12px">➕ Programar Verificación</button>
+            <button class="btn btn-primary" onclick="abrirModalVerificacion()" style="font-size:.94rem;padding:6px 12px">➕ Programar Verificación</button>
           </div>
         </div>
 
         <!-- Filtros verificaciones -->
         <div class="card" style="padding:12px;margin-bottom:12px">
           <div class="filters" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <select id="ver-filtro-estado" onchange="cargarVerificaciones()" style="padding:7px 10px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+            <select id="ver-filtro-estado" onchange="cargarVerificaciones()" style="padding:7px 10px;border:1px solid var(--borde);border-radius:6px;font-size:.94rem">
               <option value="">Todos los estados</option>
               <option value="programada">📅 Programada</option>
               <option value="en_proceso">🔄 En Proceso</option>
@@ -1009,23 +1010,23 @@
 
           <!-- Permisos -->
           <div style="margin-top:16px">
-            <label style="display:block;font-weight:700;color:#1a3a5c;font-size:.85rem;margin-bottom:8px">📋 Permisos / Licencias</label>
+            <label style="display:block;font-weight:700;color:#1a3a5c;font-size:.94rem;margin-bottom:8px">📋 Permisos / Licencias</label>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="licencia_funcionamiento" class="perm-check"> Licencia de Funcionamiento</label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="dictamen_ambiental" class="perm-check"> Dictamen Ambiental</label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="manejo_residuos" class="perm-check"> Manejo de Residuos</label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="descarga_aguas" class="perm-check"> Descarga de Aguas</label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="emisiones_ruido" class="perm-check"> Emisiones/Ruido</label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="uso_suelo" class="perm-check"> Uso de Suelo</label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="proteccion_civil" class="perm-check"> Protección Civil</label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" value="anuncio_publicidad" class="perm-check"> Anuncio/Publicidad</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.97rem;cursor:pointer"><input type="checkbox" value="licencia_funcionamiento" class="perm-check"> Licencia de Funcionamiento</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.97rem;cursor:pointer"><input type="checkbox" value="dictamen_ambiental" class="perm-check"> Dictamen Ambiental</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.97rem;cursor:pointer"><input type="checkbox" value="manejo_residuos" class="perm-check"> Manejo de Residuos</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.97rem;cursor:pointer"><input type="checkbox" value="descarga_aguas" class="perm-check"> Descarga de Aguas</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.97rem;cursor:pointer"><input type="checkbox" value="emisiones_ruido" class="perm-check"> Emisiones/Ruido</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.97rem;cursor:pointer"><input type="checkbox" value="uso_suelo" class="perm-check"> Uso de Suelo</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.97rem;cursor:pointer"><input type="checkbox" value="proteccion_civil" class="perm-check"> Protección Civil</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.97rem;cursor:pointer"><input type="checkbox" value="anuncio_publicidad" class="perm-check"> Anuncio/Publicidad</label>
             </div>
           </div>
 
           <!-- Observaciones -->
           <div style="margin-top:12px" class="form-group">
             <label>Observaciones</label>
-            <textarea id="est-observaciones" rows="2" placeholder="Notas relevantes sobre el establecimiento..." style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem;resize:vertical"></textarea>
+            <textarea id="est-observaciones" rows="2" placeholder="Notas relevantes sobre el establecimiento..." style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.94rem;resize:vertical"></textarea>
           </div>
 
           <div id="est-modal-alert" style="margin-top:10px"></div>
@@ -1049,13 +1050,13 @@
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div style="grid-column:1/-1" class="form-group">
               <label>Establecimiento *</label>
-              <select id="ver-est-select" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+              <select id="ver-est-select" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.94rem">
                 <option value="">-- Seleccionar establecimiento --</option>
               </select>
             </div>
             <div class="form-group">
               <label>Tipo de Verificación</label>
-              <select id="ver-tipo" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+              <select id="ver-tipo" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.94rem">
                 <option value="programada">📅 Programada (rutinaria)</option>
                 <option value="oficio">⚡ De Oficio (por denuncia)</option>
                 <option value="seguimiento">🔄 Seguimiento</option>
@@ -1063,24 +1064,24 @@
             </div>
             <div class="form-group">
               <label>Fecha programada</label>
-              <input id="ver-fecha" type="date" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+              <input id="ver-fecha" type="date" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.94rem">
             </div>
             <div class="form-group">
               <label>Asignar inspector</label>
-              <select id="ver-inspector" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+              <select id="ver-inspector" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.94rem">
                 <option value="">-- Sin asignar --</option>
               </select>
             </div>
             <div style="grid-column:1/-1" class="form-group">
               <label>Motivo / Instrucciones</label>
-              <textarea id="ver-motivo" rows="3" placeholder="Describe el motivo de la verificación, aspectos a revisar, antecedentes..." style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem;resize:vertical"></textarea>
+              <textarea id="ver-motivo" rows="3" placeholder="Describe el motivo de la verificación, aspectos a revisar, antecedentes..." style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.94rem;resize:vertical"></textarea>
             </div>
           </div>
 
           <!-- Checklist por defecto -->
           <div style="margin-top:12px">
-            <label style="display:block;font-weight:700;color:#1a3a5c;font-size:.85rem;margin-bottom:8px">✅ Checklist de Verificación (selecciona los puntos a revisar)</label>
-            <div id="ver-checklist-wrap" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;max-height:200px;overflow-y:auto;padding:8px;border:1px solid var(--borde);border-radius:6px;font-size:.8rem">
+            <label style="display:block;font-weight:700;color:#1a3a5c;font-size:.94rem;margin-bottom:8px">✅ Checklist de Verificación (selecciona los puntos a revisar)</label>
+            <div id="ver-checklist-wrap" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;max-height:200px;overflow-y:auto;padding:8px;border:1px solid var(--borde);border-radius:6px;font-size:.94rem">
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="licencia_vigente"> Licencia de funcionamiento vigente</label>
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="dictamen_ambiental"> Dictamen ambiental municipal</label>
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="chk-item" value="contenedores_residuos"> Contenedores de residuos adecuados</label>
@@ -1113,18 +1114,18 @@
             <h3 id="ver-det-titulo" style="margin:0;color:#1a3a5c">🔍 Detalle de Verificación</h3>
             <button onclick="cerrarModalVerDet()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888">✕</button>
           </div>
-          <div id="ver-det-info" style="background:#f8fafc;border-radius:8px;padding:14px;margin-bottom:14px;font-size:.85rem;line-height:1.6"></div>
+          <div id="ver-det-info" style="background:#f8fafc;border-radius:8px;padding:14px;margin-bottom:14px;font-size:.94rem;line-height:1.6"></div>
 
           <!-- Checklist de resultados -->
           <div style="margin-bottom:14px">
-            <label style="display:block;font-weight:700;color:#1a3a5c;font-size:.85rem;margin-bottom:8px">✅ Resultados del Checklist</label>
-            <div id="ver-det-checklist" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:8px;border:1px solid var(--borde);border-radius:6px;font-size:.8rem;max-height:180px;overflow-y:auto"></div>
+            <label style="display:block;font-weight:700;color:#1a3a5c;font-size:.94rem;margin-bottom:8px">✅ Resultados del Checklist</label>
+            <div id="ver-det-checklist" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:8px;border:1px solid var(--borde);border-radius:6px;font-size:.94rem;max-height:180px;overflow-y:auto"></div>
           </div>
 
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
             <div class="form-group">
-              <label style="font-weight:700;font-size:.82rem">Resultado General</label>
-              <select id="ver-det-resultado" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+              <label style="font-weight:700;font-size:.97rem">Resultado General</label>
+              <select id="ver-det-resultado" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.94rem">
                 <option value="">-- Seleccionar --</option>
                 <option value="cumple">✅ Cumple con todos los requisitos</option>
                 <option value="cumple_con_observaciones">⚠️ Cumple con observaciones</option>
@@ -1133,8 +1134,8 @@
               </select>
             </div>
             <div class="form-group">
-              <label style="font-weight:700;font-size:.82rem">Acción requerida</label>
-              <select id="ver-det-accion" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem">
+              <label style="font-weight:700;font-size:.97rem">Acción requerida</label>
+              <select id="ver-det-accion" style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.94rem">
                 <option value="ninguna">✅ Ninguna acción requerida</option>
                 <option value="apercibimiento">📋 Generar Apercibimiento</option>
                 <option value="sancion">⚖️ Iniciar Sanción</option>
@@ -1144,8 +1145,8 @@
               </select>
             </div>
             <div style="grid-column:1/-1" class="form-group">
-              <label style="font-weight:700;font-size:.82rem">Hallazgos / Observaciones del inspector</label>
-              <textarea id="ver-det-hallazgos" rows="4" placeholder="Describe detalladamente lo encontrado durante la verificación..." style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.85rem;resize:vertical"></textarea>
+              <label style="font-weight:700;font-size:.97rem">Hallazgos / Observaciones del inspector</label>
+              <textarea id="ver-det-hallazgos" rows="4" placeholder="Describe detalladamente lo encontrado durante la verificación..." style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:.94rem;resize:vertical"></textarea>
             </div>
           </div>
 
@@ -1162,7 +1163,7 @@
       <div id="page-alertas" class="page">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
           <h2 style="margin:0">🔔 Alertas de Apercibimientos</h2>
-          <button class="btn btn-primary" onclick="cargarAlertas()" style="font-size:.8rem;padding:6px 14px">🔄 Actualizar</button>
+          <button class="btn btn-primary" onclick="cargarAlertas()" style="font-size:.94rem;padding:6px 14px">🔄 Actualizar</button>
         </div>
         <div id="alertas-summary" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"></div>
         <div id="alertas-lista"><p style="color:#94a3b8;text-align:center">Cargando alertas...</p></div>
@@ -1261,8 +1262,8 @@ async function refreshMapMarkers() {
       <span class="pop-badge" style="background:${color}20;color:${color}">${rep.estado.replace('_',' ')}</span>
       <button class="pop-btn" onclick="verDetalle(${rep.id});closePopups()">📋 Ver detalle completo</button>
       <div style="display:flex;gap:4px;margin-top:4px">
-        <a href="${gmapsUrl}" target="_blank" style="flex:1;display:block;text-align:center;background:#4285F4;color:#fff;border-radius:6px;padding:5px 4px;font-size:.78rem;font-weight:600;text-decoration:none">🗺️ Google Maps</a>
-        <a href="${streetUrl}" target="_blank" style="flex:1;display:block;text-align:center;background:#34A853;color:#fff;border-radius:6px;padding:5px 4px;font-size:.78rem;font-weight:600;text-decoration:none">📸 Street View</a>
+        <a href="${gmapsUrl}" target="_blank" style="flex:1;display:block;text-align:center;background:#4285F4;color:#fff;border-radius:6px;padding:5px 4px;font-size:.92rem;font-weight:600;text-decoration:none">🗺️ Google Maps</a>
+        <a href="${streetUrl}" target="_blank" style="flex:1;display:block;text-align:center;background:#34A853;color:#fff;border-radius:6px;padding:5px 4px;font-size:.92rem;font-weight:600;text-decoration:none">📸 Street View</a>
       </div>`;
     marker.bindPopup(popHtml, { maxWidth: 240 });
     marker.addTo(mapReportes);
@@ -1327,7 +1328,7 @@ async function setPickerCoords(lat, lng) {
   // Mostrar coordenadas inmediatamente mientras carga el geocoder
   document.getElementById('picker-coords').innerHTML =
     `<b>📍 Lat:</b> ${lat.toFixed(6)} &nbsp; <b>Lon:</b> ${lng.toFixed(6)}
-     <span style="margin-left:auto;color:var(--muted);font-size:.8rem">🔍 Buscando domicilio...</span>`;
+     <span style="margin-left:auto;color:var(--muted);font-size:.94rem">🔍 Buscando domicilio...</span>`;
 
   if (pickerMarker) mapPicker.removeLayer(pickerMarker);
   pickerMarker = L.marker([lat, lng], { icon: makeIcon('#003B7A') })
@@ -1386,7 +1387,7 @@ async function setPickerCoords(lat, lng) {
           <span><b>Lon:</b> ${lng.toFixed(6)}</span>
           <span style="color:var(--verde);font-weight:600">✅ Domicilio autocompletado</span>
         </div>
-        <div style="margin-top:4px;font-size:.8rem;color:var(--muted)">
+        <div style="margin-top:4px;font-size:.94rem;color:var(--muted)">
           📍 ${domicilio ? domicilio + (colonia ? ', ' + colonia : '') + (ciudad ? ', ' + ciudad : '') : geo.display_name || 'Sin dirección disponible'}
         </div>
       </div>`;
@@ -1398,7 +1399,7 @@ async function setPickerCoords(lat, lng) {
       .openPopup();
     document.getElementById('picker-coords').innerHTML =
       `<b>📍 Lat:</b> ${lat.toFixed(6)} &nbsp; <b>Lon:</b> ${lng.toFixed(6)}
-       <span style="margin-left:auto;color:var(--naranja);font-size:.8rem">⚠️ Geocodificación no disponible</span>`;
+       <span style="margin-left:auto;color:var(--naranja);font-size:.94rem">⚠️ Geocodificación no disponible</span>`;
   }
 }
 
@@ -1578,7 +1579,7 @@ async function loadDashboard() {
     if (!dashEl) return;
     const reps = r.data.reportes;
     if (!reps.length) { dashEl.innerHTML = '<div class="empty">No hay reportes recientes.</div>'; return; }
-    dashEl.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:.82rem">' +
+    dashEl.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:.97rem">' +
       '<thead><tr style="background:#f1f5f9"><th style="padding:6px 8px;text-align:left">Folio</th>' +
       '<th style="padding:6px 8px;text-align:left">Tipo</th><th style="padding:6px 8px;text-align:left">Colonia</th>' +
       '<th style="padding:6px 8px;text-align:left">Estado</th><th style="padding:6px 8px;text-align:left">Fecha</th></tr></thead><tbody>' +
@@ -1713,7 +1714,7 @@ async function loadReportes() {
     <td><span class="folio-badge">${rep.folio}</span></td>
     <td>${tipoLabel(rep.tipo)}</td><td>${rep.colonia}</td>
     <td>${badge(rep.estado)}</td>
-    <td style="font-size:.78rem;line-height:1.3">${rep.brigada?`<b style="color:var(--verde-oscuro)">${rep.brigada}</b><br><span style="color:var(--muted)">${rep.inspector||''}</span>`:'<span style="color:#94a3b8;font-style:italic">Sin asignar</span>'}</td>
+    <td style="font-size:.92rem;line-height:1.3">${rep.brigada?`<b style="color:var(--verde-oscuro)">${rep.brigada}</b><br><span style="color:var(--muted)">${rep.inspector||''}</span>`:'<span style="color:#94a3b8;font-style:italic">Sin asignar</span>'}</td>
     <td>${fmtDate(rep.fecha_creacion)}</td>
     <td style="text-align:right;white-space:nowrap">
       <button class="btn btn-secondary btn-sm" title="Ver" onclick="verDetalle(${rep.id})">👁</button>
@@ -1760,8 +1761,8 @@ async function verDetalle(id) {
         <div class="detail-item"><label>Coordenadas</label><span>${rep.lat&&rep.lon?`${parseFloat(rep.lat).toFixed(5)}, ${parseFloat(rep.lon).toFixed(5)}`:'No capturadas'}</span></div>
         <div class="detail-item"><label>Creado</label><span>${fmtDate(rep.fecha_creacion)}</span></div>
       </div>
-      <div style="margin-top:12px"><label style="font-size:.78rem;color:var(--muted)">Descripción</label>
-        <p style="margin-top:4px;font-size:.9rem;background:#EEF5FC;padding:10px;border-radius:6px">${rep.descripcion}</p>
+      <div style="margin-top:12px"><label style="font-size:.92rem;color:var(--muted)">Descripción</label>
+        <p style="margin-top:4px;font-size:.94rem;background:#EEF5FC;padding:10px;border-radius:6px">${rep.descripcion}</p>
       </div>
     </div>
     ${rep.lat&&rep.lon?`<div class="detail-section"><h4>Ubicación en Mapa</h4>
@@ -1771,7 +1772,7 @@ async function verDetalle(id) {
         <small style="color:var(--muted)">${fmtDate(a.fecha_asignacion)}${a.notas?' · '+a.notas:''}</small></li>`).join('')}
     </ul></div>`:''}
     ${rep.evidencias?.length?`<div class="detail-section"><h4>Evidencias (${rep.evidencias.length})</h4>
-      ${rep.evidencias.map(e=>`<div style="background:var(--gris);border-radius:6px;padding:8px;margin:4px 0;font-size:.82rem">
+      ${rep.evidencias.map(e=>`<div style="background:var(--gris);border-radius:6px;padding:8px;margin:4px 0;font-size:.97rem">
         📸 ${e.comentario||'Sin comentario'} ${e.lat_captura?`· 📍 ${parseFloat(e.lat_captura).toFixed(4)},${parseFloat(e.lon_captura).toFixed(4)}`:''}
       </div>`).join('')}</div>`:''}
     ${rep.firmas?.length?`<div class="detail-section"><h4>Firmas</h4><ul class="timeline">
@@ -1788,10 +1789,10 @@ async function verDetalle(id) {
             h.estado_nuevo==='cerrado'?'#166534':h.estado_nuevo==='sancionado'?'#991b1b':h.estado_nuevo==='apercibido'?'#92400e':h.estado_nuevo==='pendiente_medida'?'#d97706':'#2563eb'
           }">
             <div style="flex:1">
-              <div style="font-size:.8rem;font-weight:700;color:#1a3a5c">
+              <div style="font-size:.94rem;font-weight:700;color:#1a3a5c">
                 ${h.estado_anterior?`${h.estado_anterior} → `:''}${h.estado_nuevo}
               </div>
-              <div style="font-size:.72rem;color:#64748b;margin-top:2px">
+              <div style="font-size:.92rem;color:#64748b;margin-top:2px">
                 👤 ${h.usuario} &nbsp;·&nbsp; 📅 ${new Date(h.fecha).toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
                 ${h.nota?`&nbsp;·&nbsp; <i>${h.nota}</i>`:''}
               </div>
@@ -2282,7 +2283,7 @@ function renderActasTabla(actas, pag) {
     </tr>`).join('');
 
   wrap.innerHTML = `
-    <p style="color:var(--muted);font-size:.8rem;margin-bottom:8px">${pag?.total||actas.length} acta(s) encontrada(s)</p>
+    <p style="color:var(--muted);font-size:.94rem;margin-bottom:8px">${pag?.total||actas.length} acta(s) encontrada(s)</p>
     <div style="overflow-x:auto">
     <table class="table-reportes" style="min-width:900px">
       <thead><tr>
@@ -2320,11 +2321,11 @@ function cerrarModalActa() {
 
 function renderActaDetalle(a) {
   const fila = (lbl, val) => val ? `<tr><td class="lbl" style="width:200px;font-weight:700;color:#1a3a5c;padding:6px 10px;background:#f8fafc;border:1px solid #e2e8f0">${lbl}</td><td style="padding:6px 10px;border:1px solid #e2e8f0">${val}</td></tr>` : '';
-  const sec  = (titulo) => `<tr><td colspan="2" style="background:#002A5C;color:#fff;font-weight:700;padding:8px 12px;font-size:.85rem;letter-spacing:.05em">${titulo}</td></tr>`;
+  const sec  = (titulo) => `<tr><td colspan="2" style="background:#002A5C;color:#fff;font-weight:700;padding:8px 12px;font-size:.94rem;letter-spacing:.05em">${titulo}</td></tr>`;
 
   const TIPO_LABELS = { circunstanciada:'Circunstanciada', infraccion:'Infracción', clausura:'Clausura' };
 
-  let html = `<table style="width:100%;border-collapse:collapse;font-size:.88rem">`;
+  let html = `<table style="width:100%;border-collapse:collapse;font-size:.92rem">`;
 
   // ── ENCABEZADO ──
   html += sec('📋 IDENTIFICACIÓN DEL ACTA');
@@ -2423,15 +2424,15 @@ function renderActaDetalle(a) {
     : '<div style="height:50px;border-bottom:1px solid #333;margin-bottom:4px"></div>';
   const firmaVis = a.firma_visitado_base64
     ? `<img src="${a.firma_visitado_base64}" style="max-height:70px;display:block;margin-bottom:4px">`
-    : (a.nombre_visitado ? '<div style="background:#fef3c7;padding:8px;border-radius:4px;font-size:.75rem;color:#92400e">Se negó a firmar o no firmó</div>' : '<div style="height:50px;border-bottom:1px solid #333;margin-bottom:4px"></div>');
+    : (a.nombre_visitado ? '<div style="background:#fef3c7;padding:8px;border-radius:4px;font-size:.95rem;color:#92400e">Se negó a firmar o no firmó</div>' : '<div style="height:50px;border-bottom:1px solid #333;margin-bottom:4px"></div>');
   html += `<tr><td style="padding:12px;border:1px solid #e2e8f0;text-align:center">
     ${firmaInsp}
-    <div style="font-size:.75rem;font-weight:700;color:#1a3a5c">${a.nombre_firmante_inspector||a.inspector||'Inspector'}</div>
-    <div style="font-size:.7rem;color:#64748b">Inspector IMBIO</div>
+    <div style="font-size:.95rem;font-weight:700;color:#1a3a5c">${a.nombre_firmante_inspector||a.inspector||'Inspector'}</div>
+    <div style="font-size:.96rem;color:#64748b">Inspector IMBIO</div>
   </td><td style="padding:12px;border:1px solid #e2e8f0;text-align:center">
     ${firmaVis}
-    <div style="font-size:.75rem;font-weight:700;color:#1a3a5c">${a.nombre_visitado||'Visitado / Propietario'}</div>
-    <div style="font-size:.7rem;color:#64748b">Visitado / Propietario</div>
+    <div style="font-size:.95rem;font-weight:700;color:#1a3a5c">${a.nombre_visitado||'Visitado / Propietario'}</div>
+    <div style="font-size:.96rem;color:#64748b">Visitado / Propietario</div>
   </td></tr>`;
 
   // ── FOTOS ──
@@ -2927,8 +2928,8 @@ function _matlachoInit() {
         background:#fff;display:flex;align-items:center;justify-content:center;
         font-size:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.15);flex-shrink:0;
       }
-      .matlacho-name { color:#fff;font-weight:800;font-size:.9rem; }
-      .matlacho-role { color:rgba(255,255,255,.75);font-size:.72rem; }
+      .matlacho-name { color:#fff;font-weight:800;font-size:.96rem; }
+      .matlacho-role { color:rgba(255,255,255,.75);font-size:.92rem; }
       .matlacho-close {
         margin-left:auto;background:none;border:none;color:#fff;
         font-size:1.2rem;cursor:pointer;padding:2px 6px;opacity:.8;
@@ -2940,7 +2941,7 @@ function _matlachoInit() {
       }
       .matlacho-bubble {
         background:#f0fdf4;border-radius:12px 12px 12px 2px;
-        padding:10px 13px;font-size:.8rem;color:#1a3a5c;line-height:1.5;
+        padding:10px 13px;font-size:.95rem;color:#1a3a5c;line-height:1.5;
         border:1px solid #bbf7d0;max-width:92%;
       }
       .matlacho-bubble.user {
@@ -2956,7 +2957,7 @@ function _matlachoInit() {
       }
       .matlacho-btn {
         padding:8px 12px;border:none;border-radius:9px;
-        font-size:.78rem;font-weight:700;cursor:pointer;
+        font-size:.93rem;font-weight:700;cursor:pointer;
         display:flex;align-items:center;gap:6px;text-align:left;
         transition:opacity .15s;
       }
@@ -2971,17 +2972,17 @@ function _matlachoInit() {
       }
       .matlacho-input {
         flex:1;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:9px;
-        font-size:.8rem;outline:none;
+        font-size:.95rem;outline:none;
       }
       .matlacho-input:focus { border-color:#16a34a; }
       .matlacho-send {
         padding:7px 12px;background:#16a34a;color:#fff;border:none;
-        border-radius:9px;cursor:pointer;font-size:.85rem;
+        border-radius:9px;cursor:pointer;font-size:.94rem;
       }
       .matlacho-suggestion-banner {
         background:linear-gradient(135deg,#166534,#16a34a);
         color:#fff;border-radius:10px;padding:10px 13px;
-        font-size:.8rem;font-weight:700;margin-top:4px;
+        font-size:.95rem;font-weight:700;margin-top:4px;
       }
     </style>
 
@@ -3136,7 +3137,7 @@ async function _matlachoRedactarDesc() {
   _matlachoAddBubble('📋 Redactando descripción circunstanciada...', true);
   var result = await _matlachoCallAPI('acta_circunstanciada', datos);
   if (result) {
-    _matlachoAddBubble('✅ Descripción generada:<br><br><i style="font-size:.75rem">' +
+    _matlachoAddBubble('✅ Descripción generada:<br><br><i style="font-size:.95rem">' +
       result.texto.substring(0,200) + (result.texto.length>200?'...':'') + '</i><br><br>' +
       '<button class="matlacho-btn verde" onclick="_matlachoAplicarTextarea(\'acta-descripcion\',\'' +
       result.texto.replace(/'/g,'&#39;').replace(/\n/g,' ').replace(/"/g,'&quot;') + '\')" style="margin-top:4px">✅ Aplicar al campo</button>', false);
@@ -3154,7 +3155,7 @@ async function _matlachoRedactarAper() {
   _matlachoAddBubble('⚠️ Redactando apercibimiento...', true);
   var result = await _matlachoCallAPI('acta_apercibimiento', datos);
   if (result) {
-    _matlachoAddBubble('✅ Texto del apercibimiento:<br><br><i style="font-size:.75rem">' +
+    _matlachoAddBubble('✅ Texto del apercibimiento:<br><br><i style="font-size:.95rem">' +
       result.texto.substring(0,200) + (result.texto.length>200?'...':'') + '</i><br><br>' +
       '<button class="matlacho-btn naranja" onclick="_matlachoAplicarTextarea(\'acta-medida\',\'' +
       result.texto.replace(/'/g,'&#39;').replace(/\n/g,' ').replace(/"/g,'&quot;') + '\')" style="margin-top:4px">✅ Aplicar al campo</button>', false);
@@ -3173,7 +3174,7 @@ async function _matlachoRedactarSanc() {
   _matlachoAddBubble('🚫 Redactando motivación de sanción...', true);
   var result = await _matlachoCallAPI('acta_sancion', datos);
   if (result) {
-    _matlachoAddBubble('✅ Motivación de sanción:<br><br><i style="font-size:.75rem">' +
+    _matlachoAddBubble('✅ Motivación de sanción:<br><br><i style="font-size:.95rem">' +
       result.texto.substring(0,200) + (result.texto.length>200?'...':'') + '</i><br><br>' +
       '<button class="matlacho-btn rojo" onclick="_matlachoAplicarTextarea(\'acta-medida\',\'' +
       result.texto.replace(/'/g,'&#39;').replace(/\n/g,' ').replace(/"/g,'&quot;') + '\')" style="margin-top:4px">✅ Aplicar al campo</button>', false);
@@ -3199,11 +3200,11 @@ async function _matlachoSugerirMedida() {
   if (result) {
     var color = result.sugerencia_medida === 'sancion' ? 'rojo' : 'naranja';
     var banner = result.sugerencia_medida
-      ? '<div class="matlacho-suggestion-banner" style="margin-top:8px;font-size:.78rem">' +
+      ? '<div class="matlacho-suggestion-banner" style="margin-top:8px;font-size:.92rem">' +
         (result.sugerencia_medida === 'sancion' ? '🚫 Posible: Acta de Sanción' : '⚠️ Posible: Acta de Apercibimiento') +
         '</div>' : '';
     _matlachoAddBubble('<b>🐭 Matlacho sugiere:</b><br><br>' + result.texto + banner +
-      '<br><span style="font-size:.7rem;color:#94a3b8;display:block;margin-top:6px">Solo sugerencia — el inspector decide.</span>', false);
+      '<br><span style="font-size:.96rem;color:#94a3b8;display:block;margin-top:6px">Solo sugerencia — el inspector decide.</span>', false);
   }
 }
 
@@ -3256,11 +3257,11 @@ async function cargarAlertas() {
     summary.innerHTML = `
       <div style="background:#fee2e2;border-radius:12px;padding:14px;text-align:center">
         <div style="font-size:2rem;font-weight:900;color:#991b1b">${vencidos}</div>
-        <div style="font-size:.8rem;font-weight:700;color:#991b1b;margin-top:4px">🚨 Vencidos</div>
+        <div style="font-size:.94rem;font-weight:700;color:#991b1b;margin-top:4px">🚨 Vencidos</div>
       </div>
       <div style="background:#fef3c7;border-radius:12px;padding:14px;text-align:center">
         <div style="font-size:2rem;font-weight:900;color:#92400e">${por_vencer}</div>
-        <div style="font-size:.8rem;font-weight:700;color:#92400e;margin-top:4px">⚠️ Por vencer (≤3 días)</div>
+        <div style="font-size:.94rem;font-weight:700;color:#92400e;margin-top:4px">⚠️ Por vencer (≤3 días)</div>
       </div>`;
   }
 
@@ -3281,19 +3282,19 @@ async function cargarAlertas() {
       ? new Date(a.fecha_vencimiento).toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})
       : '–';
     const verificado = a.verificacion
-      ? `<span style="background:${a.verificacion==='cumplió'?'#dcfce7':'#fee2e2'};color:${a.verificacion==='cumplió'?'#166534':'#991b1b'};padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">
+      ? `<span style="background:${a.verificacion==='cumplió'?'#dcfce7':'#fee2e2'};color:${a.verificacion==='cumplió'?'#166534':'#991b1b'};padding:2px 8px;border-radius:20px;font-size:.92rem;font-weight:700">
           ${a.verificacion==='cumplió'?'✅ Cumplió':'❌ Incumplió'}
          </span>` : '';
 
     return `<div style="border:2px solid ${color};border-radius:12px;margin-bottom:10px;overflow:hidden">
       <div style="background:${bg};padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
         <div>
-          <span style="font-weight:800;color:${color};font-size:.9rem">${icon} ${diasText}</span>
+          <span style="font-weight:800;color:${color};font-size:.94rem">${icon} ${diasText}</span>
           ${verificado}
         </div>
-        <span style="font-family:monospace;font-size:.75rem;color:${color}">${a.folio_acta}</span>
+        <span style="font-family:monospace;font-size:.95rem;color:${color}">${a.folio_acta}</span>
       </div>
-      <div style="padding:10px 14px;display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:.8rem">
+      <div style="padding:10px 14px;display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:.94rem">
         <div><b>Reporte:</b> ${a.folio_reporte}</div>
         <div><b>Expediente:</b> ${a.expediente||'–'}</div>
         <div><b>Infractor:</b> ${a.infractor||'–'}</div>
@@ -3303,12 +3304,12 @@ async function cargarAlertas() {
         <div style="grid-column:1/-1"><b>Inspector:</b> ${a.inspector||'–'}</div>
       </div>
       <div style="padding:6px 14px 10px;display:flex;gap:8px">
-        <button class="btn" style="background:#1e3a8a;color:#fff;font-size:.75rem;padding:5px 10px"
+        <button class="btn" style="background:#1e3a8a;color:#fff;font-size:.95rem;padding:5px 10px"
           onclick="verDetalle(${a.report_id})">👁 Ver reporte</button>
         ${!a.verificacion ? `
-        <button class="btn" style="background:#16a34a;color:#fff;font-size:.75rem;padding:5px 10px"
+        <button class="btn" style="background:#16a34a;color:#fff;font-size:.95rem;padding:5px 10px"
           onclick="registrarVerificacion(${a.acta_id},'cumplió')">✅ Cumplió</button>
-        <button class="btn" style="background:#991b1b;color:#fff;font-size:.75rem;padding:5px 10px"
+        <button class="btn" style="background:#991b1b;color:#fff;font-size:.95rem;padding:5px 10px"
           onclick="registrarVerificacion(${a.acta_id},'incumplió')">❌ Incumplió</button>
         ` : ''}
       </div>
@@ -3449,10 +3450,10 @@ const GIRO_LABELS = {
 };
 
 const CUMPL_BADGE = {
-  sin_verificar: '<span style="background:#e5e7eb;color:#374151;padding:2px 8px;border-radius:99px;font-size:.72rem;font-weight:700">🔘 Sin Verificar</span>',
-  cumple:        '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:99px;font-size:.72rem;font-weight:700">✅ Cumple</span>',
-  cumple_parcial:'<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:99px;font-size:.72rem;font-weight:700">⚠️ Parcial</span>',
-  no_cumple:     '<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:99px;font-size:.72rem;font-weight:700">❌ No Cumple</span>',
+  sin_verificar: '<span style="background:#e5e7eb;color:#374151;padding:2px 8px;border-radius:99px;font-size:.92rem;font-weight:700">🔘 Sin Verificar</span>',
+  cumple:        '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:99px;font-size:.92rem;font-weight:700">✅ Cumple</span>',
+  cumple_parcial:'<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:99px;font-size:.92rem;font-weight:700">⚠️ Parcial</span>',
+  no_cumple:     '<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:99px;font-size:.92rem;font-weight:700">❌ No Cumple</span>',
 };
 
 const PERMISOS_LABELS = {
@@ -3494,15 +3495,15 @@ async function cargarEstablecimientos() {
   }
   tbody.innerHTML = _estabsCache.map((e, i) => `
     <tr style="background:${i%2===0?'#fff':'#f8fafc'};border-bottom:1px solid #f1f5f9">
-      <td style="padding:8px 12px;font-family:monospace;font-size:.78rem;font-weight:700;color:#1a3a5c">${e.folio || '–'}</td>
+      <td style="padding:8px 12px;font-family:monospace;font-size:.92rem;font-weight:700;color:#1a3a5c">${e.folio || '–'}</td>
       <td style="padding:8px 12px;font-weight:600">${e.nombre}<br><small style="color:#888;font-weight:400">${e.rfc||''}</small></td>
       <td style="padding:8px 12px">${GIRO_LABELS[e.giro]||e.giro||'–'}</td>
-      <td style="padding:8px 12px;font-size:.8rem">${e.domicilio||'–'}<br><small style="color:#888">${e.colonia||''}</small></td>
-      <td style="padding:8px 12px;font-size:.82rem">${e.responsable||'–'}<br><small style="color:#888">${e.telefono||''}</small></td>
+      <td style="padding:8px 12px;font-size:.94rem">${e.domicilio||'–'}<br><small style="color:#888">${e.colonia||''}</small></td>
+      <td style="padding:8px 12px;font-size:.97rem">${e.responsable||'–'}<br><small style="color:#888">${e.telefono||''}</small></td>
       <td style="padding:8px 12px;text-align:center">${CUMPL_BADGE[e.estado_cumplimiento||'sin_verificar']||''}</td>
       <td style="padding:8px 12px;text-align:center;white-space:nowrap">
-        <button onclick="editarEstablecimiento(${e.id})" class="btn btn-secondary btn-sm" style="font-size:.72rem;padding:4px 8px;margin:1px">✏️ Editar</button>
-        <button onclick="programarVerificacionDesde(${e.id})" class="btn btn-primary btn-sm" style="font-size:.72rem;padding:4px 8px;margin:1px">🔍 Verificar</button>
+        <button onclick="editarEstablecimiento(${e.id})" class="btn btn-secondary btn-sm" style="font-size:.92rem;padding:4px 8px;margin:1px">✏️ Editar</button>
+        <button onclick="programarVerificacionDesde(${e.id})" class="btn btn-primary btn-sm" style="font-size:.92rem;padding:4px 8px;margin:1px">🔍 Verificar</button>
       </td>
     </tr>`).join('');
 }
@@ -3626,13 +3627,13 @@ async function cargarVerificaciones() {
     <div style="background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden;border-left:4px solid ${EST_COLORS[v.estado]||'#888'}">
       <div style="padding:12px 14px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:flex-start">
         <div>
-          <div style="font-family:monospace;font-size:.78rem;font-weight:700;color:#1a3a5c">${v.folio}</div>
+          <div style="font-family:monospace;font-size:.92rem;font-weight:700;color:#1a3a5c">${v.folio}</div>
           <div style="font-weight:700;font-size:.92rem;margin-top:2px">${v.establecimiento_nombre||'–'}</div>
-          <div style="font-size:.78rem;color:#888">${GIRO_LABELS[v.establecimiento_giro]||v.establecimiento_giro||''}</div>
+          <div style="font-size:.92rem;color:#888">${GIRO_LABELS[v.establecimiento_giro]||v.establecimiento_giro||''}</div>
         </div>
-        <span style="background:${EST_COLORS[v.estado]||'#888'}20;color:${EST_COLORS[v.estado]||'#888'};padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:700;white-space:nowrap">${EST_LABELS[v.estado]||v.estado}</span>
+        <span style="background:${EST_COLORS[v.estado]||'#888'}20;color:${EST_COLORS[v.estado]||'#888'};padding:3px 10px;border-radius:99px;font-size:.92rem;font-weight:700;white-space:nowrap">${EST_LABELS[v.estado]||v.estado}</span>
       </div>
-      <div style="padding:10px 14px;font-size:.82rem;line-height:1.5">
+      <div style="padding:10px 14px;font-size:.97rem;line-height:1.5">
         <div>📍 ${v.establecimiento_domicilio||'–'}</div>
         ${v.fecha_programada?`<div>📅 Programada: <b>${new Date(v.fecha_programada+'T00:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'})}</b></div>`:''}
         <div>👷 Inspector: <b>${v.inspector_nombre||'— Sin asignar —'}</b></div>
@@ -3640,8 +3641,8 @@ async function cargarVerificaciones() {
         ${v.resultado?`<div style="margin-top:4px">🎯 Resultado: <b>${RES_LABELS[v.resultado]||v.resultado}</b></div>`:''}
       </div>
       <div style="padding:8px 14px;background:#f8fafc;border-top:1px solid #f1f5f9;display:flex;gap:6px;flex-wrap:wrap">
-        ${v.estado !== 'completada' && v.estado !== 'cancelada' ? `<button onclick="abrirDetalleVerificacion(${v.id})" class="btn btn-primary btn-sm" style="font-size:.75rem;padding:4px 10px">📝 Registrar Hallazgos</button>` : ''}
-        ${v.estado === 'completada' ? `<button onclick="abrirDetalleVerificacion(${v.id})" class="btn btn-secondary btn-sm" style="font-size:.75rem;padding:4px 10px">👁️ Ver Detalle</button>` : ''}
+        ${v.estado !== 'completada' && v.estado !== 'cancelada' ? `<button onclick="abrirDetalleVerificacion(${v.id})" class="btn btn-primary btn-sm" style="font-size:.95rem;padding:4px 10px">📝 Registrar Hallazgos</button>` : ''}
+        ${v.estado === 'completada' ? `<button onclick="abrirDetalleVerificacion(${v.id})" class="btn btn-secondary btn-sm" style="font-size:.95rem;padding:4px 10px">👁️ Ver Detalle</button>` : ''}
       </div>
     </div>`).join('');
 }
@@ -3730,7 +3731,7 @@ function abrirDetalleVerificacion(id) {
   if (ckWrap && ver.checklist && ver.checklist.length) {
     ckWrap.innerHTML = ver.checklist.map(ck => `
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:3px">
-        <select data-item="${ck.item}" class="ck-result-sel" style="padding:2px 4px;border:1px solid var(--borde);border-radius:4px;font-size:.75rem">
+        <select data-item="${ck.item}" class="ck-result-sel" style="padding:2px 4px;border:1px solid var(--borde);border-radius:4px;font-size:.95rem">
           <option value="pendiente" ${ck.resultado==='pendiente'?'selected':''}>⏳ Pendiente</option>
           <option value="cumple"    ${ck.resultado==='cumple'?'selected':''}>✅ Cumple</option>
           <option value="no_cumple" ${ck.resultado==='no_cumple'?'selected':''}>❌ No cumple</option>
