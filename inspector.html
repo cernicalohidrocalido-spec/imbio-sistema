@@ -3255,8 +3255,8 @@ function _buildActaForm() {
       </div>
     </div>` : '';
 
-  var seccionAnimal = esAnimal ? \`
-    \${_animalModuloBanner}
+  var seccionAnimal = esAnimal ? `
+    ${_animalModuloBanner}
     <!-- ══ ACTA DE INSPECCIÓN ANIMAL ══ -->
 
     <!-- BLQ 1: TIPO Y CONTEXTO -->
@@ -3267,7 +3267,7 @@ function _buildActaForm() {
         <select id="anim-tipo-incidente"
           style="width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem"
           onchange="toggleVictimaSection(this.value)">
-          \${_animTipoSelected}
+          ${_animTipoSelected}
         </select>
       </div>
       <div class="fg">
@@ -3503,7 +3503,7 @@ function _buildActaForm() {
       </div>
     </div>
 
-    \${_animalCalleExtra}
+    ${_animalCalleExtra}
 
     <!-- BLQ 5: ACCIONES EN CAMPO -->
     <div class="section-title" style="background:#1a3a5c">⚡ 5. Acciones Tomadas en Campo</div>
@@ -3876,13 +3876,9 @@ function _buildActaForm() {
     </button>
     <div id="circ-zonificacion-result" style="display:none;background:#e0f2fe;border:1.5px solid #38bdf8;border-radius:8px;padding:10px 12px;margin-top:6px;font-size:.92rem;color:#0c4a6e;line-height:1.6"></div>
 
-    <div class="section-title" style="background:#1a3a5c">👤 Identificación del Visitado</div>
+    <div class="section-title" style="background:#1a3a5c">👤 Identificación Formal del Visitado</div>
+    <input type="hidden" id="circ-visitado-nombre">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div class="fg" style="grid-column:1/-1">
-        <label>Nombre completo (quien atiende la diligencia)</label>
-        <input id="circ-visitado-nombre" placeholder="Igual que en datos de diligencia o diferente si aplica"
-          style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
-      </div>
       <div class="fg">
         <label>Carácter</label>
         <select id="circ-visitado-caracter" style="width:100%;padding:8px;border:1.5px solid var(--borde);border-radius:7px;font-size:.97rem">
@@ -4248,6 +4244,22 @@ function _buildActaForm() {
         el.addEventListener('change', _guardarCasoActivo);
       }
     });
+
+    // ── Sincronizar circ-visitado-nombre con acta-infractor ──────────
+    // El campo circ-visitado-nombre es un campo oculto que hereda el valor
+    // de acta-infractor para evitar duplicar la captura al inspector.
+    // Se sincroniza en tiempo real cuando el inspector escribe el nombre.
+    var infractorEl = document.getElementById('acta-infractor');
+    function _syncCircVisitado() {
+      var circEl = document.getElementById('circ-visitado-nombre');
+      if (circEl && infractorEl) circEl.value = infractorEl.value;
+    }
+    if (infractorEl && !infractorEl._circSync) {
+      infractorEl._circSync = true;
+      infractorEl.addEventListener('input',  _syncCircVisitado);
+      infractorEl.addEventListener('change', _syncCircVisitado);
+      _syncCircVisitado(); // sync on build
+    }
   }, 200);
 }
 
@@ -5064,7 +5076,7 @@ if (document.readyState === 'loading') {
   // Registrar Service Worker para instalar como app
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('/inspector/sw.js').catch(function() {});
+      navigator.serviceWorker.register('/inspector/sw.js', { scope: '/inspector' }).catch(function() {});
     });
   }
 

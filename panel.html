@@ -1189,7 +1189,7 @@
 
 // ── PWA: Service Worker registration ──────────────────────────
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/panel/sw.js', { scope: '/' }).catch(() => {});
+  navigator.serviceWorker.register('/panel/sw.js', { scope: '/panel' }).catch(() => {});
 }
 
 let TOKEN = null, USER = null, currentPage = 1;
