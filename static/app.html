@@ -342,6 +342,60 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
 
 /* ── ANIMAL PANEL ── */
 #panel-animal-agresivo { display:none }
+#panel-arbolado { display:none }
+
+/* ── Radio chips para poda/derribo ── */
+.radio-chips { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px }
+.radio-chip {
+  padding:10px 8px; border:2px solid var(--borde); border-radius:10px;
+  background:#fff; cursor:pointer; text-align:center; transition:.15s;
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  font-size:.82rem; font-weight:700; color:var(--muted);
+}
+.radio-chip .rc-ic { font-size:1.3rem }
+.radio-chip.sel {
+  border-color:#15803d; background:#f0fdf4;
+  box-shadow:0 0 0 3px rgba(21,128,61,.1);
+  color:#166534;
+}
+.radio-chip:active { transform:scale(.97) }
+
+/* ── Selector motivo derribo ── */
+.motivo-list { display:flex; flex-direction:column; gap:6px; margin-top:6px }
+.motivo-item {
+  padding:10px 14px; border:1.5px solid var(--borde); border-radius:10px;
+  background:#fff; cursor:pointer; font-size:.9rem; font-weight:600;
+  color:var(--muted); transition:.15s; display:flex; align-items:center; gap:8px;
+}
+.motivo-item.sel {
+  border-color:#15803d; background:#f0fdf4; color:#166534;
+}
+.motivo-item .mi-check {
+  width:18px; height:18px; border-radius:50%; border:2px solid #94a3b8;
+  flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  font-size:.7rem; transition:.15s;
+}
+.motivo-item.sel .mi-check { background:#15803d; border-color:#15803d; color:#fff }
+
+/* ── Foto árbol ── */
+.foto-arbol-zone {
+  border:2px dashed var(--borde); border-radius:12px; padding:16px;
+  text-align:center; cursor:pointer; transition:.15s; background:#fafcff;
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+}
+.foto-arbol-zone.has-foto { border-color:#15803d; background:#f0fdf4 }
+.foto-arbol-zone .fz-ic { font-size:2rem }
+.foto-arbol-zone .fz-lbl { font-size:.82rem; font-weight:700; color:var(--muted) }
+.foto-arbol-zone.has-foto .fz-lbl { color:#166534 }
+#foto-arbol-preview { max-width:100%; max-height:180px; border-radius:8px; object-fit:cover; display:none }
+
+/* ── Aviso informativo arbolado ── */
+.arbol-aviso {
+  background:#f0fdf4; border:1px solid #86efac; border-radius:10px;
+  padding:10px 14px; font-size:.82rem; color:#166534; line-height:1.5;
+  display:flex; gap:10px; align-items:flex-start; margin-bottom:4px;
+}
+.arbol-aviso .av-ic { font-size:1.2rem; flex-shrink:0; margin-top:1px }
 .body-map-wrap { position:relative; width:200px; margin:12px auto; user-select:none }
 .body-map-wrap svg { width:100%; height:auto }
 .bzone { cursor:pointer; transition:.15s; }
@@ -634,6 +688,138 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
           </div>
         </div>
 
+        <!-- PANEL ARBOLADO — poda/derribo (se muestra según tipo) -->
+        <div id="panel-arbolado" class="form-card">
+          <div class="form-card-header" style="background:#f0fdf4;border-bottom:1px solid #bbf7d0">
+            <span class="ic">🌳</span>
+            <span style="color:#166534">Datos de la Solicitud de Arbolado</span>
+          </div>
+          <div class="form-card-body">
+
+            <!-- Aviso -->
+            <div class="arbol-aviso">
+              <span class="av-ic">ℹ️</span>
+              <span>Complete los datos del árbol. Su solicitud será revisada por el inspector IMBIO y se le notificará el resultado.</span>
+            </div>
+
+            <!-- Tipo de solicitud (poda/derribo) -->
+            <div class="fgroup">
+              <label>Tipo de solicitud *</label>
+              <div class="radio-chips">
+                <div class="radio-chip sel" id="rc-poda" onclick="selTipoArbol('poda')">
+                  <span class="rc-ic">✂️</span><span>Poda</span>
+                </div>
+                <div class="radio-chip" id="rc-derribo" onclick="selTipoArbol('derribo')">
+                  <span class="rc-ic">🪓</span><span>Derribo</span>
+                </div>
+              </div>
+              <input type="hidden" id="arb-tipo-solicitud" value="poda">
+            </div>
+
+            <!-- Cantidad de árboles -->
+            <div class="fgroup">
+              <label>Cantidad de árboles *</label>
+              <input type="number" id="arb-cantidad" min="1" max="99" placeholder="Ej: 1" style="max-width:120px">
+            </div>
+
+            <!-- Tipo de árboles: una o varias especies -->
+            <div class="fgroup">
+              <label>Los árboles son:</label>
+              <div class="radio-chips">
+                <div class="radio-chip sel" id="rc-una-esp" onclick="selTipoEsp('una')">
+                  <span class="rc-ic">🌱</span><span>Una especie</span>
+                </div>
+                <div class="radio-chip" id="rc-varias-esp" onclick="selTipoEsp('varias')">
+                  <span class="rc-ic">🌿</span><span>Varias especies</span>
+                </div>
+              </div>
+              <input type="hidden" id="arb-tipo-especies" value="una">
+            </div>
+
+            <!-- Nombres / especie del árbol -->
+            <div class="fgroup">
+              <label>Especie o nombre del árbol <span style="font-weight:400;color:var(--muted)">(si lo conoce)</span></label>
+              <input id="arb-nombres-arboles" placeholder="Ej: Fresno, Eucalipto, Mezquite...">
+            </div>
+
+            <!-- Descripción del árbol -->
+            <div class="fgroup">
+              <label>Descripción del árbol *</label>
+              <textarea id="arb-descripcion" rows="3" placeholder="Describe el árbol: altura aproximada, grosor del tronco, estado visible, si tiene ramas caídas, inclinación, etc."></textarea>
+            </div>
+
+            <!-- Ubicación exacta del árbol (texto) -->
+            <div class="fgroup">
+              <label>Ubicación exacta del árbol *</label>
+              <input id="arb-ubicacion-exacta" placeholder="Ej: Frente al número 42 de Calle Reforma, junto a la barda">
+            </div>
+
+            <!-- Ubicación respecto a la propiedad -->
+            <div class="fgroup">
+              <label>El árbol está:</label>
+              <div class="radio-chips">
+                <div class="radio-chip sel" id="rc-dentro" onclick="selUbicPropiedad('dentro')">
+                  <span class="rc-ic">🏠</span><span>Dentro de mi propiedad</span>
+                </div>
+                <div class="radio-chip" id="rc-viapub" onclick="selUbicPropiedad('via_publica')">
+                  <span class="rc-ic">🛣️</span><span>Vía pública</span>
+                </div>
+              </div>
+              <input type="hidden" id="arb-ubicacion-propiedad" value="dentro">
+            </div>
+
+            <!-- Motivo de la solicitud -->
+            <div class="fgroup">
+              <label>Motivo de la solicitud *</label>
+              <div class="motivo-list" id="motivo-list">
+                <div class="motivo-item sel" onclick="selMotivoArbol(this,'riesgo_caida')">
+                  <div class="mi-check">✓</div><span>⚠️ Riesgo de caída</span>
+                </div>
+                <div class="motivo-item" onclick="selMotivoArbol(this,'obra_construccion')">
+                  <div class="mi-check"></div><span>🏗️ Por obra de construcción</span>
+                </div>
+                <div class="motivo-item" onclick="selMotivoArbol(this,'enfermedad')">
+                  <div class="mi-check"></div><span>🦠 Enfermedad del árbol</span>
+                </div>
+                <div class="motivo-item" onclick="selMotivoArbol(this,'obstruccion_visibilidad')">
+                  <div class="mi-check"></div><span>👁️ Obstrucción de visibilidad</span>
+                </div>
+                <div class="motivo-item" onclick="selMotivoArbol(this,'mantenimiento')">
+                  <div class="mi-check"></div><span>✂️ Mantenimiento (poda programada)</span>
+                </div>
+                <div class="motivo-item" onclick="selMotivoArbol(this,'otro')" id="motivo-otro-item">
+                  <div class="mi-check"></div><span>📝 Otro motivo</span>
+                </div>
+              </div>
+              <input type="hidden" id="arb-motivo" value="riesgo_caida">
+            </div>
+
+            <!-- Campo condicional: especificar otro motivo -->
+            <div class="fgroup" id="panel-motivo-otro" style="display:none">
+              <label>Especifica el motivo *</label>
+              <input id="arb-motivo-otro" placeholder="Describe el motivo de la solicitud">
+            </div>
+
+            <!-- Email del solicitante (específico para arbolado) -->
+            <div class="fgroup">
+              <label>Correo electrónico <span style="font-weight:400;color:var(--muted)">(para recibir respuesta)</span></label>
+              <input type="email" id="arb-email" placeholder="tu@correo.com (opcional)">
+            </div>
+
+            <!-- Foto del árbol -->
+            <div class="fgroup">
+              <label>Foto del árbol <span style="font-weight:400;color:var(--muted)">(recomendada)</span></label>
+              <input type="file" id="arb-foto-input" accept="image/*" capture="environment" style="display:none" onchange="onFotoArbol(this)">
+              <div class="foto-arbol-zone" id="foto-arbol-zone" onclick="document.getElementById('arb-foto-input').click()">
+                <span class="fz-ic">📷</span>
+                <img id="foto-arbol-preview" alt="Vista previa">
+                <span class="fz-lbl" id="foto-arbol-lbl">Tomar foto o seleccionar imagen</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
         <!-- PANEL ANIMAL (se muestra según tipo) -->
         <div id="panel-animal-agresivo" class="form-card">
           <div class="form-card-header"><span class="ic">🐾</span><span>Información del Incidente Animal</span></div>
@@ -911,8 +1097,23 @@ function guardarServidor() {
 function selTipo(t) {
   tipoSel = t;
   document.querySelectorAll('.tipo-chip').forEach(c => c.classList.toggle('sel', c.dataset.tipo === t));
+
+  // Panel animal
   const panelAnimal = document.getElementById('panel-animal-agresivo');
-  if (panelAnimal) panelAnimal.style.display = 'none'; // inspector solo
+  if (panelAnimal) panelAnimal.style.display =
+    (t === 'perro_agresivo' || t === 'animal_calle') ? 'block' : 'none';
+
+  // Panel arbolado
+  const panelArbol = document.getElementById('panel-arbolado');
+  if (panelArbol) {
+    const esArbol = (t === 'poda_arbol' || t === 'derribo_arbol');
+    panelArbol.style.display = esArbol ? 'block' : 'none';
+    if (esArbol) {
+      // Preseleccionar tipo según chip elegido
+      selTipoArbol(t === 'poda_arbol' ? 'poda' : 'derribo');
+    }
+  }
+
   // Scroll suave al formulario de descripción
   setTimeout(() => {
     document.querySelector('.content').scrollTo({ top: document.getElementById('nr-desc')?.offsetTop - 80 || 0, behavior: 'smooth' });
@@ -1151,6 +1352,38 @@ async function enviarReporte() {
     telefono: tel || null,
   };
 
+  // ── Datos específicos solicitud arbolado ────────────────────────────────
+  if (tipo === 'poda_arbol' || tipo === 'derribo_arbol') {
+    const arbTipo    = document.getElementById('arb-tipo-solicitud')?.value || '';
+    const arbCant    = document.getElementById('arb-cantidad')?.value.trim() || '1';
+    const arbEsp     = document.getElementById('arb-tipo-especies')?.value || '';
+    const arbNombres = document.getElementById('arb-nombres-arboles')?.value.trim() || '';
+    const arbDesc    = document.getElementById('arb-descripcion')?.value.trim() || '';
+    const arbUbicEx  = document.getElementById('arb-ubicacion-exacta')?.value.trim() || '';
+    const arbUbicProp= document.getElementById('arb-ubicacion-propiedad')?.value || '';
+    const arbMotivo  = document.getElementById('arb-motivo')?.value || '';
+    const arbMotOtro = document.getElementById('arb-motivo-otro')?.value.trim() || '';
+    const arbEmail   = document.getElementById('arb-email')?.value.trim() || '';
+    const arbFotoData= window._arbFotoBase64 || null;
+
+    // Validaciones específicas arbolado
+    if (!arbDesc) { showAlert('form-alert','err','🌳 Describe el árbol en la sección de arbolado.'); return; }
+    if (!arbUbicEx) { showAlert('form-alert','err','📍 Indica la ubicación exacta del árbol.'); return; }
+    if (arbMotivo === 'otro' && !arbMotOtro) { showAlert('form-alert','err','📝 Especifica el motivo de la solicitud.'); return; }
+
+    body.arb_tipo_solicitud    = arbTipo;
+    body.arb_cantidad          = arbCant;
+    body.arb_tipo_especies     = arbEsp;
+    if (arbNombres) body.arb_nombres_arboles  = arbNombres;
+    body.arb_descripcion       = arbDesc;
+    body.arb_ubicacion_exacta  = arbUbicEx;
+    body.arb_ubicacion_propiedad = arbUbicProp;
+    body.arb_motivo            = arbMotivo;
+    if (arbMotOtro) body.arb_motivo_otro = arbMotOtro;
+    if (arbEmail)   body.arb_email       = arbEmail;
+    if (arbFotoData) body.arb_foto_base64 = arbFotoData;
+  }
+
   // Datos extra para animal agresivo
   if (tipo === 'perro_agresivo' || tipo === 'animal_calle') {
     const afNombre = document.getElementById('a-afectado-nombre')?.value.trim();
@@ -1291,6 +1524,9 @@ function limpiarForm() {
   resetAnimalForm();
   const p = document.getElementById('panel-animal-agresivo');
   if (p) p.style.display = 'none';
+  const pa = document.getElementById('panel-arbolado');
+  if (pa) pa.style.display = 'none';
+  resetArbolForm();
 }
 
 function showAlert(containerId, type, msg) {
@@ -1306,6 +1542,92 @@ function scrollTop() { document.querySelector('.content').scrollTo({ top: 0, beh
 function fmtFecha(iso) {
   if (!iso) return '–';
   return new Date(iso).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+// ── Arbolado — Poda / Derribo ────────────────────────────────
+function selTipoArbol(val) {
+  document.getElementById('arb-tipo-solicitud').value = val;
+  document.getElementById('rc-poda').classList.toggle('sel', val === 'poda');
+  document.getElementById('rc-derribo').classList.toggle('sel', val === 'derribo');
+}
+
+function selTipoEsp(val) {
+  document.getElementById('arb-tipo-especies').value = val;
+  document.getElementById('rc-una-esp').classList.toggle('sel', val === 'una');
+  document.getElementById('rc-varias-esp').classList.toggle('sel', val === 'varias');
+}
+
+function selUbicPropiedad(val) {
+  document.getElementById('arb-ubicacion-propiedad').value = val;
+  document.getElementById('rc-dentro').classList.toggle('sel', val === 'dentro');
+  document.getElementById('rc-viapub').classList.toggle('sel', val === 'via_publica');
+}
+
+function selMotivoArbol(el, val) {
+  // Deseleccionar todos
+  document.querySelectorAll('.motivo-item').forEach(m => {
+    m.classList.remove('sel');
+    m.querySelector('.mi-check').textContent = '';
+  });
+  // Seleccionar el clickeado
+  el.classList.add('sel');
+  el.querySelector('.mi-check').textContent = '✓';
+  document.getElementById('arb-motivo').value = val;
+  // Mostrar/ocultar campo "otro"
+  const panelOtro = document.getElementById('panel-motivo-otro');
+  if (panelOtro) panelOtro.style.display = val === 'otro' ? 'block' : 'none';
+}
+
+function onFotoArbol(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const preview = document.getElementById('foto-arbol-preview');
+    const zone    = document.getElementById('foto-arbol-zone');
+    const lbl     = document.getElementById('foto-arbol-lbl');
+    preview.src   = e.target.result;
+    preview.style.display = 'block';
+    zone.classList.add('has-foto');
+    lbl.textContent = '📷 Foto seleccionada — toca para cambiar';
+    window._arbFotoBase64 = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetArbolForm() {
+  ['arb-cantidad','arb-nombres-arboles','arb-descripcion',
+   'arb-ubicacion-exacta','arb-motivo-otro','arb-email'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('arb-tipo-solicitud').value  = 'poda';
+  document.getElementById('arb-tipo-especies').value   = 'una';
+  document.getElementById('arb-ubicacion-propiedad').value = 'dentro';
+  document.getElementById('arb-motivo').value          = 'riesgo_caida';
+  // Reset radio chips
+  ['rc-poda','rc-una-esp','rc-dentro'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.classList.add('sel');
+  });
+  ['rc-derribo','rc-varias-esp','rc-viapub'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.classList.remove('sel');
+  });
+  // Reset motivos
+  document.querySelectorAll('.motivo-item').forEach((m,i) => {
+    m.classList.toggle('sel', i === 0);
+    m.querySelector('.mi-check').textContent = i === 0 ? '✓' : '';
+  });
+  // Reset foto
+  const preview = document.getElementById('foto-arbol-preview');
+  const zone    = document.getElementById('foto-arbol-zone');
+  const lbl     = document.getElementById('foto-arbol-lbl');
+  if (preview) { preview.style.display = 'none'; preview.src = ''; }
+  if (zone)    zone.classList.remove('has-foto');
+  if (lbl)     lbl.textContent = 'Tomar foto o seleccionar imagen';
+  const inp = document.getElementById('arb-foto-input');
+  if (inp) inp.value = '';
+  window._arbFotoBase64 = null;
+  const panelOtro = document.getElementById('panel-motivo-otro');
+  if (panelOtro) panelOtro.style.display = 'none';
 }
 
 // ── Animal Agresivo ────────────────────────────────────────
