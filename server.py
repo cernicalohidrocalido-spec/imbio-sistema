@@ -5,6 +5,12 @@ Servidor Python puro (stdlib) con API REST + Frontend HTML embebido
 """
 
 import json, hashlib, base64, os, re, uuid, pathlib, threading, sqlite3
+try:
+    import psycopg2
+    import psycopg2.extras
+    _PG_AVAILABLE = True
+except ImportError:
+    _PG_AVAILABLE = False
 from datetime import datetime, timezone
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
@@ -17,6 +23,43 @@ BASE_DIR   = pathlib.Path(__file__).parent
 _DENUE_SEED_PATH = BASE_DIR / 'static' / 'denue_seed.json'
 DB_FILE    = BASE_DIR / "data" / "db.json"   # legacy (used for initial seed)
 DB_SQLITE  = pathlib.Path(os.environ.get("DB_PATH", str(BASE_DIR / "data" / "imbio.db")))
+
+# ── Postgres (preferido si DATABASE_URL está disponible) ────────────────────
+_PG_URL = os.environ.get('DATABASE_URL', '')
+# Railway usa postgres:// pero psycopg2 necesita postgresql://
+if _PG_URL.startswith('postgres://'):
+    _PG_URL = 'postgresql://' + _PG_URL[len('postgres://'):]
+
+def _pg_conn():
+    """Retorna conexión psycopg2 o None si no hay Postgres configurado."""
+    if _PG_AVAILABLE and _PG_URL:
+        try:
+            return psycopg2.connect(_PG_URL, connect_timeout=10)
+        except Exception as e:
+            print(f'[PG] Error de conexión: {e}', flush=True)
+    return None
+
+def _pg_init():
+    """Crea tabla en Postgres si no existe."""
+    conn = _pg_conn()
+    if not conn:
+        return False
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS imbio_store (
+                    id   INTEGER PRIMARY KEY,
+                    data TEXT    NOT NULL
+                )
+            """)
+        conn.commit()
+        conn.close()
+        print('[PG] ✅ Tabla imbio_store lista', flush=True)
+        return True
+    except Exception as e:
+        print(f'[PG] Error init tabla: {e}', flush=True)
+        conn.close()
+        return False
 UPLOAD_EV  = BASE_DIR / "uploads" / "evidence"
 UPLOAD_SIG = BASE_DIR / "uploads" / "signatures"
 # ── Seguridad: JWT Secret desde variable de entorno ─────────────────
@@ -308,11 +351,26 @@ def _load_denue_seed():
         return 0
 
 def read_db():
-    with db_lock:
-        conn = sqlite3.connect(str(DB_SQLITE), timeout=15)
-        row = conn.execute("SELECT data FROM store WHERE id=1").fetchone()
-        conn.close()
-    db = json.loads(row[0])
+    # ── Intentar Postgres primero ──────────────────────────────────────────
+    pg = _pg_conn()
+    if pg:
+        try:
+            with pg.cursor() as cur:
+                cur.execute("SELECT data FROM imbio_store WHERE id=1")
+                row = cur.fetchone()
+            pg.close()
+            if row:
+                db = json.loads(row[0])
+            else:
+                # Primera vez en PG — migrar desde SQLite si existe
+                db = _migrar_sqlite_a_pg()
+        except Exception as e:
+            print(f'[PG] read_db error: {e}', flush=True)
+            pg.close()
+            db = _read_sqlite()
+    else:
+        db = _read_sqlite()
+    db = json.loads(json.dumps(db))  # copia limpia
     # Migración automática (fuera del lock para no bloquear)
     changed = False
     if 'actas' not in db:
@@ -345,13 +403,64 @@ def read_db():
         write_db(db)
     return db
 
-def write_db(db):
-    serialized = json.dumps(db, ensure_ascii=False)
+def _read_sqlite():
+    """Lee desde SQLite como fallback."""
     with db_lock:
         conn = sqlite3.connect(str(DB_SQLITE), timeout=15)
-        conn.execute("UPDATE store SET data=? WHERE id=1", (serialized,))
-        conn.commit()
+        row = conn.execute("SELECT data FROM store WHERE id=1").fetchone()
         conn.close()
+    return json.loads(row[0]) if row else {}
+
+def _migrar_sqlite_a_pg():
+    """Primera vez: copia datos de SQLite a Postgres y devuelve el db."""
+    try:
+        db = _read_sqlite()
+        if db:
+            _write_pg(db)
+            print('[PG] ✅ Datos migrados desde SQLite a Postgres', flush=True)
+        return db
+    except Exception as e:
+        print(f'[PG] Error migración: {e}', flush=True)
+        return {}
+
+def _write_pg(db):
+    """Escribe en Postgres (INSERT o UPDATE)."""
+    pg = _pg_conn()
+    if not pg:
+        return False
+    try:
+        serialized = json.dumps(db, ensure_ascii=False)
+        with pg.cursor() as cur:
+            cur.execute("""
+                INSERT INTO imbio_store(id, data) VALUES(1, %s)
+                ON CONFLICT(id) DO UPDATE SET data = EXCLUDED.data
+            """, (serialized,))
+        pg.commit()
+        pg.close()
+        return True
+    except Exception as e:
+        print(f'[PG] write error: {e}', flush=True)
+        try: pg.close()
+        except: pass
+        return False
+
+def write_db(db):
+    serialized = json.dumps(db, ensure_ascii=False)
+    # ── Escribir en Postgres (fuente principal) ────────────────────────────
+    pg_ok = _write_pg(db)
+    # ── Escribir en SQLite como backup local ──────────────────────────────
+    if not pg_ok:
+        with db_lock:
+            conn = sqlite3.connect(str(DB_SQLITE), timeout=15)
+            conn.execute("UPDATE store SET data=? WHERE id=1", (serialized,))
+            conn.commit()
+            conn.close()
+    # ── Backup JSON en disco ───────────────────────────────────────────────
+    try:
+        backup_path = DB_SQLITE.parent / 'db_backup.json'
+        backup_path.write_text(serialized, encoding='utf-8')
+    except Exception:
+        pass
     # ── Backup automático en JSON ─────────────────────────────────────────
     # Guarda siempre una copia legible en data/db_backup.json.
     # Si el servidor corre en Railway/Render SIN volumen persistente,
@@ -2566,8 +2675,16 @@ if __name__ == '__main__':
     try:
         print("[START] Inicializando base de datos...", flush=True)
         _init_sqlite()
+        # Inicializar Postgres si está disponible
+        if _PG_URL and _PG_AVAILABLE:
+            if _pg_init():
+                print("[START] ✅ Postgres activo — datos persistentes garantizados", flush=True)
+            else:
+                print("[START] ⚠️  Postgres no disponible, usando SQLite", flush=True)
+        else:
+            print("[START] SQLite mode (sin DATABASE_URL)", flush=True)
         _load_denue_seed()
-        print("[START] SQLite OK", flush=True)
+        print("[START] Base de datos OK", flush=True)
     except Exception as e:
         print(f"[START] ERROR en _init_sqlite: {e}", flush=True)
         sys.exit(1)
