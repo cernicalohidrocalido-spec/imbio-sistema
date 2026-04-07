@@ -279,14 +279,14 @@ def _reset_login_attempts(ip: str):
     with _login_lock:
         _login_attempts.pop(ip, None)
 
-def _init_sqlite():
-    """Create SQLite DB and seed from JSON if first run."""
+def _init_sqlite(skip_seed=False):
+    """Create SQLite DB. Si skip_seed=True (Postgres disponible), no hace seed
+    con datos demo — SQLite solo actúa como caché temporal."""
     global DB_SQLITE
     try:
         DB_SQLITE.parent.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(str(DB_SQLITE), timeout=15)
     except (OSError, PermissionError) as e:
-        # En entornos read-only (ej. Railway sin volumen) usar /tmp
         fallback = pathlib.Path('/tmp/imbio.db')
         print(f"[START] No se pudo usar {DB_SQLITE}: {e}. Usando {fallback}", flush=True)
         DB_SQLITE = fallback
@@ -297,6 +297,14 @@ def _init_sqlite():
     )""")
     conn.commit()
     row = conn.execute("SELECT data FROM store WHERE id=1").fetchone()
+    if not row and skip_seed:
+        # Postgres está activo — poner placeholder vacío en SQLite, no demos
+        placeholder = json.dumps({"reports":[],"users":[],"actas":[],"assignments":[]}, ensure_ascii=False)
+        conn.execute("INSERT INTO store(id,data) VALUES(1,?)", (placeholder,))
+        conn.commit()
+        conn.close()
+        print("[START] SQLite inicializado como caché (datos en Postgres)", flush=True)
+        return
     if not row:
         # Orden de prioridad para el seed inicial:
         # 1. db_backup.json  — copia automática del último estado real
@@ -351,22 +359,26 @@ def _load_denue_seed():
         return 0
 
 def read_db():
-    # ── Intentar Postgres primero ──────────────────────────────────────────
-    pg = _pg_conn()
-    if pg:
-        try:
-            with pg.cursor() as cur:
-                cur.execute("SELECT data FROM imbio_store WHERE id=1")
-                row = cur.fetchone()
-            pg.close()
-            if row:
-                db = json.loads(row[0])
-            else:
-                # Primera vez en PG — migrar desde SQLite si existe
-                db = _migrar_sqlite_a_pg()
-        except Exception as e:
-            print(f'[PG] read_db error: {e}', flush=True)
-            pg.close()
+    # ── Si Postgres está configurado, ES la fuente de verdad — SIEMPRE ────
+    if _PG_URL and _PG_AVAILABLE:
+        pg = _pg_conn()
+        if pg:
+            try:
+                with pg.cursor() as cur:
+                    cur.execute("SELECT data FROM imbio_store WHERE id=1")
+                    row = cur.fetchone()
+                pg.close()
+                if row:
+                    db = json.loads(row[0])
+                else:
+                    db = _migrar_sqlite_a_pg()
+            except Exception as e:
+                print(f'[PG] read_db error: {e} — fallback a SQLite', flush=True)
+                try: pg.close()
+                except: pass
+                db = _read_sqlite()
+        else:
+            print('[PG] Sin conexión — usando SQLite', flush=True)
             db = _read_sqlite()
     else:
         db = _read_sqlite()
@@ -2674,19 +2686,23 @@ if __name__ == '__main__':
 
     try:
         print("[START] Inicializando base de datos...", flush=True)
-        _init_sqlite()
-        # Inicializar Postgres si está disponible
+        # ── 1. Postgres PRIMERO (fuente de verdad) ─────────────────────────
+        _pg_ok = False
         if _PG_URL and _PG_AVAILABLE:
-            if _pg_init():
+            _pg_ok = _pg_init()
+            if _pg_ok:
                 print("[START] ✅ Postgres activo — datos persistentes garantizados", flush=True)
             else:
-                print("[START] ⚠️  Postgres no disponible, usando SQLite", flush=True)
+                print("[START] ⚠️  Postgres no disponible, usando SQLite como fallback", flush=True)
         else:
-            print("[START] SQLite mode (sin DATABASE_URL)", flush=True)
+            print("[START] Sin DATABASE_URL — modo SQLite", flush=True)
+        # ── 2. SQLite solo si Postgres no está disponible ──────────────────
+        # Si PG está activo, SQLite es solo caché temporal — no hacer seed
+        _init_sqlite(skip_seed=_pg_ok)
         _load_denue_seed()
         print("[START] Base de datos OK", flush=True)
     except Exception as e:
-        print(f"[START] ERROR en _init_sqlite: {e}", flush=True)
+        print(f"[START] ERROR inicializando DB: {e}", flush=True)
         sys.exit(1)
 
     # ── Aplicar credenciales desde variables de entorno ──────────────────
