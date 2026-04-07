@@ -1452,14 +1452,26 @@ async function enviarReporte() {
     // Validaciones específicas arbolado
     if (arbMotivo === 'otro' && !arbMotOtro) { showAlert('form-alert','err','📝 Especifica el motivo de la solicitud.'); return; }
 
-    body.arb_tipo_solicitud    = arbTipo;
-    body.arb_cantidad          = arbCant;
-    body.arb_tipo_especies     = arbEsp;
-    if (arbNombres) body.arb_nombres_arboles  = arbNombres;
-    body.arb_ubicacion_propiedad = arbUbicProp;
-    body.arb_motivo            = arbMotivo;
-    if (arbMotOtro) body.arb_motivo_otro = arbMotOtro;
+    // Construir descripción automática para el reporte (campo requerido por servidor)
+    const motivoLabels = {
+      riesgo_caida: 'Riesgo de caída', obra_construccion: 'Por obra de construcción',
+      enfermedad: 'Enfermedad del árbol', obstruccion_visibilidad: 'Obstrucción de visibilidad',
+      mantenimiento: 'Mantenimiento (poda)', otro: arbMotOtro || 'Otro motivo'
+    };
+    const tipoLabel  = arbTipo === 'poda' ? 'Poda' : 'Derribo';
+    const ubicLabel  = arbUbicProp === 'dentro' ? 'dentro de la propiedad' : 'en vía pública';
+    const motivoStr  = motivoLabels[arbMotivo] || arbMotivo;
+    const especieStr = arbNombres ? ` (${arbNombres})` : '';
+    const cantStr    = arbCant && arbCant !== '1' ? `${arbCant} árboles` : 'árbol';
+    body.descripcion = `Solicitud de ${tipoLabel} — ${cantStr}${especieStr}, ${ubicLabel}. Motivo: ${motivoStr}.`;
 
+    body.arb_tipo_solicitud      = arbTipo;
+    body.arb_cantidad            = arbCant;
+    body.arb_tipo_especies       = arbEsp;
+    if (arbNombres) body.arb_nombres_arboles = arbNombres;
+    body.arb_ubicacion_propiedad = arbUbicProp;
+    body.arb_motivo              = arbMotivo;
+    if (arbMotOtro) body.arb_motivo_otro = arbMotOtro;
     if (arbFotoData) body.arb_foto_base64 = arbFotoData;
   }
 
@@ -1500,10 +1512,12 @@ async function enviarReporte() {
     if (situacion) body.animal_situacion = situacion;
   }
 
-  if (!sigIsEmpty()) {
-    const firmante = document.getElementById('nr-firmante').value.trim();
-    if (firmante) { body.firma_base64 = sigAppCanvas.toDataURL('image/png'); body.nombre_firmante = firmante; }
-  }
+  try {
+    if (!esArbol && !sigIsEmpty()) {
+      const firmante = document.getElementById('nr-firmante').value.trim();
+      if (firmante) { body.firma_base64 = sigAppCanvas.toDataURL('image/png'); body.nombre_firmante = firmante; }
+    }
+  } catch(e) { /* canvas de firma no disponible */ }
 
   showLoading(true);
   try {
@@ -1516,7 +1530,7 @@ async function enviarReporte() {
     const data = await r.json();
     showLoading(false);
     if (data.success) {
-      const entry = { id: data.data.report.id, folio: data.data.report.folio, tipo, colonia, desc: desc.slice(0,80), estado: 'reportado', fecha: new Date().toISOString(), lat, lon };
+      const entry = { id: data.data.report.id, folio: data.data.report.folio, tipo, colonia, desc: (body.descripcion || desc).slice(0,80), estado: 'reportado', fecha: new Date().toISOString(), lat, lon };
       misReportes.unshift(entry);
       if (misReportes.length > 50) misReportes.pop();
       localStorage.setItem('imbio_mis_reportes', JSON.stringify(misReportes));
