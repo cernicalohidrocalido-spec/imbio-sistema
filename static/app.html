@@ -678,17 +678,6 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
               <input id="arb-nombres-arboles" placeholder="Ej: Fresno, Eucalipto, Mezquite...">
             </div>
 
-            <!-- Descripción del árbol -->
-            <div class="fgroup">
-              <label>Descripción del árbol *</label>
-              <textarea id="arb-descripcion" rows="3" placeholder="Describe el árbol: altura aproximada, grosor del tronco, estado visible, si tiene ramas caídas, inclinación, etc."></textarea>
-            </div>
-
-            <!-- Ubicación exacta del árbol (texto) -->
-            <div class="fgroup">
-              <label>Ubicación exacta del árbol *</label>
-              <input id="arb-ubicacion-exacta" placeholder="Ej: Frente al número 42 de Calle Reforma, junto a la barda">
-            </div>
 
             <!-- Ubicación respecto a la propiedad -->
             <div class="fgroup">
@@ -736,11 +725,6 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
               <input id="arb-motivo-otro" placeholder="Describe el motivo de la solicitud">
             </div>
 
-            <!-- Email del solicitante (específico para arbolado) -->
-            <div class="fgroup">
-              <label>Correo electrónico <span style="font-weight:400;color:var(--muted)">(para recibir respuesta)</span></label>
-              <input type="email" id="arb-email" placeholder="tu@correo.com (opcional)">
-            </div>
 
             <!-- Foto del árbol -->
             <div class="fgroup">
@@ -1394,31 +1378,24 @@ async function enviarReporte() {
     const arbCant    = document.getElementById('arb-cantidad')?.value.trim() || '1';
     const arbEsp     = document.getElementById('arb-tipo-especies')?.value || '';
     const arbNombres = document.getElementById('arb-nombres-arboles')?.value.trim() || '';
-    const arbDesc    = document.getElementById('arb-descripcion')?.value.trim() || '';
-    const arbUbicEx  = document.getElementById('arb-ubicacion-exacta')?.value.trim() || '';
+
     const arbUbicProp= document.getElementById('arb-ubicacion-propiedad')?.value || '';
     const arbMotivo  = document.getElementById('arb-motivo')?.value || '';
     const arbMotOtro = document.getElementById('arb-motivo-otro')?.value.trim() || '';
-    const arbEmail   = document.getElementById('arb-email')?.value.trim() || '';
+
     const arbFotoData= window._arbFotoBase64 || null;
 
     // Validaciones específicas arbolado
-    if (!arbDesc) { showAlert('form-alert','err','🌳 Describe el árbol para continuar.'); scrollTop(); return; }
-    if (!arbUbicEx) { showAlert('form-alert','err','📍 Indica la ubicación exacta del árbol.'); return; }
     if (arbMotivo === 'otro' && !arbMotOtro) { showAlert('form-alert','err','📝 Especifica el motivo de la solicitud.'); return; }
 
-    // Usar la descripción del árbol como descripción principal del reporte
-    body.descripcion = arbDesc;
     body.arb_tipo_solicitud    = arbTipo;
     body.arb_cantidad          = arbCant;
     body.arb_tipo_especies     = arbEsp;
     if (arbNombres) body.arb_nombres_arboles  = arbNombres;
-    body.arb_descripcion       = arbDesc;
-    body.arb_ubicacion_exacta  = arbUbicEx;
     body.arb_ubicacion_propiedad = arbUbicProp;
     body.arb_motivo            = arbMotivo;
     if (arbMotOtro) body.arb_motivo_otro = arbMotOtro;
-    if (arbEmail)   body.arb_email       = arbEmail;
+
     if (arbFotoData) body.arb_foto_base64 = arbFotoData;
   }
 
@@ -1636,8 +1613,7 @@ function onFotoArbol(input) {
 }
 
 function resetArbolForm() {
-  ['arb-cantidad','arb-nombres-arboles','arb-descripcion',
-   'arb-ubicacion-exacta','arb-motivo-otro','arb-email'].forEach(id => {
+  ['arb-cantidad','arb-nombres-arboles','arb-motivo-otro'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   document.getElementById('arb-tipo-solicitud').value  = 'poda';
