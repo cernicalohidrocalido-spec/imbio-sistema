@@ -624,70 +624,6 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
           </div>
         </div>
 
-        <!-- DESCRIPCIÓN -->
-        <div class="form-card">
-          <div class="form-card-header"><span class="ic">📝</span><span>Descripción *</span></div>
-          <div class="form-card-body">
-            <div class="fgroup">
-              <textarea id="nr-desc" placeholder="Describe la situación con detalle: ¿qué ocurre?, ¿desde cuándo?, ¿qué tan urgente es?..." rows="4"></textarea>
-              <button type="button" onclick="_matlachoMejorarDesc(this)"
-                style="margin-top:10px;width:100%;padding:12px 14px;background:linear-gradient(135deg,#003B7A,#0057B8);color:#fff;border:none;border-radius:11px;font-size:.94rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Nunito',sans-serif">
-                🐭 Matlacho — Mejorar mi descripción
-              </button>
-              <div id="matlacho-desc-result" style="display:none;margin-top:8px;background:#E8F1FB;border:1.5px solid #B3CFF0;border-radius:11px;padding:12px 14px;font-size:.94rem;color:#1a3a5c;line-height:1.6"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- UBICACIÓN -->
-        <div class="form-card">
-          <div class="form-card-header"><span class="ic">📍</span><span>Ubicación *</span></div>
-          <div class="form-card-body">
-            <div class="map-btns">
-              <button class="map-btn" onclick="usarGPS()">📡 Mi ubicación</button>
-              <button class="map-btn" onclick="setMapLayer('sat')" id="btn-sat">🛰️ Satelital</button>
-              <button class="map-btn" onclick="setMapLayer('osm')" id="btn-osm">🗺️ Calles</button>
-            </div>
-            <div id="map-app" style="margin-top:10px">
-              <button class="map-expand-btn" onclick="toggleMapSize()" id="map-expand-btn" title="Ampliar/reducir mapa">
-                <span id="map-expand-ic">⛶</span> <span id="map-expand-lbl">Ampliar</span>
-              </button>
-            </div>
-            <div class="map-addr" id="map-addr">📍 Toca el mapa o usa tu GPS para marcar la ubicación exacta</div>
-            <div class="addr-grid" id="addr-grid" style="margin-top:10px">
-              <div class="fgroup"><label>Calle</label><input id="nr-calle" placeholder="Se autocompleta"></div>
-              <div class="fgroup"><label>Número</label><input id="nr-numero" placeholder="Núm. ext."></div>
-              <div class="fgroup"><label>Colonia *</label><input id="nr-colonia" placeholder="Colonia o fraccionamiento"></div>
-              <div class="fgroup"><label>C.P.</label><input id="nr-cp" placeholder="Código postal"></div>
-            </div>
-            <input type="hidden" id="nr-lat">
-            <input type="hidden" id="nr-lon">
-          </div>
-        </div>
-
-        <!-- DATOS PERSONALES -->
-        <div class="form-card">
-          <div class="form-card-header"><span class="ic">👤</span><span>Tus datos (opcionales)</span></div>
-          <div class="form-card-body">
-            <div class="fgroup"><label>Nombre completo</label><input id="nr-nombre" placeholder="Tu nombre (opcional)"></div>
-            <div class="fgroup"><label>Teléfono</label><input id="nr-tel" type="tel" placeholder="449 000 0000 (opcional)"></div>
-          </div>
-        </div>
-
-        <!-- FIRMA -->
-        <div class="form-card">
-          <div class="form-card-header"><span class="ic">✍️</span><span>Firma digital (opcional)</span></div>
-          <div class="form-card-body">
-            <div style="touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none">
-              <canvas id="sig-app" onclick="sigFocusResize()"></canvas>
-            </div>
-            <div style="display:flex;gap:8px;margin-top:8px">
-              <div class="fgroup" style="flex:1"><input id="nr-firmante" placeholder="Nombre del firmante"></div>
-              <button class="map-btn" onclick="clearSigApp()" style="flex:none;width:44px">🗑</button>
-            </div>
-          </div>
-        </div>
-
         <!-- PANEL ARBOLADO — poda/derribo (se muestra según tipo) -->
         <div id="panel-arbolado" class="form-card">
           <div class="form-card-header" style="background:#f0fdf4;border-bottom:1px solid #bbf7d0">
@@ -820,6 +756,74 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
           </div>
         </div>
 
+        <!-- DESCRIPCIÓN (adaptativa según tipo) -->
+        <div class="form-card" id="card-descripcion">
+          <div class="form-card-header" id="desc-header">
+            <span class="ic">📝</span>
+            <span id="desc-header-txt">Descripción *</span>
+          </div>
+          <div class="form-card-body">
+            <div class="fgroup">
+              <textarea id="nr-desc" placeholder="Describe la situación con detalle: ¿qué ocurre?, ¿desde cuándo?, ¿qué tan urgente es?..." rows="4"></textarea>
+              <button type="button" onclick="_matlachoMejorarDesc(this)"
+                style="margin-top:10px;width:100%;padding:12px 14px;background:linear-gradient(135deg,#003B7A,#0057B8);color:#fff;border:none;border-radius:11px;font-size:.94rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Nunito',sans-serif">
+                🐭 Matlacho — Mejorar mi descripción
+              </button>
+              <div id="matlacho-desc-result" style="display:none;margin-top:8px;background:#E8F1FB;border:1.5px solid #B3CFF0;border-radius:11px;padding:12px 14px;font-size:.94rem;color:#1a3a5c;line-height:1.6"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- UBICACIÓN -->
+        <div class="form-card">
+          <div class="form-card-header"><span class="ic">📍</span><span>Ubicación *</span></div>
+          <div class="form-card-body">
+            <div class="map-btns">
+              <button class="map-btn" onclick="usarGPS()">📡 Mi ubicación</button>
+              <button class="map-btn" onclick="setMapLayer('sat')" id="btn-sat">🛰️ Satelital</button>
+              <button class="map-btn" onclick="setMapLayer('osm')" id="btn-osm">🗺️ Calles</button>
+            </div>
+            <div id="map-app" style="margin-top:10px">
+              <button class="map-expand-btn" onclick="toggleMapSize()" id="map-expand-btn" title="Ampliar/reducir mapa">
+                <span id="map-expand-ic">⛶</span> <span id="map-expand-lbl">Ampliar</span>
+              </button>
+            </div>
+            <div class="map-addr" id="map-addr">📍 Toca el mapa o usa tu GPS para marcar la ubicación exacta</div>
+            <div class="addr-grid" id="addr-grid" style="margin-top:10px">
+              <div class="fgroup"><label>Calle</label><input id="nr-calle" placeholder="Se autocompleta"></div>
+              <div class="fgroup"><label>Número</label><input id="nr-numero" placeholder="Núm. ext."></div>
+              <div class="fgroup"><label>Colonia *</label><input id="nr-colonia" placeholder="Colonia o fraccionamiento"></div>
+              <div class="fgroup"><label>C.P.</label><input id="nr-cp" placeholder="Código postal"></div>
+            </div>
+            <input type="hidden" id="nr-lat">
+            <input type="hidden" id="nr-lon">
+          </div>
+        </div>
+
+        <!-- DATOS PERSONALES -->
+        <div class="form-card">
+          <div class="form-card-header"><span class="ic">👤</span><span>Tus datos (opcionales)</span></div>
+          <div class="form-card-body">
+            <div class="fgroup"><label>Nombre completo</label><input id="nr-nombre" placeholder="Tu nombre (opcional)"></div>
+            <div class="fgroup"><label>Teléfono</label><input id="nr-tel" type="tel" placeholder="449 000 0000 (opcional)"></div>
+          </div>
+        </div>
+
+        <!-- FIRMA -->
+        <div class="form-card" id="card-firma">
+          <div class="form-card-header"><span class="ic">✍️</span><span>Firma digital (opcional)</span></div>
+          <div class="form-card-body">
+            <div style="touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none">
+              <canvas id="sig-app" onclick="sigFocusResize()"></canvas>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <div class="fgroup" style="flex:1"><input id="nr-firmante" placeholder="Nombre del firmante"></div>
+              <button class="map-btn" onclick="clearSigApp()" style="flex:none;width:44px">🗑</button>
+            </div>
+          </div>
+        </div>
+
+
         <!-- PANEL ANIMAL (se muestra según tipo) -->
         <div id="panel-animal-agresivo" class="form-card">
           <div class="form-card-header"><span class="ic">🐾</span><span>Información del Incidente Animal</span></div>
@@ -931,7 +935,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
             </div>
             <div class="about-row"><div class="row-ic" id="conn-status-ic">🔴</div><div class="row-info"><label>Estado de conexión</label><span id="conn-status-txt">Sin conexión</span></div></div>
             <div class="about-row"><div class="row-ic">👨‍💻</div><div class="row-info"><label>Desarrollo</label><span>Biol. Luis Felipe Lozano Román</span></div></div>
-            <div class="about-row"><div class="row-ic">📧</div><div class="row-info"><label>Contacto</label><span>imbio@pabellon.gob.mx</span></div></div>
+            <div class="about-row"><div class="row-ic">📧</div><div class="row-info"><label>Contacto</label><span><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="caa3a7a8a3a58abaaba8afa6a6a5a4e4ada5a8e4a7b2">[email&#160;protected]</a></span></div></div>
             <div class="about-row"><div class="row-ic">📞</div><div class="row-info"><label>Emergencias</label><span>911 / Protección Civil</span></div></div>
             <div class="about-row"><div class="row-ic">©</div><div class="row-info"><label>Derechos</label><span>2026 · Municipio de Pabellón de Arteaga</span></div></div>
           </div>
@@ -947,7 +951,7 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
   </div><!-- /content -->
 </div><!-- /app -->
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ════════════════════════════════════════════════════════
 //  IMBIO CIUDADANO v2.0 — App JavaScript
 // ════════════════════════════════════════════════════════
@@ -1098,26 +1102,55 @@ function selTipo(t) {
   tipoSel = t;
   document.querySelectorAll('.tipo-chip').forEach(c => c.classList.toggle('sel', c.dataset.tipo === t));
 
+  const esArbol  = (t === 'poda_arbol' || t === 'derribo_arbol');
+  const esAnimal = (t === 'perro_agresivo' || t === 'animal_calle');
+
+  // ── Adaptar formulario según tipo ──────────────────────────────
+  _adaptarFormulario(esArbol, esAnimal, t);
+
+  // Scroll al inicio del formulario específico
+  setTimeout(() => {
+    const target = esArbol
+      ? document.getElementById('panel-arbolado')
+      : document.getElementById('nr-desc');
+    if (target) {
+      const top = target.offsetTop - 60;
+      document.querySelector('.content').scrollTo({ top, behavior: 'smooth' });
+    }
+  }, 120);
+}
+
+function _adaptarFormulario(esArbol, esAnimal, t) {
   // Panel animal
   const panelAnimal = document.getElementById('panel-animal-agresivo');
-  if (panelAnimal) panelAnimal.style.display =
-    (t === 'perro_agresivo' || t === 'animal_calle') ? 'block' : 'none';
+  if (panelAnimal) panelAnimal.style.display = esAnimal ? 'block' : 'none';
 
   // Panel arbolado
   const panelArbol = document.getElementById('panel-arbolado');
   if (panelArbol) {
-    const esArbol = (t === 'poda_arbol' || t === 'derribo_arbol');
     panelArbol.style.display = esArbol ? 'block' : 'none';
-    if (esArbol) {
-      // Preseleccionar tipo según chip elegido
-      selTipoArbol(t === 'poda_arbol' ? 'poda' : 'derribo');
-    }
+    if (esArbol) selTipoArbol(t === 'poda_arbol' ? 'poda' : 'derribo');
   }
 
-  // Scroll suave al formulario de descripción
-  setTimeout(() => {
-    document.querySelector('.content').scrollTo({ top: document.getElementById('nr-desc')?.offsetTop - 80 || 0, behavior: 'smooth' });
-  }, 200);
+  // Card descripción: ocultar para arbolado (tiene su propio campo dentro del panel)
+  const cardDesc = document.getElementById('card-descripcion');
+  if (cardDesc) cardDesc.style.display = esArbol ? 'none' : 'block';
+
+  // Card firma: ocultar para arbolado (no aplica en solicitud)
+  const cardFirma = document.getElementById('card-firma');
+  if (cardFirma) cardFirma.style.display = esArbol ? 'none' : 'block';
+
+  // Botón enviar: cambiar texto según contexto
+  const btnEnviar = document.getElementById('btn-enviar');
+  if (btnEnviar) {
+    if (esArbol) {
+      btnEnviar.innerHTML = '🌳 Enviar Solicitud de Arbolado';
+      btnEnviar.style.background = 'linear-gradient(135deg,#14532d,#15803d)';
+    } else {
+      btnEnviar.innerHTML = '📨 Enviar Reporte';
+      btnEnviar.style.background = '';
+    }
+  }
 }
 
 // ── Mapa ─────────────────────────────────────────────────
@@ -1338,8 +1371,11 @@ async function enviarReporte() {
   const nombre = document.getElementById('nr-nombre').value.trim();
   const tel    = document.getElementById('nr-tel').value.trim();
 
-  if (!tipo)          { showAlert('form-alert','err','Selecciona el tipo de incidencia.'); scrollTop(); return; }
-  if (desc.length<10) { showAlert('form-alert','err','La descripción debe tener al menos 10 caracteres.'); return; }
+  const esArbol = (tipo === 'poda_arbol' || tipo === 'derribo_arbol');
+
+  if (!tipo) { showAlert('form-alert','err','Selecciona el tipo de incidencia.'); scrollTop(); return; }
+  // Para arbolado la descripción viene del panel específico
+  if (!esArbol && desc.length < 10) { showAlert('form-alert','err','La descripción debe tener al menos 10 caracteres.'); return; }
   if (!lat || !lon)   { showAlert('form-alert','err','📍 Marca la ubicación en el mapa o usa tu GPS.'); return; }
   if (!colonia)       { showAlert('form-alert','err','Escribe o confirma la colonia.'); return; }
 
@@ -1353,7 +1389,7 @@ async function enviarReporte() {
   };
 
   // ── Datos específicos solicitud arbolado ────────────────────────────────
-  if (tipo === 'poda_arbol' || tipo === 'derribo_arbol') {
+  if (esArbol) {
     const arbTipo    = document.getElementById('arb-tipo-solicitud')?.value || '';
     const arbCant    = document.getElementById('arb-cantidad')?.value.trim() || '1';
     const arbEsp     = document.getElementById('arb-tipo-especies')?.value || '';
@@ -1367,10 +1403,12 @@ async function enviarReporte() {
     const arbFotoData= window._arbFotoBase64 || null;
 
     // Validaciones específicas arbolado
-    if (!arbDesc) { showAlert('form-alert','err','🌳 Describe el árbol en la sección de arbolado.'); return; }
+    if (!arbDesc) { showAlert('form-alert','err','🌳 Describe el árbol para continuar.'); scrollTop(); return; }
     if (!arbUbicEx) { showAlert('form-alert','err','📍 Indica la ubicación exacta del árbol.'); return; }
     if (arbMotivo === 'otro' && !arbMotOtro) { showAlert('form-alert','err','📝 Especifica el motivo de la solicitud.'); return; }
 
+    // Usar la descripción del árbol como descripción principal del reporte
+    body.descripcion = arbDesc;
     body.arb_tipo_solicitud    = arbTipo;
     body.arb_cantidad          = arbCant;
     body.arb_tipo_especies     = arbEsp;
@@ -1527,6 +1565,8 @@ function limpiarForm() {
   const pa = document.getElementById('panel-arbolado');
   if (pa) pa.style.display = 'none';
   resetArbolForm();
+  // Restaurar formulario genérico
+  _adaptarFormulario(false, false, '');
 }
 
 function showAlert(containerId, type, msg) {
@@ -1951,18 +1991,4 @@ async function _matlachoMejorarDesc(btnEl) {
       resultEl.textContent = '⚠️ Sin conexión. Verifica tu red e intenta de nuevo.';
     }
   } finally {
-    btnEl.innerHTML = original;
-    btnEl.disabled  = false;
-  }
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', _matlachoInit);
-} else {
-  _matlachoInit();
-}
-// ══ END MATLACHO ══
-</script>
-
-</body>
-</html>
+    btnEl.innerHTML = origin
