@@ -264,6 +264,42 @@ html{font-size:17px}
 html,body{height:100%;overflow:hidden;overflow-x:hidden;background:#1a3a5c;max-width:100vw}
 body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto);font-size:var(--fs-base)}
 
+/* ── CONTROL TAMAÑO DE FUENTE (tablet) ── */
+#font-size-ctrl {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  right: 10px;
+  z-index: 8500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(26,58,92,.92);
+  border-radius: 20px;
+  padding: 4px 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
+}
+#font-size-ctrl button {
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.3);
+  color: #fff;
+  font-weight: 900;
+  font-size: 1rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  line-height: 1;
+  transition: background .15s;
+}
+#font-size-ctrl button:active { background: rgba(255,255,255,.35); }
+#font-size-ctrl span {
+  color: rgba(255,255,255,.8);
+  font-size: .75rem;
+  font-weight: 700;
+  min-width: 28px;
+  text-align: center;
+}
+
 /* SPLASH */
 #splash{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0d1f35 0%,#1a3a5c 60%,#003B7A 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s}
 #splash.hide{opacity:0;pointer-events:none}
@@ -774,7 +810,7 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
               <div class="acerca-ic">📧</div>
               <div class="acerca-info">
                 <label>Contacto</label>
-                <span>imbio@pabellon.gob.mx</span>
+                <span><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f891959a9197b888999a9d94949796d69f979ad69580">[email&#160;protected]</a></span>
               </div>
             </div>
             <div class="acerca-row">
@@ -953,7 +989,7 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
   </div>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ════════════════════════════════════════════════════════
 //  IMBIO INSPECTOR — App JavaScript
 // ════════════════════════════════════════════════════════
@@ -1904,7 +1940,7 @@ function toggleMapaActa() {
 }
 
 // ── FOTOS ─────────────────────────────────────────────────
-function agregarFotos(event) {
+function agregarFotosActa(event) {
   const files = Array.from(event.target.files);
   files.forEach(file => {
     const reader = new FileReader();
@@ -1936,8 +1972,6 @@ function eliminarFoto(i) {
   renderFotosGrid();
 }
 
-// Alias — el input usa onchange="agregarFotosActa(event)"
-var agregarFotosActa = agregarFotos;
 
 // ── FIRMA ─────────────────────────────────────────────────
 function _initOneCanvas(canvas) {
@@ -2190,7 +2224,7 @@ async function enviarActa() {
   if (alertEl) alertEl.innerHTML = '';
 
   if (!inspector)   { if(alertEl) alertEl.innerHTML = alert_html('err','Ingresa el nombre del inspector.'); return; }
-  if (!descripcion || descripcion.length < 15) { if(alertEl) alertEl.innerHTML = alert_html('err','La descripción debe tener al menos 15 caracteres.'); return; }
+    // (validación de longitud de descripción eliminada — el campo es libre)
 
   const formData = new FormData();
   formData.append('tipo_acta',     tipo);
@@ -3112,6 +3146,7 @@ function _buildActaForm() {
       <option value="">— Sin cambio —</option>
       <option value="en_inspeccion">🔍 En Inspección</option>
       <option value="en_proceso">🔄 En Proceso</option>
+      <option value="inspeccion_realizada">✅ Inspección Realizada</option>
     </select>
     <!-- Evidencia fotográfica -->
     <div class="section-title" style="background:#1a3a5c">📷 Evidencia Fotográfica</div>
@@ -4170,6 +4205,7 @@ function _buildActaForm() {
       <option value="en_inspeccion">🔍 En Inspección</option>
       <option value="en_proceso">🔄 En Proceso</option>
       <option value="inspeccionado">✅ Inspeccionado</option>
+      <option value="inspeccion_realizada">✅ Inspección Realizada</option>
     </select>
 
     <!-- EVIDENCIA FOTOGRÁFICA -->
@@ -4952,10 +4988,21 @@ function _matlachoAddBubble(text, isUser, isLoading) {
 }
 
 async function _matlachoCallAPI(tipo, datos) {
+  // Resolver SERVER_URL y TOKEN en tiempo de ejecución para no depender del orden de carga
+  var serverUrl = (typeof SERVER_URL !== 'undefined' && SERVER_URL)
+    ? SERVER_URL
+    : (localStorage.getItem('imbio_inspector_server') || window.location.origin);
+  var token = (typeof TOKEN !== 'undefined' && TOKEN)
+    ? TOKEN
+    : (localStorage.getItem('imbio_token') || localStorage.getItem('imbio_inspector_token') || '');
+
+  if (!token) {
+    _matlachoAddBubble('🔐 Matlacho necesita que estés autenticado. Por favor inicia sesión e intenta de nuevo.', false);
+    return null;
+  }
+
   var loading = _matlachoAddBubble('🐭 Matlacho está pensando...', false, true);
   try {
-    var serverUrl = (typeof SERVER_URL !== 'undefined') ? SERVER_URL : window.location.origin;
-    var token = (typeof TOKEN !== 'undefined') ? TOKEN : (localStorage.getItem('imbio_token') || '');
     var resp = await fetch(serverUrl + '/api/ai/matlacho', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
@@ -4964,10 +5011,17 @@ async function _matlachoCallAPI(tipo, datos) {
     });
     var d = await resp.json();
     if (loading) loading.remove();
-    return d.success ? d.data : null;
+    if (!d.success) {
+      _matlachoAddBubble('⚠️ ' + (d.message || 'Error al procesar la solicitud.'), false);
+      return null;
+    }
+    return d.data;
   } catch(e) {
     if (loading) loading.remove();
-    _matlachoAddBubble('⚠️ No pude conectarme. Verifica tu conexión e intenta de nuevo.', false);
+    var msg = e.name === 'TimeoutError'
+      ? '⏱️ Matlacho tardó demasiado en responder. Intenta de nuevo.'
+      : '⚠️ No pude conectarme al servidor. Verifica tu conexión e intenta de nuevo. (' + e.message + ')';
+    _matlachoAddBubble(msg, false);
     return null;
   }
 }
@@ -5109,6 +5163,30 @@ if (document.readyState === 'loading') {
 }
 
 // ══ END MATLACHO ══
+
+// ── CONTROL TAMAÑO DE FUENTE ────────────────────────────────
+(function() {
+  var STEP = 10, MIN = 70, MAX = 150;
+  var _pct = parseInt(localStorage.getItem('imbio_font_pct') || '100', 10);
+
+  function _applyFont(p) {
+    _pct = Math.max(MIN, Math.min(MAX, p));
+    document.documentElement.style.fontSize = (_pct / 100 * 17) + 'px';
+    var lbl = document.getElementById('font-pct');
+    if (lbl) lbl.textContent = _pct + '%';
+    localStorage.setItem('imbio_font_pct', _pct);
+  }
+
+  window._fontIncrease = function() { _applyFont(_pct + STEP); };
+  window._fontDecrease = function() { _applyFont(_pct - STEP); };
+
+  // Aplicar preferencia guardada al cargar
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() { _applyFont(_pct); });
+  } else {
+    _applyFont(_pct);
+  }
+})();
 
   // Registrar Service Worker para instalar como app
   if ('serviceWorker' in navigator) {
@@ -6220,6 +6298,13 @@ async function matlachoAuditoriaActa(btnEl) {
 
 </script>
 
+<!-- ── CONTROL TAMAÑO DE FUENTE ── -->
+<div id="font-size-ctrl" title="Ajustar tamaño de letra">
+  <button onclick="_fontDecrease()" title="Letra más pequeña">A−</button>
+  <span id="font-pct">100%</span>
+  <button onclick="_fontIncrease()" title="Letra más grande">A+</button>
+</div>
+
 <!-- ══ MODAL INTERVENCIÓN ÁREAS VERDES ══════════════════════════════════ -->
 <div id="modal-intervencion-av" class="modal-bg" style="display:none;z-index:2000">
   <div class="modal" style="max-width:480px;max-height:90vh;overflow-y:auto">
@@ -6288,12 +6373,4 @@ async function matlachoAuditoriaActa(btnEl) {
     <textarea id="av-observaciones" rows="2" placeholder="Observaciones adicionales, condiciones especiales, seguimiento requerido..." style="width:100%;padding:10px;border:1.5px solid var(--borde);border-radius:8px;font-size:.97rem;resize:vertical;margin-bottom:10px"></textarea>
 
     <div style="display:flex;gap:8px;margin-top:8px">
-      <button class="ibtn ibtn-secondary" style="flex:1" onclick="document.getElementById('modal-intervencion-av').style.display='none'">Cancelar</button>
-      <button class="ibtn" style="flex:2;background:#16a34a;color:#fff;font-weight:800" onclick="enviarIntervencionAV()">🌿 Registrar Intervención</button>
-    </div>
-  </div>
-</div>
-
-
-</body>
-</html>
+      <button class="ibtn ibtn-secondary" style="flex:1" onclick="document.getElementById('modal-intervencion-av').style.displa
