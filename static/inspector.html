@@ -41,6 +41,8 @@
   --ic-lg:   2.8rem;    /* iconos splash     */
 }
 
+</style>
+<script>
 // ════════════════════════════════════════════════════════════════
 // MATLACHO — MÓDULO B: ARBOLADO TÉCNICO
 // ════════════════════════════════════════════════════════════════
@@ -138,8 +140,7 @@ async function matlachoArbolAlternativas(btnEl) {
       signal: AbortSignal.timeout(35000)
     });
     var d = await resp.json();
-    if (res) res.innerHTML = d.success && d.data ? '♻️ <b>Alternativas técnicas evaluadas:</b><br>' + d.data.texto.replace(/
-/g,'<br>') : '⚠️ No se pudo generar la evaluación.';
+    if (res) res.innerHTML = d.success && d.data ? '♻️ <b>Alternativas técnicas evaluadas:</b><br>' + d.data.texto.split('\n').join('<br>') : '⚠️ No se pudo generar la evaluación.';
   } catch(e) {
     if (res) res.innerHTML = '⚠️ Error: ' + e.message;
   } finally {
@@ -172,8 +173,7 @@ async function matlachoArbolFitosanitario(btnEl) {
       signal: AbortSignal.timeout(35000)
     });
     var d = await resp.json();
-    if (res) res.innerHTML = d.success && d.data ? '🔬 <b>Análisis fitosanitario:</b><br>' + d.data.texto.replace(/
-/g,'<br>') : '⚠️ No se pudo generar el análisis.';
+    if (res) res.innerHTML = d.success && d.data ? '🔬 <b>Análisis fitosanitario:</b><br>' + d.data.texto.split('\n').join('<br>') : '⚠️ No se pudo generar el análisis.';
   } catch(e) {
     if (res) res.innerHTML = '⚠️ Error: ' + e.message;
   } finally {
@@ -259,44 +259,41 @@ async function matlachoAnimalEstadoSalud(btnEl) {
 }
 
 
+</script>
+<style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{font-size:17px}
 html,body{height:100%;overflow:hidden;overflow-x:hidden;background:#1a3a5c;max-width:100vw}
 body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--texto);font-size:var(--fs-base)}
 
 /* ── CONTROL TAMAÑO DE FUENTE (tablet) ── */
-#font-size-ctrl {
-  position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + 8px);
-  right: 10px;
-  z-index: 8500;
+.font-size-ctrl {
   display: flex;
   align-items: center;
-  gap: 4px;
-  background: rgba(26,58,92,.92);
-  border-radius: 20px;
-  padding: 4px 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  gap: 3px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
-#font-size-ctrl button {
+.font-size-ctrl button {
   background: rgba(255,255,255,.15);
   border: 1px solid rgba(255,255,255,.3);
   color: #fff;
   font-weight: 900;
-  font-size: 1rem;
-  width: 32px;
-  height: 32px;
+  font-size: .85rem;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   cursor: pointer;
   line-height: 1;
   transition: background .15s;
+  padding: 0;
 }
-#font-size-ctrl button:active { background: rgba(255,255,255,.35); }
-#font-size-ctrl span {
+.font-size-ctrl button:active { background: rgba(255,255,255,.35); }
+.font-size-ctrl span {
   color: rgba(255,255,255,.8);
-  font-size: .75rem;
+  font-size: .72rem;
   font-weight: 700;
-  min-width: 28px;
+  min-width: 26px;
   text-align: center;
 }
 
@@ -609,6 +606,11 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
     <div class="ih-right">
       <div class="conn-dot" id="conn-dot"></div>
       <span class="user-chip" id="user-chip">–</span>
+      <div class="font-size-ctrl" title="Ajustar tamaño de letra">
+        <button onclick="_fontDecrease()">A−</button>
+        <span id="font-pct">100%</span>
+        <button onclick="_fontIncrease()">A+</button>
+      </div>
       <button class="btn-logout" onclick="doLogout()">Salir</button>
     </div>
   </div>
@@ -875,6 +877,11 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
 <div id="modal-detalle" class="modal-acta" style="position:fixed;inset:0;z-index:800;background:var(--gris);display:none;flex-direction:column;overflow:hidden">
   <div class="modal-header">
     <h2 id="detalle-folio-title">Reporte</h2>
+    <div class="font-size-ctrl" title="Ajustar letra">
+      <button onclick="_fontDecrease()">A−</button>
+      <span>Aa</span>
+      <button onclick="_fontIncrease()">A+</button>
+    </div>
     <button onclick="closeDetalle()">✕ Cerrar</button>
   </div>
   <div class="modal-body" id="detalle-body"></div>
@@ -884,6 +891,11 @@ canvas.sig-visitado{display:block;width:100%;height:90px;cursor:crosshair;touch-
 <div id="modal-nueva-acta" style="position:fixed;inset:0;z-index:850;background:var(--gris);display:none;flex-direction:column;overflow:hidden">
   <div class="modal-header">
     <h2>📄 Nueva Acta</h2>
+    <div class="font-size-ctrl" title="Ajustar letra">
+      <button onclick="_fontDecrease()">A−</button>
+      <span>Aa</span>
+      <button onclick="_fontIncrease()">A+</button>
+    </div>
     <button onclick="closeNuevaActa()">✕ Cancelar</button>
   </div>
   <div style="flex:1;overflow-y:auto;padding:14px" id="acta-form-body">
@@ -6298,12 +6310,7 @@ async function matlachoAuditoriaActa(btnEl) {
 
 </script>
 
-<!-- ── CONTROL TAMAÑO DE FUENTE ── -->
-<div id="font-size-ctrl" title="Ajustar tamaño de letra">
-  <button onclick="_fontDecrease()" title="Letra más pequeña">A−</button>
-  <span id="font-pct">100%</span>
-  <button onclick="_fontIncrease()" title="Letra más grande">A+</button>
-</div>
+
 
 <!-- ══ MODAL INTERVENCIÓN ÁREAS VERDES ══════════════════════════════════ -->
 <div id="modal-intervencion-av" class="modal-bg" style="display:none;z-index:2000">
