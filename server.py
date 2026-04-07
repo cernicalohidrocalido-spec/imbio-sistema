@@ -2165,6 +2165,9 @@ class IMBIOHandler(BaseHTTPRequestHandler):
                 'comp_categoria': fields.get('comp_categoria', ''),
                 'comp_arboles':   fields.get('comp_arboles', ''),
                 'comp_especie':   fields.get('comp_especie', ''),
+                # Requisitos IMBIO y observaciones al solicitante (Módulo B arbolado)
+                'arb_requisitos':      fields.get('arb_requisitos', ''),
+                'arb_obs_solicitante': fields.get('arb_obs_solicitante', ''),
                 # Datos animal / mordida
                 'vic_nombre':     fields.get('vic_nombre', ''),
                 'vic_edad':       fields.get('vic_edad', ''),
