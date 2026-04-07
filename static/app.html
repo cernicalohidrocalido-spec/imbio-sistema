@@ -737,6 +737,55 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
               </div>
             </div>
 
+            <!-- Información del trámite -->
+            <div id="arb-info-tramite" style="margin-top:6px">
+              <div style="font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#166534;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+                <span>📋</span><span>Información del trámite</span>
+              </div>
+
+              <!-- Requisitos generales -->
+              <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px 14px;font-size:.84rem;color:#14532d;line-height:1.7;margin-bottom:10px">
+                <div style="font-weight:800;margin-bottom:6px">📄 Requisitos para presentar en oficinas IMBIO:</div>
+                <div>1. Formato de solicitud llenado y firmado</div>
+                <div>2. Identificación oficial <em>(copia)</em></div>
+                <div>3. Comprobante de domicilio o documento que acredite la posesión del predio <em>(copia)</em></div>
+                <div>4. Documento que acredite personalidad jurídica, si aplica <em>(copia)</em></div>
+                <div>5. Comprobante de pago de derechos <em>(una vez dictaminado)</em></div>
+                <div>6. Fotografías del árbol o los árboles</div>
+                <div style="margin-top:6px;padding:6px 10px;background:#dcfce7;border-radius:6px;font-size:.8rem">
+                  <b>🏘️ Si el árbol está en predio aledaño:</b> escrito del vecino de común acuerdo <em>(original)</em>
+                </div>
+                <div style="margin-top:6px;padding:6px 10px;background:#dcfce7;border-radius:6px;font-size:.8rem">
+                  <b>🛣️ Si el árbol está en vía pública:</b> escrito de vecinos de común acuerdo <em>(original)</em>
+                </div>
+              </div>
+
+              <!-- Requisitos adicionales por obra -->
+              <div style="background:#fefce8;border:1px solid #fde047;border-radius:10px;padding:10px 14px;font-size:.84rem;color:#713f12;line-height:1.7;margin-bottom:10px">
+                <div style="font-weight:800;margin-bottom:4px">🏗️ Si la solicitud es por obra de construcción, agregar además:</div>
+                <div>1. Licencia de construcción <em>(copia)</em></div>
+                <div>2. Resolutivo en materia de impacto ambiental <em>(si aplica, estatal o federal)</em></div>
+              </div>
+
+              <!-- Tiempo y costo -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 12px;text-align:center">
+                  <div style="font-size:1.3rem;margin-bottom:2px">⏱️</div>
+                  <div style="font-size:.78rem;font-weight:800;color:#1e40af">Tiempo de respuesta</div>
+                  <div style="font-size:.82rem;color:#1e3a8a;margin-top:3px">10 días hábiles desde que el expediente esté completo</div>
+                </div>
+                <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 12px;text-align:center">
+                  <div style="font-size:1.3rem;margin-bottom:2px">💰</div>
+                  <div style="font-size:.78rem;font-weight:800;color:#1e40af">Costo</div>
+                  <div style="font-size:.82rem;color:#1e3a8a;margin-top:3px"><b>Poda:</b> 1.5 UMA<br><b>Derribo:</b> variable según características del árbol</div>
+                </div>
+              </div>
+
+              <div style="margin-top:8px;padding:8px 12px;background:#f1f5f9;border-radius:8px;font-size:.78rem;color:#475569;text-align:center;line-height:1.5">
+                ℹ️ El costo sólo incluye la <b>licencia</b>. Los servicios de poda o derribo se solicitan directamente al IMBIO.
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -785,11 +834,14 @@ body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; color: var
         </div>
 
         <!-- DATOS PERSONALES -->
-        <div class="form-card">
-          <div class="form-card-header"><span class="ic">👤</span><span>Tus datos (opcionales)</span></div>
+        <div class="form-card" id="card-datos-personales">
+          <div class="form-card-header" id="datos-header">
+            <span class="ic">👤</span>
+            <span id="datos-header-txt">Tus datos</span>
+          </div>
           <div class="form-card-body">
-            <div class="fgroup"><label>Nombre completo</label><input id="nr-nombre" placeholder="Tu nombre (opcional)"></div>
-            <div class="fgroup"><label>Teléfono</label><input id="nr-tel" type="tel" placeholder="449 000 0000 (opcional)"></div>
+            <div class="fgroup"><label>Nombre completo</label><input id="nr-nombre" placeholder="Tu nombre"></div>
+            <div class="fgroup"><label>Teléfono</label><input id="nr-tel" type="tel" placeholder="449 000 0000"></div>
           </div>
         </div>
 
@@ -1123,6 +1175,18 @@ function _adaptarFormulario(esArbol, esAnimal, t) {
   // Card firma: ocultar para arbolado (no aplica en solicitud)
   const cardFirma = document.getElementById('card-firma');
   if (cardFirma) cardFirma.style.display = esArbol ? 'none' : 'block';
+
+  // Card datos personales: cambiar header y labels según contexto
+  const datosHeaderTxt = document.getElementById('datos-header-txt');
+  const nrNombreLabel = document.querySelector('label[for="nr-nombre"]');
+  const nrNombreInput = document.getElementById('nr-nombre');
+  const nrTelLabel = document.querySelector('label[for="nr-tel"]');
+  const nrTelInput = document.getElementById('nr-tel');
+  if (datosHeaderTxt) {
+    datosHeaderTxt.textContent = esArbol ? 'Datos del solicitante' : 'Tus datos';
+  }
+  if (nrNombreInput) nrNombreInput.placeholder = esArbol ? 'Tu nombre completo' : 'Tu nombre';
+  if (nrTelInput)    nrTelInput.placeholder    = esArbol ? '449 000 0000' : '449 000 0000';
 
   // Botón enviar: cambiar texto según contexto
   const btnEnviar = document.getElementById('btn-enviar');
