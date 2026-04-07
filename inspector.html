@@ -1936,6 +1936,9 @@ function eliminarFoto(i) {
   renderFotosGrid();
 }
 
+// Alias — el input usa onchange="agregarFotosActa(event)"
+var agregarFotosActa = agregarFotos;
+
 // ── FIRMA ─────────────────────────────────────────────────
 function _initOneCanvas(canvas) {
   if (!canvas) return;
@@ -2216,6 +2219,18 @@ async function enviarActa() {
   if (compCat)   formData.append('comp_categoria', compCat);
   if (compArb)   formData.append('comp_arboles',   compArb);
   if (compEsp)   formData.append('comp_especie',   compEsp);
+  // ── Requisitos IMBIO y observaciones al solicitante (Módulo B arbolado) ──
+  if (esArbolE) {
+    var _gcR = function(id){ var el=document.getElementById(id); return el?el.checked:false; };
+    var _reqArr = [];
+    if (_gcR('req-impacto'))    _reqArr.push('Resolutivo de impacto ambiental');
+    if (_gcR('req-licencia'))   _reqArr.push('Licencia de construcción vigente');
+    if (_gcR('req-croquis'))    _reqArr.push('Croquis o plano de ubicación del árbol');
+    if (_gcR('req-fotografia')) _reqArr.push('Fotografías del árbol (mínimo 3 vistas)');
+    if (_reqArr.length) formData.append('arb_requisitos', _reqArr.join(','));
+    var _obsArb = (document.getElementById('arb-obs-solicitante')||{value:''}).value.trim();
+    if (_obsArb) formData.append('arb_obs_solicitante', _obsArb);
+  }
   // Campos animal agresivo (si aplica) — IDs actualizados
   var tipoRepAnimal = window._actaReporteTipo || '';
   var esAnimalActa = ['perro_agresivo','animal_calle','animal_maltrato','fauna_silvestre','animal_abandonado'].includes(tipoRepAnimal);
@@ -4377,6 +4392,9 @@ function buildActaHTML(acta) {
   .firma-label { font-size: 8px; color: #555; }
   .firma-name { font-size: 9px; font-weight: bold; color: #1a3a5c; }
   .footer { margin-top: 14px; border-top: 1px solid #ccc; padding-top: 5px; font-size: 8px; color: #666; text-align: center; }
+  .evidencia-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .evidencia-grid img { width: 110px; height: 90px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; }
+  .evidencia-caption { font-size: 7.5px; color: #555; text-align: center; margin-top: 2px; }
   .legal-ref { font-size: 8px; color: #555; font-style: italic; margin-bottom: 6px; }
   p { margin-bottom: 5px; font-size: 9.5px; line-height: 1.4; }
   .badge-row { margin: 4px 0; }
@@ -4505,7 +4523,17 @@ ${acta.acta_plazo || acta.plazo ? `<p><b>Plazo:</b> ${acta.acta_plazo||acta.plaz
 ${acta.observaciones ? `<p><b>Observaciones:</b> ${acta.observaciones}</p>` : ''}
 ${acta.medidas_correctivas ? `<div style="background:#fef9c3;border-left:4px solid #f59e0b;padding:10px 14px;margin:8px 0;border-radius:0 8px 8px 0"><b>📋 Medidas correctivas requeridas:</b><br>${acta.medidas_correctivas}</div>` : ''}
 ${acta.arb_obs_solicitante ? `<p><b>Observaciones al solicitante:</b> ${acta.arb_obs_solicitante}</p>` : ''}
-${esArbolPDF && acta.arb_requisitos ? `<p><b>Requisitos solicitados al ciudadano:</b> ${acta.arb_requisitos.split(',').join(', ')}</p>` : ''}
+${esArbolPDF ? `
+<div class="section-title" style="background:#1a3a5c">📋 Requisitos para Trámite en Oficinas IMBIO</div>
+<div style="background:#EEF5FC;border:1px solid #c8d8f0;border-radius:4px;padding:8px 12px;font-size:9px;line-height:1.8;margin-bottom:6px">
+  <div style="font-weight:700;margin-bottom:4px">⚠️ Concluida la inspección, el solicitante deberá presentar en oficinas del IMBIO:</div>
+  <div>✔️ Solicitud por escrito dirigida al Director del IMBIO</div>
+  <div>✔️ Comprobante de domicilio <b>o</b> pago de predial a nombre del solicitante</div>
+  ${acta.arb_requisitos ? acta.arb_requisitos.split(',').map(function(r){ return '<div>✔️ ' + r.trim() + '</div>'; }).join('') : ''}
+  <div style="margin-top:6px;background:#fff3cd;border-radius:3px;padding:5px 8px;font-weight:700;color:#92400e">
+    ⏱ Plazo de resolución: <b>15 días hábiles</b> a partir de la recepción del expediente completo.
+  </div>
+</div>` : ''}
 ${acta.gravedad_infraccion ? `<p><b>Gravedad:</b> ${acta.gravedad_infraccion} ${acta.reincidente==='si' ? '⚠️ Reincidente' : ''}</p>` : ''}
 ${acta.firmado_enterado ? `<p><b>Firmado de enterado:</b> ${acta.firmado_enterado==='si'?'Sí firmó':'No firmó / '+acta.firmado_enterado}</p>` : ''}
 ${acta.tiene_permiso ? `<p><b>Permisos:</b> ${acta.tiene_permiso==='si'?'Exhibidos y vigentes':acta.tiene_permiso==='no'?'Sin autorización':acta.tiene_permiso==='vencido'?'Vencidos':acta.tiene_permiso}${acta.num_permiso?' — Folio: '+acta.num_permiso:''}</p>` : ''}
@@ -4536,6 +4564,15 @@ ${acta.circ_clima || acta.circ_visibilidad ? `<p style="font-size:9px"><b>Condic
 ${acta.circ_derechos_leidos === 'si' ? `<p style="font-size:9px">✅ Se hizo saber al visitado sus derechos y obligaciones durante la diligencia.</p>` : ''}
 ${acta.circ_copia_entregada === 'si' ? `<p style="font-size:9px">✅ Se entregó copia del acta al visitado.</p>` : ''}
 ${compensHTML}
+
+${acta.fotos && acta.fotos.length > 0 ? `
+<div class="section-title">📷 EVIDENCIA FOTOGRÁFICA DE LA INSPECCIÓN</div>
+<div class="evidencia-grid">
+  ${acta.fotos.map(function(url, idx) {
+    var src = (typeof SERVER_URL !== 'undefined' ? SERVER_URL : '') + '/' + url;
+    return '<div style="text-align:center"><img src="' + src + '" alt="Foto ' + (idx+1) + '"><div class="evidencia-caption">Foto ' + (idx+1) + '</div></div>';
+  }).join('')}
+</div>` : ''}
 
 <!-- FIRMAS -->
 <div class="firma-section">
