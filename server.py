@@ -99,10 +99,15 @@ ESTADOS_VALIDOS = [
 
 # ── Auto-crear directorios y DB si no existen ─────────────────────────────
 def _init_storage():
-    """Crea carpetas y db.json con datos demo si no existen. Sin acentos para maximo compatibilidad."""
+    """Crea carpetas y db.json SOLO si no existe ningun dato previo.
+    Si imbio.db ya tiene datos reales, no toca nada.
+    """
     UPLOAD_EV.mkdir(parents=True, exist_ok=True)
     UPLOAD_SIG.mkdir(parents=True, exist_ok=True)
     DB_FILE.parent.mkdir(parents=True, exist_ok=True)
+    # Si ya existe la DB SQLite con datos, no tocar db.json
+    if DB_SQLITE.exists() and DB_SQLITE.stat().st_size > 4096:
+        return
     if DB_FILE.exists():
         return
     def hp(pw): return __import__('hashlib').sha256(pw.encode()).hexdigest()
@@ -250,9 +255,17 @@ def _init_sqlite():
     conn.commit()
     row = conn.execute("SELECT data FROM store WHERE id=1").fetchone()
     if not row:
-        # Seed from JSON file if it exists, otherwise use defaults
-        if DB_FILE.exists():
+        # Orden de prioridad para el seed inicial:
+        # 1. db_backup.json  — copia automática del último estado real
+        # 2. db.json         — seed manual o datos exportados
+        # 3. Datos mínimos   — solo usuarios, sin reportes demo
+        backup_path = DB_SQLITE.parent / 'db_backup.json'
+        if backup_path.exists() and backup_path.stat().st_size > 100:
+            seed = backup_path.read_text(encoding='utf-8')
+            print("[START] ✅ Restaurando desde db_backup.json", flush=True)
+        elif DB_FILE.exists():
             seed = DB_FILE.read_text(encoding='utf-8')
+            print("[START] Seed desde db.json", flush=True)
         else:
             seed = json.dumps({
                 "reports": [], "assignments": [], "users": [
@@ -261,6 +274,7 @@ def _init_sqlite():
                     {"id":3,"username":"inspector01","password": hashlib.sha256(b"inspector123").hexdigest(),"nombre":"Inspector Campo 01","rol":"inspector","brigada":"Brigada 1","activo":True}
                 ], "actas": [], "establecimientos": [], "verificaciones": []
             }, ensure_ascii=False)
+            print("[START] DB nueva — sin datos demo. Configura DB_PATH para persistencia.", flush=True)
         conn.execute("INSERT INTO store(id,data) VALUES(1,?)", (seed,))
         conn.commit()
     conn.close()
@@ -332,12 +346,23 @@ def read_db():
     return db
 
 def write_db(db):
+    serialized = json.dumps(db, ensure_ascii=False)
     with db_lock:
         conn = sqlite3.connect(str(DB_SQLITE), timeout=15)
-        conn.execute("UPDATE store SET data=? WHERE id=1",
-                     (json.dumps(db, ensure_ascii=False),))
+        conn.execute("UPDATE store SET data=? WHERE id=1", (serialized,))
         conn.commit()
         conn.close()
+    # ── Backup automático en JSON ─────────────────────────────────────────
+    # Guarda siempre una copia legible en data/db_backup.json.
+    # Si el servidor corre en Railway/Render SIN volumen persistente,
+    # este archivo también se perderá al reiniciar — en ese caso configurar
+    # la variable de entorno DB_PATH apuntando a un volumen montado:
+    #   DB_PATH=/data/imbio.db  (Railway: Settings > Volumes > mount en /data)
+    try:
+        backup_path = DB_SQLITE.parent / 'db_backup.json'
+        backup_path.write_text(serialized, encoding='utf-8')
+    except Exception:
+        pass  # No fallar si no se puede escribir el backup
 
 def hash_pw(pw):
     return hashlib.sha256(pw.encode()).hexdigest()
@@ -546,6 +571,20 @@ class IMBIOHandler(BaseHTTPRequestHandler):
             self.send_header('Content-Length', len(_LEAFLET_JS))
             self.end_headers()
             self.wfile.write(_LEAFLET_JS)
+            return
+
+        if path == '/api/admin/export-db':
+            user = self.require_auth('admin')
+            if not user: return
+            db = read_db()
+            payload = json.dumps(db, ensure_ascii=False, indent=2, default=str)
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Disposition',
+                f'attachment; filename="imbio_backup_{now_iso()[:10]}.json"')
+            self.send_header('Content-Length', str(len(payload.encode())))
+            self.end_headers()
+            self.wfile.write(payload.encode())
             return
 
         if path == '/health':
