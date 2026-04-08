@@ -99,48 +99,31 @@ ESTADOS_VALIDOS = [
 
 # ── Auto-crear directorios y DB si no existen ─────────────────────────────
 def _init_storage():
-    """Crea carpetas y db.json con datos demo si no existen. Sin acentos para maximo compatibilidad."""
+    """Crea carpetas y db.json SOLO si no existe. Arranca sin datos demo."""
     UPLOAD_EV.mkdir(parents=True, exist_ok=True)
     UPLOAD_SIG.mkdir(parents=True, exist_ok=True)
     DB_FILE.parent.mkdir(parents=True, exist_ok=True)
     if DB_FILE.exists():
         return
     def hp(pw): return __import__('hashlib').sha256(pw.encode()).hexdigest()
-    def n(): return __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()
     db = {
         "users": [
-            {"id":1,"nombre":"Administrador IMBIO","username":"admin",      "password":hp("admin123"),     "rol":"admin",    "activo":True},
-            {"id":2,"nombre":"Operador Central",   "username":"operador",   "password":hp("operador123"),  "rol":"operador", "activo":True},
-            {"id":3,"nombre":"Inspector Campo 01", "username":"inspector01","password":hp("inspector123"), "rol":"inspector","activo":True},
+            {"id":1,"nombre":"Administrador IMBIO","username":"admin",    "password":hp("admin123"),    "rol":"admin",    "activo":True},
+            {"id":2,"nombre":"Operador Central",   "username":"operador", "password":hp("operador123"), "rol":"operador", "activo":True},
         ],
-        "reports": [
-            {"id":1,"folio":"IMBIO-2026-0001","tipo":"emergencia",        "descripcion":"Arbol caido en calle principal bloqueando el paso","colonia":"Centro",         "lat":22.1508,"lon":-102.2913,"estado":"reportado", "nombre_reportante":"Maria Lopez",    "telefono":"449 100 1000","fecha_creacion":n(),"fecha_actualizacion":n()},
-            {"id":2,"folio":"IMBIO-2026-0002","tipo":"denuncia_ambiental","descripcion":"Quema ilegal de residuos en terreno baldio",       "colonia":"Los Pinos",      "lat":22.1518,"lon":-102.2923,"estado":"reportado", "nombre_reportante":"Carlos Hernandez","telefono":"449 111 1111","fecha_creacion":n(),"fecha_actualizacion":n()},
-            {"id":3,"folio":"IMBIO-2026-0003","tipo":"areas_verdes",      "descripcion":"Poda urgente de arboles con ramas sobre cables",   "colonia":"Jardines",       "lat":22.1528,"lon":-102.2933,"estado":"asignado",  "nombre_reportante":"Ana Garcia",     "telefono":None,          "fecha_creacion":n(),"fecha_actualizacion":n()},
-            {"id":4,"folio":"IMBIO-2026-0004","tipo":"residuos_solidos",  "descripcion":"Contenedores desbordados sin recoleccion 5 dias",  "colonia":"La Providencia","lat":22.1538,"lon":-102.2943,"estado":"en_proceso","nombre_reportante":"Roberto Diaz",   "telefono":"449 133 1333","fecha_creacion":n(),"fecha_actualizacion":n()},
-            {"id":5,"folio":"IMBIO-2026-0005","tipo":"agua_contaminada",  "descripcion":"Mancha oscura en arroyo olor fetido posible derrame","colonia":"Villas del Rey","lat":22.1548,"lon":-102.2953,"estado":"cerrado",  "nombre_reportante":"Lucia Martinez", "telefono":"449 144 1444","fecha_creacion":n(),"fecha_actualizacion":n()},
-            {"id":6,"folio":"IMBIO-2026-0006","tipo":"ruido",             "descripcion":"Ruido excesivo de establecimiento despues 11pm",   "colonia":"El Mirador",    "lat":22.1558,"lon":-102.2963,"estado":"reportado", "nombre_reportante":None,             "telefono":None,          "fecha_creacion":n(),"fecha_actualizacion":n()},
-            {"id":7,"folio":"IMBIO-2026-0007","tipo":"otro",              "descripcion":"Bache profundo en Av Principal riesgo vehiculos",  "colonia":"San Antonio",   "lat":22.1568,"lon":-102.2973,"estado":"asignado",  "nombre_reportante":"Pedro Ramirez",  "telefono":"449 166 1666","fecha_creacion":n(),"fecha_actualizacion":n()},
-            {"id":8,"folio":"IMBIO-2026-0008","tipo":"poda_arbol",          "descripcion":"Arbol con ramas que obstruyen el alumbrado publico",  "colonia":"Las Flores",    "lat":22.1578,"lon":-102.2983,"estado":"reportado", "nombre_reportante":"Sofia Reyes",    "telefono":"449 177 1777","fecha_creacion":n(),"fecha_actualizacion":n()},
-            {"id":9,"folio":"IMBIO-2026-0009","tipo":"perro_agresivo",      "descripcion":"Perro sin dueno ataca a transeuntes en parque",       "colonia":"El Roble",      "lat":22.1488,"lon":-102.2893,"estado":"reportado", "nombre_reportante":"Miguel Torres",  "telefono":"449 188 1888","fecha_creacion":n(),"fecha_actualizacion":n()},
-            {"id":10,"folio":"IMBIO-2026-0010","tipo":"tiradero_escombro",  "descripcion":"Deposito ilegal de escombro en via publica",          "colonia":"Industrial",    "lat":22.1498,"lon":-102.2903,"estado":"reportado", "nombre_reportante":None,             "telefono":None,          "fecha_creacion":n(),"fecha_actualizacion":n()},
-        ],
-        "assignments": [
-            {"id":1,"report_id":3,"brigada":"Brigada Verde A", "inspector":"Carlos Mendez","notas":"","fecha_asignacion":n()},
-            {"id":2,"report_id":4,"brigada":"Brigada Azul B",  "inspector":"Laura Torres", "notas":"Atencion prioritaria","fecha_asignacion":n()},
-            {"id":3,"report_id":5,"brigada":"Brigada Naranja C","inspector":"Jose Ruiz",   "notas":"Atencion prioritaria","fecha_asignacion":n()},
-            {"id":4,"report_id":7,"brigada":"Brigada Verde A", "inspector":"Carlos Mendez","notas":"","fecha_asignacion":n()},
-        ],
-        "evidence": [
-            {"id":1,"report_id":4,"photo_url":"uploads/evidence/demo_4.jpg","comentario":"Situacion confirmada en campo.","lat_captura":22.1538,"lon_captura":-102.2943,"fecha":n()},
-            {"id":2,"report_id":5,"photo_url":"uploads/evidence/demo_5.jpg","comentario":"Derrame atendido y contenido.", "lat_captura":22.1548,"lon_captura":-102.2953,"fecha":n()},
-        ],
+        "reports": [],
+        "assignments": [],
+        "evidence": [],
         "signatures": [],
-        "folio_counter": 10,
+        "folio_counter": 0,
         "actas": [],
+        "establecimientos": [],
+        "verificaciones": [],
+        "historial_estados": [],
+        "expedientes": [],
     }
     DB_FILE.write_text(__import__('json').dumps(db, indent=2, ensure_ascii=False), encoding='utf-8')
-    print("[DB] Base de datos inicializada con datos demo.")
+    print("[DB] Base de datos inicializada vacia (sin datos demo).")
 
 _init_storage()
 
@@ -250,16 +233,21 @@ def _init_sqlite():
     conn.commit()
     row = conn.execute("SELECT data FROM store WHERE id=1").fetchone()
     if not row:
-        # Seed from JSON file if it exists, otherwise use defaults
-        if DB_FILE.exists():
+        # Orden de prioridad: db_backup.json > db.json > mínimos
+        backup_path = DB_SQLITE.parent / 'db_backup.json'
+        if backup_path.exists() and backup_path.stat().st_size > 100:
+            seed = backup_path.read_text(encoding='utf-8')
+            print("[START] ✅ Restaurando desde db_backup.json", flush=True)
+        elif DB_FILE.exists():
             seed = DB_FILE.read_text(encoding='utf-8')
+            print("[START] Seed desde db.json", flush=True)
         else:
             seed = json.dumps({
                 "reports": [], "assignments": [], "users": [
                     {"id":1,"username":"admin","password": hashlib.sha256(b"admin123").hexdigest(),"nombre":"Administrador IMBIO","rol":"admin","activo":True},
                     {"id":2,"username":"operador","password": hashlib.sha256(b"operador123").hexdigest(),"nombre":"Operador IMBIO","rol":"operador","activo":True},
-                    {"id":3,"username":"inspector01","password": hashlib.sha256(b"inspector123").hexdigest(),"nombre":"Inspector Campo 01","rol":"inspector","brigada":"Brigada 1","activo":True}
-                ], "actas": [], "establecimientos": [], "verificaciones": []
+                ], "actas": [], "establecimientos": [], "verificaciones": [],
+                "historial_estados": [], "expedientes": [], "folio_counter": 0
             }, ensure_ascii=False)
         conn.execute("INSERT INTO store(id,data) VALUES(1,?)", (seed,))
         conn.commit()
@@ -332,12 +320,25 @@ def read_db():
     return db
 
 def write_db(db):
-    with db_lock:
-        conn = sqlite3.connect(str(DB_SQLITE), timeout=15)
-        conn.execute("UPDATE store SET data=? WHERE id=1",
-                     (json.dumps(db, ensure_ascii=False),))
-        conn.commit()
-        conn.close()
+    serialized = json.dumps(db, ensure_ascii=False)
+    try:
+        with db_lock:
+            conn = sqlite3.connect(str(DB_SQLITE), timeout=15)
+            row = conn.execute("SELECT id FROM store WHERE id=1").fetchone()
+            if row:
+                conn.execute("UPDATE store SET data=? WHERE id=1", (serialized,))
+            else:
+                conn.execute("INSERT INTO store(id,data) VALUES(1,?)", (serialized,))
+            conn.commit()
+            conn.close()
+    except Exception as e:
+        print(f'[SQLite] write error: {e}', flush=True)
+    # Backup JSON siempre actualizado
+    try:
+        backup_path = DB_SQLITE.parent / 'db_backup.json'
+        backup_path.write_text(serialized, encoding='utf-8')
+    except Exception:
+        pass
 
 def hash_pw(pw):
     return hashlib.sha256(pw.encode()).hexdigest()
@@ -2526,6 +2527,13 @@ if __name__ == '__main__':
 
     try:
         print("[START] Inicializando base de datos...", flush=True)
+        # Verificar si DB_PATH apunta a un volumen persistente
+        db_path_env = os.environ.get("DB_PATH", "")
+        if db_path_env:
+            print(f"[START] ✅ Usando DB_PATH persistente: {db_path_env}", flush=True)
+        else:
+            print("[START] ⚠️  DB_PATH no configurado. Los datos se perderán al reiniciar.", flush=True)
+            print("[START]    → En Railway: Settings > Volumes > mount en /data, agrega DB_PATH=/data/imbio.db", flush=True)
         _init_sqlite()
         _load_denue_seed()
         print("[START] SQLite OK", flush=True)
