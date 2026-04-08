@@ -154,41 +154,24 @@ def _init_storage():
     if DB_FILE.exists():
         return
     def hp(pw): return __import__('hashlib').sha256(pw.encode()).hexdigest()
-    def n(): return __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()
     db = {
         "users": [
-            {"id":1,"nombre":"Administrador IMBIO","username":"admin",      "password":hp("admin123"),     "rol":"admin",    "activo":True},
-            {"id":2,"nombre":"Operador Central",   "username":"operador",   "password":hp("operador123"),  "rol":"operador", "activo":True},
-            {"id":3,"nombre":"Inspector Campo 01", "username":"inspector01","password":hp("inspector123"), "rol":"inspector","activo":True},
+            {"id":1,"nombre":"Administrador IMBIO","username":"admin",    "password":hp("admin123"),    "rol":"admin",    "activo":True},
+            {"id":2,"nombre":"Operador Central",   "username":"operador", "password":hp("operador123"), "rol":"operador", "activo":True},
         ],
-        "reports": [
-            {"id":1,"folio":"IMBIO-2026-0001","tipo":"emergencia",        "descripcion":"Arbol caido en calle principal bloqueando el paso","colonia":"Centro",         "lat":22.1508,"lon":-102.2913,"estado":"reportado", "nombre_reportante":"Maria Lopez",    "telefono":"449 100 1000","fecha_creacion":n(),"fecha_actualizacion":n()},
-            {"id":2,"folio":"IMBIO-2026-0002","tipo":"denuncia_ambiental","descripcion":"Quema ilegal de residuos en terreno baldio",       "colonia":"Los Pinos",      "lat":22.1518,"lon":-102.2923,"estado":"reportado", "nombre_reportante":"Carlos Hernandez","telefono":"449 111 1111","fecha_creacion":n(),"fecha_actualizacion":n()},
-            {"id":3,"folio":"IMBIO-2026-0003","tipo":"areas_verdes",      "descripcion":"Poda urgente de arboles con ramas sobre cables",   "colonia":"Jardines",       "lat":22.1528,"lon":-102.2933,"estado":"asignado",  "nombre_reportante":"Ana Garcia",     "telefono":None,          "fecha_creacion":n(),"fecha_actualizacion":n()},
-            {"id":4,"folio":"IMBIO-2026-0004","tipo":"residuos_solidos",  "descripcion":"Contenedores desbordados sin recoleccion 5 dias",  "colonia":"La Providencia","lat":22.1538,"lon":-102.2943,"estado":"en_proceso","nombre_reportante":"Roberto Diaz",   "telefono":"449 133 1333","fecha_creacion":n(),"fecha_actualizacion":n()},
-            {"id":5,"folio":"IMBIO-2026-0005","tipo":"agua_contaminada",  "descripcion":"Mancha oscura en arroyo olor fetido posible derrame","colonia":"Villas del Rey","lat":22.1548,"lon":-102.2953,"estado":"cerrado",  "nombre_reportante":"Lucia Martinez", "telefono":"449 144 1444","fecha_creacion":n(),"fecha_actualizacion":n()},
-            {"id":6,"folio":"IMBIO-2026-0006","tipo":"ruido",             "descripcion":"Ruido excesivo de establecimiento despues 11pm",   "colonia":"El Mirador",    "lat":22.1558,"lon":-102.2963,"estado":"reportado", "nombre_reportante":None,             "telefono":None,          "fecha_creacion":n(),"fecha_actualizacion":n()},
-            {"id":7,"folio":"IMBIO-2026-0007","tipo":"otro",              "descripcion":"Bache profundo en Av Principal riesgo vehiculos",  "colonia":"San Antonio",   "lat":22.1568,"lon":-102.2973,"estado":"asignado",  "nombre_reportante":"Pedro Ramirez",  "telefono":"449 166 1666","fecha_creacion":n(),"fecha_actualizacion":n()},
-            {"id":8,"folio":"IMBIO-2026-0008","tipo":"poda_arbol",          "descripcion":"Arbol con ramas que obstruyen el alumbrado publico",  "colonia":"Las Flores",    "lat":22.1578,"lon":-102.2983,"estado":"reportado", "nombre_reportante":"Sofia Reyes",    "telefono":"449 177 1777","fecha_creacion":n(),"fecha_actualizacion":n()},
-            {"id":9,"folio":"IMBIO-2026-0009","tipo":"perro_agresivo",      "descripcion":"Perro sin dueno ataca a transeuntes en parque",       "colonia":"El Roble",      "lat":22.1488,"lon":-102.2893,"estado":"reportado", "nombre_reportante":"Miguel Torres",  "telefono":"449 188 1888","fecha_creacion":n(),"fecha_actualizacion":n()},
-            {"id":10,"folio":"IMBIO-2026-0010","tipo":"tiradero_escombro",  "descripcion":"Deposito ilegal de escombro en via publica",          "colonia":"Industrial",    "lat":22.1498,"lon":-102.2903,"estado":"reportado", "nombre_reportante":None,             "telefono":None,          "fecha_creacion":n(),"fecha_actualizacion":n()},
-        ],
-        "assignments": [
-            {"id":1,"report_id":3,"brigada":"Brigada Verde A", "inspector":"Carlos Mendez","notas":"","fecha_asignacion":n()},
-            {"id":2,"report_id":4,"brigada":"Brigada Azul B",  "inspector":"Laura Torres", "notas":"Atencion prioritaria","fecha_asignacion":n()},
-            {"id":3,"report_id":5,"brigada":"Brigada Naranja C","inspector":"Jose Ruiz",   "notas":"Atencion prioritaria","fecha_asignacion":n()},
-            {"id":4,"report_id":7,"brigada":"Brigada Verde A", "inspector":"Carlos Mendez","notas":"","fecha_asignacion":n()},
-        ],
-        "evidence": [
-            {"id":1,"report_id":4,"photo_url":"uploads/evidence/demo_4.jpg","comentario":"Situacion confirmada en campo.","lat_captura":22.1538,"lon_captura":-102.2943,"fecha":n()},
-            {"id":2,"report_id":5,"photo_url":"uploads/evidence/demo_5.jpg","comentario":"Derrame atendido y contenido.", "lat_captura":22.1548,"lon_captura":-102.2953,"fecha":n()},
-        ],
+        "reports": [],
+        "assignments": [],
+        "evidence": [],
         "signatures": [],
-        "folio_counter": 10,
+        "folio_counter": 0,
         "actas": [],
+        "establecimientos": [],
+        "verificaciones": [],
+        "historial_estados": [],
+        "expedientes": [],
     }
     DB_FILE.write_text(__import__('json').dumps(db, indent=2, ensure_ascii=False), encoding='utf-8')
-    print("[DB] Base de datos inicializada con datos demo.")
+    print("[DB] Base de datos inicializada vacía (sin datos demo).")
 
 _init_storage()
 
@@ -299,10 +282,11 @@ def _init_sqlite(skip_seed=False):
     row = conn.execute("SELECT data FROM store WHERE id=1").fetchone()
     if not row and skip_seed:
         # Postgres está activo — poner placeholder vacío en SQLite, no demos
-        placeholder = json.dumps({"reports":[],"users":[],"actas":[],"assignments":[]}, ensure_ascii=False)
+        placeholder = json.dumps({"reports":[],"users":[],"actas":[],"assignments":[],"establecimientos":[],"verificaciones":[],"historial_estados":[],"expedientes":[],"folio_counter":0}, ensure_ascii=False)
         conn.execute("INSERT INTO store(id,data) VALUES(1,?)", (placeholder,))
         conn.commit()
         conn.close()
+        # Si db.json tiene datos demo, no interferir — PG es la fuente de verdad
         print("[START] SQLite inicializado como caché (datos en Postgres)", flush=True)
         return
     if not row:
@@ -319,11 +303,13 @@ def _init_sqlite(skip_seed=False):
             print("[START] Seed desde db.json", flush=True)
         else:
             seed = json.dumps({
-                "reports": [], "assignments": [], "users": [
-                    {"id":1,"username":"admin","password": hashlib.sha256(b"admin123").hexdigest(),"nombre":"Administrador IMBIO","rol":"admin","activo":True},
-                    {"id":2,"username":"operador","password": hashlib.sha256(b"operador123").hexdigest(),"nombre":"Operador IMBIO","rol":"operador","activo":True},
-                    {"id":3,"username":"inspector01","password": hashlib.sha256(b"inspector123").hexdigest(),"nombre":"Inspector Campo 01","rol":"inspector","brigada":"Brigada 1","activo":True}
-                ], "actas": [], "establecimientos": [], "verificaciones": []
+                "reports": [], "assignments": [], "evidence": [], "signatures": [],
+                "actas": [], "establecimientos": [], "verificaciones": [],
+                "historial_estados": [], "expedientes": [], "folio_counter": 0,
+                "users": [
+                    {"id":1,"username":"admin",    "password": hashlib.sha256(b"admin123").hexdigest(),    "nombre":"Administrador IMBIO","rol":"admin",    "activo":True},
+                    {"id":2,"username":"operador", "password": hashlib.sha256(b"operador123").hexdigest(), "nombre":"Operador IMBIO",     "rol":"operador", "activo":True},
+                ]
             }, ensure_ascii=False)
             print("[START] DB nueva — sin datos demo. Configura DB_PATH para persistencia.", flush=True)
         conn.execute("INSERT INTO store(id,data) VALUES(1,?)", (seed,))
@@ -331,6 +317,44 @@ def _init_sqlite(skip_seed=False):
     conn.close()
 
 # ── DENUE Seed ──────────────────────────────────────────────────────────────
+def _sync_pg_to_sqlite():
+    """Al arrancar, si PG tiene datos reales, sincronizarlos a SQLite como backup."""
+    if not (_PG_URL and _PG_AVAILABLE):
+        return
+    try:
+        pg = _pg_conn()
+        if not pg:
+            return
+        with pg.cursor() as cur:
+            cur.execute("SELECT data FROM imbio_store WHERE id=1")
+            row = cur.fetchone()
+        pg.close()
+        if not row:
+            return
+        db_pg = json.loads(row[0])
+        # Solo sincronizar si PG tiene datos reales (usuarios y/o reportes)
+        if not db_pg.get('users'):
+            return
+        serialized = json.dumps(db_pg, ensure_ascii=False)
+        with db_lock:
+            conn = sqlite3.connect(str(DB_SQLITE), timeout=15)
+            rows = conn.execute("SELECT id FROM store WHERE id=1").fetchone()
+            if rows:
+                conn.execute("UPDATE store SET data=? WHERE id=1", (serialized,))
+            else:
+                conn.execute("INSERT INTO store(id,data) VALUES(1,?)", (serialized,))
+            conn.commit()
+            conn.close()
+        # También actualizar db_backup.json
+        try:
+            backup_path = DB_SQLITE.parent / 'db_backup.json'
+            backup_path.write_text(serialized, encoding='utf-8')
+        except Exception:
+            pass
+        print(f'[START] ✅ SQLite sincronizado desde Postgres ({len(db_pg.get("reports",[]))} reportes)', flush=True)
+    except Exception as e:
+        print(f'[START] sync PG→SQLite error: {e}', flush=True)
+
 def _load_denue_seed():
     """Carga establecimientos del DENUE INEGI si el padrón está vacío."""
     try:
@@ -424,13 +448,40 @@ def _read_sqlite():
     return json.loads(row[0]) if row else {}
 
 def _migrar_sqlite_a_pg():
-    """Primera vez: copia datos de SQLite a Postgres y devuelve el db."""
+    """Primera vez: copia datos de SQLite a Postgres y devuelve el db.
+    Solo migra si SQLite tiene datos reales (más de solo usuarios base).
+    Si SQLite está vacío o tiene solo placeholder, inicializa PG con datos mínimos limpios.
+    """
     try:
         db = _read_sqlite()
-        if db:
+        # Verificar que haya datos reales para migrar
+        tiene_usuarios_reales = len(db.get('users', [])) > 0
+        tiene_reportes = len(db.get('reports', [])) > 0
+        # Si tiene usuarios y reportes reales, migrar
+        if tiene_usuarios_reales and tiene_reportes:
             _write_pg(db)
             print('[PG] ✅ Datos migrados desde SQLite a Postgres', flush=True)
-        return db
+            return db
+        # Si tiene usuarios pero no reportes, migrar solo los usuarios
+        elif tiene_usuarios_reales:
+            _write_pg(db)
+            print('[PG] ✅ Usuarios migrados desde SQLite a Postgres (sin reportes)', flush=True)
+            return db
+        else:
+            # SQLite vacío — inicializar PG con datos mínimos limpios
+            db_minimo = {
+                "reports": [], "assignments": [], "evidence": [], "signatures": [],
+                "actas": [], "establecimientos": [], "verificaciones": [],
+                "historial_estados": [], "expedientes": [],
+                "folio_counter": 0,
+                "users": [
+                    {"id":1,"username":"admin",    "password":hashlib.sha256(b"admin123").hexdigest(),    "nombre":"Administrador IMBIO","rol":"admin",    "activo":True},
+                    {"id":2,"username":"operador", "password":hashlib.sha256(b"operador123").hexdigest(), "nombre":"Operador IMBIO",     "rol":"operador", "activo":True},
+                ]
+            }
+            _write_pg(db_minimo)
+            print('[PG] ✅ Postgres inicializado con datos mínimos (SQLite estaba vacío)', flush=True)
+            return db_minimo
     except Exception as e:
         print(f'[PG] Error migración: {e}', flush=True)
         return {}
@@ -460,25 +511,20 @@ def write_db(db):
     serialized = json.dumps(db, ensure_ascii=False)
     # ── Escribir en Postgres (fuente principal) ────────────────────────────
     pg_ok = _write_pg(db)
-    # ── Escribir en SQLite como backup local ──────────────────────────────
-    if not pg_ok:
+    # ── Escribir SIEMPRE en SQLite (backup local, independiente de PG) ────
+    try:
         with db_lock:
             conn = sqlite3.connect(str(DB_SQLITE), timeout=15)
-            conn.execute("UPDATE store SET data=? WHERE id=1", (serialized,))
+            rows = conn.execute("SELECT id FROM store WHERE id=1").fetchone()
+            if rows:
+                conn.execute("UPDATE store SET data=? WHERE id=1", (serialized,))
+            else:
+                conn.execute("INSERT INTO store(id,data) VALUES(1,?)", (serialized,))
             conn.commit()
             conn.close()
+    except Exception as e:
+        print(f'[SQLite] write error: {e}', flush=True)
     # ── Backup JSON en disco ───────────────────────────────────────────────
-    try:
-        backup_path = DB_SQLITE.parent / 'db_backup.json'
-        backup_path.write_text(serialized, encoding='utf-8')
-    except Exception:
-        pass
-    # ── Backup automático en JSON ─────────────────────────────────────────
-    # Guarda siempre una copia legible en data/db_backup.json.
-    # Si el servidor corre en Railway/Render SIN volumen persistente,
-    # este archivo también se perderá al reiniciar — en ese caso configurar
-    # la variable de entorno DB_PATH apuntando a un volumen montado:
-    #   DB_PATH=/data/imbio.db  (Railway: Settings > Volumes > mount en /data)
     try:
         backup_path = DB_SQLITE.parent / 'db_backup.json'
         backup_path.write_text(serialized, encoding='utf-8')
@@ -2699,6 +2745,9 @@ if __name__ == '__main__':
         # ── 2. SQLite solo si Postgres no está disponible ──────────────────
         # Si PG está activo, SQLite es solo caché temporal — no hacer seed
         _init_sqlite(skip_seed=_pg_ok)
+        # Si PG está activo, sincronizar PG → SQLite para tener backup actualizado
+        if _pg_ok:
+            _sync_pg_to_sqlite()
         _load_denue_seed()
         print("[START] Base de datos OK", flush=True)
     except Exception as e:
